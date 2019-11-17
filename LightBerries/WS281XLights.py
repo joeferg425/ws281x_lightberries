@@ -1,5 +1,6 @@
 import sys
 import atexit
+import inspect
 if sys.platform != 'linux':
 	# this lets me debug in windows
 	class rpi_ws281x:
@@ -20,50 +21,51 @@ import numpy as np
 import enum
 import time
 import logging
-from Pixels import Pixel, PixelColors
+from .Pixels import Pixel, PixelColors
 
-LOGGER = logging.getLogger('Lights')
+LOGGER = logging.getLogger(__name__)
+logging.addLevelName(5, 'VERBOSE')
 if not LOGGER.handlers:
 	streamHandler = logging.StreamHandler()
 	LOGGER.addHandler(streamHandler)
 LOGGER.setLevel(logging.INFO)
 
 class LightString(dict):
-	def __init__(self, gpioPin:int=18, ledCount:int=100, ledFrequency:int=800000, ledDMA:int=5, ledInvert:bool=False, ledPercentBrightness:int=80, verbose:bool=False):
+	def __init__(self, gpioPin:int=18, ledCount:int=100, ledFrequency:int=800000, ledDMA:int=5, ledInvert:bool=False, ledPercentBrightness:int=80, debug:bool=False):
 		self._gpioPin = gpioPin
 		self._ledCount = ledCount
 		self._ledFrequency = ledFrequency
 		self._ledDMA = ledDMA
 		self._ledInvert = ledInvert
 		self._ledBrightness = int(255 * (ledPercentBrightness / 100))
-		if True == verbose:
+		if True == debug:
 			LOGGER.setLevel(logging.DEBUG)
-			LOGGER.debug('Debugging mode')
+			LOGGER.debug('%s.%s Debugging mode', self.__class__.__name__, inspect.stack()[0][3])
 		try:
 			self._ws281x = rpi_ws281x.Adafruit_NeoPixel(self._ledCount, self._gpioPin, self._ledFrequency, self._ledDMA, self._ledInvert, self._ledBrightness)
 			self._ws281x.begin()
-			LOGGER.debug('Created WS281X object')
+			LOGGER.debug('%s.%s Created WS281X object', self.__class__.__name__, inspect.stack()[0][3])
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Failed to create WS281X object: {}'.format(ex))
+			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 		try:
 			self._lights = np.array([Pixel() for i in range(self._ledCount)])
-			LOGGER.debug('Created Numpy Light array')
+			LOGGER.debug('%s.%s Created Numpy Light array', self.__class__.__name__, inspect.stack()[0][3])
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Failed to create Numpy LED Array: {}'.format(ex))
+			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 		# force cleanup of c objects
 		atexit.register(self.__del__)
 
-	def __del__(self):
+	def __del__(self) -> None:
 		if not self._ws281x is None:
 			# self.SetLEDsOff()
 			# self.RefreshLEDs()
@@ -79,12 +81,16 @@ class LightString(dict):
 				raise
 			self._ws281x = None
 
-	def __len__(self):
+	def setDebugLevel(self, level:int):
+		LOGGER.setLevel(level)
+
+	def __len__(self) -> int:
 		'''
+		return length of the light string (the number of LEDs)
 		'''
 		return self._ledCount
 
-	def __getitem__(self, key):
+	def __getitem__(self, key) -> Pixel:
 		try:
 			return self._lights[key]
 		except SystemExit:
@@ -92,7 +98,7 @@ class LightString(dict):
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Failed to get key "{}" from {}'.format(key, self._lights))
+			LOGGER.error('Failed to get key "%s" from %s: %s', key, self._lights, ex)
 			raise
 
 	def __setitem__(self, key, value):
@@ -106,7 +112,7 @@ class LightString(dict):
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Failed to set light {} to value {}: {}'.format(key, value, ex))
+			LOGGER.error('Failed to set light %s to value %s: %s', key, value, ex)
 			raise
 
 	def __enter__(self):
@@ -128,7 +134,7 @@ class LightString(dict):
 			except KeyboardInterrupt:
 				raise
 			except Exception as ex:
-				LOGGER.error('Failed to set pixel {} in WS281X to value {}: {}'.format(index, Pixel(0), ex))
+				LOGGER.error('Failed to set pixel %s in WS281X to value %s: %s', index, Pixel(0), ex)
 				raise
 		self.Refresh()
 
@@ -144,7 +150,7 @@ class LightString(dict):
 			except KeyboardInterrupt:
 				raise
 			except Exception as ex:
-				LOGGER.error('Failed to set pixel {} in WS281X to value {}: {}'.format(index, light._value, ex))
+				LOGGER.error('Failed to set pixel %s in WS281X to value %s: %s', index, light._value, ex)
 				raise
 		try:
 			self._ws281x.show()

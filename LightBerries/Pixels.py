@@ -1,9 +1,10 @@
 import enum
 import logging
 import random
+import inspect
 from numpy import ndarray, array
 
-LOGGER = logging.getLogger('Lights')
+LOGGER = logging.getLogger(__name__)
 streamHandler = logging.StreamHandler()
 LOGGER.addHandler(streamHandler)
 LOGGER.setLevel(logging.INFO)
@@ -37,30 +38,36 @@ class Pixel():
 			elif isinstance(rgb, Pixel):
 				self._value = rgb._value
 			else:
-				raise Exception('Cannot assign pixel value using value: {}'.format(rgb))
+				raise Exception('%s.%s Exception: Cannot assign pixel value using value: %s' % (self.__class__.__name__, inspect.stack()[0][3], rgb))
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Error creating pixel: {}'.format(ex))
+			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def __len__(self):
+	def __len__(self) -> int:
+		'''
+		return the length of the pixel color array
+		'''
 		return 3
 
-	def __int__(self):
+	def __int__(self) -> int:
+		'''
+		return the pixel as an RGB value
+		'''
 		return self._value
 
-	def __str__(self):
+	def __str__(self) -> str:
 		x=(self._value & 0xFF0000) >> 16, (self._value & 0xFF00) >> 8, self._value & 0xFF
 		return '#{:02X}{:02X}{:02X}'.format(x[self._order.value[0]], x[self._order.value[1]], x[self._order.value[2]])
 
-	def __repr__(self):
+	def __repr__(self) -> str:
 		return '<{}> {}'.format(self.__class__.__name__, str(self))
 
 	@property
-	def Tuple(self):
+	def Tuple(self) -> tuple:
 		x = ((self._value & 0xFF0000) >> 16, (self._value & 0xFF00) >> 8, self._value & 0xFF)
 		return (x[self._order.value[0]], x[self._order.value[1]], x[self._order.value[2]])
 
@@ -76,7 +83,7 @@ class Pixel():
 					self.Array[rgbIndex] = fadeToColor[rgbIndex]
 
 	@property
-	def Array(self):
+	def Array(self) -> array:
 		return array(self.Tuple)
 
 class PixelColors(enum.Enum):
@@ -109,6 +116,3 @@ class PixelColors(enum.Enum):
 		while randomColor == PixelColors.OFF:
 			 randomColor = list(PixelColors)[random.randint(0,len(PixelColors))]
 		return randomColor
-
-if __name__ == '__main__':
-	pass

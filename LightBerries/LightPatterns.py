@@ -1,10 +1,12 @@
 import numpy as np
 import random
 import logging
-from WS281XLights import LightString, Pixel, PixelColors
 from typing import List, Tuple
+from .Pixels import Pixel, PixelColors
+from .WS281XLights import LightString
 
-LOGGER = logging.getLogger()
+
+LOGGER = logging.getLogger(__name__)
 if not LOGGER.handlers:
 	streamHandler = logging.StreamHandler()
 	LOGGER.addHandler(streamHandler)
