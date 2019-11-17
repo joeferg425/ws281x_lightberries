@@ -1,3 +1,4 @@
+import os
 import sys
 import atexit
 import inspect
@@ -5,7 +6,7 @@ if sys.platform != 'linux':
 	# this lets me debug in windows
 	class rpi_ws281x:
 		class Adafruit_NeoPixel:
-			def __init__(*args):
+			def __init__(self, *args):
 				pass
 			def begin(self):
 				pass
@@ -15,6 +16,7 @@ if sys.platform != 'linux':
 				pass
 			def _cleanup(self):
 				pass
+
 else:
 	import rpi_ws281x
 import numpy as np
@@ -31,7 +33,22 @@ if not LOGGER.handlers:
 LOGGER.setLevel(logging.INFO)
 
 class LightString(dict):
-	def __init__(self, gpioPin:int=18, ledCount:int=100, ledFrequency:int=800000, ledDMA:int=5, ledInvert:bool=False, ledPercentBrightness:int=80, debug:bool=False):
+	def __init__(self, gpioPin:int, ledDMA:int, ledCount:int, ledFrequency:int, ledInvert:bool=False, ledPercentBrightness:int=80, debug:bool=False):
+		'''
+		Creates a light array using the rpi_ws281x library.
+
+		gpioPin: int
+			try GPIO 18
+
+		ledCount: int
+			set this to the number of LEDs you are using
+
+		ledDMA: int
+			try DMA 5
+
+		ledFrequency: int
+			try 800,000
+		'''
 		self._gpioPin = gpioPin
 		self._ledCount = ledCount
 		self._ledFrequency = ledFrequency
@@ -41,6 +58,9 @@ class LightString(dict):
 		if True == debug:
 			LOGGER.setLevel(logging.DEBUG)
 			LOGGER.debug('%s.%s Debugging mode', self.__class__.__name__, inspect.stack()[0][3])
+		self._ws281x = None
+		if sys.platform=='linux' and not os.getuid() == 0:
+			raise Exception('GPIO functionality requires root privilege. Please run command again as root')
 		try:
 			self._ws281x = rpi_ws281x.Adafruit_NeoPixel(self._ledCount, self._gpioPin, self._ledFrequency, self._ledDMA, self._ledInvert, self._ledBrightness)
 			self._ws281x.begin()

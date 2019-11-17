@@ -112,7 +112,7 @@ class PixelColors(enum.Enum):
 
 	@ classmethod
 	def RANDOM(self):
-		randomColor = list(PixelColors)[random.randint(0,len(PixelColors))]
+		randomColor = list(PixelColors)[random.randint(0,len(PixelColors)-1)]
 		while randomColor == PixelColors.OFF:
-			 randomColor = list(PixelColors)[random.randint(0,len(PixelColors))]
+			 randomColor = list(PixelColors)[random.randint(0,len(PixelColors)-1)]
 		return randomColor
