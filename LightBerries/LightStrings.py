@@ -2,27 +2,11 @@ import os
 import sys
 import atexit
 import inspect
-if sys.platform != 'linux':
-	# this lets me debug in windows
-	class rpi_ws281x:
-		class Adafruit_NeoPixel:
-			def __init__(self, *args):
-				pass
-			def begin(self):
-				pass
-			def setPixelColor(self, index, color):
-				pass
-			def show(self):
-				pass
-			def _cleanup(self):
-				pass
-
-else:
-	import rpi_ws281x
 import numpy as np
 import enum
 import time
 import logging
+from . import rpi_ws281x
 from .Pixels import Pixel, PixelColors
 
 LOGGER = logging.getLogger(__name__)
@@ -32,38 +16,44 @@ if not LOGGER.handlers:
 	LOGGER.addHandler(streamHandler)
 LOGGER.setLevel(logging.INFO)
 
-class LightString(dict):
-	def __init__(self, gpioPin:int, ledDMA:int, ledCount:int, ledFrequency:int, ledInvert:bool=False, ledPercentBrightness:int=80, debug:bool=False):
-		'''
-		Creates a light array using the rpi_ws281x library.
+class LightString:
+	""" empty class prototype for typing """
+	pass
 
-		gpioPin: int
-			try GPIO 18
+class LightString(list):
+	def __init__(self, ledCount:int=None, rpi_ws281x:rpi_ws281x=None, debug:bool=False):
+		"""
+		Creates a pixel array using the rpi_ws281x library and Pixels.
 
 		ledCount: int
-			set this to the number of LEDs you are using
+			the number of LEDs desired in the LightString
 
-		ledDMA: int
-			try DMA 5
+		rpi_ws281x: rpi_ws281x
+			the ws281x object that actually controls the LED signaling
 
-		ledFrequency: int
-			try 800,000
-		'''
-		self._gpioPin = gpioPin
+		debug: bool
+			set true for debug messages
+		"""
+		if ledCount is None and rpi_ws281x is None:
+			raise Exception('Cannot create LightString object without ledCount or rpi_ws281x object being specified')
+		# self._gpioPin = gpioPin
 		self._ledCount = ledCount
-		self._ledFrequency = ledFrequency
-		self._ledDMA = ledDMA
-		self._ledInvert = ledInvert
-		self._ledBrightness = int(255 * (ledPercentBrightness / 100))
+		# self._ledCount = ledCount
+		# self._ledFrequency = ledFrequency
+		# self._ledDMA = ledDMA
+		# self._ledInvert = ledInvert
+		# self._ledBrightness = int(255 * (ledPercentBrightness / 100))
 		if True == debug:
 			LOGGER.setLevel(logging.DEBUG)
 			LOGGER.debug('%s.%s Debugging mode', self.__class__.__name__, inspect.stack()[0][3])
 		self._ws281x = None
-		if sys.platform=='linux' and not os.getuid() == 0:
+		if sys.platform == 'linux' and not os.getuid() == 0:
 			raise Exception('GPIO functionality requires root privilege. Please run command again as root')
 		try:
-			self._ws281x = rpi_ws281x.Adafruit_NeoPixel(self._ledCount, self._gpioPin, self._ledFrequency, self._ledDMA, self._ledInvert, self._ledBrightness)
-			self._ws281x.begin()
+			if not rpi_ws281x is None:
+				self._ws281x = rpi_ws281x# rpi_ws281x.Adafruit_NeoPixel(self._ledCount, self._gpioPin, self._ledFrequency, self._ledDMA, self._ledInvert, self._ledBrightness)
+				self._ws281x.begin()
+				self._ledCount = self._ws281x.numPixels()
 			LOGGER.debug('%s.%s Created WS281X object', self.__class__.__name__, inspect.stack()[0][3])
 		except SystemExit:
 			raise
@@ -84,12 +74,16 @@ class LightString(dict):
 			raise
 		# force cleanup of c objects
 		atexit.register(self.__del__)
+		# return self
 
 	def __del__(self) -> None:
+		"""
+		Properly disposes of the rpi_ws281X object.
+		Prevents (hopefully) memory leaks that were happening in the rpi_ws281x module.
+		"""
+		# super(LightString, self).__del__()
 		if not self._ws281x is None:
-			# self.SetLEDsOff()
-			# self.RefreshLEDs()
-			self.Off()
+			self.off()
 			try:
 				self._ws281x._cleanup()
 			except SystemExit:
@@ -101,18 +95,18 @@ class LightString(dict):
 				raise
 			self._ws281x = None
 
-	def setDebugLevel(self, level:int):
-		LOGGER.setLevel(level)
-
 	def __len__(self) -> int:
-		'''
+		"""
 		return length of the light string (the number of LEDs)
-		'''
-		return self._ledCount
+		"""
+		return len(self._lights)
 
 	def __getitem__(self, key) -> Pixel:
+		"""
+		return a LED(s) from array
+		"""
 		try:
-			return self._lights[key]
+			return self._lights[key].array
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
@@ -121,12 +115,17 @@ class LightString(dict):
 			LOGGER.error('Failed to get key "%s" from %s: %s', key, self._lights, ex)
 			raise
 
-	def __setitem__(self, key, value):
+	def __setitem__(self, key, value) -> None:
+		"""
+		set LED value(s) in array
+		"""
 		try:
 			if isinstance(key, slice):
 				self._lights.__setitem__(key, [Pixel(v) for v in value])
 			else:
 				self._lights.__setitem__(key, Pixel(value))
+			# else:
+				# super(LightString, self).__setitem__(key, value)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
@@ -135,30 +134,42 @@ class LightString(dict):
 			LOGGER.error('Failed to set light %s to value %s: %s', key, value, ex)
 			raise
 
-	def __enter__(self):
-		'''
-		'''
+	def __enter__(self) -> LightString:
+		"""
+		"""
 		return self
 
-	def __exit__(self, *args):
-		'''
-		'''
+	def __exit__(self, *args) -> None:
+		"""
+		"""
 		self.__del__()
 
-	def Off(self):
+	def setDebugLevel(self, level:int):
+		"""
+		set the logging level
+		"""
+		LOGGER.setLevel(level)
+
+	def off(self):
+		"""
+		turn all of the LEDs in the LightString off
+		"""
 		for index in range(len(self._lights)):
 			try:
-				self[index] = 0
+				self[index] = 0#LightString(PixelColors.OFF)
 			except SystemExit:
 				raise
 			except KeyboardInterrupt:
 				raise
 			except Exception as ex:
-				LOGGER.error('Failed to set pixel %s in WS281X to value %s: %s', index, Pixel(0), ex)
+				LOGGER.error('Failed to set pixel %s in WS281X to value %s: %s', index, LightString(0), ex)
 				raise
-		self.Refresh()
+		self.refresh()
 
-	def Refresh(self):
+	def refresh(self):
+		"""
+		update ws281x signal using the numpy array
+		"""
 		for index, light in enumerate(self._lights):
 			try:
 				if index > 0:
@@ -184,10 +195,11 @@ class LightString(dict):
 
 if __name__ == '__main__':
 	LOGGER.info('Running LightString')
-	with LightString(ledCount=5, verbose=True) as l:
-	# l = LightString(ledCount=5, verbose=True)
-		l.Refresh()
-		p = Pixel((255, 0, 0))
+	ledCount = 100
+	ws281x = rpi_ws281x.Adafruit_NeoPixel(pin=18, dma=5, num=ledCount, freq_hz=800000)
+	with LightString(rpi_ws281x=ws281x, debug=True) as l:
+		l.refresh()
+		p = LightString((255, 0, 0))
 		l[4] = PixelColors.RED
-		l.Refresh()
+		l.refresh()
 		time.sleep(1)

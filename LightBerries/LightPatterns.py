@@ -3,7 +3,7 @@ import random
 import logging
 from typing import List, Tuple
 from .Pixels import Pixel, PixelColors
-from .WS281XLights import LightString
+from .LightStrings import LightString
 
 
 LOGGER = logging.getLogger(__name__)
@@ -13,44 +13,66 @@ if not LOGGER.handlers:
 LOGGER.setLevel(logging.INFO)
 
 class LightPattern:
+	""" This class defines several functions for easily creating static color patterns """
 	@staticmethod
-	def _PixelArray(arrayLength:int) -> List[List[int]]:
-		"""
-		Creates array of RGB tuples that are all one color
+	def PixelArray(arrayLength:int) -> List[Pixel]:
+		""" Creates array of RGB tuples that are all off
+
+		arrayLength: int
+			the number of pixels desired in the returned pixel array
+
+		returns: List[Pixel]
+			a list of Pixel objects in the pattern you requested
 		"""
 		try:
 			arrayLength = int(arrayLength)
-			return np.array([np.array(PixelColors.OFF.value.Tuple) for i in range(arrayLength)])
+			return np.array([PixelColors.OFF.array for i in range(arrayLength)])
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Error in {}._PixelArray: {}'.format('LightPatterns', ex))
+			LOGGER.error('Error in {}.PixelArray: {}'.format('LightPatterns', ex))
 			raise
 
 	@staticmethod
-	def _FixColorSequence(colorSequence:List[any]) -> List[Pixel]:
-		try:
-			return np.array([Pixel(p).Tuple for p in colorSequence])
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('Error in {}._FixColorSequence: {}'.format('LightPatterns', ex))
-			raise
+	def ConvertPixelArrayToNumpyArray(colorSequence:List[any]) -> np.ndarray:
+		""" Convert an array of Pixels into a numpy array of rgb arrays
 
-	@staticmethod
-	def SolidColorArray(arrayLength:int, color:Pixel=PixelColors.WHITE) -> List[List[int]]:
+		colorSequence: List[Pixel]
+			a list of Pixel objects
+
+		returns: List[Pixel]
+			a numpy array of int arrays representing a string of rgb values
 		"""
-		Creates array of RGB tuples that are all one color
+		try:
+			return np.array([Pixel(p).tuple for p in colorSequence])
+		except SystemExit:
+			raise
+		except KeyboardInterrupt:
+			raise
+		except Exception as ex:
+			LOGGER.error('Error in {}.ConvertPixelArrayToNumpyArray: {}'.format('LightPatterns', ex))
+			raise
+
+	@staticmethod
+	def SolidColorArray(arrayLength:int, color:Pixel=PixelColors.WHITE) -> List[Pixel]:
+		""" Creates array of RGB tuples that are all one color
+
+		arrayLength: int
+			the total desired length of the return array
+
+		color: Pixel
+			a pixel object defining the rgb values you want in the pattern
+
+		returns: List[Pixel]
+			a list of Pixel objects in the pattern you requested
 		"""
 		try:
 			arrayLength = int(arrayLength)
 			if not isinstance(color, Pixel):
 				color = Pixel(color)
-			return np.array([color.Tuple for i in range(arrayLength)])
+			return np.array([color.array for i in range(arrayLength)])
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
@@ -60,12 +82,14 @@ class LightPattern:
 			raise
 
 	@staticmethod
-	def WesArray() -> List[List[int]]:
-		"""
-		creates Wes's color buffer to be shifted in
+	def WesArray() -> List[Pixel]:
+		"""	creates a color array that Wes wanted
+
+		returns: List[Pixel]
+			a list of Pixel objects in the pattern you requested
 		"""
 		try:
-			return LightPattern._FixColorSequence([PixelColors.WHITE, PixelColors.ORANGE, PixelColors.YELLOW, PixelColors.RED, PixelColors.BLUE, PixelColors.GREEN])
+			return LightPattern.ConvertPixelArrayToNumpyArray([PixelColors.WHITE, PixelColors.ORANGE, PixelColors.YELLOW, PixelColors.RED, PixelColors.BLUE, PixelColors.GREEN])
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
@@ -75,7 +99,7 @@ class LightPattern:
 			raise
 
 	@staticmethod
-	def ColorTransitionArray(arrayLength:int, colorSequence:List[Pixel]=[PixelColors.RED,PixelColors.GREEN,PixelColors.BLUE,PixelColors.WHITE]) -> List[List[int]]:
+	def ColorTransitionArray(arrayLength:int, colorSequence:List[Pixel]=[PixelColors.RED,PixelColors.GREEN,PixelColors.BLUE,PixelColors.WHITE]) -> List[Pixel]:
 		"""
 		This is a slightly more versatile version of CreateRainbow.
 		The user specifies a color sequence and the number of steps (LEDS)
@@ -91,10 +115,13 @@ class LightPattern:
 		stepCount: int
 			The number of LEDs it takes to transition between one color and the next.
 			This parameter is optional and defaults to 'totalArrayLength / len(sequence)'.
+
+		returns: List[Pixel]
+			a list of Pixel objects in the pattern you requested
 		"""
 		try:
 			# get length of sequence
-			colorSequence = LightPattern._FixColorSequence(colorSequence)
+			colorSequence = LightPattern.ConvertPixelArrayToNumpyArray(colorSequence)
 			sequenceLength = len(colorSequence)
 			derive=False
 			count = 0
@@ -105,7 +132,7 @@ class LightPattern:
 				stepCount = arrayLength // sequenceLength
 				prevStepCount = stepCount
 			# create temporary array
-			arry = LightPattern._PixelArray(arrayLength)
+			arry = LightPattern.PixelArray(arrayLength)
 			# step through color sequence
 			for colorIndex in range(sequenceLength):
 				if colorIndex == sequenceLength - 1 and derive==True:
@@ -129,13 +156,15 @@ class LightPattern:
 			raise
 
 	@staticmethod
-	def RainbowArray(arrayLength:int) -> List[List[int]]:
-		"""
-		create a color gradient array
+	def RainbowArray(arrayLength:int) -> List[Pixel]:
+		""" create a color gradient array
 
 		arrayLength: int
 			The length of the gradient array to create.
 			(the number of LEDs in the rainbow)
+
+		returns: List[Pixel]
+			a list of Pixel objects in the pattern you requested
 		"""
 		try:
 			return LightPattern.ColorTransitionArray(arrayLength=arrayLength, colorSequence=[PixelColors.RED,PixelColors.GREEN,PixelColors.BLUE])
@@ -148,24 +177,25 @@ class LightPattern:
 			raise
 
 	@staticmethod
-	def RepeatingColorSequenceArray(arrayLength:int, colorSequence:List[Pixel]=[PixelColors.RED,PixelColors.GREEN,PixelColors.BLUE]) -> List[List[int]]:
+	def RepeatingColorSequenceArray(arrayLength:int, colorSequence:List[Pixel]=[PixelColors.RED,PixelColors.GREEN,PixelColors.BLUE]) -> List[Pixel]:
 		"""
 		Creates a repeating LightPattern from a given sequence
 
-		Parameters:
-			arrayLength: int
-				The length of the gradient array to create.
-				(the number of LEDs in the rainbow)
+		arrayLength: int
+			The length of the gradient array to create.
+			(the number of LEDs in the rainbow)
 
-			colorSequence: array(tuple(int,int,int))
-				sequence of RGB tuples
+		colorSequence: List[Pixel]
+			sequence of RGB tuples
 
+		returns: List[Pixel]
+			a list of Pixel objects in the pattern you requested
 		"""
 		try:
 			arrayLength = int(arrayLength)
-			colorSequence = LightPattern._FixColorSequence(colorSequence)
+			colorSequence = LightPattern.ConvertPixelArrayToNumpyArray(colorSequence)
 			sequenceLength = len(colorSequence)
-			arry = LightPattern._PixelArray(arrayLength=arrayLength)
+			arry = LightPattern.PixelArray(arrayLength=arrayLength)
 			arry[0:sequenceLength] = colorSequence
 			for i in range(0, arrayLength, sequenceLength):
 				if i + sequenceLength <= arrayLength:
@@ -184,16 +214,18 @@ class LightPattern:
 			raise
 
 	@staticmethod
-	def RepeatingRainbowArray(arrayLength:int, segmentLength:int=None) -> List[List[int]]:
+	def RepeatingRainbowArray(arrayLength:int, segmentLength:int=None) -> List[Pixel]:
 		"""
 		Creates a repeating gradient for you
 
-		Parameters:
-			arrayLength: int
-				the number of LEDs to involve in the rainbow
+		arrayLength: int
+			the number of LEDs to involve in the rainbow
 
-			colorSkip: RED, GREEN, or BLUE
-				RGB color tuple
+		segmentLength: int
+			the length of each mini rainbow in the repeating sequence
+
+		returns: List[Pixel]
+			a list of Pixel objects in the pattern you requested
 		"""
 		if segmentLength is None:
 			segmentLength = arrayLength // 4
@@ -208,32 +240,47 @@ class LightPattern:
 			raise
 
 	@staticmethod
-	def ReflectArray(arrayLength:int, colorSequence:List[Pixel]=[PixelColors.RED, PixelColors.RED, PixelColors.GREEN, PixelColors.GREEN, PixelColors.BLUE, PixelColors.BLUE]) -> List[List[int]]:
+	def ReflectArray(arrayLength:int, colorSequence:List[Pixel]=[PixelColors.RED, PixelColors.RED, PixelColors.GREEN, PixelColors.GREEN, PixelColors.BLUE, PixelColors.BLUE], foldLength=None) -> List[Pixel]:
 		"""
 		generates an array where each repetition of the input
 		sequence is reversed from the previous
 
-		Parameters:
-			totalArrayLength: int
-				the number of LEDs to involve in the rainbow
+		arrayLength: int
+			the number of LEDs to involve in the rainbow
 
-			sequence: array(tuple(int,int,int))
-				an array of RGB tuples
+		colorSequence: array(tuple(int,int,int))
+			an array of RGB tuples
+
+		returns: List[Pixel]
+			a list of Pixel objects in the pattern you requested
 		"""
 		# if user didn't specify otherwise, fold in middle
 		try:
 			arrayLength = int(arrayLength)
-			colorSequence = LightPattern._FixColorSequence(colorSequence)
-			foldLength = len(colorSequence)
+			colorSequence = LightPattern.ConvertPixelArrayToNumpyArray(colorSequence)
+			colorSequenceLen = len(colorSequence)
+			if foldLength is None:
+				foldLength = arrayLength // 2
+			if foldLength > colorSequenceLen:
+				temp = LightPattern.PixelArray(foldLength)
+				temp[foldLength - colorSequenceLen:] = colorSequence
+				colorSequence = temp
+				colorSequenceLen = len(colorSequence)
 			flip = False
-			arry = LightPattern._PixelArray(arrayLength)
+			arry = LightPattern.PixelArray(arrayLength)
 			for segBegin in range(0, arrayLength, foldLength):
 				overflow = 0
-				if segBegin + foldLength <= arrayLength:
+				if segBegin + foldLength <= arrayLength and segBegin + foldLength <= colorSequenceLen:
 					segEnd = segBegin + foldLength
-				else:
+				elif segBegin + foldLength > arrayLength:
+					segEnd = segBegin + foldLength
 					overflow = ((segBegin + foldLength) % arrayLength)
 					segEnd = (segBegin + foldLength) - overflow
+				elif segBegin + foldLength > colorSequenceLen:
+					segEnd = segBegin + colorSequenceLen
+					overflow = ((segBegin + colorSequenceLen) % colorSequenceLen)
+					segEnd = (segBegin + colorSequenceLen) - overflow
+
 				if flip:
 					arry[segBegin:segEnd] = colorSequence[foldLength-overflow-1::-1]
 				else:
@@ -249,16 +296,18 @@ class LightPattern:
 			raise
 
 	@staticmethod
-	def TrueRandomArray(arrayLength=None):
+	def TrueRandomArray(arrayLength=None) -> List[Pixel]:
 		"""
 		Creates an array of random colors
 
-		Parameters:
-			count: int
-				the number of random colors to generate for the array
+		arrayLength: int
+			the number of random colors to generate for the array
+
+		returns: List[Pixel]
+			a list of Pixel objects in the pattern you requested
 		"""
 		try:
-			arry = LightPattern._PixelArray(arrayLength)
+			arry = LightPattern.PixelArray(arrayLength)
 			for i in range(arrayLength):
 				# prevent 255, 255, 255
 				x = random.randint(0,2)
@@ -285,14 +334,47 @@ class LightPattern:
 			raise
 
 	@staticmethod
-	def ColorStretchArray(repeats = 5, colorSequence:List[Pixel]=[PixelColors.RED, PixelColors.ORANGE2, PixelColors.YELLOW, PixelColors.GREEN, PixelColors.BLUE, PixelColors.PURPLE]):
+	def RandomArray(arrayLength=None) -> List[Pixel]:
 		"""
+		Creates an array of random colors
+
+		arrayLength: int
+			the number of random colors to generate for the array
+
+		returns: List[Pixel]
+			a list of Pixel objects in the pattern you requested
 		"""
 		try:
-			colorSequence = LightPattern._FixColorSequence(colorSequence)
+			arry = LightPattern.PixelArray(arrayLength)
+			for i in range(arrayLength):
+				arry[i] = PixelColors.random().array
+			return arry
+		except SystemExit:
+			raise
+		except KeyboardInterrupt:
+			raise
+		except Exception as ex:
+			LOGGER.error('Error in {}.RandomArray: {}'.format('LightPatterns', ex))
+			raise
+
+	@staticmethod
+	def ColorStretchArray(repeats = 5, colorSequence:List[Pixel]=[PixelColors.RED, PixelColors.ORANGE2, PixelColors.YELLOW, PixelColors.GREEN, PixelColors.BLUE, PixelColors.PURPLE]) -> List[Pixel]:
+		""" takes a sequence of input colors and repeats each element the requested number of times
+
+		repeats: int
+			the number of times to repeat each element oc colorSequence
+
+		colorSequence: List[Pixel]
+			a list of pixels defining the desired colors in the output array
+
+		returns: List[Pixel]
+			a list of Pixel objects in the pattern you requested
+		"""
+		try:
+			colorSequence = LightPattern.ConvertPixelArrayToNumpyArray(colorSequence)
 			colorSequenceLength = len(colorSequence)
 			# repeats = arrayLength // colorSequenceLength
-			arry = LightPattern._PixelArray(colorSequenceLength * repeats)
+			arry = LightPattern.PixelArray(colorSequenceLength * repeats)
 			for i in range(colorSequenceLength):
 				arry[i*repeats:(i+1)*repeats] = colorSequence[i]
 			return arry
@@ -307,9 +389,13 @@ class LightPattern:
 	@staticmethod
 	def Emily1():
 		"""
+		defines a color pattern that emily requested
+
+		returns: List[Pixel]
+			a list of Pixel objects in the pattern you requested
 		"""
 		try:
-			return LightPattern._FixColorSequence([PixelColors.RED, PixelColors.ORANGE, PixelColors.YELLOW, PixelColors.GREEN, PixelColors.ORANGE, PixelColors.YELLOW, PixelColors.GREEN, PixelColors.PURPLE, PixelColors.YELLOW, PixelColors.GREEN, PixelColors.PURPLE, PixelColors.BLUE])
+			return LightPattern.ConvertPixelArrayToNumpyArray([PixelColors.RED, PixelColors.ORANGE, PixelColors.YELLOW, PixelColors.GREEN, PixelColors.ORANGE, PixelColors.YELLOW, PixelColors.GREEN, PixelColors.PURPLE, PixelColors.YELLOW, PixelColors.GREEN, PixelColors.PURPLE, PixelColors.BLUE])
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
@@ -320,74 +406,74 @@ class LightPattern:
 
 if __name__ == '__main__':
 	import time
-	lights = LightString()
+	lights = LightString(gpioPin=18, ledDMA=5, ledCount=100, ledFrequency=800000)
 	lightLength = len(lights)
 	delay = 2
 
-	# p = LightPattern._PixelArray(lightLength)
-	# lights[:len(p)] = p
-	# lights.Refresh()
-	# time.sleep(delay)
+	p = LightPattern.PixelArray(lightLength)
+	lights[:len(p)] = p
+	lights.refresh()
+	time.sleep(delay)
 
-	# p = LightPattern._PixelArray(lightLength)
-	# lights[:len(p)] = p
-	# p = LightPattern.SolidColorArray(lightLength, PixelColors.WHITE)
-	# lights[:len(p)] = p
-	# lights.Refresh()
-	# time.sleep(delay)
+	p = LightPattern.PixelArray(lightLength)
+	lights[:len(p)] = p
+	p = LightPattern.SolidColorArray(lightLength, PixelColors.WHITE)
+	lights[:len(p)] = p
+	lights.refresh()
+	time.sleep(delay)
 
-	# p = LightPattern._PixelArray(lightLength)
-	# lights[:len(p)] = p
-	# p = LightPattern.WesArray()
-	# lights[:len(p)] = p
-	# lights.Refresh()
-	# time.sleep(delay)
+	p = LightPattern.PixelArray(lightLength)
+	lights[:len(p)] = p
+	p = LightPattern.WesArray()
+	lights[:len(p)] = p
+	lights.refresh()
+	time.sleep(delay)
 
-	# p = LightPattern._PixelArray(lightLength)
-	# lights[:len(p)] = p
-	# p = LightPattern.ColorTransitionArray(lightLength)
-	# lights[:len(p)] = p
-	# lights.Refresh()
-	# time.sleep(delay)
+	p = LightPattern.PixelArray(lightLength)
+	lights[:len(p)] = p
+	p = LightPattern.ColorTransitionArray(lightLength)
+	lights[:len(p)] = p
+	lights.refresh()
+	time.sleep(delay)
 
-	# p = LightPattern._PixelArray(lightLength)
-	# lights[:len(p)] = p
-	# p = LightPattern.RainbowArray(lightLength)
-	# lights[:len(p)] = p
-	# lights.Refresh()
-	# time.sleep(delay)
+	p = LightPattern.PixelArray(lightLength)
+	lights[:len(p)] = p
+	p = LightPattern.RainbowArray(lightLength)
+	lights[:len(p)] = p
+	lights.refresh()
+	time.sleep(delay)
 
-	# p = LightPattern._PixelArray(lightLength)
-	# lights[:len(p)] = p
-	# p = LightPattern.RepeatingColorSequenceArray(lightLength)
-	# lights[:len(p)] = p
-	# lights.Refresh()
-	# time.sleep(delay)
+	p = LightPattern.PixelArray(lightLength)
+	lights[:len(p)] = p
+	p = LightPattern.RepeatingColorSequenceArray(lightLength)
+	lights[:len(p)] = p
+	lights.refresh()
+	time.sleep(delay)
 
-	# p = LightPattern._PixelArray(lightLength)
-	# lights[:len(p)] = p
-	# p = LightPattern.RepeatingRainbowArray(lightLength)
-	# lights[:len(p)] = p
-	# lights.Refresh()
-	# time.sleep(delay)
+	p = LightPattern.PixelArray(lightLength)
+	lights[:len(p)] = p
+	p = LightPattern.RepeatingRainbowArray(lightLength)
+	lights[:len(p)] = p
+	lights.refresh()
+	time.sleep(delay)
 
-	# p = LightPattern._PixelArray(lightLength)
-	# lights[:len(p)] = p
-	# p = LightPattern.ReflectArray(lightLength)
-	# lights[:len(p)] = p
-	# lights.Refresh()
-	# time.sleep(delay)
+	p = LightPattern.PixelArray(lightLength)
+	lights[:len(p)] = p
+	p = LightPattern.ReflectArray(lightLength)
+	lights[:len(p)] = p
+	lights.refresh()
+	time.sleep(delay)
 
-	# p = LightPattern._PixelArray(lightLength)
-	# lights[:len(p)] = p
-	# p = LightPattern.RandomArray(lightLength)
-	# lights[:len(p)] = p
-	# lights.Refresh()
-	# time.sleep(delay)
+	p = LightPattern.PixelArray(lightLength)
+	lights[:len(p)] = p
+	p = LightPattern.RandomArray(lightLength)
+	lights[:len(p)] = p
+	lights.refresh()
+	time.sleep(delay)
 
-	p = LightPattern._PixelArray(lightLength)
+	p = LightPattern.PixelArray(lightLength)
 	lights[:len(p)] = p
 	p = LightPattern.ColorStretchArray(lightLength)
 	lights[:len(p)] = p
-	lights.Refresh()
+	lights.refresh()
 	time.sleep(delay)

@@ -1,11 +1,22 @@
+import logging
+
+LOGGER = logging.getLogger(__name__)
+logging.addLevelName(5, 'VERBOSE')
+if not LOGGER.handlers:
+	streamHandler = logging.StreamHandler()
+	LOGGER.addHandler(streamHandler)
+LOGGER.setLevel(logging.INFO)
+
 import sys
 if sys.platform != 'linux':
 	# this lets me debug in windows
 	class rpi_ws281x:
 		class Adafruit_NeoPixel:
 			rpi_ws281x = None
-			def __init__(self, *args):
-				pass
+			def __init__(self, *args, **kwargs):
+				self.count = 0
+				if 'num' in kwargs:
+					self.count = kwargs['num']
 			def begin(self):
 				pass
 			def setPixelColor(self, index, color):
@@ -14,6 +25,8 @@ if sys.platform != 'linux':
 				pass
 			def _cleanup(self):
 				pass
+			def numPixels(self):
+				return self.count
 	ws = rpi_ws281x
 
 else:
@@ -31,21 +44,19 @@ else:
 		if isinstance(pos, slice):
 			index = 0
 			for n in xrange(*pos.indices(self.size)):
-				#print(value[index], type(value[index]))
 				ws.ws2811_led_set(self.channel, n, int(value[index]))
 				index += 1
 		# Else assume the passed in value is a number to the position.
 		else:
-			#print(value, type(value))
 			return ws.ws2811_led_set(self.channel, pos, int(value))
 
 
 	try:
 		rpi_ws281x.rpi_ws281x._LED_Data.__setitem__ = _monkeypatch__setitem__
 	except Exception as ex:
-		print('Failed rpi_ws281x Monkey Patch: %s' % ex)
+		LOGGER.error('Failed rpi_ws281x Monkey Patch: %s' % ex)
 
 from .Pixels import Pixel, PixelColors
-from .WS281XLights import LightString
+from .LightStrings import LightString
 from .LightPatterns import LightPattern
 from .LightFunctions import LightFunction
