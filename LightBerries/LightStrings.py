@@ -6,7 +6,7 @@ import numpy as np
 import enum
 import time
 import logging
-from . import rpi_ws281x
+from .rpi_ws281x_patch import rpi_ws281x
 from .Pixels import Pixel, PixelColors
 
 LOGGER = logging.getLogger(__name__)
@@ -21,21 +21,21 @@ class LightString:
 	pass
 
 class LightString(list):
-	def __init__(self, ledCount:int=None, rpi_ws281x:rpi_ws281x=None, debug:bool=False):
+	def __init__(self, ledCount:int=None, pixelStrip:rpi_ws281x.PixelStrip=None, debug:bool=False):
 		"""
-		Creates a pixel array using the rpi_ws281x library and Pixels.
+		Creates a pixel array using the rpipixelStrip library and Pixels.
 
 		ledCount: int
 			the number of LEDs desired in the LightString
 
-		rpi_ws281x: rpi_ws281x
+		pixelStrip: rpipixelStrip.PixelStrip
 			the ws281x object that actually controls the LED signaling
 
 		debug: bool
 			set true for debug messages
 		"""
-		if ledCount is None and rpi_ws281x is None:
-			raise Exception('Cannot create LightString object without ledCount or rpi_ws281x object being specified')
+		if ledCount is None and pixelStrip is None:
+			raise Exception('Cannot create LightString object without ledCount or pixelStrip object being specified')
 		# self._gpioPin = gpioPin
 		self._ledCount = ledCount
 		# self._ledCount = ledCount
@@ -46,14 +46,14 @@ class LightString(list):
 		if True == debug:
 			LOGGER.setLevel(logging.DEBUG)
 			LOGGER.debug('%s.%s Debugging mode', self.__class__.__name__, inspect.stack()[0][3])
-		self._ws281x = None
+		self.pixelStrip = None
 		if sys.platform == 'linux' and not os.getuid() == 0:
 			raise Exception('GPIO functionality requires root privilege. Please run command again as root')
 		try:
-			if not rpi_ws281x is None:
-				self._ws281x = rpi_ws281x# rpi_ws281x.Adafruit_NeoPixel(self._ledCount, self._gpioPin, self._ledFrequency, self._ledDMA, self._ledInvert, self._ledBrightness)
-				self._ws281x.begin()
-				self._ledCount = self._ws281x.numPixels()
+			if not pixelStrip is None:
+				self.pixelStrip = pixelStrip
+				self.pixelStrip.begin()
+				self._ledCount = self.pixelStrip.numPixels()
 			LOGGER.debug('%s.%s Created WS281X object', self.__class__.__name__, inspect.stack()[0][3])
 		except SystemExit:
 			raise
@@ -78,14 +78,14 @@ class LightString(list):
 
 	def __del__(self) -> None:
 		"""
-		Properly disposes of the rpi_ws281X object.
-		Prevents (hopefully) memory leaks that were happening in the rpi_ws281x module.
+		Properly disposes of the rpipixelStrip object.
+		Prevents (hopefully) memory leaks that were happening in the rpipixelStrip module.
 		"""
 		# super(LightString, self).__del__()
-		if not self._ws281x is None:
+		if not self.pixelStrip is None:
 			self.off()
 			try:
-				self._ws281x._cleanup()
+				self.pixelStrip._cleanup()
 			except SystemExit:
 				raise
 			except KeyboardInterrupt:
@@ -93,7 +93,7 @@ class LightString(list):
 			except Exception as ex:
 				LOGGER.error('Failed to clean up WS281X object: {}'.format(ex))
 				raise
-			self._ws281x = None
+			self.pixelStrip = None
 
 	def __len__(self) -> int:
 		"""
@@ -173,9 +173,9 @@ class LightString(list):
 		for index, light in enumerate(self._lights):
 			try:
 				if index > 0:
-					self._ws281x.setPixelColor(int(index), light._value)
+					self.pixelStrip.setPixelColor(int(index), light._value)
 				else:
-					self._ws281x.setPixelColor(int(index), 0)
+					self.pixelStrip.setPixelColor(int(index), 0)
 			except SystemExit:
 				raise
 			except KeyboardInterrupt:
@@ -184,7 +184,7 @@ class LightString(list):
 				LOGGER.error('Failed to set pixel %s in WS281X to value %s: %s', index, light._value, ex)
 				raise
 		try:
-			self._ws281x.show()
+			self.pixelStrip.show()
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
@@ -195,9 +195,19 @@ class LightString(list):
 
 if __name__ == '__main__':
 	LOGGER.info('Running LightString')
-	ledCount = 100
-	ws281x = rpi_ws281x.Adafruit_NeoPixel(pin=18, dma=5, num=ledCount, freq_hz=800000)
-	with LightString(rpi_ws281x=ws281x, debug=True) as l:
+	# the number of pixels in the light string
+	PIXEL_COUNT = 100
+	# GPIO pin to use for PWM signal
+	GPIO_PWM_PIN = 18
+	# DMA channel
+	DMA_CHANNEL = 5
+	# frequency to run the PWM signal at
+	PWM_FREQUENCY = 800000
+	GAMMA = None
+	LED_STRIP_TYPE = None
+	INVERT = False
+	PWM_CHANNEL = 0
+	with LightString(pixelStrip=rpi_ws281x.PixelStrip(num=PIXEL_COUNT, pin=GPIO_PWM_PIN, dma=DMA_CHANNEL, freq_hz=PWM_FREQUENCY, channel=PWM_CHANNEL, invert=INVERT, gamma=GAMMA, strip_type=LED_STRIP_TYPE), debug=True) as l:
 		l.refresh()
 		p = LightString((255, 0, 0))
 		l[4] = PixelColors.RED
