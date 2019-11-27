@@ -99,7 +99,7 @@ class LightPattern:
 			raise
 
 	@staticmethod
-	def ColorTransitionArray(arrayLength:int, colorSequence:List[Pixel]=[PixelColors.RED,PixelColors.GREEN,PixelColors.BLUE,PixelColors.WHITE]) -> List[Pixel]:
+	def ColorTransitionArray(arrayLength:int, wrap=True, colorSequence:List[Pixel]=[PixelColors.RED,PixelColors.GREEN,PixelColors.BLUE,PixelColors.WHITE]) -> List[Pixel]:
 		"""
 		This is a slightly more versatile version of CreateRainbow.
 		The user specifies a color sequence and the number of steps (LEDS)
@@ -108,6 +108,9 @@ class LightPattern:
 		arrayLength: int
 			The total totalArrayLength of the final sequence in LEDs
 			This parameter is optional and defaults to LED_INDEX_COUNT
+
+		wrap: bool
+			set true to wrap the transition from the last color back to the first
 
 		colorSequence: array(tuple(int,int,int))
 			a sequence of colors to merge between
@@ -126,15 +129,19 @@ class LightPattern:
 			derive=False
 			count = 0
 			stepCount = None
-			# figure out how many LED's per color change
+			if wrap:
+				wrap = 0
+			else:
+				wrap = 1
+			# figure out how many LEDs per color change
 			if stepCount is None:
 				derive = True
-				stepCount = arrayLength // sequenceLength
+				stepCount = arrayLength // (sequenceLength - wrap)
 				prevStepCount = stepCount
 			# create temporary array
 			arry = LightPattern.PixelArray(arrayLength)
 			# step through color sequence
-			for colorIndex in range(sequenceLength):
+			for colorIndex in range(sequenceLength - wrap):
 				if colorIndex == sequenceLength - 1 and derive==True:
 					stepCount = arrayLength - count
 				# figure out the current and next colors
@@ -296,7 +303,7 @@ class LightPattern:
 			raise
 
 	@staticmethod
-	def TrueRandomArray(arrayLength=None) -> List[Pixel]:
+	def RandomArray(arrayLength=None) -> List[Pixel]:
 		"""
 		Creates an array of random colors
 
@@ -330,11 +337,11 @@ class LightPattern:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Error in {}.RandomArray: {}'.format('LightPatterns', ex))
+			LOGGER.error('Error in {}.PseudoRandomArray: {}'.format('LightPatterns', ex))
 			raise
 
 	@staticmethod
-	def RandomArray(arrayLength=None) -> List[Pixel]:
+	def PseudoRandomArray(arrayLength=None, colorSequence=None) -> List[Pixel]:
 		"""
 		Creates an array of random colors
 
@@ -346,15 +353,20 @@ class LightPattern:
 		"""
 		try:
 			arry = LightPattern.PixelArray(arrayLength)
+			if not colorSequence is None:
+				colorSequence = LightPattern.ConvertPixelArrayToNumpyArray(colorSequence)
 			for i in range(arrayLength):
-				arry[i] = PixelColors.random().array
+				if colorSequence is None:
+					arry[i] = PixelColors.pseudoRandom().array
+				else:
+					arry[i] = colorSequence[random.randint(0, len(colorSequence)-1)]
 			return arry
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Error in {}.RandomArray: {}'.format('LightPatterns', ex))
+			LOGGER.error('Error in {}.PseudoRandomArray: {}'.format('LightPatterns', ex))
 			raise
 
 	@staticmethod
@@ -383,7 +395,7 @@ class LightPattern:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Error in {}.RandomArray: {}'.format('LightPatterns', ex))
+			LOGGER.error('Error in {}.PseudoRandomArray: {}'.format('LightPatterns', ex))
 			raise
 
 	@staticmethod
@@ -401,7 +413,7 @@ class LightPattern:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Error in {}.RandomArray: {}'.format('LightPatterns', ex))
+			LOGGER.error('Error in {}.PseudoRandomArray: {}'.format('LightPatterns', ex))
 			raise
 
 if __name__ == '__main__':
@@ -466,7 +478,7 @@ if __name__ == '__main__':
 
 	p = LightPattern.PixelArray(lightLength)
 	lights[:len(p)] = p
-	p = LightPattern.RandomArray(lightLength)
+	p = LightPattern.PseudoRandomArray(lightLength)
 	lights[:len(p)] = p
 	lights.refresh()
 	time.sleep(delay)

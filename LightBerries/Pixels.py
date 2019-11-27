@@ -123,7 +123,7 @@ class PixelColors():
 	GRAY    = Pixel((128, 118, 108))
 
 	@ classmethod
-	def random(self) -> PixelColors:
+	def pseudoRandom(self) -> PixelColors:
 		""" get a random color from the list of defined colors """
 		pixelColors = list(dir(PixelColors))
 		pixelColors = [p for p in pixelColors if not '__' in p and not 'random' in p.lower()]
@@ -133,7 +133,7 @@ class PixelColors():
 		return getattr(PixelColors, randomColor)
 
 	@ classmethod
-	def trueRandom(self) -> PixelColors:
+	def random(self) -> PixelColors:
 		""" get a randomly generated pixel value """
 		x = random.randint(0,2)
 		y = random.randint(0,3)

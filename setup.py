@@ -14,7 +14,7 @@ setup(
         'RPi.GPIO>=0.7.0',
     ],
     name='LightBerries_joeferg425',
-    version='0.3.3dev',
+    version='0.3.4dev',
     packages=setuptools.find_packages(),
     license='MIT',
     description=("A wrapper for rpi_ws281x that does all the heavy lifting for you."),

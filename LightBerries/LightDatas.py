@@ -7,6 +7,7 @@ class LightData():
 		self.index = 0
 		self.lastindex = 0
 		self.step = 0
+		self.oldStep = 0
 		self.stepCounter = 0
 		self.stepCountMax = 0
 		self.previousIndex = 0
@@ -21,7 +22,7 @@ class LightData():
 		self.colorSequenceIndex = 0
 		self.maxSize = 0
 		self.fadeAmount = 0
-		self.colorindex = 0
+		self.colorIndex = 0
 		self.random = False
 		if hasattr(colors, '__len__') and hasattr(colors, 'shape') and len(colors.shape)>1:
 			self.colors = LightPattern.ConvertPixelArrayToNumpyArray(colors)
