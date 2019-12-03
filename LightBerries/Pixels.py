@@ -45,10 +45,10 @@ class Pixel():
 					# print(rgb)
 				if rgb[0] > 255 or rgb[1] > 255 or rgb[2] > 255:
 					raise Exception('Invalid Pixel values: {}'.format(rgb))
-				x0 = (rgb[self._order.value[0]] << 16)
-				x1 = (rgb[self._order.value[1]] << 8)
-				x2 = (rgb[self._order.value[2]])
-				self._value = (rgb[self._order.value[0]] << 16) + (rgb[self._order.value[1]] << 8) + (rgb[self._order.value[2]])
+				# x0 = (rgb[self._order.value[0]] << 16)
+				# x1 = (rgb[self._order.value[1]] << 8)
+				# x2 = (rgb[self._order.value[2]])
+				self._value = (int(rgb[self._order.value[0]]) << 16) + (int(rgb[self._order.value[1]]) << 8) + (int(rgb[self._order.value[2]]))
 			elif isinstance(rgb, PixelColors):
 				self._value = rgb.value._value
 			elif isinstance(rgb, Pixel):

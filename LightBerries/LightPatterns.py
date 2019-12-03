@@ -163,7 +163,7 @@ class LightPattern:
 			raise
 
 	@staticmethod
-	def RainbowArray(arrayLength:int) -> List[Pixel]:
+	def RainbowArray(arrayLength:int, wrap:bool=False) -> List[Pixel]:
 		""" create a color gradient array
 
 		arrayLength: int
@@ -174,7 +174,7 @@ class LightPattern:
 			a list of Pixel objects in the pattern you requested
 		"""
 		try:
-			return LightPattern.ColorTransitionArray(arrayLength=arrayLength, colorSequence=[PixelColors.RED,PixelColors.GREEN,PixelColors.BLUE])
+			return LightPattern.ColorTransitionArray(arrayLength=arrayLength, colorSequence=[PixelColors.RED,PixelColors.GREEN,PixelColors.BLUE,PixelColors.VIOLET], wrap=wrap)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:

@@ -24,6 +24,7 @@ class LightData():
 		self.fadeAmount = 0
 		self.colorIndex = 0
 		self.random = False
+		self.flipLength = 0
 		if hasattr(colors, '__len__') and hasattr(colors, 'shape') and len(colors.shape)>1:
 			self.colors = LightPattern.ConvertPixelArrayToNumpyArray(colors)
 		else:
