@@ -1,0 +1,135 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module LightBerries.LightPatterns</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="LightBerries.html"><font color="#ffffff">LightBerries</font></a>.LightPatterns</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:c%3A%5Cusers%5Cferg%5Cgoogle%20drive%5Cpi%5Cws281x_lightberries%5Clightberries%5Clightpatterns.py">c:\users\ferg\google drive\pi\ws281x_lightberries\lightberries\lightpatterns.py</a></font></td></tr></table>
+    <p></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="logging.html">logging</a><br>
+</td><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+</td><td width="25%" valign=top><a href="random.html">random</a><br>
+</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="builtins.html#object">builtins.object</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="LightBerries.LightPatterns.html#LightPattern">LightPattern</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="LightPattern">class <strong>LightPattern</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%">Static methods defined here:<br>
+<dl><dt><a name="LightPattern-ColorStretchArray"><strong>ColorStretchArray</strong></a>(repeats=5, colorSequence: List[LightBerries.Pixels.Pixel] = [&lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #808000, &lt;Pixel&gt; PX #FFD250, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #0000FF, &lt;Pixel&gt; PX #800080])</dt></dl>
+
+<dl><dt><a name="LightPattern-ColorTransitionArray"><strong>ColorTransitionArray</strong></a>(arrayLength: int, colorSequence: List[LightBerries.Pixels.Pixel] = [&lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #0000FF, &lt;Pixel&gt; PX #FFFFFF]) -&gt; List[List[int]]</dt><dd><tt>This&nbsp;is&nbsp;a&nbsp;slightly&nbsp;more&nbsp;versatile&nbsp;version&nbsp;of&nbsp;CreateRainbow.<br>
+The&nbsp;user&nbsp;specifies&nbsp;a&nbsp;color&nbsp;sequence&nbsp;and&nbsp;the&nbsp;number&nbsp;of&nbsp;steps&nbsp;(LEDS)<br>
+in&nbsp;the&nbsp;transition&nbsp;from&nbsp;one&nbsp;color&nbsp;to&nbsp;the&nbsp;next.<br>
+&nbsp;<br>
+arrayLength:&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;total&nbsp;totalArrayLength&nbsp;of&nbsp;the&nbsp;final&nbsp;sequence&nbsp;in&nbsp;LEDs<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This&nbsp;parameter&nbsp;is&nbsp;optional&nbsp;and&nbsp;defaults&nbsp;to&nbsp;LED_INDEX_COUNT<br>
+&nbsp;<br>
+colorSequence:&nbsp;array(tuple(int,int,int))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;sequence&nbsp;of&nbsp;colors&nbsp;to&nbsp;merge&nbsp;between<br>
+&nbsp;<br>
+stepCount:&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;number&nbsp;of&nbsp;LEDs&nbsp;it&nbsp;takes&nbsp;to&nbsp;transition&nbsp;between&nbsp;one&nbsp;color&nbsp;and&nbsp;the&nbsp;next.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This&nbsp;parameter&nbsp;is&nbsp;optional&nbsp;and&nbsp;defaults&nbsp;to&nbsp;'totalArrayLength&nbsp;/&nbsp;len(sequence)'.</tt></dd></dl>
+
+<dl><dt><a name="LightPattern-Emily1"><strong>Emily1</strong></a>()</dt></dl>
+
+<dl><dt><a name="LightPattern-RainbowArray"><strong>RainbowArray</strong></a>(arrayLength: int) -&gt; List[List[int]]</dt><dd><tt>create&nbsp;a&nbsp;color&nbsp;gradient&nbsp;array<br>
+&nbsp;<br>
+arrayLength:&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;length&nbsp;of&nbsp;the&nbsp;gradient&nbsp;array&nbsp;to&nbsp;create.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(the&nbsp;number&nbsp;of&nbsp;LEDs&nbsp;in&nbsp;the&nbsp;rainbow)</tt></dd></dl>
+
+<dl><dt><a name="LightPattern-PseudoRandomArray"><strong>PseudoRandomArray</strong></a>(arrayLength=None)</dt><dd><tt>Creates&nbsp;an&nbsp;array&nbsp;of&nbsp;random&nbsp;colors<br>
+&nbsp;<br>
+Parameters:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count:&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;number&nbsp;of&nbsp;random&nbsp;colors&nbsp;to&nbsp;generate&nbsp;for&nbsp;the&nbsp;array</tt></dd></dl>
+
+<dl><dt><a name="LightPattern-ReflectArray"><strong>ReflectArray</strong></a>(arrayLength: int, colorSequence: List[LightBerries.Pixels.Pixel] = [&lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #0000FF, &lt;Pixel&gt; PX #0000FF], foldLength=None) -&gt; List[List[int]]</dt><dd><tt>generates&nbsp;an&nbsp;array&nbsp;where&nbsp;each&nbsp;repetition&nbsp;of&nbsp;the&nbsp;input<br>
+sequence&nbsp;is&nbsp;reversed&nbsp;from&nbsp;the&nbsp;previous<br>
+&nbsp;<br>
+Parameters:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;totalArrayLength:&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;number&nbsp;of&nbsp;LEDs&nbsp;to&nbsp;involve&nbsp;in&nbsp;the&nbsp;rainbow<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sequence:&nbsp;array(tuple(int,int,int))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;an&nbsp;array&nbsp;of&nbsp;RGB&nbsp;tuples</tt></dd></dl>
+
+<dl><dt><a name="LightPattern-RepeatingColorSequenceArray"><strong>RepeatingColorSequenceArray</strong></a>(arrayLength: int, colorSequence: List[LightBerries.Pixels.Pixel] = [&lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #0000FF]) -&gt; List[List[int]]</dt><dd><tt>Creates&nbsp;a&nbsp;repeating&nbsp;<a href="#LightPattern">LightPattern</a>&nbsp;from&nbsp;a&nbsp;given&nbsp;sequence<br>
+&nbsp;<br>
+Parameters:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;arrayLength:&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;length&nbsp;of&nbsp;the&nbsp;gradient&nbsp;array&nbsp;to&nbsp;create.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(the&nbsp;number&nbsp;of&nbsp;LEDs&nbsp;in&nbsp;the&nbsp;rainbow)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;colorSequence:&nbsp;array(tuple(int,int,int))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sequence&nbsp;of&nbsp;RGB&nbsp;tuples</tt></dd></dl>
+
+<dl><dt><a name="LightPattern-RepeatingRainbowArray"><strong>RepeatingRainbowArray</strong></a>(arrayLength: int, segmentLength: int = None) -&gt; List[List[int]]</dt><dd><tt>Creates&nbsp;a&nbsp;repeating&nbsp;gradient&nbsp;for&nbsp;you<br>
+&nbsp;<br>
+Parameters:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;arrayLength:&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;number&nbsp;of&nbsp;LEDs&nbsp;to&nbsp;involve&nbsp;in&nbsp;the&nbsp;rainbow<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;colorSkip:&nbsp;RED,&nbsp;GREEN,&nbsp;or&nbsp;BLUE<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RGB&nbsp;color&nbsp;tuple</tt></dd></dl>
+
+<dl><dt><a name="LightPattern-SolidColorArray"><strong>SolidColorArray</strong></a>(arrayLength: int, color: LightBerries.Pixels.Pixel = &lt;Pixel&gt; PX #FFFFFF) -&gt; List[List[int]]</dt><dd><tt>Creates&nbsp;array&nbsp;of&nbsp;RGB&nbsp;tuples&nbsp;that&nbsp;are&nbsp;all&nbsp;one&nbsp;color</tt></dd></dl>
+
+<dl><dt><a name="LightPattern-RandomArray"><strong>RandomArray</strong></a>(arrayLength=None)</dt><dd><tt>Creates&nbsp;an&nbsp;array&nbsp;of&nbsp;random&nbsp;colors<br>
+&nbsp;<br>
+Parameters:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count:&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;number&nbsp;of&nbsp;random&nbsp;colors&nbsp;to&nbsp;generate&nbsp;for&nbsp;the&nbsp;array</tt></dd></dl>
+
+<dl><dt><a name="LightPattern-WesArray"><strong>WesArray</strong></a>() -&gt; List[List[int]]</dt><dd><tt>creates&nbsp;Wes's&nbsp;color&nbsp;buffer&nbsp;to&nbsp;be&nbsp;shifted&nbsp;in</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>LOGGER</strong> = &lt;Logger LightBerries.LightPatterns (INFO)&gt;<br>
+<strong>List</strong> = typing.List<br>
+<strong>Tuple</strong> = typing.Tuple<br>
+<strong>streamHandler</strong> = &lt;StreamHandler &lt;stderr&gt; (NOTSET)&gt;</td></tr></table>
+</body></html>

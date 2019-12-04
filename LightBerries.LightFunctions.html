@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module LightBerries.LightFunctions</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="LightBerries.html"><font color="#ffffff">LightBerries</font></a>.LightFunctions</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:c%3A%5Cusers%5Cferg%5Cgoogle%20drive%5Cpi%5Cws281x_lightberries%5Clightberries%5Clightfunctions.py">c:\users\ferg\google drive\pi\ws281x_lightberries\lightberries\lightfunctions.py</a></font></td></tr></table>
+    <p></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="inspect.html">inspect</a><br>
+<a href="logging.html">logging</a><br>
+</td><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+<a href="random.html">random</a><br>
+</td><td width="25%" valign=top><a href="time.html">time</a><br>
+</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="builtins.html#object">builtins.object</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="LightBerries.LightFunctions.html#LightData">LightData</a>
+</font></dt><dt><font face="helvetica, arial"><a href="LightBerries.LightFunctions.html#LightFunction">LightFunction</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="LightData">class <strong>LightData</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt><a href="#LightData">LightData</a>(colors)<br>
+&nbsp;<br>
+<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="LightData-__init__"><strong>__init__</strong></a>(self, colors)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="LightFunction">class <strong>LightFunction</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt><a href="#LightFunction">LightFunction</a>(lights:&nbsp;LightBerries.LightStrings.LightString,&nbsp;debug:&nbsp;bool&nbsp;=&nbsp;False,&nbsp;verbose:&nbsp;bool&nbsp;=&nbsp;False)<br>
+&nbsp;<br>
+<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="LightFunction-Do_Accelerate_Rainbow"><strong>Do_Accelerate_Rainbow</strong></a>(self, segmentLength: int = None, arrayLength: int = None, delaySteps: int = 25, beginDelay: float = 0.1, endDelay: float = 0.001, backgroundColor=&lt;Pixel&gt; PX #000000, twinkleColor: LightBerries.Pixels.Pixel = &lt;Pixel&gt; PX #80766C, twinkleChance: float = 0.0)</dt><dd><tt>Even&nbsp;More&nbsp;Different&nbsp;Do_Shift_Rainbow!</tt></dd></dl>
+
+<dl><dt><a name="LightFunction-Do_Accelerate_Sequence"><strong>Do_Accelerate_Sequence</strong></a>(self, delaySteps=25, beginDelay=0.1, endDelay=0.001, colorSequence: List[LightBerries.Pixels.Pixel] = [&lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #FFFFFF, &lt;Pixel&gt; PX #FFFFFF, &lt;Pixel&gt; PX #FFFFFF], backgroundColor=&lt;Pixel&gt; PX #000000)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Accelerate_Sequence_RandomColors"><strong>Do_Accelerate_Sequence_RandomColors</strong></a>(self, delaySteps=25, beginDelay=0.1, endDelay=0.001, randomColorCount=None, backgroundColor=&lt;Pixel&gt; PX #000000)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Accelerate_Sequence_TrueRandomColors"><strong>Do_Accelerate_Sequence_TrueRandomColors</strong></a>(self, delaySteps=25, beginDelay=0.1, endDelay=0.001, randomColorCount=None, backgroundColor=&lt;Pixel&gt; PX #000000)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Accelerate_Wes1"><strong>Do_Accelerate_Wes1</strong></a>(self, delaySteps=25, beginDelay=0.1, endDelay=0.001, backgroundColor=&lt;Pixel&gt; PX #000000)</dt><dd><tt>Wes&nbsp;chose&nbsp;the&nbsp;pattern</tt></dd></dl>
+
+<dl><dt><a name="LightFunction-Do_Alternate_Rainbow"><strong>Do_Alternate_Rainbow</strong></a>(self, refreshDelay=0.05, shiftAmount=1, segmentLength: int = None, arrayLength: int = None, twinkleColors: List[LightBerries.Pixels.Pixel] = [&lt;Pixel&gt; PX #80766C], twinkleChance: float = 0.0)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Alternate_Sequence"><strong>Do_Alternate_Sequence</strong></a>(self, refreshDelay=0.05, shiftAmount=1, colorSequence=[&lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #FFFFFF, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #FFFFFF], twinkleColors=[&lt;Pixel&gt; PX #80766C], twinkleChance=0.0)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Alternate_Sequence_RandomColors"><strong>Do_Alternate_Sequence_RandomColors</strong></a>(self, refreshDelay=0.02, shiftAmount=1, randomColorCount=None, twinkleColors=[&lt;Pixel&gt; PX #80766C], twinkleChance=0.0)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Alternate_Sequence_Repeating"><strong>Do_Alternate_Sequence_Repeating</strong></a>(self, refreshDelay=0.05, shiftAmount=1, shiftCount=None, flipLength=None, colorSequence=[&lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #FFFFFF, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #FFFFFF], twinkleColors=[&lt;Pixel&gt; PX #80766C], twinkleChance=0.0)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Alternate_Sequence_TrueRandomColors"><strong>Do_Alternate_Sequence_TrueRandomColors</strong></a>(self, refreshDelay=0.02, shiftAmount=1, randomColorCount=None, twinkleColors=[&lt;Pixel&gt; PX #80766C], twinkleChance=0.0)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Cylon"><strong>Do_Cylon</strong></a>(self, refreshDelay=0.01, colorSequence=[&lt;Pixel&gt; PX #FF0000], backgroundColor=&lt;Pixel&gt; PX #000000, fadeAmount=15, cylonSpeedup=2)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Cylon_RandomColor"><strong>Do_Cylon_RandomColor</strong></a>(self, refreshDelay=0.01, backgroundColor=&lt;Pixel&gt; PX #000000, fadeAmount=15, cylonSpeedup=2)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Cylon_TrueRandomColor"><strong>Do_Cylon_TrueRandomColor</strong></a>(self, refreshDelay=0.01, backgroundColor=&lt;Pixel&gt; PX #000000, fadeAmount=15, cylonSpeedup=2)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Girly"><strong>Do_Girly</strong></a>(self)</dt><dd><tt>For&nbsp;Emily&nbsp;and&nbsp;Lily</tt></dd></dl>
+
+<dl><dt><a name="LightFunction-Do_Merge_Rainbow"><strong>Do_Merge_Rainbow</strong></a>(self, refreshDelay=0.1, segmentLength: int = None, arrayLength: int = None, backgroundColor=&lt;Pixel&gt; PX #000000, twinkleColors: List[LightBerries.Pixels.Pixel] = [&lt;Pixel&gt; PX #80766C], twinkleChance: float = 0.0)</dt><dd><tt>Even&nbsp;More&nbsp;Different&nbsp;Do_Shift_Rainbow!</tt></dd></dl>
+
+<dl><dt><a name="LightFunction-Do_Merge_Sequence"><strong>Do_Merge_Sequence</strong></a>(self, refreshDelay=0.1, colorSequence=[&lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #FFFFFF, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #FFFFFF], twinkleColors=[&lt;Pixel&gt; PX #80766C], twinkleChance=0.0)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Merge_Sequence_RandomColors"><strong>Do_Merge_Sequence_RandomColors</strong></a>(self, refreshDelay=0.1, randomColorCount=None, twinkleColors=[&lt;Pixel&gt; PX #80766C], twinkleChance=0.0)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Merge_Sequence_TrueRandomColors"><strong>Do_Merge_Sequence_TrueRandomColors</strong></a>(self, refreshDelay=0.1, randomColorCount=None, twinkleColors=[&lt;Pixel&gt; PX #80766C], twinkleChance=0.0)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Merge_Wintergreen"><strong>Do_Merge_Wintergreen</strong></a>(self, refreshDelay=0.01, backgroundColor=&lt;Pixel&gt; PX #FFFFFF, twinkleColors: List[LightBerries.Pixels.Pixel] = [&lt;Pixel&gt; PX #80766C], twinkleChance: float = 0.0)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Meteors"><strong>Do_Meteors</strong></a>(self, refreshDelay=0.01, arrayLength=None, colorSequence=[&lt;Pixel&gt; PX #FF8000, &lt;Pixel&gt; PX #FFD250, &lt;Pixel&gt; PX #FF0000], backgroundColor=&lt;Pixel&gt; PX #000000, fadeAmount=0.25, maxSpeed=2)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Meteors_Again"><strong>Do_Meteors_Again</strong></a>(self, refreshDelay=0.001, colorSequence=[&lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #FFFFFF, &lt;Pixel&gt; PX #00FF00], backgroundColor=&lt;Pixel&gt; PX #000000, maxDelay=5, fadeSteps=25, randomColors=True)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Meteors_Bouncy"><strong>Do_Meteors_Bouncy</strong></a>(self, refreshDelay=0.001, colorSequence=[&lt;Pixel&gt; PX #FFFFFF, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #FF0000], backgroundColor=&lt;Pixel&gt; PX #000000, fadeAmount=25, maxSpeed=1, explode=True)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Meteors_Fancy"><strong>Do_Meteors_Fancy</strong></a>(self, refreshDelay=0.03, colorSequence=[&lt;Pixel&gt; PX #FFFFFF, &lt;Pixel&gt; PX #FFFFFF, &lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #00FF00], meteorCount=3, backgroundColor=&lt;Pixel&gt; PX #000000, fadeAmount=35, maxSpeed=2, cycleColors=False)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Paint"><strong>Do_Paint</strong></a>(self, refreshDelay=0.001, colorSequence=[&lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #FFFFFF, &lt;Pixel&gt; PX #000000], backgroundColor=&lt;Pixel&gt; PX #000000, maxDelay=10, randomColors=False)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Peppermint"><strong>Do_Peppermint</strong></a>(self)</dt><dd><tt>For&nbsp;Kaleigh</tt></dd></dl>
+
+<dl><dt><a name="LightFunction-Do_Raindrops"><strong>Do_Raindrops</strong></a>(self, refreshDelay=0.05, colorSequence=[&lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #FFFFFF], maxSize=15, backgroundColor=&lt;Pixel&gt; PX #000000, fadeAmount=25)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_RandomChangeFade"><strong>Do_RandomChangeFade</strong></a>(self, refreshDelay=0.05, colorSequence=[&lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #00FF00], fadeInChance=0.25, backgroundColor=&lt;Pixel&gt; PX #FFFFFF, fadeStepCount=15)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_RandomChange_RandomColors"><strong>Do_RandomChange_RandomColors</strong></a>(self, refreshDelay=0.05, arrayLength: int = None, changeChance: float = None)</dt><dd><tt>It's&nbsp;very&nbsp;blinky</tt></dd></dl>
+
+<dl><dt><a name="LightFunction-Do_RandomChange_Sequence"><strong>Do_RandomChange_Sequence</strong></a>(self, refreshDelay=0.05, arrayLength: int = None, changeChance: float = None, colorSequence: List[LightBerries.Pixels.Pixel] = [&lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #FFFFFF])</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_RandomChange_TrueRandomColors"><strong>Do_RandomChange_TrueRandomColors</strong></a>(self, refreshDelay=0.05, arrayLength: int = None, changeChance: float = None)</dt><dd><tt>It's&nbsp;very&nbsp;blinky</tt></dd></dl>
+
+<dl><dt><a name="LightFunction-Do_Shift_Emily1"><strong>Do_Shift_Emily1</strong></a>(self, refreshDelay=0.1, shiftAmount=1, twinkleColors=[&lt;Pixel&gt; PX #80766C], twinkleChance=0.0)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Shift_Fade_Sequence"><strong>Do_Shift_Fade_Sequence</strong></a>(self, refreshDelay=0.05, colorSequence=[&lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #FFFFFF, &lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #FFFFFF, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #FFFFFF], shiftAmount=1, fadeStepCount=10)</dt><dd><tt>Chase&nbsp;mode</tt></dd></dl>
+
+<dl><dt><a name="LightFunction-Do_Shift_Fade_Sequence_RandomColors"><strong>Do_Shift_Fade_Sequence_RandomColors</strong></a>(self, refreshDelay=0.05, randomColorCount=None, shiftAmount=1, fadeStepCount=10)</dt><dd><tt>Chase&nbsp;mode</tt></dd></dl>
+
+<dl><dt><a name="LightFunction-Do_Shift_Fade_Sequence_TrueRandomColors"><strong>Do_Shift_Fade_Sequence_TrueRandomColors</strong></a>(self, refreshDelay=0.05, randomColorCount=None, shiftAmount=1, fadeStepCount=10)</dt><dd><tt>Chase&nbsp;mode</tt></dd></dl>
+
+<dl><dt><a name="LightFunction-Do_Shift_Lily1"><strong>Do_Shift_Lily1</strong></a>(self, refreshDelay=0.1, shiftAmount=1, twinkleColors=[&lt;Pixel&gt; PX #80766C], twinkleChance=0.0)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Shift_Rainbow"><strong>Do_Shift_Rainbow</strong></a>(self, refreshDelay=0.1, shiftAmount=1, rainbowLength=None, twinkleColors=[&lt;Pixel&gt; PX #80766C], twinkleChance=0.0)</dt><dd><tt>RainbowChases!&nbsp;Unicorns!</tt></dd></dl>
+
+<dl><dt><a name="LightFunction-Do_Shift_Sequence"><strong>Do_Shift_Sequence</strong></a>(self, refreshDelay=0.1, colorSequence=[&lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #FFFFFF, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #FFFFFF], backgroundColor=&lt;Pixel&gt; PX #000000, twinkleColors=[&lt;Pixel&gt; PX #80766C], twinkleChance=0.0, shiftAmount=1)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Shift_Sequence_RandomColors"><strong>Do_Shift_Sequence_RandomColors</strong></a>(self, refreshDelay=0.1, randomColorCount=None, backgroundColor=&lt;Pixel&gt; PX #000000, twinkleColors=[&lt;Pixel&gt; PX #80766C], twinkleChance=0.0, shiftAmount=1)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Shift_Sequence_Repeating"><strong>Do_Shift_Sequence_Repeating</strong></a>(self, refreshDelay=0.1, colorSequence=[&lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #FFFFFF, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #FFFFFF], backgroundColor=&lt;Pixel&gt; PX #000000, twinkleColors=[&lt;Pixel&gt; PX #80766C], twinkleChance=0.0, shiftAmount=1)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Shift_Sequence_TrueRandomColors"><strong>Do_Shift_Sequence_TrueRandomColors</strong></a>(self, refreshDelay=0.1, randomColorCount=None, backgroundColor=&lt;Pixel&gt; PX #000000, twinkleColors=[&lt;Pixel&gt; PX #80766C], twinkleChance=0.0, shiftAmount=1)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_SolidColor"><strong>Do_SolidColor</strong></a>(self, refreshDelay=0.5, backgroundColor=&lt;Pixel&gt; PX #FFFFFF, twinkleColors: List[LightBerries.Pixels.Pixel] = [&lt;Pixel&gt; PX #80766C], twinkleChance: float = 0.0)</dt><dd><tt>Set&nbsp;all&nbsp;LEDs&nbsp;to&nbsp;the&nbsp;same&nbsp;color<br>
+&nbsp;<br>
+backgroundColor:&nbsp;Pixel<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;pixel&nbsp;color</tt></dd></dl>
+
+<dl><dt><a name="LightFunction-Do_SolidColor_Cycle_Rainbow"><strong>Do_SolidColor_Cycle_Rainbow</strong></a>(self, refreshDelay=0.5, segmentLength=75, twinkleColors: List[LightBerries.Pixels.Pixel] = [&lt;Pixel&gt; PX #80766C], twinkleChance: float = 0.0)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_SolidColor_Cycle_RandomColors"><strong>Do_SolidColor_Cycle_RandomColors</strong></a>(self, refreshDelay=0.5, twinkleColors: List[LightBerries.Pixels.Pixel] = [&lt;Pixel&gt; PX #80766C], twinkleChance: float = 0.0)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_SolidColor_Cycle_Sequence"><strong>Do_SolidColor_Cycle_Sequence</strong></a>(self, refreshDelay=0.5, colorSequence=[&lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #FFFFFF], twinkleColors: List[LightBerries.Pixels.Pixel] = [&lt;Pixel&gt; PX #80766C], twinkleChance: float = 0.0)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_SolidColor_Cycle_TrueRandomColors"><strong>Do_SolidColor_Cycle_TrueRandomColors</strong></a>(self, refreshDelay=0.5, twinkleColors: List[LightBerries.Pixels.Pixel] = [&lt;Pixel&gt; PX #80766C], twinkleChance: float = 0.0)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_SolidColor_Random"><strong>Do_SolidColor_Random</strong></a>(self, refreshDelay=0.5, twinkleColors: List[LightBerries.Pixels.Pixel] = [&lt;Pixel&gt; PX #80766C], twinkleChance: float = 0.0)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Sprites"><strong>Do_Sprites</strong></a>(self, refreshDelay=0.03, colorSequence=[&lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #FFFFFF], backgroundColor=&lt;Pixel&gt; PX #000000, fadeAmount=3, randomColors=True)</dt></dl>
+
+<dl><dt><a name="LightFunction-Do_Twinkle"><strong>Do_Twinkle</strong></a>(self, refreshDelay=0.05, backgroundColor=&lt;Pixel&gt; PX #000000, twinkleChance=0.05, twinkleColors=[(80, 80, 80)])</dt></dl>
+
+<dl><dt><a name="LightFunction-Dont_Spaz"><strong>Dont_Spaz</strong></a>(self, refreshDelay=0.02, colorSequence=[&lt;Pixel&gt; PX #FF0000, &lt;Pixel&gt; PX #00FF00, &lt;Pixel&gt; PX #0000FF], twinkleColors=[&lt;Pixel&gt; PX #00FFFF], blinkColors=[&lt;Pixel&gt; PX #000000, &lt;Pixel&gt; PX #FFFFFF], shiftAmount=7, twinkleChance=0.5, blinkChance=0.5)</dt><dd><tt>For&nbsp;annoying&nbsp;people</tt></dd></dl>
+
+<dl><dt><a name="LightFunction-__del__"><strong>__del__</strong></a>(self)</dt><dd><tt>disposes&nbsp;of&nbsp;the&nbsp;rpi_ws281x&nbsp;<a href="builtins.html#object">object</a>&nbsp;(if&nbsp;it&nbsp;exists)&nbsp;to&nbsp;prevent&nbsp;memory&nbsp;leaks</tt></dd></dl>
+
+<dl><dt><a name="LightFunction-__init__"><strong>__init__</strong></a>(self, lights: LightBerries.LightStrings.LightString, debug: bool = False, verbose: bool = False)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="LightFunction-demo"><strong>demo</strong></a>(self, secondsPerMode=20)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>BackgroundColor</strong></dt>
+</dl>
+<dl><dt><strong>ColorSequence</strong></dt>
+</dl>
+<dl><dt><strong>ColorSequenceCount</strong></dt>
+</dl>
+<dl><dt><strong>ColorSequenceIndex</strong></dt>
+</dl>
+<dl><dt><strong>ColorSequenceNext</strong></dt>
+</dl>
+<dl><dt><strong>RefreshDelay</strong></dt>
+</dl>
+<dl><dt><strong>SecondsPerMode</strong></dt>
+</dl>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>DEFAULT_TWINKLE_CHANCE</strong> = 0.0<br>
+<strong>DEFAULT_TWINKLE_COLOR</strong> = &lt;Pixel&gt; PX #80766C<br>
+<strong>LOGGER</strong> = &lt;RootLogger root (INFO)&gt;<br>
+<strong>List</strong> = typing.List<br>
+<strong>Optional</strong> = typing.Optional<br>
+<strong>Tuple</strong> = typing.Tuple<br>
+<strong>streamHandler</strong> = &lt;StreamHandler &lt;stderr&gt; (NOTSET)&gt;</td></tr></table>
+</body></html>
