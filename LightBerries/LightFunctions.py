@@ -777,7 +777,7 @@ class LightFunction:
 
 
 
-	def functionSolidColor(self, refreshDelay:float=0.1):
+	def functionNone(self, refreshDelay:float=0.1):
 		"""
 		Set all LEDs to the same color
 
@@ -793,7 +793,7 @@ class LightFunction:
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._SolidColor_Function, configurationPointer=self._SolidColor_Configuration)
+			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._None_Function, configurationPointer=self._None_Configuration)
 			# self._Twinkle_Configuration(twinkleChance=twinkleChance, twinkleColors=twinkleColors)
 			# self._Run()
 		except SystemExit:
@@ -804,7 +804,7 @@ class LightFunction:
 			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def _SolidColor_Configuration(self):
+	def _None_Configuration(self):
 		"""
 
 		"""
@@ -819,7 +819,7 @@ class LightFunction:
 			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def _SolidColor_Function(self):
+	def _None_Function(self):
 		try:
 			pass
 		except KeyboardInterrupt:
@@ -895,7 +895,7 @@ class LightFunction:
 			raise
 
 
-	def functionShift(self, refreshDelay:float=0.05, shiftAmount:int=1):
+	def functionMarquee(self, refreshDelay:float=0.05, shiftAmount:int=1):
 		"""
 		Shifts a color pattern across the LED string marquee style.
 		Uses the provided sequence of colors.
@@ -914,7 +914,7 @@ class LightFunction:
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._Shift_Function, configurationPointer=self._Shift_Configuration, shiftAmount=shiftAmount)
+			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._Marquee_Function, configurationPointer=self._Marquee_Configuration, shiftAmount=shiftAmount)
 		except KeyboardInterrupt:
 			raise
 		except SystemExit:
@@ -923,7 +923,7 @@ class LightFunction:
 			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def _Shift_Configuration(self, shiftAmount:int):
+	def _Marquee_Configuration(self, shiftAmount:int):
 		"""
 		Shifts each element in the array by 'shiftAmount' places
 
@@ -946,7 +946,7 @@ class LightFunction:
 			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def _Shift_Function(self):
+	def _Marquee_Function(self):
 		"""
 		"""
 		try:
@@ -1392,7 +1392,7 @@ class LightFunction:
 
 	def _Accelerate_Function(self):
 		try:
-			self._Shift_Function()
+			self._Marquee_Function()
 			if self._AccelerateDirection > 0:
 				self._AccelerateIndex += 1
 			else:
@@ -1479,7 +1479,7 @@ class LightFunction:
 			raise
 
 
-	def functionRandomChangeFade(self, refreshDelay:float=0.001, changeChance:float=0.2, fadeStepCount:int=30):
+	def functionRandomFadeChange(self, refreshDelay:float=0.001, changeChance:float=0.2, fadeStepCount:int=30):
 		"""
 		Randomly changes pixels on the string to one of the provided colors by fading from one color to the next
 
@@ -1499,7 +1499,7 @@ class LightFunction:
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._RandomChangeFade_Function, configurationPointer=self._RandomChangeFade_Configuration, fadeInChance=changeChance, fadeStepCount=fadeStepCount)
+			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._RandomFadeChange_Function, configurationPointer=self._RandomFadeChange_Configuration, fadeInChance=changeChance, fadeStepCount=fadeStepCount)
 			# self._Twinkle_Configuration(twinkleChance=twinkleChance, twinkleColors=twinkleColors)
 			# self._Run()
 		except SystemExit:
@@ -1510,7 +1510,7 @@ class LightFunction:
 			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def _RandomChangeFade_Configuration(self, fadeInChance:float, fadeStepCount:int):
+	def _RandomFadeChange_Configuration(self, fadeInChance:float, fadeStepCount:int):
 		try:
 			LOGGER.log(5, '%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
 			self._FadeChance = fadeInChance
@@ -1519,7 +1519,7 @@ class LightFunction:
 			self._FadeStepCounter = 0
 			self._PreviousIndices = []
 			# self.colorSequence = colorSequence
-			# self._FunctionList.append(self._RandomChangeFade_Function)
+			# self._FunctionList.append(self._RandomFadeChange_Function)
 			indices = self._GetRandomIndices(self._FadeChance)
 			for index in indices:
 				self._PreviousIndices.append(index)
@@ -1537,7 +1537,7 @@ class LightFunction:
 			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def _RandomChangeFade_Function(self):
+	def _RandomFadeChange_Function(self):
 		try:
 			for randomFade in self._LightDataObjects:
 				self._FadeLED(led_index=randomFade.index, offColor=randomFade.colors[randomFade.colorIndex], fadeAmount=randomFade.fadeAmount)
@@ -1610,26 +1610,19 @@ class LightFunction:
 	def _Meteors_Configuration(self, fadeStepCount:int, maxSpeed:int):
 		try:
 			LOGGER.log(5, '%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			# if not callable(colorSequence):
-				# self.colorSequence = colorSequence
-			# else:
-				# self.colorSequence = colorSequence
-				# self.colorSequenceCount = randomColorCount
 			self._LightDataObjects = []
 			rnge = [i for i in range(-maxSpeed,maxSpeed+1)]
 			for index in range(min(self.colorSequenceCount, 4)):
 				meteor = LightData(self.colorSequenceNext)
 				meteor.index = random.randint(0,self._VirtualLEDIndexCount-1)
-
+				meteor.fadeAmount = np.ceil(255/fadeStepCount)
 				meteor.step = rnge[random.randint(0,len(rnge)-1)]
 				while meteor.step == 0:
 					meteor.step = rnge[random.randint(0,len(rnge)-1)]
 				meteor.stepCountMax = random.randint(2, self._VirtualLEDIndexCount-1)
-				# meteor.colorSequenceIndex = index
 				self._LightDataObjects.append(meteor)
 			self._FadeAmount = int(255 / fadeStepCount)
 			self._MaxSpeed = maxSpeed
-			# self._FunctionList.append(self._Meteors_Function)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
@@ -1641,15 +1634,10 @@ class LightFunction:
 	def _Meteors_Function(self):
 		try:
 			rnge = [i for i in range(-self._MaxSpeed,self._MaxSpeed+1)]
-			for ledIndex in range(len(self._VirtualLEDArray)):
-				for rgbIndex in range(len(self._VirtualLEDArray[ledIndex])):
-					if self._VirtualLEDArray[ledIndex][rgbIndex] - self._FadeAmount >= self.backgroundColor[rgbIndex]:
-						self._VirtualLEDArray[ledIndex][rgbIndex] -= self._FadeAmount
-					elif self._VirtualLEDArray[ledIndex][rgbIndex] + self._FadeAmount <= self.backgroundColor[rgbIndex]:
-						self._VirtualLEDArray[ledIndex][rgbIndex] += self._FadeAmount
-					else:
-						self._VirtualLEDArray[ledIndex][rgbIndex] = self.backgroundColor[rgbIndex]
+			self._Fade(fadeAmount=self._LightDataObjects[0].fadeAmount)
 			for meteor in self._LightDataObjects:
+				oldLocation = meteor.index
+				newLocationx = (meteor.index + meteor.step)
 				newLocation = (meteor.index + meteor.step) % self._VirtualLEDIndexCount
 				meteor.index = newLocation
 				meteor.stepCounter += 1
@@ -1661,7 +1649,16 @@ class LightFunction:
 					meteor.stepCountMax = random.randint(2,self._VirtualLEDIndexCount*2)
 					meteor.colors = [self.colorSequenceNext]
 					meteor.index = random.randint(0,self._VirtualLEDIndexCount-1)
-				self._VirtualLEDArray[meteor.index] = meteor.colors[meteor.colorIndex]
+				# rng = []
+				# if newLocation > oldLocation:
+				rng = range(oldLocation, newLocationx + 1)
+				if len(rng) > 5:
+					print('hey')
+				# else:
+					# newLocation = (newLocation - 1)% self._VirtualLEDCount
+				for i in rng:
+					i = i% self._VirtualLEDCount
+					self._VirtualLEDArray[i] = meteor.colors[meteor.colorIndex]
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
@@ -1671,7 +1668,7 @@ class LightFunction:
 			raise
 
 
-	def Do_MeteorsFancy_colorSequence(self, refreshDelay:float=0.03, fadeAmount:int=35, maxSpeed:int=2, cycleColors:bool=False, meteorCount:int=3, backgroundColor:Pixel=PixelColors.OFF, colorSequence:List[Pixel]=[PixelColors.WHITE, PixelColors.WHITE, PixelColors.RED, PixelColors.RED, PixelColors.GREEN], twinkleColors:Pixel=[DEFAULT_TWINKLE_COLOR], twinkleChance:float=DEFAULT_TWINKLE_CHANCE):
+	def functionMeteorsFancy(self, refreshDelay:float=0.03, fadeAmount:int=35, maxSpeed:int=2, cycleColors:bool=False, meteorCount:int=3):
 		"""
 		Creates several 'meteors' from the given color list that will fly around the light string leaving a comet trail.
 		In this version each meteor contains all colors of the colorSequence.
@@ -1698,10 +1695,9 @@ class LightFunction:
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self._Initialize(refreshDelay=refreshDelay, backgroundColor=backgroundColor, ledArray=LightPattern.SolidColorArray(arrayLength=self._LEDCount, color=backgroundColor))
-			self._MeteorsFancy_Configuration(meteorCount=meteorCount, colorSequence=colorSequence, maxSpeed=maxSpeed, fadeAmount=fadeAmount, cycleColors=cycleColors, randomColorCount=None)
-			self._Twinkle_Configuration(twinkleChance=twinkleChance, twinkleColors=twinkleColors)
-			self._Run()
+			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._MeteorsFancy_Function, configurationPointer=self._MeteorsFancy_Configuration, meteorCount=meteorCount, maxSpeed=maxSpeed, fadeAmount=fadeAmount, cycleColors=cycleColors, randomColorCount=None)
+			# self._Twinkle_Configuration(twinkleChance=twinkleChance, twinkleColors=twinkleColors)
+			# self._Run()
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
@@ -1710,101 +1706,10 @@ class LightFunction:
 			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def Do_MeteorsFancy_PseudoRandomcolorSequence(self, refreshDelay:float=0.03, fadeAmount:int=35, maxSpeed:int=2, cycleColors:bool=False, meteorCount=None, randomColorCount:int=None, backgroundColor:Pixel=PixelColors.OFF, twinkleColors:Pixel=[DEFAULT_TWINKLE_COLOR], twinkleChance:float=DEFAULT_TWINKLE_CHANCE):
-		"""
-		Creates several 'meteors' from a list of random named colors that will fly around the light string leaving a comet trail.
-		In this version each meteor contains all colors of the colorSequence.
-
-		refreshDelay: float
-			delay between color updates
-		fadeAmount: int
-			the amount by which meteors are faded
-		maxSpeed: int
-			the amount be which the meteor moves each refresh
-		cycleColors: bool
-			if True, the meteors transition through the color sequence as they travel
-		meteorCount: int
-			the number of meteors flying around
-		backgroundColor: Pixel
-			the color that pixels are when no meteor is present
-		randomColorCount: int
-			the number of colors in the random color sequence
-		twinkleColors:List[Pixel]
-			list of colors to twinkle
-		twinkleChance:float
-			chance (from 0.0 to 1.0) that a single LED will twinkle
-		returns: None
-		"""
-		try:
-			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			if meteorCount is None:
-				meteorCount = random.randint(2,5)
-			if randomColorCount is None:
-				randomColorCount = random.randint(2,4)
-			self._Initialize(refreshDelay=refreshDelay, backgroundColor=backgroundColor, ledArray=LightPattern.SolidColorArray(arrayLength=self._LEDCount, color=backgroundColor))
-			self._MeteorsFancy_Configuration(meteorCount=meteorCount, colorSequence=PixelColors.pseudoRandom, maxSpeed=maxSpeed, fadeAmount=fadeAmount, cycleColors=cycleColors, randomColorCount=randomColorCount)
-			self._Twinkle_Configuration(twinkleChance=twinkleChance, twinkleColors=twinkleColors)
-			self._Run()
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
-			raise
-
-	def Do_MeteorsFancy_RandomcolorSequence(self, refreshDelay:float=0.03, fadeAmount:int=35, maxSpeed:int=2, cycleColors:bool=False, meteorCount=None, randomColorCount:int=None, backgroundColor:Pixel=PixelColors.OFF, twinkleColors:Pixel=[DEFAULT_TWINKLE_COLOR], twinkleChance:float=DEFAULT_TWINKLE_CHANCE):
-		"""
-		Creates several 'meteors' from a randomly generated list of RGB values that will fly around the light string leaving a comet trail.
-		In this version each meteor contains all colors of the colorSequence.
-
-		refreshDelay: float
-			delay between color updates
-		fadeAmount: int
-			the amount by which meteors are faded
-		maxSpeed: int
-			the amount be which the meteor moves each refresh
-		cycleColors: bool
-			if True, the meteors transition through the color sequence as they travel
-		meteorCount: int
-			the number of meteors flying around
-		backgroundColor: Pixel
-			the color that pixels are when no meteor is present
-		randomColorCount: int
-			the number of colors in the random color sequence
-		twinkleColors:List[Pixel]
-			list of colors to twinkle
-		twinkleChance:float
-			chance (from 0.0 to 1.0) that a single LED will twinkle
-		returns: None
-		"""
-		try:
-			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			if meteorCount is None:
-				meteorCount = random.randint(2,5)
-			if randomColorCount is None:
-				randomColorCount = random.randint(2,4)
-			self._Initialize(refreshDelay=refreshDelay, backgroundColor=backgroundColor, ledArray=LightPattern.SolidColorArray(arrayLength=self._LEDCount, color=backgroundColor))
-			self._MeteorsFancy_Configuration(meteorCount=meteorCount, colorSequence=PixelColors.random, maxSpeed=maxSpeed, fadeAmount=fadeAmount, cycleColors=cycleColors, randomColorCount=randomColorCount)
-			self._Twinkle_Configuration(twinkleChance=twinkleChance, twinkleColors=twinkleColors)
-			self._Run()
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
-			raise
-
-	def _MeteorsFancy_Configuration(self, meteorCount:int, colorSequence:List[Pixel], maxSpeed:int, fadeAmount:int, cycleColors:bool, randomColorCount:int):
+	def _MeteorsFancy_Configuration(self, meteorCount:int, maxSpeed:int, fadeAmount:int, cycleColors:bool, randomColorCount:int):
 		try:
 			LOGGER.log(5, '%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
 			self._MeteorCount = meteorCount
-			if not callable(colorSequence):
-				self.colorSequence = colorSequence
-			else:
-				self.colorSequence = colorSequence
-				self.colorSequenceCount = randomColorCount
 			self._FadeAmount = fadeAmount
 			self._CycleColors = cycleColors
 			self._MaxSpeed = maxSpeed
@@ -1815,7 +1720,7 @@ class LightFunction:
 				meteor.step = (-maxSpeed, maxSpeed)[random.randint(0,1)]
 				meteor.stepCountMax = random.randint(2, self._VirtualLEDCount*2)
 				self._LightDataObjects.append(meteor)
-			self._FunctionList.append(self._MeteorsFancy_Function)
+			# self._FunctionList.append(self._MeteorsFancy_Function)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
@@ -1828,6 +1733,8 @@ class LightFunction:
 		try:
 			self._Fade()
 			for meteor in self._LightDataObjects:
+				oldIndex = meteor.index
+				newIndex = (meteor.index + meteor.step)
 				meteor.index = (meteor.index + meteor.step) % self._VirtualLEDCount
 				meteor.stepCounter += 1
 				if meteor.stepCounter >= meteor.stepCountMax:
@@ -1927,6 +1834,8 @@ class LightFunction:
 			# move the meteors
 			for meteor in self._LightDataObjects:
 				# calculate next index
+				oldIndex = meteor.index
+				newIndex = (meteor.index + meteor.step)
 				newLocation = (meteor.index + meteor.step) % self._VirtualLEDCount
 				# save previous index
 				meteor.previousIndex = meteor.index
@@ -2011,17 +1920,13 @@ class LightFunction:
 			raise
 
 
-	def Do_MeteorsAgain_ColorList(self, refreshDelay=0.001, colorSequence=[PixelColors.RED,PixelColors.WHITE, PixelColors.GREEN], backgroundColor=PixelColors.OFF, maxDelay=5, fadeSteps=25, randomColors=True):
+	def functionMeteorsAgain(self, refreshDelay=0.001, maxDelay=5, fadeSteps=25):
 		"""
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self._Initialize(refreshDelay=refreshDelay, backgroundColor=backgroundColor, ledArray=None)
-			fadeAmount = 255//fadeSteps
-			while (fadeAmount * fadeSteps) < 256:
-				fadeAmount += 1
-			self._MeteorsAgain_Configuration(colorSequence=colorSequence, maxDelay=maxDelay, fadeAmount=fadeAmount, fadeSteps=fadeSteps)
-			self._Run()
+			fadeAmount = np.ceil(255/fadeSteps)
+			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._MeteorsAgain_Function, configurationPointer=self._MeteorsAgain_Configuration, maxDelay=maxDelay, fadeAmount=fadeAmount, fadeSteps=fadeSteps)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
@@ -2030,63 +1935,16 @@ class LightFunction:
 			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def Do_MeteorsAgain_PseudoRandomColorList(self, refreshDelay=0.001, randomColorCount=None, backgroundColor=PixelColors.OFF, maxDelay=5, fadeSteps=25, randomColors=True):
-		"""
-		"""
-		try:
-			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			fadeAmount = 255//fadeSteps
-			while (fadeAmount * fadeSteps) < 256:
-				fadeAmount += 1
-			if randomColorCount is None:
-				randomColorCount = random.randint(3,7)
-			colorSequence = []
-			for i in range(randomColorCount):
-				colorSequence.append(PixelColors.pseudoRandom())
-			self._Initialize(refreshDelay=refreshDelay, backgroundColor=backgroundColor, ledArray=None)
-			self._MeteorsAgain_Configuration(colorSequence=colorSequence, maxDelay=maxDelay, fadeAmount=fadeAmount, fadeSteps=fadeSteps)
-			self._Run()
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
-			raise
-
-	def Do_MeteorsAgain_RandomColorList(self, refreshDelay=0.001, randomColorCount=None, backgroundColor=PixelColors.OFF, maxDelay=5, fadeSteps=25, randomColors=True):
-		"""
-		"""
-		try:
-			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			fadeAmount = 255//fadeSteps
-			while (fadeAmount * fadeSteps) < 256:
-				fadeAmount += 1
-			if randomColorCount is None:
-				randomColorCount = random.randint(3,7)
-			colorSequence = []
-			for i in range(randomColorCount):
-				colorSequence.append(PixelColors.random())
-			self._Initialize(refreshDelay=refreshDelay, backgroundColor=backgroundColor, ledArray=None)
-			self._MeteorsAgain_Configuration(colorSequence=colorSequence, maxDelay=maxDelay, fadeAmount=fadeAmount, fadeSteps=fadeSteps)
-			self._Run()
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
-			raise
-
-	def _MeteorsAgain_Configuration(self, colorSequence, maxDelay, fadeAmount, fadeSteps):
+	def _MeteorsAgain_Configuration(self, maxDelay, fadeAmount, fadeSteps):
 		try:
 			LOGGER.log(5, '%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self.colorSequence = colorSequence
+			# self.colorSequence = colorSequence
 			self._MaxDelay = maxDelay
 			self._FadeAmount = fadeAmount
 			self._FadeSteps = fadeSteps
-			for index, color in enumerate(self.colorSequence):
-				meteor = LightData(color)
+			self._LightDataObjects = []
+			for index in range(self.colorSequenceCount):
+				meteor = LightData(self.colorSequenceNext)
 				meteor.index = random.randint(0, self._VirtualLEDCount-1)
 				meteor.direction = (-1,1)[random.randint(0, 1)]
 				meteor.step = (-1,1)[random.randint(0, 1)]
@@ -2094,7 +1952,7 @@ class LightFunction:
 				meteor.stepCountMax = random.randint(2, self._VirtualLEDCount*6)
 				meteor.colorSequenceIndex = index
 				self._LightDataObjects.append(meteor)
-			self._FunctionList.append(self._MeteorsAgain_Function)
+			# self._FunctionList.append(self._MeteorsAgain_Function)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
@@ -2460,7 +2318,7 @@ class LightFunction:
 			self._Initialize(refreshDelay=refreshDelay, backgroundColor=PixelColors.OFF, ledArray=LightPattern.ColorTransitionArray(arrayLength=self._LEDCount, colorSequence=colorSequence))
 			self._Twinkle_Configuration(twinkleChance=twinkleChance, twinkleColors=twinkleColors)
 			self._Blink_Configuration(blinkChance=blinkChance, blinkColors=blinkColors)
-			self._Shift_Configuration(shiftAmount=shiftAmount)
+			self._Marquee_Configuration(shiftAmount=shiftAmount)
 			self._Run()
 		except SystemExit:
 			raise
