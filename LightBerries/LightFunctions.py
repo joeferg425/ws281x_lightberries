@@ -29,6 +29,7 @@ DEFAULT_TWINKLE_CHANCE = 0.0
 DEFAULT_TWINKLE_COLOR = PixelColors.GRAY
 DEFAULT_BACKGROUND_COLOR = PixelColors.OFF
 DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.RED, PixelColors.WHITE, PixelColors.WHITE, PixelColors.GREEN, PixelColors.GREEN]
+DEFAULT_REFRESH_DELAY = 50
 
 class LightFunction:
 	"""
@@ -87,11 +88,14 @@ class LightFunction:
 			self.__colorSequence = LightPattern.ConvertPixelArrayToNumpyArray([])
 			self.__colorSequenceCount = 0
 			self.__colorSequenceIndex = 0
+			self.__twinkleColorSequence = LightPattern.ConvertPixelArrayToNumpyArray([])
+			self.__twinkleColorSequenceCount = 0
+			self.__twinkleColorSequenceIndex = 0
 
 			self._LoopForever = False
 			self._OverlayList = []
 			self._TwinkleChance = 0.0
-			self._TwinkleColorList = [PixelColors.WHITE]
+			# self._TwinkleColorList = [PixelColors.WHITE]
 			self._BlinkChance = 0.0
 			self._BlinkColorList = [PixelColors.OFF]
 			self._Blink = False
@@ -115,7 +119,7 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def __del__(self):
@@ -131,7 +135,7 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	@property
@@ -194,6 +198,46 @@ class LightFunction:
 			temp = self.colorSequence().array
 		return temp
 
+
+	@property
+	def twinkleColorSequence(self)->np.ndarray:
+		return self.__twinkleColorSequence
+	@twinkleColorSequence.setter
+	def twinkleColorSequence(self, twinkleColorSequence:List[Pixel]):
+		if not callable(twinkleColorSequence):
+			self.__twinkleColorSequence = LightPattern.ConvertPixelArrayToNumpyArray(twinkleColorSequence)
+			self.twinkleColorSequenceCount = len(self.__twinkleColorSequence)
+			self.twinkleColorSequenceIndex = 0
+		else:
+			self.__twinkleColorSequence = twinkleColorSequence
+			self.twinkleColorSequenceCount = None
+			self.twinkleColorSequenceIndex = None
+
+	@property
+	def twinkleColorSequenceCount(self)->int:
+		return self.__twinkleColorSequenceCount
+	@twinkleColorSequenceCount.setter
+	def twinkleColorSequenceCount(self, twinkleColorSequenceCount:int):
+		self.__twinkleColorSequenceCount = twinkleColorSequenceCount
+
+	@property
+	def twinkleColorSequenceIndex(self)->int:
+		return self.__twinkleColorSequenceIndex
+	@twinkleColorSequenceIndex.setter
+	def twinkleColorSequenceIndex(self, twinkleColorSequenceIndex:int):
+		self.__twinkleColorSequenceIndex = twinkleColorSequenceIndex
+
+	@property
+	def twinkleColorSequenceNext(self):
+		if not callable(self.twinkleColorSequence):
+			temp = self.twinkleColorSequence[self.twinkleColorSequenceIndex]
+			self.twinkleColorSequenceIndex += 1
+			if self.twinkleColorSequenceIndex >= self.twinkleColorSequenceCount:
+				self.twinkleColorSequenceIndex = 0
+		else:
+			temp = self.twinkleColorSequence().array
+		return temp
+
 	def reset(self):
 		try:
 			self._FunctionList = []
@@ -208,7 +252,7 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _initializeFunction(self, refreshDelay, functionPointer, configurationPointer, *args, **kwargs):
@@ -220,7 +264,18 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			raise
+
+	def _initializeOverlay(self, functionPointer, configurationPointer, *args, **kwargs):
+		try:
+			self._OverlayList = [(functionPointer, configurationPointer, args, kwargs)]
+		except SystemExit:
+			raise
+		except KeyboardInterrupt:
+			raise
+		except Exception as ex:
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _initializePattern(self, backgroundColor, ledArray):
@@ -240,7 +295,7 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _SetVirtualLEDArray(self, ledArray:List[List[int]]) -> None:
@@ -271,7 +326,7 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _CopyVirtualLedsToWS281X(self, led_array=None):
@@ -292,7 +347,7 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _RefreshLEDs(self):
@@ -306,7 +361,7 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _off(self):
@@ -320,19 +375,21 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _RunConfigurations(self):
 		try:
 			for function in self._FunctionList:
 				function[1](*function[2], **function[3])
+			for function in self._OverlayList:
+				function[1](*function[2], **function[3])
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _RunFunctions(self):
@@ -344,19 +401,19 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _RunOverlays(self):
 		try:
 			for overlay in self._OverlayList:
-				overlay()
+				overlay[0]()
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _GetRandomIndices(self, getChance:float=0.1):
@@ -373,7 +430,7 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _Fade(self, fadeIndices:List[int]=None, fadeAmount:int=None, fadeColor:Pixel=None):
@@ -392,8 +449,13 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
+
+	def _FadeOff(self, fadeAmount=None):
+		if fadeAmount is None:
+			fadeAmount = self._FadeAmount
+		self._VirtualLEDArray[:] = self._VirtualLEDArray * ((255 - fadeAmount) / 255)
 
 	def _FadeLED(self, led_index:int, offColor:Pixel=None, fadeAmount:int=None):
 		try:
@@ -408,7 +470,7 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _FadeColor(self, color:Pixel, offColor:Pixel=None, fadeAmount:int=None):
@@ -433,7 +495,7 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def run(self):
@@ -457,7 +519,7 @@ class LightFunction:
 				except SystemExit:
 					raise
 				except Exception as ex:
-					LOGGER.error('_Run Loop Error: {}'.format(ex))
+					LOGGER.exception('_Run Loop Error: {}'.format(ex))
 					raise
 			self._LastModeChange = time.time()
 			if self.secondsPerMode is None:
@@ -469,96 +531,133 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 
 
-	def useColorSingle(self, backgroundColor:Pixel=DEFAULT_BACKGROUND_COLOR, foregroundColor:Pixel=DEFAULT_COLOR_SEQUENCE[0]):
+	def useColorSingle(self, foregroundColor:Pixel=DEFAULT_COLOR_SEQUENCE[0], twinkleColors:bool=False)->None:
 		"""
+		Sets the the color sequence used by light functions to a single color of your choice
+
+		foregroundColor:Pixel
+			the color that each pixel will be set to
+
+		twinkleColors:bool
+			set to true when assigning these colors to be used in a twinkle overlay
 
 		returns: None
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self.backgroundColor = backgroundColor
-			self.colorSequence = LightPattern.ConvertPixelArrayToNumpyArray([foregroundColor])
-			self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
-			self._colorFunction = {'function':self.useColorSingle, 'backgroundColor':self.backgroundColor, 'foregroundColor':self.colorSequence[0]}
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
-			raise
-
-	def useColorSinglePseudoRandom(self, backgroundColor:Pixel=DEFAULT_BACKGROUND_COLOR):
-		"""
-
-		returns: None
-		"""
-		try:
-			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self.backgroundColor = backgroundColor
-			self.colorSequence = [PixelColors.pseudoRandom()]
-			self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
-			self._colorFunction = {'function':self.useColorSinglePseudoRandom, 'backgroundColor':self.backgroundColor}
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
-			raise
-
-	def useColorSingleRandom(self, backgroundColor:Pixel=DEFAULT_BACKGROUND_COLOR):
-		"""
-
-		returns: None
-		"""
-		try:
-			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self.backgroundColor = backgroundColor
-			self.colorSequence = [PixelColors.random()]
-			self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
-			self._colorFunction = {'function':self.useColorSingleRandom, 'backgroundColor':self.backgroundColor}
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
-			raise
-
-	def useColorSequence(self, backgroundColor:Pixel=DEFAULT_BACKGROUND_COLOR, colorSequence:List[Pixel]=DEFAULT_COLOR_SEQUENCE):
-		"""
-
-		backgroundColor:Pixel
-			color to set any LED that isn't part of the pattern
-		colorSequence:List[Pixel]
-			list of colors to in the pattern being shifted across the LED string
-		returns: None
-		"""
-		try:
-			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self.backgroundColor = backgroundColor
-			self.colorSequence = colorSequence
-			if self.colorSequenceCount < self._LEDCount:
+			self.backgroundColor = DEFAULT_BACKGROUND_COLOR
+			if twinkleColors == False:
+				self.colorSequence = LightPattern.ConvertPixelArrayToNumpyArray([foregroundColor])
 				self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
-			else:
-				self._SetVirtualLEDArray(LightPattern.PixelArray(self.colorSequenceCount))
-			self._colorFunction = {'function':self.useColorSequence, 'backgroundColor':self.backgroundColor, 'colorSequence':self.colorSequence}
+				self._colorFunction = {'function':self.useColorSingle, 'foregroundColor':self.colorSequence[0]}
+			elif twinkleColors == True:
+				self.twinkleColorSequence = LightPattern.ConvertPixelArrayToNumpyArray([foregroundColor])
+		except SystemExit:
+			raise
+		except KeyboardInterrupt:
+			raise
+		except Exception as ex:
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			raise
+
+	def useColorSinglePseudoRandom(self, twinkleColors:bool=False)->None:
+		"""
+		Sets the the color sequence used by light functions to a single random named color
+
+		twinkleColors:bool
+			set to true when assigning these colors to be used in a twinkle overlay
+
+		returns: None
+		"""
+		try:
+			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
+			self.backgroundColor = DEFAULT_BACKGROUND_COLOR
+			if twinkleColors == False:
+				self.colorSequence = [PixelColors.pseudoRandom()]
+				self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
+				self._colorFunction = {'function':self.useColorSinglePseudoRandom}
+			elif twinkleColors == True:
+				self.twinkleColorSequence = [PixelColors.pseudoRandom()]
+		except SystemExit:
+			raise
+		except KeyboardInterrupt:
+			raise
+		except Exception as ex:
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			raise
+
+	def useColorSingleRandom(self, twinkleColors:bool=False)->None:
+		"""
+		Sets the the color sequence used by light functions to a single random RGB value
+
+		twinkleColors:bool
+			set to true when assigning these colors to be used in a twinkle overlay
+
+		returns: None
+		"""
+		try:
+			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
+			self.backgroundColor = DEFAULT_BACKGROUND_COLOR
+			if twinkleColors == False:
+				self.colorSequence = [PixelColors.random()]
+				self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
+				self._colorFunction = {'function':self.useColorSingleRandom}
+			elif twinkleColors == True:
+				self.twinkleColorSequence = [PixelColors.random()]
+		except SystemExit:
+			raise
+		except KeyboardInterrupt:
+			raise
+		except Exception as ex:
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			raise
+
+	def useColorSequence(self, colorSequence:List[Pixel]=DEFAULT_COLOR_SEQUENCE, twinkleColors:bool=False)->None:
+		"""
+		Sets the the color sequence used by light functions to one of your choice
+
+		colorSequence:List[Pixel]
+			list of colors in the pattern
+
+		twinkleColors:bool
+			set to true when assigning these colors to be used in a twinkle overlay
+
+		returns: None
+		"""
+		try:
+			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
+			self.backgroundColor = DEFAULT_BACKGROUND_COLOR
+			if twinkleColors == False:
+				self.colorSequence = LightPattern.ConvertPixelArrayToNumpyArray(colorSequence)
+				if self.colorSequenceCount < self._LEDCount:
+					self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
+				else:
+					self._SetVirtualLEDArray(LightPattern.PixelArray(self.colorSequenceCount))
+				self._colorFunction = {'function':self.useColorSequence, 'colorSequence':self.colorSequence}
+			elif twinkleColors == True:
+				self.twinkleColorSequence = LightPattern.ConvertPixelArrayToNumpyArray(colorSequence)
 		except KeyboardInterrupt:
 			raise
 		except SystemExit:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def useColorPseudoRandomSequence(self, backgroundColor:Pixel=DEFAULT_BACKGROUND_COLOR, sequenceLength:int=None):
+	def useColorPseudoRandomSequence(self, sequenceLength:int=None, twinkleColors:bool=False)->None:
 		"""
+		Sets the color sequence used in light functions to a random list of named colors
+
+		sequenceLength:int
+			the number of random colors to use in the generated sequence
+
+		twinkleColors:bool
+			set to true when assigning these colors to be used in a twinkle overlay
 
 		returns: None
 		"""
@@ -567,109 +666,152 @@ class LightFunction:
 			if sequenceLength is None:
 				sequenceLength = random.randint(self._LEDCount//20, self._LEDCount //10)
 			self.backgroundColor = backgroundColor=PixelColors.OFF
-			self.colorSequence = [PixelColors.pseudoRandom() for i in range(sequenceLength)]
-			if self.colorSequenceCount < self._LEDCount:
+			if twinkleColors == False:
+				self.colorSequence = [PixelColors.pseudoRandom() for i in range(sequenceLength)]
+				if self.colorSequenceCount < self._LEDCount:
+					self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
+				else:
+					self._SetVirtualLEDArray(LightPattern.PixelArray(self.colorSequenceCount))
+				self._colorFunction = {'function':self.useColorPseudoRandomSequence, 'sequenceLength':sequenceLength}
+			elif twinkleColors == True:
+				self.twinkleColorSequence = [PixelColors.pseudoRandom() for i in range(sequenceLength)]
+		except SystemExit:
+			raise
+		except KeyboardInterrupt:
+			raise
+		except Exception as ex:
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			raise
+
+	def useColorPseudoRandom(self, twinkleColors:bool=False)->None:
+		"""
+		Sets the color sequence to generate a random named color every time one is needed in a function
+
+		twinkleColors:bool
+			set to true when assigning these colors to be used in a twinkle overlay
+
+		returns: None
+		"""
+		try:
+			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
+			self.backgroundColor = backgroundColor=PixelColors.OFF
+			if twinkleColors == False:
+				self.colorSequence = PixelColors.pseudoRandom
+				self.colorSequenceCount = random.randint(2,7)
 				self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
-			else:
-				self._SetVirtualLEDArray(LightPattern.PixelArray(self.colorSequenceCount))
-			self._colorFunction = {'function':self.useColorPseudoRandomSequence, 'backgroundColor':self.backgroundColor, 'sequenceLength':sequenceLength}
+				self._colorFunction = {'function':self.useColorPseudoRandom}
+			elif twinkleColors == True:
+				self.twinkleColorSequence = PixelColors.pseudoRandom
+				self.twinkleColorSequenceCount = random.randint(2,7)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def useColorPseudoRandom(self, backgroundColor:Pixel=DEFAULT_BACKGROUND_COLOR):
+	def useColorRandomSequence(self, sequenceLength:int=None, twinkleColors:bool=False)->None:
 		"""
+		Sets the color sequence used in light functions to a random list of RGB values
+
+		sequenceLength:int
+			the number of random colors to use in the generated sequence
+
+		twinkleColors:bool
+			set to true when assigning these colors to be used in a twinkle overlay
 
 		returns: None
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
 			self.backgroundColor = backgroundColor=PixelColors.OFF
-			self.colorSequence = PixelColors.pseudoRandom
-			self.colorSequenceCount = random.randint(2,7)
-			self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
-			self._colorFunction = {'function':self.useColorRandom, 'backgroundColor':self.backgroundColor}
+			if twinkleColors == False:
+				if sequenceLength is None:
+					sequenceLength = random.randint(self._LEDCount//20, self._LEDCount //10)
+				self.colorSequence = [PixelColors.random() for i in range(sequenceLength)]
+				if self.colorSequenceCount < self._LEDCount:
+					self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
+				else:
+					self._SetVirtualLEDArray(LightPattern.PixelArray(self.colorSequenceCount))
+				self._colorFunction = {'function':self.useColorRandomSequence, 'sequenceLength':sequenceLength}
+			elif twinkleColors == True:
+				if sequenceLength is None:
+					sequenceLength = random.randint(self._LEDCount//20, self._LEDCount //10)
+				self.twinkleColorSequence = [PixelColors.random() for i in range(sequenceLength)]
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def useColorRandomSequence(self, backgroundColor:Pixel=DEFAULT_BACKGROUND_COLOR, sequenceLength:int=None):
+	def useColorRandom(self, twinkleColors:bool=False)->None:
 		"""
+		Sets the color sequence to generate a random RGB value every time one is needed in a function
+
+		twinkleColors:bool
+			set to true when assigning these colors to be used in a twinkle overlay
 
 		returns: None
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			if sequenceLength is None:
-				sequenceLength = random.randint(self._LEDCount//20, self._LEDCount //10)
-			self.backgroundColor = backgroundColor=PixelColors.OFF
-			self.colorSequence = [PixelColors.random() for i in range(sequenceLength)]
-			if self.colorSequenceCount < self._LEDCount:
+			self.backgroundColor = DEFAULT_BACKGROUND_COLOR
+			if twinkleColors == False:
+				self.colorSequence = PixelColors.random
+				self.colorSequenceCount = random.randint(2,7)
 				self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
-			else:
-				self._SetVirtualLEDArray(LightPattern.PixelArray(self.colorSequenceCount))
-			self._colorFunction = {'function':self.useColorRandomSequence, 'backgroundColor':self.backgroundColor, 'sequenceLength':sequenceLength}
+				self._colorFunction = {'function':self.useColorRandom}
+			elif twinkleColors == True:
+				self.twinkleColorSequence = PixelColors.random
+				self.twinkleColorSequenceCount = random.randint(2,7)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def useColorRandom(self, backgroundColor:Pixel=DEFAULT_BACKGROUND_COLOR):
+	def useColorSequenceRepeating(self, colorSequence:List[Pixel]=DEFAULT_COLOR_SEQUENCE, twinkleColors:bool=False)->None:
 		"""
+		Sets the color sequence used by light functions to the sequence given, buts repeats it across the entire light string
 
-		returns: None
-		"""
-		try:
-			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self.backgroundColor = backgroundColor=PixelColors.OFF
-			self.colorSequence = PixelColors.random
-			self.colorSequenceCount = random.randint(2,7)
-			self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
-			self._colorFunction = {'function':self.useColorRandom, 'backgroundColor':self.backgroundColor}
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
-			raise
+		If the sequence will not fill perfectly when repeated, the virtual LED string is extended until it fits
 
-	def useColorSequenceRepeating(self, backgroundColor:Pixel=DEFAULT_BACKGROUND_COLOR, colorSequence:List[Pixel]=DEFAULT_COLOR_SEQUENCE):
-		"""
 		colorSequence:List[Pixel]
 			list of colors to in the pattern being shifted across the LED string
+
+		twinkleColors:bool
+			set to true when assigning these colors to be used in a twinkle overlay
+
 		returns: None
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			arrayLength = np.ceil(self._LEDCount / len(colorSequence)) * len(colorSequence)
-			self.backgroundColor = backgroundColor
-			self.colorSequence = LightPattern.RepeatingColorSequenceArray(arrayLength=arrayLength, colorSequence=colorSequence)
-			if self.colorSequenceCount < self._LEDCount:
-				self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
-			else:
-				self._SetVirtualLEDArray(LightPattern.PixelArray(self.colorSequenceCount))
-			self._colorFunction = {'function':self.useColorSequenceRepeating, 'backgroundColor':self.backgroundColor, 'colorSequence':self.colorSequence}
+			self.backgroundColor = DEFAULT_BACKGROUND_COLOR
+			if twinkleColors == False:
+				arrayLength = np.ceil(self._LEDCount / len(colorSequence)) * len(colorSequence)
+				self.colorSequence = LightPattern.RepeatingColorSequenceArray(arrayLength=arrayLength, colorSequence=colorSequence)
+				if self.colorSequenceCount < self._LEDCount:
+					self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
+				else:
+					self._SetVirtualLEDArray(LightPattern.PixelArray(self.colorSequenceCount))
+				self._colorFunction = {'function':self.useColorSequenceRepeating, 'colorSequence':self.colorSequence}
+			elif twinkleColors == True:
+				arrayLength = np.ceil(self._LEDCount / len(colorSequence)) * len(colorSequence)
+				self.twinkleColorSequence = LightPattern.RepeatingColorSequenceArray(arrayLength=arrayLength, colorSequence=colorSequence)
 		except KeyboardInterrupt:
 			raise
 		except SystemExit:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def useColorTransition(self, backgroundColor:Pixel=DEFAULT_BACKGROUND_COLOR, colorSequence:List[Pixel]=DEFAULT_COLOR_SEQUENCE, stepsPerTransition:int=5, wrap:bool=True):
+	def useColorTransition(self, colorSequence:List[Pixel]=DEFAULT_COLOR_SEQUENCE, stepsPerTransition:int=5, wrap:bool=True, twinkleColors:bool=False)->None:
 		"""
 		stepsPerTransition: int
 			how many pixels it takes to transition from one color to the next
@@ -683,22 +825,25 @@ class LightFunction:
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self.backgroundColor = backgroundColor
-			self.colorSequence = LightPattern.ColorTransitionArray(arrayLength=len(colorSequence)*int(stepsPerTransition),wrap=False, colorSequence=colorSequence)
-			if self.colorSequenceCount < self._LEDCount:
-				self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
-			else:
-				self._SetVirtualLEDArray(LightPattern.PixelArray(self.colorSequenceCount))
-			self._colorFunction = {'function':self.useColorTransition, 'backgroundColor':self.backgroundColor, 'colorSequence':self.colorSequence, 'stepsPerTransition':stepsPerTransition, 'wrap':wrap}
+			self.backgroundColor = DEFAULT_BACKGROUND_COLOR
+			if twinkleColors == False:
+				self.colorSequence = LightPattern.ColorTransitionArray(arrayLength=len(colorSequence)*int(stepsPerTransition),wrap=False, colorSequence=colorSequence)
+				if self.colorSequenceCount < self._LEDCount:
+					self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
+				else:
+					self._SetVirtualLEDArray(LightPattern.PixelArray(self.colorSequenceCount))
+				self._colorFunction = {'function':self.useColorTransition, 'colorSequence':self.colorSequence, 'stepsPerTransition':stepsPerTransition, 'wrap':wrap}
+			elif twinkleColors == True:
+				self.twinkleColorSequence = LightPattern.ColorTransitionArray(arrayLength=len(colorSequence)*int(stepsPerTransition),wrap=False, colorSequence=colorSequence)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def useColorTransitionRepeating(self, backgroundColor:Pixel=DEFAULT_BACKGROUND_COLOR, colorSequence:List[Pixel]=DEFAULT_COLOR_SEQUENCE, stepsPerTransition:int=5, wrap:bool=True):
+	def useColorTransitionRepeating(self, colorSequence:List[Pixel]=DEFAULT_COLOR_SEQUENCE, stepsPerTransition:int=5, wrap:bool=True, twinkleColors:bool=False):
 		"""
 		colorSequence:List[Pixel]
 			list of colors to in the pattern being shifted across the LED string
@@ -706,24 +851,29 @@ class LightFunction:
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			colorSequence = LightPattern.ColorTransitionArray(arrayLength=(len(colorSequence)*stepsPerTransition), wrap=wrap, colorSequence=colorSequence)
-			arrayLength = np.ceil(self._LEDCount / len(colorSequence)) * len(colorSequence)
-			self.backgroundColor = backgroundColor
-			self.colorSequence = LightPattern.RepeatingColorSequenceArray(arrayLength=arrayLength, colorSequence=colorSequence)
-			if self.colorSequenceCount < self._LEDCount:
-				self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
-			else:
-				self._SetVirtualLEDArray(LightPattern.PixelArray(self.colorSequenceCount))
-			self._colorFunction = {'function':self.useColorTransitionRepeating, 'backgroundColor':self.backgroundColor, 'colorSequence':self.colorSequence, 'stepsPerTransition':stepsPerTransition, 'wrap':wrap}
+			self.backgroundColor = DEFAULT_BACKGROUND_COLOR
+			if twinkleColors == False:
+				colorSequence = LightPattern.ColorTransitionArray(arrayLength=(len(colorSequence)*stepsPerTransition), wrap=wrap, colorSequence=colorSequence)
+				arrayLength = np.ceil(self._LEDCount / len(colorSequence)) * len(colorSequence)
+				self.colorSequence = LightPattern.RepeatingColorSequenceArray(arrayLength=arrayLength, colorSequence=colorSequence)
+				if self.colorSequenceCount < self._LEDCount:
+					self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
+				else:
+					self._SetVirtualLEDArray(LightPattern.PixelArray(self.colorSequenceCount))
+				self._colorFunction = {'function':self.useColorTransitionRepeating, 'colorSequence':self.colorSequence, 'stepsPerTransition':stepsPerTransition, 'wrap':wrap}
+			elif twinkleColors == True:
+				colorSequence = LightPattern.ColorTransitionArray(arrayLength=(len(colorSequence)*stepsPerTransition), wrap=wrap, colorSequence=colorSequence)
+				arrayLength = np.ceil(self._LEDCount / len(colorSequence)) * len(colorSequence)
+				self.twinkleColorSequence = LightPattern.RepeatingColorSequenceArray(arrayLength=arrayLength, colorSequence=colorSequence)
 		except KeyboardInterrupt:
 			raise
 		except SystemExit:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def useColorRainbow(self, backgroundColor:Pixel=DEFAULT_BACKGROUND_COLOR, rainbowPixels:int=50):
+	def useColorRainbow(self, rainbowPixels:int=50, twinkleColors:bool=False):
 		"""
 		Set the entire LED string to a single color, but cycle through the colors of the rainbow a bit at a time
 
@@ -733,22 +883,25 @@ class LightFunction:
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self.backgroundColor = backgroundColor
-			self.colorSequence = LightPattern.RainbowArray(arrayLength=rainbowPixels)
-			if self.colorSequenceCount < self._LEDCount:
-				self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
-			else:
-				self._SetVirtualLEDArray(LightPattern.PixelArray(self.colorSequenceCount))
-			self._colorFunction = {'function':self.useColorTransitionRepeating, 'backgroundColor':self.backgroundColor, 'rainbowPixels':rainbowPixels}
+			self.backgroundColor = DEFAULT_BACKGROUND_COLOR
+			if twinkleColors == False:
+				self.colorSequence = LightPattern.RainbowArray(arrayLength=rainbowPixels)
+				if self.colorSequenceCount < self._LEDCount:
+					self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
+				else:
+					self._SetVirtualLEDArray(LightPattern.PixelArray(self.colorSequenceCount))
+				self._colorFunction = {'function':self.useColorRainbow, 'rainbowPixels':rainbowPixels}
+			elif twinkleColors == True:
+				self.twinkleColorSequence = LightPattern.RainbowArray(arrayLength=rainbowPixels)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def useColorRainbowRepeating(self, backgroundColor:Pixel=DEFAULT_BACKGROUND_COLOR, rainbowPixels:int=10):
+	def useColorRainbowRepeating(self, rainbowPixels:int=10, twinkleColors:bool=False):
 		"""
 		Set the entire LED string to a single color, but cycle through the colors of the rainbow a bit at a time
 
@@ -758,26 +911,31 @@ class LightFunction:
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self.backgroundColor = backgroundColor
-			self.colorSequence = LightPattern.RainbowArray(arrayLength=rainbowPixels)
-			arrayLength = np.ceil(self._LEDCount / len(self.colorSequence)) * len(self.colorSequence)
-			self.colorSequence = LightPattern.RepeatingColorSequenceArray(arrayLength=arrayLength, colorSequence=self.colorSequence)
-			if self.colorSequenceCount < self._LEDCount:
-				self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
-			else:
-				self._SetVirtualLEDArray(LightPattern.PixelArray(self.colorSequenceCount))
-			self._colorFunction = {'function':self.useColorRainbowRepeating, 'backgroundColor':self.backgroundColor, 'rainbowPixels':rainbowPixels}
+			self.backgroundColor = DEFAULT_BACKGROUND_COLOR
+			if twinkleColors == False:
+				colorSequence = LightPattern.RainbowArray(arrayLength=rainbowPixels)
+				arrayLength = np.ceil(self._LEDCount / len(colorSequence)) * len(colorSequence)
+				self.colorSequence = LightPattern.RepeatingColorSequenceArray(arrayLength=arrayLength, colorSequence=colorSequence)
+				if self.colorSequenceCount < self._LEDCount:
+					self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
+				else:
+					self._SetVirtualLEDArray(LightPattern.PixelArray(self.colorSequenceCount))
+				self._colorFunction = {'function':self.useColorRainbowRepeating, 'rainbowPixels':rainbowPixels}
+			elif twinkleColors == True:
+				colorSequence = LightPattern.RainbowArray(arrayLength=rainbowPixels)
+				arrayLength = np.ceil(self._LEDCount / len(colorSequence)) * len(colorSequence)
+				self.twinkleColorSequence = LightPattern.RepeatingColorSequenceArray(arrayLength=arrayLength, colorSequence=colorSequence)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 
 
-	def functionNone(self, refreshDelay:float=0.1):
+	def functionNone(self, refreshDelay:float=None):
 		"""
 		Set all LEDs to the same color
 
@@ -793,15 +951,15 @@ class LightFunction:
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
+			if refreshDelay is None:
+				refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 5
 			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._None_Function, configurationPointer=self._None_Configuration)
-			# self._Twinkle_Configuration(twinkleChance=twinkleChance, twinkleColors=twinkleColors)
-			# self._Run()
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _None_Configuration(self):
@@ -816,7 +974,7 @@ class LightFunction:
 		except SystemExit:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _None_Function(self):
@@ -827,11 +985,11 @@ class LightFunction:
 		except SystemExit:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 
-	def functionSolidColorCycle(self, refreshDelay:float=0.3):
+	def functionSolidColorCycle(self, refreshDelay:float=None):
 		"""
 		Set all LEDs to a single color at once, but cycles between a list of colors
 
@@ -847,17 +1005,15 @@ class LightFunction:
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
+			if refreshDelay is None:
+				refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) * 2
 			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._SolidColorCycle_Function, configurationPointer=self._SolidColorCycle_Configuration)
-			# self._Initialize(refreshDelay=refreshDelay, backgroundColor=PixelColors.OFF, ledArray=None)
-			# self._Cycle_Configuration(colorSequence=colorSequence)
-			# self._Twinkle_Configuration(twinkleChance=twinkleChance, twinkleColors=twinkleColors)
-			# self._Run()
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _SolidColorCycle_Configuration(self):
@@ -879,7 +1035,7 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _SolidColorCycle_Function(self):
@@ -891,11 +1047,11 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 
-	def functionMarquee(self, refreshDelay:float=0.05, shiftAmount:int=1):
+	def functionMarquee(self, refreshDelay:float=None, shiftAmount:int=1):
 		"""
 		Shifts a color pattern across the LED string marquee style.
 		Uses the provided sequence of colors.
@@ -914,13 +1070,15 @@ class LightFunction:
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
+			if refreshDelay is None:
+				refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 10
 			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._Marquee_Function, configurationPointer=self._Marquee_Configuration, shiftAmount=shiftAmount)
 		except KeyboardInterrupt:
 			raise
 		except SystemExit:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _Marquee_Configuration(self, shiftAmount:int):
@@ -943,7 +1101,7 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _Marquee_Function(self):
@@ -956,116 +1114,118 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 
-	def functionShiftFade(self, refreshDelay:float=0.001, fadeStepCount:int=25):
-		"""
-		Shift a color pattern across the LED string marquee style fading from color to color.
+	# def functionShiftFade(self, refreshDelay:float=None, fadeStepCount:int=25):
+	# 	"""
+	# 	Shift a color pattern across the LED string marquee style fading from color to color.
 
-		refreshDelay: float
-			delay between color updates
-		shiftAmount: int
-			each time the pattern shifts, shift it by this many LEDs
-		fadeStepCount: int
-			the number of fade steps between one color and the next
-		backgroundColor:Pixel
-			color to set any LED that isnt part of the shifting pattern
-		colorSequence:List[Pixel]
-			list of colors to in the pattern being shifted across the LED string
-		twinkleColors:List[Pixel]
-			list of colors to twinkle
-		twinkleChance:float
-			chance (from 0.0 to 1.0) that a single LED will twinkle
-		returns: None
-		"""
-		try:
-			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._ShiftFade_Function, configurationPointer=self._ShiftFade_Configuration, fadeStepCount=fadeStepCount)
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
-			raise
+	# 	refreshDelay: float
+	# 		delay between color updates
+	# 	shiftAmount: int
+	# 		each time the pattern shifts, shift it by this many LEDs
+	# 	fadeStepCount: int
+	# 		the number of fade steps between one color and the next
+	# 	backgroundColor:Pixel
+	# 		color to set any LED that isnt part of the shifting pattern
+	# 	colorSequence:List[Pixel]
+	# 		list of colors to in the pattern being shifted across the LED string
+	# 	twinkleColors:List[Pixel]
+	# 		list of colors to twinkle
+	# 	twinkleChance:float
+	# 		chance (from 0.0 to 1.0) that a single LED will twinkle
+	# 	returns: None
+	# 	"""
+	# 	try:
+	# 		LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
+	# 		if refreshDelay is None:
+	# 			refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 1000
+	# 		self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._ShiftFade_Function, configurationPointer=self._ShiftFade_Configuration, fadeStepCount=fadeStepCount)
+	# 	except SystemExit:
+	# 		raise
+	# 	except KeyboardInterrupt:
+	# 		raise
+	# 	except Exception as ex:
+	# 		LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+	# 		raise
 
-	def _ShiftFade_Configuration(self, fadeStepCount:int):
-		"""
-		Shifts each element in the array by 'shift' places
+	# def _ShiftFade_Configuration(self, fadeStepCount:int):
+	# 	"""
+	# 	Shifts each element in the array by 'shift' places
 
-		Parameters:
-			shift: int
-				the amount by which to shift each element
-		"""
-		try:
-			LOGGER.log(5, '%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			# self._ShiftAmount =
-			# self._FadeStepCounter = self._VirtualLEDCount
-			# self._DefaultColorIndices = []
-			# self._FadeInColorIndices = []
-			colorSequence = LightPattern.PixelArray(arrayLength=self._VirtualLEDCount)
-			# colorSequence = []
-			self._LightDataObjects = []
-			offset = 0
-			if self.colorSequenceCount < self._VirtualLEDCount:
-				pixel = LightData(PixelColors.OFF)
-				pixel.index = 0
-				pixel.shiftAmount = 1
-				pixel.stepCountMax = fadeStepCount
-				self._LightDataObjects.append(pixel)
-				offset = 1
-			for i in range(self.colorSequenceCount):
-				color = self.colorSequenceNext
-				colorSequence[i+offset] = color
-				pixel = LightData(color)
-				pixel.index = i + offset
-				pixel.shiftAmount = 1
-				pixel.stepCountMax = fadeStepCount
-				self._LightDataObjects.append(pixel)
-			self._SetVirtualLEDArray(LightPattern.ConvertPixelArrayToNumpyArray(colorSequence))
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
-			raise
+	# 	Parameters:
+	# 		shift: int
+	# 			the amount by which to shift each element
+	# 	"""
+	# 	try:
+	# 		LOGGER.log(5, '%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
+	# 		# self._ShiftAmount =
+	# 		# self._FadeStepCounter = self._VirtualLEDCount
+	# 		# self._DefaultColorIndices = []
+	# 		# self._FadeInColorIndices = []
+	# 		colorSequence = LightPattern.PixelArray(arrayLength=self._VirtualLEDCount)
+	# 		# colorSequence = []
+	# 		self._LightDataObjects = []
+	# 		offset = 0
+	# 		if self.colorSequenceCount < self._VirtualLEDCount:
+	# 			pixel = LightData(PixelColors.OFF)
+	# 			pixel.index = 0
+	# 			pixel.shiftAmount = 1
+	# 			pixel.stepCountMax = fadeStepCount
+	# 			self._LightDataObjects.append(pixel)
+	# 			offset = 1
+	# 		for i in range(self.colorSequenceCount):
+	# 			color = self.colorSequenceNext
+	# 			colorSequence[i+offset] = color
+	# 			pixel = LightData(color)
+	# 			pixel.index = i + offset
+	# 			pixel.shiftAmount = 1
+	# 			pixel.stepCountMax = fadeStepCount
+	# 			self._LightDataObjects.append(pixel)
+	# 		self._SetVirtualLEDArray(LightPattern.ConvertPixelArrayToNumpyArray(colorSequence))
+	# 	except SystemExit:
+	# 		raise
+	# 	except KeyboardInterrupt:
+	# 		raise
+	# 	except Exception as ex:
+	# 		LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+	# 		raise
 
-	def _ShiftFade_Function(self):
-		try:
-			reset = False
-			for pixel in self._LightDataObjects:
-				index = (pixel.index + 1) % self._VirtualLEDCount
-				curPixel = self._VirtualLEDBuffer[pixel.index]
-				nextPixel = self._VirtualLEDBuffer[(index % self._VirtualLEDCount)]
-				for RGBindex in range(len(pixel.colors[pixel.colorIndex])):
-					step = int(((nextPixel[RGBindex] - curPixel[RGBindex]) // pixel.stepCountMax))
-					self._VirtualLEDArray[index,RGBindex] -= step
-					if self._VirtualLEDArray[index,RGBindex] > 255:
-						self._VirtualLEDArray[index,RGBindex] = 255
-					elif self._VirtualLEDArray[index,RGBindex] < 0:
-						self._VirtualLEDArray[index,RGBindex] = 0
-				pixel.stepCounter += 1
-				if pixel.stepCounter >= pixel.stepCountMax:
-					pixel.stepCounter = 0
-					pixel.index = (pixel.index + pixel.shiftAmount) % self._VirtualLEDCount
-					# self._VirtualLEDArray[pixel.index] = pixel.colors[pixel.colorIndex]
-					reset = True
-			if reset:
-				self._VirtualLEDBuffer = np.roll(self._VirtualLEDBuffer, pixel.shiftAmount, 0)
-				self._VirtualLEDArray[:] = self._VirtualLEDBuffer.copy()
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
-			raise
+	# def _ShiftFade_Function(self):
+	# 	try:
+	# 		reset = False
+	# 		for pixel in self._LightDataObjects:
+	# 			index = (pixel.index + 1) % self._VirtualLEDCount
+	# 			curPixel = self._VirtualLEDBuffer[pixel.index]
+	# 			nextPixel = self._VirtualLEDBuffer[(index % self._VirtualLEDCount)]
+	# 			for RGBindex in range(len(pixel.color)):
+	# 				step = int(((nextPixel[RGBindex] - curPixel[RGBindex]) // pixel.stepCountMax))
+	# 				self._VirtualLEDArray[index,RGBindex] -= step
+	# 				if self._VirtualLEDArray[index,RGBindex] > 255:
+	# 					self._VirtualLEDArray[index,RGBindex] = 255
+	# 				elif self._VirtualLEDArray[index,RGBindex] < 0:
+	# 					self._VirtualLEDArray[index,RGBindex] = 0
+	# 			pixel.stepCounter += 1
+	# 			if pixel.stepCounter >= pixel.stepCountMax:
+	# 				pixel.stepCounter = 0
+	# 				pixel.index = (pixel.index + pixel.shiftAmount) % self._VirtualLEDCount
+	# 				# self._VirtualLEDArray[pixel.index] = pixel.color
+	# 				reset = True
+	# 		if reset:
+	# 			self._VirtualLEDBuffer = np.roll(self._VirtualLEDBuffer, pixel.shiftAmount, 0)
+	# 			self._VirtualLEDArray[:] = self._VirtualLEDBuffer
+	# 	except SystemExit:
+	# 		raise
+	# 	except KeyboardInterrupt:
+	# 		raise
+	# 	except Exception as ex:
+	# 		LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+	# 		raise
 
 
-	def functionAlternate(self, refreshDelay:float=0.03, shiftAmount:int=1):
+	def functionAlternate(self, refreshDelay:float=None, shiftAmount:int=1):
 		"""
 		Shift a color pattern across the LED string marquee style and then bounce back.
 
@@ -1085,19 +1245,15 @@ class LightFunction:
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			# arrayLength = np.ceil(self._LEDCount / len(colorSequence)) * len(colorSequence)
+			if refreshDelay is None:
+				refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 35
 			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._Alternate_Function, configurationPointer=self._Alternate_Configuration, shiftAmount=shiftAmount)
-			# self._Alternate_Configuration(refreshDelay=refreshDelay)
-			# self._Initialize(refreshDelay=refreshDelay, backgroundColor=backgroundColor, ledArray=colorSequence)
-			# self._Alternate_Configuration(shiftAmount=shiftAmount)
-			# self._Twinkle_Configuration(twinkleChance=twinkleChance, twinkleColors=twinkleColors)
-			# self._Run()
 		except KeyboardInterrupt:
 			raise
 		except SystemExit:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _Alternate_Configuration(self, shiftAmount:int):
@@ -1130,14 +1286,14 @@ class LightFunction:
 		except SystemExit:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _Alternate_Function(self):
 		try:
 			self._off()
 			for alternator in self._LightDataObjects:
-				self._VirtualLEDArray[alternator.index] = alternator.colors[alternator.colorIndex]
+				self._VirtualLEDArray[alternator.index] = alternator.color
 				if alternator.index + (alternator.direction * alternator.shiftAmount) >= self._VirtualLEDCount or \
 				alternator.index + (alternator.direction * alternator.shiftAmount) < 0:
 					alternator.stepCounter = 0
@@ -1150,11 +1306,11 @@ class LightFunction:
 		except SystemExit:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 
-	def functionCylon(self, refreshDelay:float=0.01, fadeAmount:int=15):
+	def functionCylon(self, refreshDelay:float=None, fadeAmount:int=45):
 		"""
 		Shift a pixel across the LED string marquee style and then bounce back leaving a comet tail.
 
@@ -1175,13 +1331,15 @@ class LightFunction:
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
+			if refreshDelay is None:
+				refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 10
 			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._Cylon_Function, configurationPointer=self._Cylon_Configuration, fadeAmount=fadeAmount)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _Cylon_Configuration(self, fadeAmount:int):
@@ -1201,12 +1359,12 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _Cylon_Function(self):
 		try:
-			self._Fade(fadeAmount=self._LightDataObjects[0].fadeAmount)
+			self._FadeOff(fadeAmount=self._LightDataObjects[0].fadeAmount)
 			for eye in self._LightDataObjects:
 				last_index = eye.index
 				next_index = eye.index + (eye.direction * eye.step)
@@ -1218,17 +1376,17 @@ class LightFunction:
 					eye.direction = 1
 				eye.index = next_index
 				for i in np.linspace(last_index, next_index, abs(last_index - next_index)+1, dtype=int):
-					self._VirtualLEDArray[i] = eye.colors[eye.colorIndex]
+					self._VirtualLEDArray[i] = eye.color
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 
-	def functionMerge(self, refreshDelay:float=0.1, mergeSegmentLength:int=None):
+	def functionMerge(self, refreshDelay:float=None, mergeSegmentLength:int=None):
 		"""
 		Reflect a color sequence and shift the reflections toward each other in the middle
 
@@ -1246,14 +1404,15 @@ class LightFunction:
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			# arrayLength = np.ceil(self._LEDCount / len(colorSequence)) * len(colorSequence)
+			if refreshDelay is None:
+				refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 3
 			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._Merge_Function, configurationPointer=self._Merge_Configuration, mergeSegmentLength=mergeSegmentLength)
 		except KeyboardInterrupt:
 			raise
 		except SystemExit:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _Merge_Configuration(self, mergeSegmentLength:int):
@@ -1283,7 +1442,7 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _Merge_Function(self):
@@ -1312,11 +1471,11 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 
-	def functionAccelerate(self, beginDelay:float=0.1, endDelay:float=0.0001, delaySteps:int=None):
+	def functionAccelerate(self, beginDelay:float=None, endDelay:float=None, delaySteps:int=None):
 		"""
 		Shifts a color pattern across the LED string marquee style, but accelerates as it goes.
 		Uses the provided sequence of colors.
@@ -1339,13 +1498,17 @@ class LightFunction:
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
+			if beginDelay is None:
+				beginDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 5
+			if endDelay is None:
+				endDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 10000
 			self._initializeFunction(refreshDelay=beginDelay, functionPointer=self._Accelerate_Function, configurationPointer=self._Accelerate_Configuration, shiftAmount=1, beginDelay=beginDelay, endDelay=endDelay, delaySteps=delaySteps)
 		except KeyboardInterrupt:
 			raise
 		except SystemExit:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _Accelerate_Configuration(self, shiftAmount:int, beginDelay:float, endDelay:float, delaySteps:int):
@@ -1387,7 +1550,7 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _Accelerate_Function(self):
@@ -1408,11 +1571,11 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 
-	def functionRandomChange(self, refreshDelay:float=0.05, changeChance:float=0.01):
+	def functionRandomChange(self, refreshDelay:float=None, changeChance:float=0.01):
 		"""
 		Randomly changes pixels on the string to one of the provided colors
 
@@ -1430,15 +1593,15 @@ class LightFunction:
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
+			if refreshDelay is None:
+				refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 20
 			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._RandomChange_Function, configurationPointer=self._RandomChange_Configuration, changeChance=changeChance)
-			# self._Twinkle_Configuration(twinkleChance=twinkleChance, twinkleColors=twinkleColors)
-			# self._Run()
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _RandomChange_Configuration(self, changeChance:float):
@@ -1460,7 +1623,7 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _RandomChange_Function(self):
@@ -1475,11 +1638,11 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 
-	def functionRandomFadeChange(self, refreshDelay:float=0.001, changeChance:float=0.2, fadeStepCount:int=30):
+	def functionRandomFadeChange(self, refreshDelay:float=None, changeChance:float=0.2, fadeStepCount:int=50):
 		"""
 		Randomly changes pixels on the string to one of the provided colors by fading from one color to the next
 
@@ -1499,15 +1662,15 @@ class LightFunction:
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
+			if refreshDelay is None:
+				refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 20
 			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._RandomFadeChange_Function, configurationPointer=self._RandomFadeChange_Configuration, fadeInChance=changeChance, fadeStepCount=fadeStepCount)
-			# self._Twinkle_Configuration(twinkleChance=twinkleChance, twinkleColors=twinkleColors)
-			# self._Run()
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _RandomFadeChange_Configuration(self, fadeInChance:float, fadeStepCount:int):
@@ -1518,9 +1681,8 @@ class LightFunction:
 			self._FadeAmount = 255 // self._FadeStepCount
 			self._FadeStepCounter = 0
 			self._PreviousIndices = []
-			# self.colorSequence = colorSequence
-			# self._FunctionList.append(self._RandomFadeChange_Function)
 			indices = self._GetRandomIndices(self._FadeChance)
+			self._LightDataObjects = []
 			for index in indices:
 				self._PreviousIndices.append(index)
 				randomfade = LightData(self.colorSequenceNext)
@@ -1534,49 +1696,51 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _RandomFadeChange_Function(self):
 		try:
 			for randomFade in self._LightDataObjects:
-				self._FadeLED(led_index=randomFade.index, offColor=randomFade.colors[randomFade.colorIndex], fadeAmount=randomFade.fadeAmount)
+				self._FadeLED(led_index=randomFade.index, offColor=randomFade.color, fadeAmount=randomFade.fadeAmount)
 				randomFade.stepCounter += 1
-			if randomFade.stepCounter >= randomFade.stepCountMax:
-				randomFadeIndices = np.array(self._GetRandomIndices(self._FadeChance))
-				x = np.intersect1d(self._PreviousIndices, randomFadeIndices)
-				randomFadeIndices = [i for i in randomFadeIndices if not i in x]
-				defaultIndices = np.array(self._GetRandomIndices(self._FadeChance))
-				x = np.intersect1d(self._PreviousIndices, defaultIndices)
-				defaultIndices = [i for i in defaultIndices if not i in x]
-				x = np.intersect1d(randomFadeIndices, defaultIndices)
-				defaultIndices = [i for i in defaultIndices if not i in x]
-				self._PreviousIndices = []
-				self._LightDataObjects = []
-				for index in randomFadeIndices:
-					self._PreviousIndices.append(index)
-					randomfade = LightData(self.colorSequenceNext)
-					randomfade.index = index
-					randomfade.fadeAmount = self._FadeAmount
-					randomfade.stepCountMax = self._FadeStepCount
-					self._LightDataObjects.append(randomfade)
-				for index in defaultIndices:
-					randomfade = LightData(self.backgroundColor)
-					randomfade.index = index
-					randomfade.fadeAmount = self._FadeAmount
-					randomfade.stepCountMax = self._FadeStepCount
-					self._LightDataObjects.append(randomfade)
-				self._PreviousIndices = np.array(self._PreviousIndices)
+				if randomFade.stepCounter >= randomFade.stepCountMax:
+					randomFadeIndices = np.array(self._GetRandomIndices(self._FadeChance))
+					x = np.intersect1d(self._PreviousIndices, randomFadeIndices)
+					randomFadeIndices = [i for i in randomFadeIndices if not i in x]
+					defaultIndices = np.array(self._GetRandomIndices(self._FadeChance))
+					x = np.intersect1d(self._PreviousIndices, defaultIndices)
+					defaultIndices = [i for i in defaultIndices if not i in x]
+					x = np.intersect1d(randomFadeIndices, defaultIndices)
+					defaultIndices = [i for i in defaultIndices if not i in x]
+					self._PreviousIndices = []
+					self._LightDataObjects = []
+					for index in randomFadeIndices:
+						if index < self._VirtualLEDCount:
+							self._PreviousIndices.append(index)
+							randomfade = LightData(self.colorSequenceNext)
+							randomfade.index = index
+							randomfade.fadeAmount = self._FadeAmount
+							randomfade.stepCountMax = self._FadeStepCount
+							self._LightDataObjects.append(randomfade)
+					for index in defaultIndices:
+						if index < self._VirtualLEDCount:
+							randomfade = LightData(self.backgroundColor)
+							randomfade.index = index
+							randomfade.fadeAmount = self._FadeAmount
+							randomfade.stepCountMax = self._FadeStepCount
+							self._LightDataObjects.append(randomfade)
+					self._PreviousIndices = np.array(self._PreviousIndices)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 
-	def functionMeteors(self, refreshDelay:float=0.03, fadeStepCount:int=10, maxSpeed:int=2):
+	def functionMeteors(self, refreshDelay:float=None, fadeStepCount:int=5, maxSpeed:int=2):
 		"""
 		creates several 'meteors' from the given color list that will fly around the light string leaving a comet trail
 
@@ -1598,13 +1762,15 @@ class LightFunction:
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
+			if refreshDelay is None:
+				refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 50
 			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._Meteors_Function, configurationPointer=self._Meteors_Configuration, fadeStepCount=fadeStepCount, maxSpeed=maxSpeed)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _Meteors_Configuration(self, fadeStepCount:int, maxSpeed:int):
@@ -1628,13 +1794,13 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _Meteors_Function(self):
 		try:
 			rnge = [i for i in range(-self._MaxSpeed,self._MaxSpeed+1)]
-			self._Fade(fadeAmount=self._LightDataObjects[0].fadeAmount)
+			self._FadeOff(fadeAmount=self._LightDataObjects[0].fadeAmount)
 			for meteor in self._LightDataObjects:
 				oldLocation = meteor.index
 				newLocationx = (meteor.index + meteor.step)
@@ -1647,7 +1813,7 @@ class LightFunction:
 					while meteor.step == 0:
 						meteor.step = rnge[random.randint(0,len(rnge)-1)]
 					meteor.stepCountMax = random.randint(2,self._VirtualLEDIndexCount*2)
-					meteor.colors = [self.colorSequenceNext]
+					meteor.color = self.colorSequenceNext
 					meteor.index = random.randint(0,self._VirtualLEDIndexCount-1)
 				# rng = []
 				# if newLocation > oldLocation:
@@ -1658,17 +1824,17 @@ class LightFunction:
 					# newLocation = (newLocation - 1)% self._VirtualLEDCount
 				for i in rng:
 					i = i% self._VirtualLEDCount
-					self._VirtualLEDArray[i] = meteor.colors[meteor.colorIndex]
+					self._VirtualLEDArray[i] = meteor.color
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 
-	def functionMeteorsFancy(self, refreshDelay:float=0.03, fadeAmount:int=35, maxSpeed:int=2, cycleColors:bool=False, meteorCount:int=3):
+	def functionMeteorsFancy(self, refreshDelay:float=None, fadeAmount:int=75, maxSpeed:int=2, cycleColors:bool=False, meteorCount:int=3):
 		"""
 		Creates several 'meteors' from the given color list that will fly around the light string leaving a comet trail.
 		In this version each meteor contains all colors of the colorSequence.
@@ -1695,15 +1861,15 @@ class LightFunction:
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
+			if refreshDelay is None:
+				refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 20
 			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._MeteorsFancy_Function, configurationPointer=self._MeteorsFancy_Configuration, meteorCount=meteorCount, maxSpeed=maxSpeed, fadeAmount=fadeAmount, cycleColors=cycleColors, randomColorCount=None)
-			# self._Twinkle_Configuration(twinkleChance=twinkleChance, twinkleColors=twinkleColors)
-			# self._Run()
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _MeteorsFancy_Configuration(self, meteorCount:int, maxSpeed:int, fadeAmount:int, cycleColors:bool, randomColorCount:int):
@@ -1726,12 +1892,12 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _MeteorsFancy_Function(self):
 		try:
-			self._Fade()
+			self._FadeOff()
 			for meteor in self._LightDataObjects:
 				oldIndex = meteor.index
 				newIndex = (meteor.index + meteor.step)
@@ -1747,7 +1913,7 @@ class LightFunction:
 					for i in range(0,len(meteor.colors)):
 						self._VirtualLEDArray[(meteor.index + meteor.step * i) % self._VirtualLEDCount] = meteor.colors[i]
 				else:
-					for i in range(0,len(meteor.colors)):
+					for i in range(0,len(meteor.color)):
 						self._VirtualLEDArray[(meteor.index + meteor.step * i) % self._VirtualLEDCount] = meteor.colors[(meteor.colorIndex + i) % len(meteor.colors)]
 				if self._CycleColors:
 					meteor.colorIndex = (meteor.colorIndex + 1) % len(meteor.colors)
@@ -1756,11 +1922,11 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 
-	def functionMeteorsBouncy(self, refreshDelay:float=0.04, fadeAmount:int=35, maxSpeed:int=1, explode:bool=True):
+	def functionMeteorsBouncy(self, refreshDelay:float=None, fadeAmount:int=80, maxSpeed:int=1, explode:bool=True):
 		"""
 		Creates several 'meteors' from the given color list that will fly around the light string leaving a comet trail.
 		In this version each meteor contains all colors of the colorSequence.
@@ -1787,13 +1953,15 @@ class LightFunction:
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
+			if refreshDelay is None:
+				refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 10
 			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._MeteorsBouncy_Function, configurationPointer=self._MeteorsBouncy_Configuration, fadeAmount=fadeAmount, maxSpeed=maxSpeed, explode=explode)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _MeteorsBouncy_Configuration(self, fadeAmount:int, maxSpeed:int, explode:bool):
@@ -1825,12 +1993,12 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _MeteorsBouncy_Function(self):
 		try:
-			self._Fade()
+			self._FadeOff()
 			# move the meteors
 			for meteor in self._LightDataObjects:
 				# calculate next index
@@ -1883,30 +2051,33 @@ class LightFunction:
 						meteor.index = newLocation + random.randint(0,3)
 						meteor.previousIndex = newLocation
 						if random.randint(0,1000) > 800:
-							meteor.colors = [self.colorSequenceNext]
+							meteor.color = self.colorSequenceNext
 						meteor.bounce = False
 						if self._Explode:
 							middle = meteor.moveRange[len(meteor.moveRange)//2]
-							explosions.append(((middle-6) % self._VirtualLEDCount, Pixel(PixelColors.GRAY).array))
-							explosions.append(((middle-5) % self._VirtualLEDCount, Pixel(PixelColors.YELLOW).array))
-							explosions.append(((middle-4) % self._VirtualLEDCount, Pixel(PixelColors.ORANGE).array))
-							explosions.append(((middle-3) % self._VirtualLEDCount, Pixel(PixelColors.ORANGE).array))
-							explosions.append(((middle-2) % self._VirtualLEDCount, Pixel(PixelColors.RED).array))
-							explosions.append(((middle-1) % self._VirtualLEDCount, Pixel(PixelColors.RED).array))
-							explosions.append(((middle+1) % self._VirtualLEDCount, Pixel(PixelColors.RED).array))
-							explosions.append(((middle+2) % self._VirtualLEDCount, Pixel(PixelColors.RED).array))
-							explosions.append(((middle+3) % self._VirtualLEDCount, Pixel(PixelColors.ORANGE).array))
-							explosions.append(((middle+4) % self._VirtualLEDCount, Pixel(PixelColors.ORANGE).array))
-							explosions.append(((middle+5) % self._VirtualLEDCount, Pixel(PixelColors.YELLOW).array))
-							explosions.append(((middle+6) % self._VirtualLEDCount, Pixel(PixelColors.GRAY).array))
+							r = (self._LEDCount//20)
+							for i in range(r):
+								explosions.append(((middle-i) % self._VirtualLEDCount, Pixel(PixelColors.YELLOW).array * (r-i)/r))
+								explosions.append(((middle+i) % self._VirtualLEDCount, Pixel(PixelColors.YELLOW).array * (r-i)/r))
+								# explosions.append(((middle-5) % self._VirtualLEDCount, Pixel(PixelColors.YELLOW).array))
+								# explosions.append(((middle-4) % self._VirtualLEDCount, Pixel(PixelColors.ORANGE).array))
+								# explosions.append(((middle-3) % self._VirtualLEDCount, Pixel(PixelColors.ORANGE).array))
+								# explosions.append(((middle-2) % self._VirtualLEDCount, Pixel(PixelColors.RED).array))
+								# explosions.append(((middle-1) % self._VirtualLEDCount, Pixel(PixelColors.RED).array))
+								# explosions.append(((middle+1) % self._VirtualLEDCount, Pixel(PixelColors.RED).array))
+								# explosions.append(((middle+2) % self._VirtualLEDCount, Pixel(PixelColors.RED).array))
+								# explosions.append(((middle+3) % self._VirtualLEDCount, Pixel(PixelColors.ORANGE).array))
+								# explosions.append(((middle+4) % self._VirtualLEDCount, Pixel(PixelColors.ORANGE).array))
+								# explosions.append(((middle+5) % self._VirtualLEDCount, Pixel(PixelColors.YELLOW).array))
+								# explosions.append(((middle+6) % self._VirtualLEDCount, Pixel(PixelColors.GRAY).array))
 			for index, meteor in enumerate(self._LightDataObjects):
 				try:
 					if meteor.index > self._VirtualLEDCount-1:
 						meteor.index = meteor.index % (self._VirtualLEDCount)
 					for i in meteor.moveRange:
-						self._VirtualLEDArray[i] = meteor.colors[meteor.colorIndex]
+						self._VirtualLEDArray[i] = meteor.color
 				except:
-					# LOGGER.error('len(self._LightDataObjects)={},len(meteor[{}]={}, itms[{},{}] len(LEDS)={}'.format(len(self._LightDataObjects), led, len(self._LightDataObjects[led]), index, color, len(self._VirtualLEDArray)))
+					# LOGGER.exception('len(self._LightDataObjects)={},len(meteor[{}]={}, itms[{},{}] len(LEDS)={}'.format(len(self._LightDataObjects), led, len(self._LightDataObjects[led]), index, color, len(self._VirtualLEDArray)))
 					raise
 			if self._Explode and len(explosions) > 0:
 				for x in explosions:
@@ -1916,34 +2087,34 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 
-	def functionMeteorsAgain(self, refreshDelay=0.001, maxDelay=5, fadeSteps=25):
+	def functionMeteorsAgain(self, refreshDelay=None, maxDelay=5, fadeSteps=10):
 		"""
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			fadeAmount = np.ceil(255/fadeSteps)
-			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._MeteorsAgain_Function, configurationPointer=self._MeteorsAgain_Configuration, maxDelay=maxDelay, fadeAmount=fadeAmount, fadeSteps=fadeSteps)
+			if refreshDelay is None:
+				refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 1000
+			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._MeteorsAgain_Function, configurationPointer=self._MeteorsAgain_Configuration, maxDelay=maxDelay, fadeSteps=fadeSteps)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def _MeteorsAgain_Configuration(self, maxDelay, fadeAmount, fadeSteps):
+	def _MeteorsAgain_Configuration(self, maxDelay:int, fadeSteps:int):
 		try:
 			LOGGER.log(5, '%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			# self.colorSequence = colorSequence
 			self._MaxDelay = maxDelay
-			self._FadeAmount = fadeAmount
 			self._FadeSteps = fadeSteps
+			self._FadeAmount = np.ceil(255/fadeSteps)
 			self._LightDataObjects = []
-			for index in range(self.colorSequenceCount):
+			for index in range(max(min(self.colorSequenceCount, 5), 2)):
 				meteor = LightData(self.colorSequenceNext)
 				meteor.index = random.randint(0, self._VirtualLEDCount-1)
 				meteor.direction = (-1,1)[random.randint(0, 1)]
@@ -1952,13 +2123,12 @@ class LightFunction:
 				meteor.stepCountMax = random.randint(2, self._VirtualLEDCount*6)
 				meteor.colorSequenceIndex = index
 				self._LightDataObjects.append(meteor)
-			# self._FunctionList.append(self._MeteorsAgain_Function)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _MeteorsAgain_Function(self):
@@ -1975,95 +2145,53 @@ class LightFunction:
 						meteor.step = (-1,1)[random.randint(0,1)]
 						meteor.delayCountMax = random.randint(0, self._MaxDelay)
 						meteor.stepCountMax = random.randint(self._VirtualLEDCount,self._VirtualLEDCount*4)
-						# if self._RandomColors:
-							# meteor.colors = COLORS_NO_OFF[COLORS_NO_OFF.keys()[random.randint(0,len(COLORS_NO_OFF.keys())-1)]]
-			for ledIndex in range(len(self._VirtualLEDArray)):
-				self._FadeLED(ledIndex, self.backgroundColor, self._FadeAmount/2)
+			self._FadeOff()
 			for meteor in self._LightDataObjects:
-				self._VirtualLEDArray[meteor.index] = meteor.colors[meteor.colorIndex]
+				self._VirtualLEDArray[meteor.index] = meteor.color
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 
-	def Do_Paint_ColorList(self, refreshDelay=0.001, colorSequence=[PixelColors.RED,PixelColors.GREEN,PixelColors.WHITE,PixelColors.OFF], backgroundColor=PixelColors.OFF, maxDelay=10):
+	def functionPaint(self, refreshDelay=None, maxDelay=5):
 		"""
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self._Initialize(refreshDelay=refreshDelay, backgroundColor=backgroundColor, ledArray=LightPattern.SolidColorArray(arrayLength=self._LEDCount, color=self.backgroundColor))
-			self._Paint_Configuration(randomColors=False, colorSequence=colorSequence, colorCount=len(colorSequence), maxDelay=maxDelay)
-			self._Run()
+			if refreshDelay is None:
+				refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 1000
+			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._Paint_Function, configurationPointer=self._Paint_Configuration, maxDelay=maxDelay)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def Do_Paint_PseudoRandomColorList(self, refreshDelay=0.001, randomColorCount=None, backgroundColor=PixelColors.OFF, maxDelay=10, randomColors=False):
-		"""
-		"""
-		try:
-			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			if randomColorCount is None:
-				randomColorCount = random.randint(2,5)
-			self._Initialize(refreshDelay=refreshDelay, backgroundColor=backgroundColor, ledArray=LightPattern.SolidColorArray(arrayLength=self._LEDCount, color=self.backgroundColor))
-			self._Paint_Configuration(randomColors=True, colorSequence=PixelColors.pseudoRandom, colorCount=randomColorCount, maxDelay=maxDelay)
-			self._Run()
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
-			raise
-
-	def Do_Paint_RandomColorList(self, refreshDelay=0.001, randomColorCount=None, backgroundColor=PixelColors.OFF, maxDelay=10, randomColors=False):
-		"""
-		"""
-		try:
-			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			if randomColorCount is None:
-				randomColorCount = random.randint(2,5)
-			self._Initialize(refreshDelay=refreshDelay, backgroundColor=backgroundColor, ledArray=LightPattern.SolidColorArray(arrayLength=self._LEDCount, color=self.backgroundColor))
-			self._Paint_Configuration(randomColors=True, colorSequence=PixelColors.random, colorCount=randomColorCount, maxDelay=maxDelay)
-			self._Run()
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
-			raise
-
-	def _Paint_Configuration(self, randomColors, colorSequence, colorCount, maxDelay):
+	def _Paint_Configuration(self, maxDelay):
 		try:
 			LOGGER.log(5, '%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self._RandomColors = randomColors
-			self.colorSequence = colorSequence
 			self._MaxDelay = maxDelay
-			for i in range(colorCount):
+			self._LightDataObjects = []
+			for i in range(max(min(self.colorSequenceCount, 10), 2)):
 				paintBrush = LightData(self.colorSequenceNext)
 				paintBrush.index = random.randint(0, self._VirtualLEDCount-1)
 				paintBrush.step = (-1, 1)[random.randint(0,1)]
-				paintBrush.delayCountMax = random.randint(10, self._MaxDelay)
+				paintBrush.delayCountMax = random.randint(min(0, self._MaxDelay), max(0, self._MaxDelay))
 				paintBrush.stepCountMax = random.randint(2, self._VirtualLEDCount*2)
 				paintBrush.colorSequenceIndex = i
-				paintBrush.random = randomColors
 				self._LightDataObjects.append(paintBrush)
-			self._FunctionList.append(self._Paint_Function)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _Paint_Function(self):
@@ -2081,99 +2209,64 @@ class LightFunction:
 						paintBrush.delayCountMax = random.randint(0, self._MaxDelay)
 						paintBrush.stepCountMax = random.randint(2, self._VirtualLEDCount*2)
 						if paintBrush.random:
-							paintBrush.colors = [self.colorSequenceNext]
-				self._VirtualLEDArray[paintBrush.index] = paintBrush.colors[paintBrush.colorIndex]
+							paintBrush.color = self.colorSequenceNext
+				self._VirtualLEDArray[paintBrush.index] = paintBrush.color
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 
-	def Do_Sprites_ColorList(self, refreshDelay=0.03, colorSequence=[PixelColors.RED,PixelColors.GREEN,PixelColors.WHITE], backgroundColor=PixelColors.OFF, fadeAmount=15):
+	def functionSprites(self, refreshDelay=None, fadeSteps=3):
 		"""
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self._Initialize(refreshDelay=refreshDelay, backgroundColor=backgroundColor, ledArray=LightPattern.SolidColorArray(arrayLength=self._LEDCount, color=self.backgroundColor))
-			self._Sprites_Configuration(fadeAmount=fadeAmount, colorSequence=colorSequence, colorCount=len(colorSequence), randomColors=False)
-			self._Run()
+			if refreshDelay is None:
+				refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 20
+			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._Sprites_Function, configurationPointer=self._Sprites_Configuration, fadeSteps=fadeSteps)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def Do_Sprites_PseudoRandomColorList(self, refreshDelay=0.03, randomColorCount=None, backgroundColor=PixelColors.OFF, fadeAmount=10):
-		"""
-		"""
-		try:
-			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			if randomColorCount is None:
-				randomColorCount = random.randint(2,5)
-			self._Initialize(refreshDelay=refreshDelay, backgroundColor=backgroundColor, ledArray=LightPattern.SolidColorArray(arrayLength=self._LEDCount, color=self.backgroundColor))
-			self._Sprites_Configuration(fadeAmount=fadeAmount, colorSequence=PixelColors.pseudoRandom, colorCount=randomColorCount, randomColors=True)
-			self._Run()
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
-			raise
-
-	def Do_Sprites_RandomColorList(self, refreshDelay=0.03, randomColorCount=None, backgroundColor=PixelColors.OFF, fadeAmount=10):
-		"""
-		"""
-		try:
-			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			if randomColorCount is None:
-				randomColorCount = random.randint(2,5)
-			self._Initialize(refreshDelay=refreshDelay, backgroundColor=backgroundColor, ledArray=LightPattern.SolidColorArray(arrayLength=self._LEDCount, color=self.backgroundColor))
-			self._Sprites_Configuration(fadeAmount=fadeAmount, colorSequence=PixelColors.random, colorCount=randomColorCount, randomColors=True)
-			self._Run()
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
-			raise
-
-	def _Sprites_Configuration(self, fadeAmount, colorSequence, colorCount, randomColors):
+	def _Sprites_Configuration(self, fadeSteps:int):
 		try:
 			LOGGER.log(5, '%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self._FadeAmount = fadeAmount
-			self.colorSequence = colorSequence
-			for i in range(colorCount):
+			self._FadeSteps = fadeSteps
+			self._FadeAmount = np.ceil(255/fadeSteps)
+			self._LightDataObjects = []
+			for i in range(max(min(self.colorSequenceCount, 10),2)):
 				sprite = LightData(self.colorSequenceNext)
 				sprite.active = False
 				sprite.index = random.randint(0, self._VirtualLEDCount-1)
 				sprite.lastindex = sprite.index
 				sprite.direction = [-1,1][random.randint(0,1)]
 				sprite.colorSequenceIndex = i
-				sprite.random = randomColors
+				# sprite.random = randomColors
 				self._LightDataObjects.append(sprite)
 			self._LightDataObjects[0].active = True
-			self._FunctionList.append(self._Sprites_Function)
+			# self._FunctionList.append(self._Sprites_Function)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _Sprites_Function(self):
 		try:
-			self._Fade()
+			self._FadeOff()
 			for sprite in self._LightDataObjects:
 				if sprite.active:
-					still_alive = random.randint(6,40) > sprite.duration
+					still_alive = random.randint(6,self._VirtualLEDCount//2) > sprite.duration
 					if still_alive:
 						sprite.lastindex = sprite.index
 						step_size = random.randint(1,3)*sprite.direction
@@ -2185,7 +2278,7 @@ class LightFunction:
 							for index in range(mi+1, ma+1):
 								index = index % self._VirtualLEDCount
 								sprite.index = index
-								self._VirtualLEDArray[sprite.index] = sprite.colors[sprite.colorIndex]
+								self._VirtualLEDArray[sprite.index] = sprite.color
 								if not first:
 									self._FadeLED(index, self.backgroundColor, self._FadeAmount)
 								first - False
@@ -2194,7 +2287,7 @@ class LightFunction:
 							for index in range(ma-1, mi-1,-1):
 								index = index % self._VirtualLEDCount
 								sprite.index = index
-								self._VirtualLEDArray[sprite.index] = sprite.colors[sprite.colorIndex]
+								self._VirtualLEDArray[sprite.index] = sprite.color
 								if not first:
 									self._FadeLED(index, self.backgroundColor, self._FadeAmount)
 								first - False
@@ -2211,73 +2304,77 @@ class LightFunction:
 						sprite.direction = [-1,1][random.randint(0,1)]
 						sprite.index = random.randint(0, self._VirtualLEDCount-1)
 						sprite.lastindex = sprite.index
-						if sprite.random:
-							sprite.colors = [self.colorSequenceNext]
+						# if sprite.random:
+						sprite.color = self.colorSequenceNext
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 
-	def Do_Twinkle(self, refreshDelay=0.05, backgroundColor=PixelColors.OFF, twinkleChance=0.05, twinkleColors=[(80,80,80)]):
+	def functionTwinkle(self, refreshDelay=None, twinkleChance=0.025):
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self._Initialize(refreshDelay=refreshDelay, backgroundColor=backgroundColor, ledArray=LightPattern.SolidColorArray(arrayLength=self._LEDCount, color=backgroundColor))
-			self._Twinkle_Configuration(twinkleChance=twinkleChance, twinkleColors=twinkleColors)
-			self._Run()
+			if refreshDelay is None:
+				refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 10
+			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._None_Function, configurationPointer=self._None_Configuration)
+			self._initializeOverlay(functionPointer=self._Twinkle_Overlay, configurationPointer=self._Twinkle_Configuration, twinkleChance=twinkleChance)
+			c = self._colorFunction.copy()
+			c['twinkleColors'] = True
+			self.colorSequence = LightPattern.ConvertPixelArrayToNumpyArray(LightPattern.PixelArray(arrayLength=self._LEDCount))
+			self._SetVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
+			self._colorFunction = c
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def Do_Peppermint(self):
-		"""
-		For Kaleigh
-		"""
-		try:
-			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self.Do_Twinkle(refreshDelay=0.2, backgroundColor=(170,170,170), twinkleChance=0.3, twinkleColors=[PixelColors.PURPLE])
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
-			raise
+	# def Do_Peppermint(self):
+	# 	"""
+	# 	For Kaleigh
+	# 	"""
+	# 	try:
+	# 		LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
+	# 		self.Do_Twinkle(refreshDelay=0.2, backgroundColor=(170,170,170), twinkleChance=0.3, twinkleColors=[PixelColors.PURPLE])
+	# 	except SystemExit:
+	# 		raise
+	# 	except KeyboardInterrupt:
+	# 		raise
+	# 	except Exception as ex:
+	# 		LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+	# 		raise
 
-	def Do_Girly(self):
-		"""
-		For Emily and Lily
-		"""
-		try:
-			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self.Do_Twinkle(refreshDelay=0.2, backgroundColor=(170,170,170), twinkleChance=0.3, twinkleColors=[PixelColors.PINK, PixelColors.VIOLET, PixelColors.RED])
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
-			raise
+	# def Do_Girly(self):
+	# 	"""
+	# 	For Emily and Lily
+	# 	"""
+	# 	try:
+	# 		LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
+	# 		self.Do_Twinkle(refreshDelay=0.2, backgroundColor=(170,170,170), twinkleChance=0.3, twinkleColors=[PixelColors.PINK, PixelColors.VIOLET, PixelColors.RED])
+	# 	except SystemExit:
+	# 		raise
+	# 	except KeyboardInterrupt:
+	# 		raise
+	# 	except Exception as ex:
+	# 		LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+	# 		raise
 
-	def _Twinkle_Configuration(self, twinkleChance, twinkleColors):
+	def _Twinkle_Configuration(self, twinkleChance):
 		try:
 			LOGGER.log(5, '%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
 			self._TwinkleChance = float(twinkleChance)
-			self._TwinkleColorList = LightPattern.ConvertPixelArrayToNumpyArray(twinkleColors)
-			self._OverlayList.append(self._Twinkle_Overlay)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _Twinkle_Overlay(self):
@@ -2295,38 +2392,37 @@ class LightFunction:
 		try:
 			maxVal = 1000
 			if self._TwinkleChance > 0.0:
-				for color in self._TwinkleColorList:
-					for LEDIndex in range(self._LEDCount):
-						doLight = random.randint(0,maxVal)
-						if doLight > maxVal * (1.0 - self._TwinkleChance):
-							self._LEDArray[LEDIndex] = color
+				for LEDIndex in range(self._LEDCount):
+					doLight = random.randint(0,maxVal)
+					if doLight > maxVal * (1.0 - self._TwinkleChance):
+						self._LEDArray[LEDIndex] = self.twinkleColorSequenceNext
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 
-	def Do_Spaz(self, refreshDelay=0.02, colorSequence=[PixelColors.RED,PixelColors.GREEN,PixelColors.BLUE], twinkleColors=[PixelColors.CYAN], blinkColors=[PixelColors.OFF, PixelColors.WHITE], shiftAmount=7, twinkleChance=0.5, blinkChance=0.5):
-		"""
-		For annoying people
-		"""
-		try:
-			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self._Initialize(refreshDelay=refreshDelay, backgroundColor=PixelColors.OFF, ledArray=LightPattern.ColorTransitionArray(arrayLength=self._LEDCount, colorSequence=colorSequence))
-			self._Twinkle_Configuration(twinkleChance=twinkleChance, twinkleColors=twinkleColors)
-			self._Blink_Configuration(blinkChance=blinkChance, blinkColors=blinkColors)
-			self._Marquee_Configuration(shiftAmount=shiftAmount)
-			self._Run()
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
-			raise
+	# def Do_Spaz(self, refreshDelay=0.02, colorSequence=[PixelColors.RED,PixelColors.GREEN,PixelColors.BLUE], twinkleColors=[PixelColors.CYAN], blinkColors=[PixelColors.OFF, PixelColors.WHITE], shiftAmount=7, twinkleChance=0.5, blinkChance=0.5):
+	# 	"""
+	# 	For annoying people
+	# 	"""
+	# 	try:
+	# 		LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
+	# 		self._Initialize(refreshDelay=refreshDelay, backgroundColor=PixelColors.OFF, ledArray=LightPattern.ColorTransitionArray(arrayLength=self._LEDCount, colorSequence=colorSequence))
+	# 		self._Twinkle_Configuration(twinkleChance=twinkleChance, twinkleColors=twinkleColors)
+	# 		self._Blink_Configuration(blinkChance=blinkChance, blinkColors=blinkColors)
+	# 		self._Marquee_Configuration(shiftAmount=shiftAmount)
+	# 		self._Run()
+	# 	except SystemExit:
+	# 		raise
+	# 	except KeyboardInterrupt:
+	# 		raise
+	# 	except Exception as ex:
+	# 		LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+	# 		raise
 
 	def _Blink_Configuration(self, blinkChance, blinkColors):
 		try:
@@ -2339,7 +2435,7 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _Blink_Overlay(self):
@@ -2368,85 +2464,50 @@ class LightFunction:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 
-	def Do_Raindrops_ColorList(self, refreshDelay=0.05, colorSequence=[PixelColors.RED, PixelColors.GREEN, PixelColors.WHITE], maxSize=15, backgroundColor=PixelColors.OFF, fadeAmount=25):
+	def functionRaindrops(self, refreshDelay=None, maxSize=10, fadeAmount=5, raindropChance=0.05):
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self._Initialize(refreshDelay=refreshDelay, backgroundColor=backgroundColor, ledArray=None)
-			self._Raindrops_Configuration(colorSequence=colorSequence, colorCount=len(colorSequence), fadeAmount=fadeAmount, maxSize=maxSize, randomColors=False)
-			self._Run()
+			if refreshDelay is None:
+				refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 50
+			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._Raindrops_Function, configurationPointer=self._Raindrops_Configuration, fadeAmount=fadeAmount, maxSize=maxSize, raindropChance=raindropChance)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def Do_Raindrops_PseudoRandomColorList(self, refreshDelay=0.05, randomColorCount=None, maxSize=15, backgroundColor=PixelColors.OFF, fadeAmount=25):
-		try:
-			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			if randomColorCount is None:
-				randomColorCount = random.randint(2,5)
-			self._Initialize(refreshDelay=refreshDelay, backgroundColor=backgroundColor, ledArray=None)
-			self._Raindrops_Configuration(colorSequence=PixelColors.pseudoRandom, colorCount=randomColorCount, fadeAmount=fadeAmount, maxSize=maxSize, randomColors=True)
-			self._Run()
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
-			raise
-
-	def Do_Raindrops_RandomColorList(self, refreshDelay=0.05, randomColorCount=None, maxSize=15, backgroundColor=PixelColors.OFF, fadeAmount=25):
-		try:
-			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			if randomColorCount is None:
-				randomColorCount = random.randint(2,5)
-			self._Initialize(refreshDelay=refreshDelay, backgroundColor=backgroundColor, ledArray=None)
-			self._Raindrops_Configuration(colorSequence=PixelColors.random, colorCount=randomColorCount, fadeAmount=fadeAmount, maxSize=maxSize, randomColors=True)
-			self._Run()
-		except SystemExit:
-			raise
-		except KeyboardInterrupt:
-			raise
-		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
-			raise
-
-	def _Raindrops_Configuration(self, colorSequence, colorCount, fadeAmount, maxSize, randomColors):
+	def _Raindrops_Configuration(self, fadeAmount:int, maxSize:int, raindropChance:float):
 		try:
 			LOGGER.log(5, '%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
 			self._FadeAmount = fadeAmount
-			self.colorSequence = colorSequence
-			for i in range(colorCount):
+			self._LightDataObjects = []
+			for i in range(max(min(self.colorSequenceCount, 10), 2)):
 				raindrop = LightData(self.colorSequenceNext)
 				raindrop.maxSize = maxSize
 				raindrop.index = random.randint(0, self._VirtualLEDCount-1)
-				raindrop.stepCountMax = random.randint(2, raindrop.maxSize//2)
-				raindrop.fadeAmount = 192 // raindrop.stepCountMax
+				raindrop.stepCountMax = random.randint(2, raindrop.maxSize)
+				raindrop.fadeAmount = ((255/raindrop.stepCountMax)/255)*2
 				raindrop.active = False
-				raindrop.activeChance = 0.2
-				raindrop.colorSequenceIndex = i
-				raindrop.random = randomColors
+				raindrop.activeChance = raindropChance
 				self._LightDataObjects.append(raindrop)
 			self._LightDataObjects[0].active = True
-			self._FunctionList.append(self._Raindrops_Function)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def _Raindrops_Function(self):
 		try:
-			self._Fade()
+			self._FadeOff()
 			for raindrop in self._LightDataObjects:
 				if not raindrop.active:
 					chance = random.randint(0, 1000) / 1000
@@ -2454,43 +2515,53 @@ class LightFunction:
 						raindrop.active = True
 				if raindrop.active:
 					if raindrop.stepCounter < raindrop.stepCountMax:
-						self._VirtualLEDArray[(raindrop.index + raindrop.stepCounter) % self._VirtualLEDCount] = raindrop.colors[raindrop.colorIndex]
-						self._VirtualLEDArray[(raindrop.index - raindrop.stepCounter)] = raindrop.colors[raindrop.colorIndex]
-						raindrop.colors[raindrop.colorIndex] = self._FadeColor(raindrop.colors[raindrop.colorIndex], fadeAmount=raindrop.fadeAmount)
+						self._VirtualLEDArray[(raindrop.index + raindrop.stepCounter) % self._VirtualLEDCount] = raindrop.color
+						self._VirtualLEDArray[(raindrop.index - raindrop.stepCounter) % self._VirtualLEDCount] = raindrop.color
+						raindrop.color[:] = raindrop.color * ((raindrop.stepCountMax - raindrop.stepCounter) / raindrop.stepCountMax)
+						p = Pixel(raindrop.color)
 						raindrop.stepCounter += 1
 					else:
 						raindrop.index = random.randint(0, self._VirtualLEDCount-1)
-						raindrop.stepCountMax = random.randint(2, raindrop.maxSize//2)
-						raindrop.fadeAmount = 192 // raindrop.stepCountMax
+						raindrop.stepCountMax = random.randint(2, raindrop.maxSize)
+						raindrop.fadeAmount = ((255/raindrop.stepCountMax)/255)*2
 						raindrop.stepCounter = 0
-						raindrop.colors = [self.colorSequenceNext]
+						raindrop.color = self.colorSequenceNext.copy()
 						raindrop.active = False
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 
 	def demo(self, secondsPerMode=20):
 		try:
 			self.secondsPerMode = secondsPerMode
-			omitted = [LightFunction.Do_Spaz.__name__, LightFunction.Do_SolidColor_SinglePseudoRandomColor.__name__, LightFunction.Do_SolidColor_SinglePseudoRandomColor.__name__, LightFunction.Do_SolidColor_SingleRandomColor.__name__]
-			funcs = list(dir(self))
-			funcs = [f  for f in funcs if f.lower()[:3] == 'do_' and not f in omitted]
+			# omitted = [LightFunction.Do_Spaz.__name__, LightFunction.Do_SolidColor_SinglePseudoRandomColor.__name__, LightFunction.Do_SolidColor_SinglePseudoRandomColor.__name__, LightFunction.Do_SolidColor_SingleRandomColor.__name__]
+			omitted = [LightFunction.functionNone.__name__]
+			attrs = list(dir(self))
+			funcs = [f for f in attrs if f[:8] == 'function']
+			colors = [c for c in attrs if c[:8] == 'useColor']
+			funcs.sort()
+			colors.sort()
 			while True:
 				try:
+					getattr(self, colors[random.randint(0, len(colors)-1)])()
 					getattr(self, funcs[random.randint(0, len(funcs)-1)])()
+					c = self._colorFunction.copy()
+					c.pop('function')
+					self._colorFunction['function'](**c)
+					self.run()
 				except Exception as ex:
-					LOGGER.error(ex)
+					LOGGER.exception(ex)
 		except SystemExit:
 			pass
 		except KeyboardInterrupt:
 			pass
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def test(self, secondsPerMode=0.5, function_names=[], color_names=[], skip_functions=[], skip_colors=[]):
@@ -2525,14 +2596,18 @@ class LightFunction:
 							colors.remove(f)
 			for f in funcs:
 				for c in colors:
-					getattr(self, f)()
+					# getattr(self, f)()
 					getattr(self, c)()
+					getattr(self, f)()
+					c = self._colorFunction.copy()
+					c.pop('function')
+					self._colorFunction['function'](**c)
 					self.run()
 		except SystemExit:
 			pass
 		except KeyboardInterrupt:
 			pass
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 

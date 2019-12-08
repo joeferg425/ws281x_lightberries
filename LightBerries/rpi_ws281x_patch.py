@@ -54,4 +54,4 @@ else:
 	try:
 		rpi_ws281x.rpi_ws281x._LED_Data.__setitem__ = _monkeypatch__setitem__
 	except Exception as ex:
-		LOGGER.error('Failed rpi_ws281x Monkey Patch: %s' % ex)
+		LOGGER.exception('Failed rpi_ws281x Monkey Patch: %s' % ex)

@@ -26,6 +26,14 @@ class LightData():
 		self.random = False
 		self.flipLength = 0
 		if hasattr(colors, '__len__') and hasattr(colors, 'shape') and len(colors.shape)>1:
+			self.color = None
 			self.colors = LightPattern.ConvertPixelArrayToNumpyArray(colors)
 		else:
 			self.colors = array([Pixel(colors).tuple])
+			self.color = Pixel(colors).array
+
+	def __str__(self):
+		return '[{}]: {}'.format(self.index, Pixel(self.colors[0]))
+
+	def __repr__(self):
+		return '<{}> {}'.format(self.__class__.__name__, str(self))

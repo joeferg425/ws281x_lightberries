@@ -60,7 +60,7 @@ class LightString(list):
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 		try:
 			self._lights = np.array([Pixel() for i in range(self._ledCount)])
@@ -70,7 +70,7 @@ class LightString(list):
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 		# force cleanup of c objects
 		atexit.register(self.__del__)
@@ -91,7 +91,7 @@ class LightString(list):
 			except KeyboardInterrupt:
 				raise
 			except Exception as ex:
-				LOGGER.error('Failed to clean up WS281X object: {}'.format(ex))
+				LOGGER.exception('Failed to clean up WS281X object: {}'.format(ex))
 				raise
 			self.pixelStrip = None
 
@@ -112,7 +112,7 @@ class LightString(list):
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Failed to get key "%s" from %s: %s', key, self._lights, ex)
+			LOGGER.exception('Failed to get key "%s" from %s: %s', key, self._lights, ex)
 			raise
 
 	def __setitem__(self, key, value) -> None:
@@ -131,7 +131,7 @@ class LightString(list):
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Failed to set light %s to value %s: %s', key, value, ex)
+			LOGGER.exception('Failed to set light %s to value %s: %s', key, value, ex)
 			raise
 
 	def __enter__(self) -> LightString:
@@ -162,7 +162,7 @@ class LightString(list):
 			except KeyboardInterrupt:
 				raise
 			except Exception as ex:
-				LOGGER.error('Failed to set pixel %s in WS281X to value %s: %s', index, LightString(0), ex)
+				LOGGER.exception('Failed to set pixel %s in WS281X to value %s: %s', index, LightString(0), ex)
 				raise
 		self.refresh()
 
@@ -181,7 +181,7 @@ class LightString(list):
 			except KeyboardInterrupt:
 				raise
 			except Exception as ex:
-				LOGGER.error('Failed to set pixel %s in WS281X to value %s: %s', index, light._value, ex)
+				LOGGER.exception('Failed to set pixel %s in WS281X to value %s: %s', index, light._value, ex)
 				raise
 		try:
 			self.pixelStrip.show()
@@ -190,7 +190,7 @@ class LightString(list):
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Function call "show" in WS281X object failed: {}'.format(ex))
+			LOGGER.exception('Function call "show" in WS281X object failed: {}'.format(ex))
 			raise
 
 if __name__ == '__main__':

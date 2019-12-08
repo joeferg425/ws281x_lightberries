@@ -54,7 +54,9 @@ PWM_CHANNEL = 0
 # create the light-function object
 lightFunction = LightFunction(ledCount=PIXEL_COUNT, pwmGPIOpin=GPIO_PWM_PIN, channelDMA=DMA_CHANNEL, frequencyPWM=PWM_FREQUENCY, channelPWM=PWM_CHANNEL, invertSignalPWM=INVERT, gamma=GAMMA, stripTypeLED=LED_STRIP_TYPE, ledBrightnessFloat=BRIGHTNESS, debug=True)
 # choose a function
-lightFunction.Do_Shift_Rainbow()
+lightFunction.useColorRainbow()
+lightFunction.functionMarquee()
+lightFunction.run()
 ```
 ## Raindrop function:
 ```python
@@ -76,5 +78,7 @@ PWM_CHANNEL = 0
 # create the light-function object
 lightFunction = LightFunction(ledCount=PIXEL_COUNT, pwmGPIOpin=GPIO_PWM_PIN, channelDMA=DMA_CHANNEL, frequencyPWM=PWM_FREQUENCY, channelPWM=PWM_CHANNEL, invertSignalPWM=INVERT, gamma=GAMMA, stripTypeLED=LED_STRIP_TYPE, ledBrightnessFloat=BRIGHTNESS, debug=True)
 # choose a function
-lightFunction.Do_Raindrops()
+lightFunction.useColorRandom()
+lightFunction.functionRaindrops()
+lightFunction.run()
 ```

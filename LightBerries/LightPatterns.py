@@ -32,7 +32,7 @@ class LightPattern:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Error in {}.PixelArray: {}'.format('LightPatterns', ex))
+			LOGGER.exception('Error in {}.PixelArray: {}'.format('LightPatterns', ex))
 			raise
 
 	@staticmethod
@@ -52,7 +52,7 @@ class LightPattern:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Error in {}.ConvertPixelArrayToNumpyArray: {}'.format('LightPatterns', ex))
+			LOGGER.exception('Error in {}.ConvertPixelArrayToNumpyArray: {}'.format('LightPatterns', ex))
 			raise
 
 	@staticmethod
@@ -78,7 +78,7 @@ class LightPattern:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Error in {}.SolidColorArray: {}'.format('LightPatterns', ex))
+			LOGGER.exception('Error in {}.SolidColorArray: {}'.format('LightPatterns', ex))
 			raise
 
 	@staticmethod
@@ -95,7 +95,7 @@ class LightPattern:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Error in {}.WesArray: {}'.format('LightPatterns', ex))
+			LOGGER.exception('Error in {}.WesArray: {}'.format('LightPatterns', ex))
 			raise
 
 	@staticmethod
@@ -159,7 +159,7 @@ class LightPattern:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Error in {}.ColorTransitionArray: {}'.format('LightPatterns', ex))
+			LOGGER.exception('Error in {}.ColorTransitionArray: {}'.format('LightPatterns', ex))
 			raise
 
 	@staticmethod
@@ -180,7 +180,7 @@ class LightPattern:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Error in {}.RainbowArray: {}'.format('LightPatterns', ex))
+			LOGGER.exception('Error in {}.RainbowArray: {}'.format('LightPatterns', ex))
 			raise
 
 	@staticmethod
@@ -217,7 +217,7 @@ class LightPattern:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Error in {}.RepeatingColorSequenceArray: {}'.format('LightPatterns', ex))
+			LOGGER.exception('Error in {}.RepeatingColorSequenceArray: {}'.format('LightPatterns', ex))
 			raise
 
 	@staticmethod
@@ -243,7 +243,7 @@ class LightPattern:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Error in {}.RepeatingRainbowArray: {}'.format('LightPatterns', ex))
+			LOGGER.exception('Error in {}.RepeatingRainbowArray: {}'.format('LightPatterns', ex))
 			raise
 
 	@staticmethod
@@ -299,7 +299,7 @@ class LightPattern:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Error in {}.ReflectArray: {}'.format('LightPatterns', ex))
+			LOGGER.exception('Error in {}.ReflectArray: {}'.format('LightPatterns', ex))
 			raise
 
 	@staticmethod
@@ -337,7 +337,7 @@ class LightPattern:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Error in {}.PseudoRandomArray: {}'.format('LightPatterns', ex))
+			LOGGER.exception('Error in {}.PseudoRandomArray: {}'.format('LightPatterns', ex))
 			raise
 
 	@staticmethod
@@ -366,7 +366,7 @@ class LightPattern:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Error in {}.PseudoRandomArray: {}'.format('LightPatterns', ex))
+			LOGGER.exception('Error in {}.PseudoRandomArray: {}'.format('LightPatterns', ex))
 			raise
 
 	@staticmethod
@@ -395,7 +395,7 @@ class LightPattern:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Error in {}.PseudoRandomArray: {}'.format('LightPatterns', ex))
+			LOGGER.exception('Error in {}.PseudoRandomArray: {}'.format('LightPatterns', ex))
 			raise
 
 	@staticmethod
@@ -413,7 +413,7 @@ class LightPattern:
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('Error in {}.PseudoRandomArray: {}'.format('LightPatterns', ex))
+			LOGGER.exception('Error in {}.PseudoRandomArray: {}'.format('LightPatterns', ex))
 			raise
 
 if __name__ == '__main__':

@@ -60,7 +60,7 @@ class Pixel():
 		except KeyboardInterrupt:
 			raise
 		except Exception as ex:
-			LOGGER.error('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
+			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
 	def __len__(self) -> int:
