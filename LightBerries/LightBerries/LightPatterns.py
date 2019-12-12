@@ -102,7 +102,7 @@ class LightPattern:
 	def ColorTransitionArray(arrayLength:int, wrap=True, colorSequence:List[Pixel]=[PixelColors.RED,PixelColors.GREEN,PixelColors.BLUE,PixelColors.WHITE]) -> List[Pixel]:
 		"""
 		This is a slightly more versatile version of CreateRainbow.
-		The user specifies a color sequence and the number of steps (LEDS)
+		The user specifies a color sequence and the number of steps (LEDs)
 		in the transition from one color to the next.
 
 		arrayLength: int
@@ -123,10 +123,10 @@ class LightPattern:
 			a list of Pixel objects in the pattern you requested
 		"""
 		try:
-			# get length of sequence
 			colorSequence = LightPattern.ConvertPixelArrayToNumpyArray(colorSequence)
+			# get length of sequence
 			sequenceLength = len(colorSequence)
-			derive=False
+			# derive=False
 			count = 0
 			stepCount = None
 			if wrap:
@@ -135,14 +135,16 @@ class LightPattern:
 				wrap = 1
 			# figure out how many LEDs per color change
 			if stepCount is None:
-				derive = True
+				# derive = True
 				stepCount = arrayLength // (sequenceLength - wrap)
 				prevStepCount = stepCount
 			# create temporary array
 			arry = LightPattern.PixelArray(arrayLength)
 			# step through color sequence
 			for colorIndex in range(sequenceLength - wrap):
-				if colorIndex == sequenceLength - 1 and derive==True:
+				if colorIndex == sequenceLength-1:
+					stepCount = arrayLength - count
+				elif colorIndex == sequenceLength-2:
 					stepCount = arrayLength - count
 				# figure out the current and next colors
 				thisColor = colorSequence[colorIndex]
@@ -237,7 +239,7 @@ class LightPattern:
 		if segmentLength is None:
 			segmentLength = arrayLength // 4
 		try:
-			return LightPattern.RepeatingColorSequenceArray(arrayLength=arrayLength, colorSequence=LightPattern.RainbowArray(arrayLength=segmentLength))
+			return LightPattern.RepeatingColorSequenceArray(arrayLength=arrayLength, colorSequence=LightPattern.RainbowArray(arrayLength=segmentLength, wrap=True))
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
