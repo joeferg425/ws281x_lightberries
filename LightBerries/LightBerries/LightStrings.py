@@ -36,13 +36,7 @@ class LightString(list):
 		"""
 		if ledCount is None and pixelStrip is None:
 			raise Exception('Cannot create LightString object without ledCount or pixelStrip object being specified')
-		# self._gpioPin = gpioPin
 		self._ledCount = ledCount
-		# self._ledCount = ledCount
-		# self._ledFrequency = ledFrequency
-		# self._ledDMA = ledDMA
-		# self._ledInvert = ledInvert
-		# self._ledBrightness = int(255 * (ledPercentBrightness / 100))
 		if True == debug:
 			LOGGER.setLevel(logging.DEBUG)
 			LOGGER.debug('%s.%s Debugging mode', self.__class__.__name__, inspect.stack()[0][3])

@@ -1,7 +1,7 @@
 from LightBerries import LightFunction, PixelColors
 
 # the number of pixels in the light string
-PIXEL_COUNT = 100
+PIXEL_COUNT = 196
 # GPIO pin to use for PWM signal
 GPIO_PWM_PIN = 18
 # DMA channel
@@ -20,9 +20,10 @@ lightFunction = LightFunction(ledCount=PIXEL_COUNT, pwmGPIOpin=GPIO_PWM_PIN, cha
 try:
 	function_names=[]
 	color_names=[]
-	function_names=['bouncy']
-	skip_functions=['accelerate', 'alternate', 'cylon', 'merge', 'randomchange', 'shift', 'shiftfade', 'solidcolor', 'solidcolorcycle', 'randomchangefade']
+	skip_functions=[]
 	skip_colors=[]
+	# function_names=['bouncy']
+	# skip_functions=['accelerate', 'alternate', 'cylon', 'merge', 'randomchange', 'shift', 'shiftfade', 'solidcolor', 'solidcolorcycle', 'randomchangefade']
 	# color_names=['rainbow']
 	secondsPerMode=10
 	lightFunction.test(secondsPerMode=secondsPerMode, function_names=function_names, color_names=color_names, skip_functions=skip_functions, skip_colors=skip_colors)

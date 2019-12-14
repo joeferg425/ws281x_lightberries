@@ -35,14 +35,14 @@ class App:
 		color = int(color[1][1:],16)
 		self.lightFunction._VirtualLEDArray[:] *=0
 		self.lightFunction._VirtualLEDArray[:] += Pixel(color).array
-		self.lightFunction._CopyVirtualLedsToWS281X()
-		self.lightFunction._RefreshLEDs()
+		self.lightFunction._copyVirtualLedsToWS281X()
+		self.lightFunction._refreshLEDs()
 
 	def updateValue(self, color):
 		color = int(color)
 		self.lightFunction._VirtualLEDArray[:] *=0
 		self.lightFunction._VirtualLEDArray[:] += Pixel(color).array
-		self.lightFunction._CopyVirtualLedsToWS281X()
-		self.lightFunction._RefreshLEDs()
+		self.lightFunction._copyVirtualLedsToWS281X()
+		self.lightFunction._refreshLEDs()
 
 app = App()

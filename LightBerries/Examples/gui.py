@@ -2,6 +2,7 @@ import tkinter as tk
 from LightBerries import LightFunction, Pixel, LightPattern
 from tkinter.colorchooser import *
 import time
+import multiprocessing
 
 # the number of pixels in the light string
 PIXEL_COUNT = 196
@@ -19,10 +20,110 @@ LED_STRIP_TYPE = None
 INVERT = False
 PWM_CHANNEL = 0
 
-class App:
+class LightsProcess():
+	def __init__(self):
+		self.inQ = multiprocessing.Queue(2)
+		self.outQ = multiprocessing.Queue(2)
+		self.process = multiprocessing.Process(target=LightsProcess.lupe, args=[self.inQ, self.outQ])
+		# self.process = multiprocessing.Process(target=App)
+		self.process.start()
+		# LightsProcess.lupe(1, 2)
+
+
+	def __del__(self):
+		self.process.terminate()
+		print('goodbye')
+
+	@classmethod
+	def lupe(cls, inQ, outQ):
+		try:
+			lf = LightFunction(ledCount=PIXEL_COUNT, pwmGPIOpin=GPIO_PWM_PIN, channelDMA=DMA_CHANNEL, frequencyPWM=PWM_FREQUENCY, channelPWM=PWM_CHANNEL, invertSignalPWM=INVERT, gamma=GAMMA, stripTypeLED=LED_STRIP_TYPE, ledBrightnessFloat=BRIGHTNESS, debug=True)
+			# print(dir(lf))
+			lf._setVirtualLEDArray(LightPattern.ConvertPixelArrayToNumpyArray(LightPattern.PixelArray(PIXEL_COUNT)))
+			lf._copyVirtualLedsToWS281X()
+			lf._refreshLEDs()
+			time.sleep(0.05)
+			count = PIXEL_COUNT
+			color = 0
+			duration = 0
+			pattern = ''
+			function = ''
+			while True:
+				msg = None
+				try:
+					msg = inQ.get()
+				except:
+					pass
+				if not msg is None:
+					print(msg)
+					if msg[0] == 'go':
+						try:
+							lf.reset()
+							getattr(lf, pattern)()
+							getattr(lf, function)()
+							lf.secondsPerMode = duration
+							lf.run()
+							lf._off()
+							lf._copyVirtualLedsToWS281X()
+							lf._refreshLEDs()
+							time.sleep(0.05)
+						except Exception as ex:
+							print(ex)
+					elif msg[0] == 'color':
+						try:
+							color = msg[1]
+							print('setting color')
+							lf._VirtualLEDArray[:] *=0
+							lf._VirtualLEDArray[:] += Pixel(color).array
+							lf._copyVirtualLedsToWS281X()
+							lf._refreshLEDs()
+							time.sleep(0.05)
+						except Exception as ex:
+							print(ex)
+					elif msg[0] == 'count':
+						try:
+							count = msg[1]
+							if count < lf._LEDCount:
+								lf._VirtualLEDArray[:] *=0
+								lf._copyVirtualLedsToWS281X()
+								lf._refreshLEDs()
+								time.sleep(0.05)
+							lf = LightFunction(ledCount=count, pwmGPIOpin=GPIO_PWM_PIN, channelDMA=DMA_CHANNEL, frequencyPWM=PWM_FREQUENCY, channelPWM=PWM_CHANNEL, invertSignalPWM=INVERT, gamma=GAMMA, stripTypeLED=LED_STRIP_TYPE, ledBrightnessFloat=BRIGHTNESS, debug=True)
+							lf.secondsPerMode = duration
+							lf._VirtualLEDArray[:] += Pixel(color).array
+							lf._copyVirtualLedsToWS281X()
+							lf._refreshLEDs()
+							time.sleep(0.05)
+						except Exception as ex:
+							print(ex)
+					elif msg[0] == 'duration':
+						try:
+							duration = msg[1]
+						except Exception as ex:
+							print(ex)
+					elif msg[0] == 'function':
+						try:
+							function = msg[1]
+						except Exception as ex:
+							print(ex)
+					elif msg[0] == 'pattern':
+						try:
+							pattern = msg[1]
+						except Exception as ex:
+							print(ex)
+
+				time.sleep(0.001)
+		except KeyboardInterrupt:
+			pass
+		except Exception as ex:
+			print(ex)
+		lf.__del__()
+		time.sleep(0.05)
+
+class App():
 	def __init__(self):
 		self.root = tk.Tk()
-		self.lightFunction = None
+		self.lights = LightsProcess()
 
 		self.LEDCountInt = tk.IntVar()
 		self.LEDCountInt.trace("w", lambda name, index, mode, var=self.LEDCountInt:self.updateLEDCount(var.get()))
@@ -30,9 +131,15 @@ class App:
 		self.LEDCountlabel.grid(row=0, column=0)
 		self.LEDCountslider = tk.Scale(self.root, from_=0, to=500, variable=self.LEDCountInt, orient="horizontal")
 		self.LEDCountslider.grid(row=0, column=1)
+		self.LEDCountPressed = False
+
 		self.LEDCounttext = tk.Entry(self.root, textvariable=self.LEDCountInt)
 		self.LEDCounttext.grid(row=0, column=2)
 		self.LEDCountInt.set(PIXEL_COUNT)
+		try:
+			self.lights.inQ.put_nowait(('count',PIXEL_COUNT))
+		except multiprocessing.queues.Full:
+			pass
 
 		self.ColorInt = tk.IntVar()
 		self.ColorString = tk.StringVar()
@@ -46,14 +153,17 @@ class App:
 		self.Colortext.grid(row=1, column=2)
 		self.Colorbutton = tk.Button(text='Select Color', command=self.getColor)
 		self.Colorbutton.grid(row=1, column=3)
+		self.updateColor(0xFF0000)
 
 		self.functionString = tk.StringVar()
+		self.functionString.trace("w", lambda name, index, mode, var=self.functionString:self.updateFunction(var.get()))
 		self.functionChoices = [f for f in dir(LightFunction) if f[:8] == 'function']
 		self.functionChoices.sort()
 		self.functionString.set(self.functionChoices[0])
 		self.functionDropdown = tk.OptionMenu(self.root, self.functionString, *self.functionChoices)
 		self.functionDropdown.grid(row=2, column=1)
 		self.patternString = tk.StringVar()
+		self.patternString.trace("w", lambda name, index, mode, var=self.patternString:self.updatePattern(var.get()))
 		self.patternChoices = [f for f in dir(LightFunction) if f[:8] == 'useColor']
 		self.patternChoices.sort()
 		self.patternString.set(self.patternChoices[0])
@@ -69,76 +179,76 @@ class App:
 		self.durationText.grid(row=3, column=2)
 		self.buttonGo = tk.Button(self.root, height=1, width=10, text="Go", command=self.go)
 		self.buttonGo.grid(row=3, column=3)
+		self.root.protocol("WM_DELETE_WINDOW", self.destroy)
+		try:
+			self.lights.inQ.put_nowait(('duration',self.durationInt.get()))
+		except multiprocessing.queues.Full:
+			pass
 
-
-		self.lightFunction = LightFunction(ledCount=self.LEDCountInt.get(), pwmGPIOpin=GPIO_PWM_PIN, channelDMA=DMA_CHANNEL, frequencyPWM=PWM_FREQUENCY, channelPWM=PWM_CHANNEL, invertSignalPWM=INVERT, gamma=GAMMA, stripTypeLED=LED_STRIP_TYPE, ledBrightnessFloat=BRIGHTNESS, debug=True)
 		self.root.title('Color Chooser')
 
 
 		self.root.mainloop()
 
+	def destroy(self):
+		self.root.destroy()
+		self.__del__()
+
+	def __del__(self):
+		del(self.lights)
+
 	def go(self):
-		self.lightFunction.reset()
-		getattr(self.lightFunction, self.patternString.get())()
-		getattr(self.lightFunction, self.functionString.get())()
-		self.lightFunction.secondsPerMode = self.durationInt.get()
-		self.lightFunction.run()
-		self.lightFunction._off()
-		self.lightFunction._CopyVirtualLedsToWS281X()
-		self.lightFunction._RefreshLEDs()
-		time.sleep(0.01)
+		try:
+			self.lights.inQ.put_nowait(('go',))
+		except multiprocessing.queues.Full:
+			pass
 
 	def getColor(self):
 		color = askcolor()
 		color = int(color[1][1:],16)
 		self.ColorInt.set(color)
+		try:
+			self.lights.inQ.put_nowait(('color',color))
+		except multiprocessing.queues.Full:
+			pass
 
+	def updateFunction(self, function):
+		try:
+			self.lights.inQ.put_nowait(('function',function))
+		except multiprocessing.queues.Full:
+			pass
+
+	def updatePattern(self, pattern):
+		try:
+			self.lights.inQ.put_nowait(('pattern',pattern))
+		except multiprocessing.queues.Full:
+			pass
 
 	def updateDuration(self, duration):
-		self.lightFunction.secondsPerMode = duration
-		# self.lightFunction._VirtualLEDArray[:] *=0
-		# self.lightFunction._VirtualLEDArray[:] += Pixel(color).array
-		# self.lightFunction._CopyVirtualLedsToWS281X()
-		# self.lightFunction._RefreshLEDs()
-
-	# def updateLEDCountslider(self, color):
-		# color = int(color)
-		# self.lightFunction._VirtualLEDArray[:] *=0
-		# self.lightFunction._VirtualLEDArray[:] += Pixel(color).array
-		# self.lightFunction._CopyVirtualLedsToWS281X()
-		# self.lightFunction._RefreshLEDs()
-		# self.LEDCountString.set('{:06X}'.format(color))
+		try:
+			self.lights.inQ.put_nowait(('duration',duration))
+		except multiprocessing.queues.Full:
+			pass
 
 	def updateLEDCount(self, count):
-		# self.LEDCountInt.set(color)
-		count = int(count)
-		if not self.lightFunction is None:
-			# print('count not null', self.lightFunction._VirtualLEDCount)
-			self.lightFunction._VirtualLEDArray[:] *=0
-			self.lightFunction._CopyVirtualLedsToWS281X()
-			self.lightFunction._RefreshLEDs()
-			time.sleep(0.01)
-			self.lightFunction = LightFunction(ledCount=self.LEDCountInt.get(), pwmGPIOpin=GPIO_PWM_PIN, channelDMA=DMA_CHANNEL, frequencyPWM=PWM_FREQUENCY, channelPWM=PWM_CHANNEL, invertSignalPWM=INVERT, gamma=GAMMA, stripTypeLED=LED_STRIP_TYPE, ledBrightnessFloat=BRIGHTNESS, debug=True)
-			# self.lightFunction._VirtualLEDArray[:] *=0
-			self.lightFunction.secondsPerMode = self.durationInt.get()
-			self.lightFunction._VirtualLEDArray[:] += Pixel(self.ColorInt.get()).array
-			self.lightFunction._CopyVirtualLedsToWS281X()
-			self.lightFunction._RefreshLEDs()
-			time.sleep(0.01)
+		try:
+			count = int(count)
+			self.lights.inQ.put_nowait(('count',count))
+		except multiprocessing.queues.Full:
+			pass
 
 	def updateColor(self, color):
 		if self.root.focus_get() != self.Colortext:
 			self.ColorString.set('{:06X}'.format(color))
-		if not self.lightFunction is None:
-			# print('color not null', self.lightFunction._VirtualLEDCount)
-			self.lightFunction._VirtualLEDArray[:] *=0
-			self.lightFunction._VirtualLEDArray[:] += Pixel(color).array
-			self.lightFunction._CopyVirtualLedsToWS281X()
-			self.lightFunction._RefreshLEDs()
-			time.sleep(0.01)
+		try:
+			self.lights.inQ.put_nowait(('color',color))
+		except multiprocessing.queues.Full:
+			pass
 
 	def updateColorHex(self, color):
 		color = int(color, 16)
 		self.ColorInt.set(color)
 
-app = App()
+if __name__ == '__main__':
+	app = App()
+	del(app)
