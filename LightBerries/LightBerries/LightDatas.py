@@ -16,15 +16,19 @@ class LightData():
 		self.delayCounter = 0
 		self.delayCountMax = 0
 		self.active = 0
+		self.dying = 0
 		self.activeChance = 0
 		self.duration = 0
 		self.direction = 0
 		self.colorSequenceIndex = 0
-		self.maxSize = 0
+		self.size = 0
+		self.sizeMax = 0
 		self.fadeAmount = 0
 		self.colorIndex = 0
 		self.random = False
 		self.flipLength = 0
+		self.state = 0
+		self.stateMax = 0
 		if hasattr(colors, '__len__') and hasattr(colors, 'shape') and len(colors.shape)>1:
 			self.color = None
 			self.colors = LightPattern.ConvertPixelArrayToNumpyArray(colors)
@@ -33,7 +37,7 @@ class LightData():
 			self.color = Pixel(colors).array
 
 	def __str__(self):
-		return '[{}]: {}'.format(self.index, Pixel(self.colors[0]))
+		return '[{}]: {}'.format(self.index, Pixel(self.color))
 
 	def __repr__(self):
 		return '<{}> {}'.format(self.__class__.__name__, str(self))
