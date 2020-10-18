@@ -25,6 +25,7 @@ class LightData():
 		self.sizeMax = 0
 		self.fadeAmount = 0
 		self.colorIndex = 0
+		self.colorScaler = 0
 		self.random = False
 		self.flipLength = 0
 		self.state = 0

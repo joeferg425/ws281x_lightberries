@@ -1,10 +1,41 @@
 import numpy as np
 import random
 import logging
+import datetime
 from typing import List, Tuple
 from .Pixels import Pixel, PixelColors
 from .LightStrings import LightString
 
+# set some constants
+DEFAULT_TWINKLE_COLOR = PixelColors.GRAY
+DEFAULT_BACKGROUND_COLOR = PixelColors.OFF
+d = datetime.datetime.now()
+m = d.month
+DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE]
+if m == 1:
+	DEFAULT_COLOR_SEQUENCE = [PixelColors.CYAN2, PixelColors.WHITE, PixelColors.CYAN, PixelColors.BLUE2, PixelColors.BLUE]
+elif m == 2:
+	DEFAULT_COLOR_SEQUENCE = [PixelColors.PINK, PixelColors.WHITE, PixelColors.RED, PixelColors.WHITE]
+elif m == 3:
+	DEFAULT_COLOR_SEQUENCE = [PixelColors.GREEN, PixelColors.WHITE, PixelColors.ORANGE, PixelColors.WHITE, PixelColors.YELLOW]
+elif m == 4:
+	DEFAULT_COLOR_SEQUENCE = [PixelColors.PINK, PixelColors.CYAN, PixelColors.YELLOW, PixelColors.GREEN, PixelColors.WHITE]
+elif m == 5:
+	DEFAULT_COLOR_SEQUENCE = [PixelColors.PINK, PixelColors.CYAN, PixelColors.YELLOW, PixelColors.GREEN, PixelColors.WHITE]
+elif m == 6:
+	DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.WHITE, PixelColors.BLUE]
+elif m == 7:
+	DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.WHITE, PixelColors.BLUE]
+elif m == 8:
+	DEFAULT_COLOR_SEQUENCE = [PixelColors.ORANGE, PixelColors.WHITE, PixelColors.YELLOW, PixelColors.ORANGE2]
+elif m == 9:
+	DEFAULT_COLOR_SEQUENCE = [PixelColors.ORANGE, PixelColors.WHITE, PixelColors.YELLOW, PixelColors.ORANGE2, PixelColors.RED, PixelColors.RED2]
+elif m == 10:
+	DEFAULT_COLOR_SEQUENCE = [PixelColors.MIDNIGHT, PixelColors.RED, PixelColors.ORANGE, PixelColors.OFF]
+elif m == 11:
+	DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.MIDNIGHT, PixelColors.GRAY]
+elif m == 12:
+	DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.WHITE, PixelColors.GREEN]
 
 LOGGER = logging.getLogger(__name__)
 if not LOGGER.handlers:
@@ -56,7 +87,7 @@ class LightPattern:
 			raise
 
 	@staticmethod
-	def SolidColorArray(arrayLength:int, color:Pixel=PixelColors.WHITE) -> List[Pixel]:
+	def SolidColorArray(arrayLength:int, color:Pixel=DEFAULT_COLOR_SEQUENCE[0]) -> List[Pixel]:
 		""" Creates array of RGB tuples that are all one color
 
 		arrayLength: int
@@ -99,7 +130,7 @@ class LightPattern:
 			raise
 
 	@staticmethod
-	def ColorTransitionArray(arrayLength:int, wrap=True, colorSequence:List[Pixel]=[PixelColors.RED,PixelColors.GREEN,PixelColors.BLUE,PixelColors.WHITE]) -> List[Pixel]:
+	def ColorTransitionArray(arrayLength:int, wrap=True, colorSequence:List[Pixel]=DEFAULT_COLOR_SEQUENCE) -> List[Pixel]:
 		"""
 		This is a slightly more versatile version of CreateRainbow.
 		The user specifies a color sequence and the number of steps (LEDs)
@@ -129,6 +160,7 @@ class LightPattern:
 			# derive=False
 			count = 0
 			stepCount = None
+			prevStepCount = 0
 			if wrap:
 				wrap = 0
 			else:
@@ -186,7 +218,7 @@ class LightPattern:
 			raise
 
 	@staticmethod
-	def RepeatingColorSequenceArray(arrayLength:int, colorSequence:List[Pixel]=[PixelColors.RED,PixelColors.GREEN,PixelColors.BLUE]) -> List[Pixel]:
+	def RepeatingColorSequenceArray(arrayLength:int, colorSequence:List[Pixel]=DEFAULT_COLOR_SEQUENCE) -> List[Pixel]:
 		"""
 		Creates a repeating LightPattern from a given sequence
 
@@ -249,7 +281,7 @@ class LightPattern:
 			raise
 
 	@staticmethod
-	def ReflectArray(arrayLength:int, colorSequence:List[Pixel]=[PixelColors.RED, PixelColors.RED, PixelColors.GREEN, PixelColors.GREEN, PixelColors.BLUE, PixelColors.BLUE], foldLength=None) -> List[Pixel]:
+	def ReflectArray(arrayLength:int, colorSequence:List[Pixel]=DEFAULT_COLOR_SEQUENCE, foldLength=None) -> List[Pixel]:
 		"""
 		generates an array where each repetition of the input
 		sequence is reversed from the previous
@@ -279,6 +311,7 @@ class LightPattern:
 			arry = LightPattern.PixelArray(arrayLength)
 			for segBegin in range(0, arrayLength, foldLength):
 				overflow = 0
+				segEnd = 0
 				if segBegin + foldLength <= arrayLength and segBegin + foldLength <= colorSequenceLen:
 					segEnd = segBegin + foldLength
 				elif segBegin + foldLength > arrayLength:
@@ -372,7 +405,7 @@ class LightPattern:
 			raise
 
 	@staticmethod
-	def ColorStretchArray(repeats = 5, colorSequence:List[Pixel]=[PixelColors.RED, PixelColors.ORANGE2, PixelColors.YELLOW, PixelColors.GREEN, PixelColors.BLUE, PixelColors.PURPLE]) -> List[Pixel]:
+	def ColorStretchArray(repeats = 5, colorSequence:List[Pixel]=DEFAULT_COLOR_SEQUENCE) -> List[Pixel]:
 		""" takes a sequence of input colors and repeats each element the requested number of times
 
 		repeats: int

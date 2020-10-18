@@ -15,6 +15,7 @@ if __name__ == '__main__':
 	INVERT = False
 	PWM_CHANNEL = 0
 	# create the light-function object
-	l = LightFunction(ledCount=PIXEL_COUNT, pwmGPIOpin=GPIO_PWM_PIN, channelDMA=DMA_CHANNEL, frequencyPWM=PWM_FREQUENCY, channelPWM=PWM_CHANNEL, invertSignalPWM=INVERT, gamma=GAMMA, stripTypeLED=LED_STRIP_TYPE, debug=True)
+	brightness = 0.75
+	l = LightFunction(ledCount=PIXEL_COUNT, pwmGPIOpin=GPIO_PWM_PIN, channelDMA=DMA_CHANNEL, frequencyPWM=PWM_FREQUENCY, channelPWM=PWM_CHANNEL, invertSignalPWM=INVERT, gamma=GAMMA, stripTypeLED=LED_STRIP_TYPE, debug=True, ledBrightnessFloat=brightness)
 	# run the demo!
 	l.demo(20)

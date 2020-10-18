@@ -1,3 +1,4 @@
+from logging import Logger
 import sys
 import numpy as np
 import time
@@ -8,7 +9,7 @@ from typing import List, Tuple, Optional
 from .rpi_ws281x_patch import rpi_ws281x
 from .Pixels import Pixel, PixelColors
 from .LightStrings import LightString
-from .LightPatterns import LightPattern
+from .LightPatterns import LightPattern, DEFAULT_BACKGROUND_COLOR, DEFAULT_COLOR_SEQUENCE, DEFAULT_TWINKLE_COLOR
 from .LightDatas import LightData
 
 # setup logging
@@ -25,11 +26,8 @@ else:
 fh.setLevel(logging.DEBUG)
 LOGGER.addHandler(fh)
 
-# set some constants
 DEFAULT_TWINKLE_CHANCE = 0.0
-DEFAULT_TWINKLE_COLOR = PixelColors.GRAY
-DEFAULT_BACKGROUND_COLOR = PixelColors.OFF
-DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.RED, PixelColors.WHITE, PixelColors.WHITE, PixelColors.GREEN, PixelColors.GREEN]
+
 DEFAULT_REFRESH_DELAY = 50
 
 class LightFunction:
@@ -54,7 +52,7 @@ class LightFunction:
 			lf.run()
 
 	"""
-	def __init__(self, ledCount:int, pwmGPIOpin:int, channelDMA:int, frequencyPWM:int, invertSignalPWM:bool=False, ledBrightnessFloat:float=1, channelPWM:int=0, stripTypeLED=None, gamma=None, debug:bool=False, verbose:bool=False):
+	def __init__(self, ledCount:int, pwmGPIOpin:int, channelDMA:int, frequencyPWM:int, invertSignalPWM:bool=False, ledBrightnessFloat:float=0.75, channelPWM:int=0, stripTypeLED=None, gamma=None, debug:bool=False, verbose:bool=False):
 		"""
 		Create a LightFunction object for running patterns across a rpi_ws281x LED string
 
@@ -257,7 +255,6 @@ class LightFunction:
 		else:
 			temp = self.overlayColorSequence().array
 		return temp
-
 
 
 	def reset(self):
@@ -476,13 +473,15 @@ class LightFunction:
 			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def _fadeOff(self, fadeAmount=None):
+	def _fadeOff(self, fadeAmount=None, recalc=True):
 		"""
 		Fade all Pixels toward OFF
 		"""
-		if fadeAmount is None:
+		if fadeAmount is None :
 			fadeAmount = self._fadeAmount
-		self._VirtualLEDArray[:] = self._VirtualLEDArray * ((255 - fadeAmount) / 255)
+		if recalc == True:
+			fadeAmount = ((255 - fadeAmount) / 255)
+		self._VirtualLEDArray[:] = self._VirtualLEDArray * fadeAmount
 
 	def _fadeLED(self, led_index:int, offColor:Pixel=None, fadeAmount:int=None):
 		"""
@@ -533,12 +532,12 @@ class LightFunction:
 
 
 
-
 	def run(self):
 		"""
 		Run the configured color pattern and function either forever or for self.secondsPerMode
 		"""
 		try:
+			LOGGER.info('%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
 			if self._NextModeChange is None:
 				self._LastModeChange = time.time()
 				if self.secondsPerMode is None:
@@ -676,6 +675,8 @@ class LightFunction:
 			self.backgroundColor = DEFAULT_BACKGROUND_COLOR
 			if twinkleColors == False:
 				self.colorSequence = LightPattern.ConvertPixelArrayToNumpyArray(colorSequence)
+				for color in self.colorSequence:
+					LOGGER.debug('{}'.format(Pixel(color)))
 				if self.colorSequenceCount < self._LEDCount:
 					self._setVirtualLEDArray(LightPattern.PixelArray(self._LEDCount))
 				else:
@@ -1724,6 +1725,9 @@ class LightFunction:
 		"""
 		"""
 		try:
+			oldLocation = 0
+			newLocation = 0
+			newLocationx = 0
 			rnge = [i for i in range(-self._MaxSpeed,self._MaxSpeed+1)]
 			self._fadeOff(fadeAmount=self._LightDataObjects[0].fadeAmount)
 			for meteor in self._LightDataObjects:
@@ -2276,15 +2280,16 @@ class LightFunction:
 			raise
 
 
-	def functionRaindrops(self, refreshDelay:float=None, maxSize:int=10, fadeAmount:int=5, raindropChance:float=0.05):
+	def functionRaindrops(self, refreshDelay:float=None, maxSize:int=10, fadeAmount:int=20, raindropChance:float=0.5, stepSize:int=1):
 		"""
 		Uses colors in the current list to cause random "splats" across the led strand
 		"""
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
 			if refreshDelay is None:
-				refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 50
-			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._Raindrops_Function, configurationPointer=self._Raindrops_Configuration, fadeAmount=fadeAmount, maxSize=maxSize, raindropChance=raindropChance)
+				# refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 50
+				refreshDelay = 0
+			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._Raindrops_Function, configurationPointer=self._Raindrops_Configuration, fadeAmount=fadeAmount, maxSize=maxSize, raindropChance=raindropChance, stepSize=stepSize)
 		except SystemExit:
 			raise
 		except KeyboardInterrupt:
@@ -2293,18 +2298,19 @@ class LightFunction:
 			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def _Raindrops_Configuration(self, fadeAmount:int, maxSize:int, raindropChance:float):
+	def _Raindrops_Configuration(self, fadeAmount:int, maxSize:int, raindropChance:float, stepSize:int):
 		"""
 		"""
 		try:
 			LOGGER.log(5, '%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
-			self._fadeAmount = fadeAmount
+			self._fadeAmount = (255-fadeAmount) / 255
 			self._LightDataObjects = []
 			for i in range(max(min(self.colorSequenceCount, 10), 2)):
 				raindrop = LightData(self.colorSequenceNext)
 				raindrop.sizeMax = maxSize
 				raindrop.index = random.randint(0, self._VirtualLEDCount-1)
 				raindrop.stepCountMax = random.randint(2, raindrop.sizeMax)
+				raindrop.step=stepSize
 				raindrop.fadeAmount = ((255/raindrop.stepCountMax)/255)*2
 				raindrop.active = False
 				raindrop.activeChance = raindropChance
@@ -2322,23 +2328,32 @@ class LightFunction:
 		"""
 		"""
 		try:
-			self._fadeOff()
+			self._fadeOff(self._fadeAmount, False)
 			for raindrop in self._LightDataObjects:
 				if not raindrop.active:
 					chance = random.randint(0, 1000) / 1000
 					if chance < raindrop.activeChance:
 						raindrop.active = True
-				if raindrop.active:
-					if raindrop.stepCounter < raindrop.stepCountMax:
-						self._VirtualLEDArray[(raindrop.index + raindrop.stepCounter) % self._VirtualLEDCount] = raindrop.color
-						self._VirtualLEDArray[(raindrop.index - raindrop.stepCounter) % self._VirtualLEDCount] = raindrop.color
-						raindrop.color[:] = raindrop.color * ((raindrop.stepCountMax - raindrop.stepCounter) / raindrop.stepCountMax)
-						p = Pixel(raindrop.color)
-						raindrop.stepCounter += 1
-					else:
-						raindrop.index = random.randint(0, self._VirtualLEDCount-1)
 						raindrop.stepCountMax = random.randint(2, raindrop.sizeMax)
 						raindrop.fadeAmount = ((255/raindrop.stepCountMax)/255)*2
+						raindrop.colorScaler = ((raindrop.stepCountMax - raindrop.stepCounter) / raindrop.stepCountMax)
+				if raindrop.active:
+					if raindrop.stepCounter < raindrop.stepCountMax:
+						s1 = max(raindrop.index - raindrop.stepCounter - raindrop.step, 0)
+						s2 = max(raindrop.index - raindrop.stepCounter, 0)
+						e1 = min(raindrop.index + raindrop.stepCounter, self._VirtualLEDCount)
+						e2 = min(raindrop.index + raindrop.stepCounter + raindrop.step, self._VirtualLEDCount)
+						# self._VirtualLEDArray[(raindrop.index + raindrop.stepCounter) % self._VirtualLEDCount] = raindrop.color
+						# self._VirtualLEDArray[(raindrop.index - raindrop.stepCounter) % self._VirtualLEDCount] = raindrop.color
+						if (s2-s1) > 0:
+							self._VirtualLEDArray[s1:s2] = [raindrop.color]*(s2-s1)
+						if (e2-e1) > 0:
+							self._VirtualLEDArray[e1:e2] = [raindrop.color]*(e2-e1)
+						raindrop.color[:] = raindrop.color * raindrop.colorScaler
+						# p = Pixel(raindrop.color)
+						raindrop.stepCounter += raindrop.step
+					else:
+						raindrop.index = random.randint(0, self._VirtualLEDCount-1)
 						raindrop.stepCounter = 0
 						raindrop.color = self.colorSequenceNext.copy()
 						raindrop.active = False
@@ -2634,10 +2649,16 @@ class LightFunction:
 				try:
 					while len(funcs_copy) > 0 and len(colors_copy) > 0:
 						self.reset()
-						clr = colors_copy[random.randint(0, len(colors)-1)]
+						if len(colors_copy) > 1:
+							clr = colors_copy[random.randint(0, len(colors_copy)-1)]
+						else:
+							clr = colors_copy[0]
 						colors_copy.remove(clr)
 						getattr(self, clr)()
-						fnc = funcs_copy[random.randint(0, len(funcs)-1)]
+						if len(funcs_copy) > 1:
+							fnc = funcs_copy[random.randint(0, len(funcs_copy)-1)]
+						else:
+							fnc = funcs_copy[0]
 						funcs_copy.remove(fnc)
 						getattr(self, fnc)()
 						c = self._colorFunction.copy()
