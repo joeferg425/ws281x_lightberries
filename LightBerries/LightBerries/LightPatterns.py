@@ -9,33 +9,37 @@ from .LightStrings import LightString
 # set some constants
 DEFAULT_TWINKLE_COLOR = PixelColors.GRAY
 DEFAULT_BACKGROUND_COLOR = PixelColors.OFF
-d = datetime.datetime.now()
-m = d.month
 DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE]
-if m == 1:
-	DEFAULT_COLOR_SEQUENCE = [PixelColors.CYAN2, PixelColors.WHITE, PixelColors.CYAN, PixelColors.BLUE2, PixelColors.BLUE]
-elif m == 2:
-	DEFAULT_COLOR_SEQUENCE = [PixelColors.PINK, PixelColors.WHITE, PixelColors.RED, PixelColors.WHITE]
-elif m == 3:
-	DEFAULT_COLOR_SEQUENCE = [PixelColors.GREEN, PixelColors.WHITE, PixelColors.ORANGE, PixelColors.WHITE, PixelColors.YELLOW]
-elif m == 4:
-	DEFAULT_COLOR_SEQUENCE = [PixelColors.PINK, PixelColors.CYAN, PixelColors.YELLOW, PixelColors.GREEN, PixelColors.WHITE]
-elif m == 5:
-	DEFAULT_COLOR_SEQUENCE = [PixelColors.PINK, PixelColors.CYAN, PixelColors.YELLOW, PixelColors.GREEN, PixelColors.WHITE]
-elif m == 6:
-	DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.WHITE, PixelColors.BLUE]
-elif m == 7:
-	DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.WHITE, PixelColors.BLUE]
-elif m == 8:
-	DEFAULT_COLOR_SEQUENCE = [PixelColors.ORANGE, PixelColors.WHITE, PixelColors.YELLOW, PixelColors.ORANGE2]
-elif m == 9:
-	DEFAULT_COLOR_SEQUENCE = [PixelColors.ORANGE, PixelColors.WHITE, PixelColors.YELLOW, PixelColors.ORANGE2, PixelColors.RED, PixelColors.RED2]
-elif m == 10:
-	DEFAULT_COLOR_SEQUENCE = [PixelColors.MIDNIGHT, PixelColors.RED, PixelColors.ORANGE, PixelColors.OFF]
-elif m == 11:
-	DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.MIDNIGHT, PixelColors.GRAY]
-elif m == 12:
-	DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.WHITE, PixelColors.GREEN]
+
+def get_DEFAULT_COLOR_SEQUENCE():
+	global DEFAULT_COLOR_SEQUENCE
+	d = datetime.datetime.now()
+	m = d.month
+	if m == 1:
+		DEFAULT_COLOR_SEQUENCE = [PixelColors.CYAN2, PixelColors.WHITE, PixelColors.CYAN, PixelColors.BLUE2, PixelColors.BLUE]
+	elif m == 2:
+		DEFAULT_COLOR_SEQUENCE = [PixelColors.PINK, PixelColors.WHITE, PixelColors.RED, PixelColors.WHITE]
+	elif m == 3:
+		DEFAULT_COLOR_SEQUENCE = [PixelColors.GREEN, PixelColors.WHITE, PixelColors.ORANGE, PixelColors.WHITE, PixelColors.YELLOW]
+	elif m == 4:
+		DEFAULT_COLOR_SEQUENCE = [PixelColors.PINK, PixelColors.CYAN, PixelColors.YELLOW, PixelColors.GREEN, PixelColors.WHITE]
+	elif m == 5:
+		DEFAULT_COLOR_SEQUENCE = [PixelColors.PINK, PixelColors.CYAN, PixelColors.YELLOW, PixelColors.GREEN, PixelColors.WHITE]
+	elif m == 6:
+		DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.WHITE, PixelColors.BLUE]
+	elif m == 7:
+		DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.WHITE, PixelColors.BLUE]
+	elif m == 8:
+		DEFAULT_COLOR_SEQUENCE = [PixelColors.ORANGE, PixelColors.WHITE, PixelColors.YELLOW, PixelColors.ORANGE2]
+	elif m == 9:
+		DEFAULT_COLOR_SEQUENCE = [PixelColors.ORANGE, PixelColors.WHITE, PixelColors.YELLOW, PixelColors.ORANGE2, PixelColors.RED, PixelColors.RED2]
+	elif m == 10:
+		DEFAULT_COLOR_SEQUENCE = [PixelColors.MIDNIGHT, PixelColors.RED, PixelColors.ORANGE, PixelColors.OFF]
+	elif m == 11:
+		DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.MIDNIGHT, PixelColors.GRAY]
+	elif m == 12:
+		DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.WHITE, PixelColors.GREEN]
+	return DEFAULT_COLOR_SEQUENCE
 
 LOGGER = logging.getLogger(__name__)
 if not LOGGER.handlers:

@@ -10,7 +10,7 @@ from typing import List, Tuple, Optional
 from .rpi_ws281x_patch import rpi_ws281x
 from .Pixels import Pixel, PixelColors
 from .LightStrings import LightString
-from .LightPatterns import LightPattern, DEFAULT_BACKGROUND_COLOR, DEFAULT_COLOR_SEQUENCE, DEFAULT_TWINKLE_COLOR
+from .LightPatterns import LightPattern, DEFAULT_BACKGROUND_COLOR, DEFAULT_COLOR_SEQUENCE, DEFAULT_TWINKLE_COLOR, get_DEFAULT_COLOR_SEQUENCE
 from .LightDatas import LightData
 
 # setup logging
@@ -590,7 +590,8 @@ class LightFunction:
 		try:
 			LOGGER.debug('\n%s.%s:', self.__class__.__name__, inspect.stack()[0][3])
 			if foregroundColor is None:
-				foregroundColor = DEFAULT_COLOR_SEQUENCE[random.randint(0,len(DEFAULT_COLOR_SEQUENCE)-1)]
+				s = get_DEFAULT_COLOR_SEQUENCE()
+				foregroundColor = s[random.randint(0,len(s)-1)]
 			self.backgroundColor = DEFAULT_BACKGROUND_COLOR
 			if twinkleColors == False:
 				self.colorSequence = LightPattern.ConvertPixelArrayToNumpyArray([foregroundColor])
@@ -661,7 +662,7 @@ class LightFunction:
 			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def useColorSequence(self, colorSequence:List[Pixel]=DEFAULT_COLOR_SEQUENCE, twinkleColors:bool=False)->None:
+	def useColorSequence(self, colorSequence:List[Pixel]=get_DEFAULT_COLOR_SEQUENCE(), twinkleColors:bool=False)->None:
 		"""
 			Sets the the color sequence used by light functions to one of your choice
 
@@ -826,7 +827,7 @@ class LightFunction:
 			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def useColorSequenceRepeating(self, colorSequence:List[Pixel]=DEFAULT_COLOR_SEQUENCE, twinkleColors:bool=False)->None:
+	def useColorSequenceRepeating(self, colorSequence:List[Pixel]=get_DEFAULT_COLOR_SEQUENCE(), twinkleColors:bool=False)->None:
 		"""
 			Sets the color sequence used by light functions to the sequence given, buts repeats it across the entire light string
 
@@ -863,7 +864,7 @@ class LightFunction:
 			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def useColorTransition(self, colorSequence:List[Pixel]=DEFAULT_COLOR_SEQUENCE, stepsPerTransition:int=5, wrap:bool=True, twinkleColors:bool=False)->None:
+	def useColorTransition(self, colorSequence:List[Pixel]=get_DEFAULT_COLOR_SEQUENCE(), stepsPerTransition:int=5, wrap:bool=True, twinkleColors:bool=False)->None:
 		"""
 			sets the color sequence used by light functions to the one specified in the argument, but
 			makes a smooth transition from one color to the next over the length specified
@@ -903,7 +904,7 @@ class LightFunction:
 			LOGGER.exception('%s.%s Exception: %s', self.__class__.__name__, inspect.stack()[0][3], ex)
 			raise
 
-	def useColorTransitionRepeating(self, colorSequence:List[Pixel]=DEFAULT_COLOR_SEQUENCE, stepsPerTransition:int=5, wrap:bool=True, twinkleColors:bool=False):
+	def useColorTransitionRepeating(self, colorSequence:List[Pixel]=get_DEFAULT_COLOR_SEQUENCE(), stepsPerTransition:int=5, wrap:bool=True, twinkleColors:bool=False):
 		"""
 			colorSequence:List[Pixel]
 				list of colors to in the pattern being shifted across the LED string
@@ -2327,13 +2328,15 @@ class LightFunction:
 			if refreshDelay is None:
 				refreshDelay = 0
 			if maxSize is None:
-				maxSize = random.randint(2, int(self._VirtualLEDCount//3))
+				maxSize = random.randint(2, int(self._VirtualLEDCount//8))
 			if fadeAmount is None:
-				fadeAmount = random.randint(10, 80)
+				fadeAmount = random.randint(50, 100)
 			if raindropChance is None:
-				raindropChance = random.uniform(0.1, 0.7)
+				raindropChance = random.uniform(0.005, 0.1)
 			if stepSize is None:
-				stepSize = random.randint(1, 30)
+				stepSize = random.randint(1, 5)
+				if stepSize > 3:
+					raindropChance /= 3
 			self._initializeFunction(refreshDelay=refreshDelay, functionPointer=self._Raindrops_Function, configurationPointer=self._Raindrops_Configuration, fadeAmount=fadeAmount, maxSize=maxSize, raindropChance=raindropChance, stepSize=stepSize)
 		except SystemExit:
 			raise

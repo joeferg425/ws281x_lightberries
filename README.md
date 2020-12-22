@@ -7,13 +7,42 @@ This library is intended for a string of lights not a matrix configuration.
 
 
 # Installation:
-	pip install lightberries-joeferg425
+
+```sh
+# from command line run:
+sudo pip3 install lightberries
+
+# alternately use pip if python3 is the only python on your system
+sudo pip install lightberries
+```
 
 
 # Examples:
 
-## Demo mode:
+## Quick Demo:
+```sh
+# run an endless random demo of functions and light-patterns that assumes you have 100 LEDs
+# press CTRL+C to exit the demo
+
+#### Makes the following assumptions ###
+## # the number of pixels in the light string
+## PIXEL_COUNT = 100
+## # GPIO pin to use for PWM signal
+## GPIO_PWM_PIN = 18
+## # DMA channel
+## DMA_CHANNEL = 5
+## # frequency to run the PWM signal at
+## PWM_FREQUENCY = 800000
+## RGB addressing versus GRB
+## DEFAULT_PIXEL_ORDER = LED_ORDER.GRB
+
+sudo python3 -m LightBerries
+```
+
+## Full Demo:
 ```python
+# import the library
+from LightBerries import LightFunction
 # the number of pixels in the light string
 PIXEL_COUNT = 100
 # GPIO pin to use for PWM signal
@@ -60,6 +89,8 @@ lightFunction.run()
 ```
 ## Raindrop function:
 ```python
+# import the library
+from LightBerries import LightFunction
 # the number of pixels in the light string
 PIXEL_COUNT = 100
 # GPIO pin to use for PWM signal
