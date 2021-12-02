@@ -1,12 +1,14 @@
-# About:
-Wrapper for rpi_ws281x (https://github.com/rpi-ws281x/rpi-ws281x-python) library that defines a bunch of colorful functions.
+# WS281X_LightBerries #
+
+## About ##
+
+Wrapper for rpi_ws281x [github.com/rpi-ws281x/rpi-ws281x-python](https://github.com/rpi-ws281x/rpi-ws281x-python) library that defines a bunch of colorful functions.
 
 This library has only been tested on raspberry pi 2 and raspberry pi 3. The lights I have are ws2811 50ct off of amazon with a custom 5v power supply and level converter.
 
 This library is intended for a string of lights not a matrix configuration.
 
-
-# Installation:
+## Installation #
 
 ```sh
 # from command line run:
@@ -16,10 +18,10 @@ sudo pip3 install lightberries
 sudo pip install lightberries
 ```
 
+## Examples ##
 
-# Examples:
+### Quick Demo ###
 
-## Quick Demo:
 ```sh
 # run an endless random demo of functions and light-patterns that assumes you have 100 LEDs
 # press CTRL+C to exit the demo
@@ -39,7 +41,8 @@ sudo pip install lightberries
 sudo python3 -m LightBerries
 ```
 
-## Full Demo:
+### Full Demo ###
+
 ```python
 # import the library
 from LightBerries import LightFunction
@@ -63,7 +66,9 @@ lightFunction = LightFunction(ledCount=PIXEL_COUNT, pwmGPIOpin=GPIO_PWM_PIN, cha
 # choose a function
 lightFunction.demo(secondsPerMode=5)
 ```
-## Rainbow that scrolls across the lights:
+
+### Rainbow that scrolls across the lights ###
+
 ```python
 # the number of pixels in the light string
 PIXEL_COUNT = 100
@@ -87,7 +92,9 @@ lightFunction.useColorRainbow()
 lightFunction.functionMarquee()
 lightFunction.run()
 ```
-## Raindrop function:
+
+### Raindrop function ###
+
 ```python
 # import the library
 from LightBerries import LightFunction
