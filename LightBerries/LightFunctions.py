@@ -6,6 +6,11 @@ import time
 import random
 import logging
 import inspect
+
+try:
+    from numba import jit
+except:
+    print("install numba for possible speed boost")
 from typing import Dict, List, Tuple, Optional, Callable, Union, Any
 from nptyping import NDArray
 from numpy.lib.arraysetops import isin
@@ -116,7 +121,7 @@ class LightFunction:
                 LOGGER.setLevel(logging.DEBUG)
             if True == verbose:
                 LOGGER.setLevel(5)
-            pixelStrip = pixelStrip = rpi_ws281x.PixelStrip(
+            pixelStrip = rpi_ws281x.PixelStrip(
                 pin=pwmGPIOpin,
                 dma=channelDMA,
                 num=ledCount,
@@ -966,15 +971,21 @@ class LightFunction:
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, inspect.stack()[0][3])
-            self.backgroundColor = backgroundColor = PixelColors.OFF
+            self.backgroundColor = PixelColors.OFF
             if twinkleColors == False:
-                self.colorSequence = PixelColors.pseudoRandom
-                self.colorSequenceCount = random.randint(2, 7)
+                colorSequenceCount = random.randint(2, 7)
+                colorSequence = []
+                for i in range(colorSequenceCount):
+                    colorSequence.append(PixelColors.pseudoRandom())
+                self.colorSequence = ConvertPixelArrayToNumpyArray(colorSequence)
                 self._setVirtualLEDArray(PixelArray(self._LEDCount))
                 self._colorFunction = {"function": self.useColorPseudoRandom}
             elif twinkleColors == True:
-                self.overlayColorSequence = PixelColors.pseudoRandom
-                self.overlayColorSequenceCount = random.randint(2, 7)
+                colorSequenceCount = random.randint(2, 7)
+                colorSequence = []
+                for i in range(colorSequenceCount):
+                    colorSequence.append(PixelColors.pseudoRandom())
+                self.overlayColorSequence = ConvertPixelArrayToNumpyArray(colorSequence)
                 self._overlayColorFunction = {
                     "function": self.useColorPseudoRandom,
                     "twinkleColors": True,
@@ -1054,13 +1065,18 @@ class LightFunction:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, inspect.stack()[0][3])
             self.backgroundColor = DEFAULT_BACKGROUND_COLOR
             if twinkleColors == False:
-                self.colorSequence = PixelColors.random
-                self.colorSequenceCount = random.randint(2, 7)
-                self._setVirtualLEDArray(PixelArray(self._LEDCount))
+                colorSequenceCount = random.randint(2, 7)
+                colorSequence = []
+                for i in range(colorSequenceCount):
+                    colorSequence.append(PixelColors.random())
+                self.colorSequence = ConvertPixelArrayToNumpyArray(colorSequence)
                 self._colorFunction = {"function": self.useColorRandom}
             elif twinkleColors == True:
-                self.overlayColorSequence = PixelColors.random
-                self.overlayColorSequenceCount = random.randint(2, 7)
+                colorSequenceCount = random.randint(2, 7)
+                colorSequence = []
+                for i in range(colorSequenceCount):
+                    colorSequence.append(PixelColors.random())
+                self.overlayColorSequence = ConvertPixelArrayToNumpyArray(colorSequence)
                 self._overlayColorFunction = {
                     "function": self.useColorRandom,
                     "twinkleColors": True,
@@ -1331,7 +1347,7 @@ class LightFunction:
             if isinstance(rainbowPixels, int):
                 pixelCount = rainbowPixels
             else:
-                rainbowPixels = random.randint(10, self._LEDCount // 2)
+                pixelCount = random.randint(10, self._LEDCount // 2)
             if twinkleColors == False:
                 arrayLength = np.ceil(self._LEDCount / pixelCount) * pixelCount
                 self.colorSequence = RepeatingRainbowArray(arrayLength=arrayLength, segmentLength=pixelCount)
@@ -1665,6 +1681,10 @@ class LightFunction:
         try:
             self._off()
             for alternator in self._LightDataObjects:
+                if alternator.index < 0:
+                    alternator.index = 0
+                elif alternator.index >= self._VirtualLEDCount:
+                    alternator.index = self._VirtualLEDCount - 1
                 self._VirtualLEDArray[alternator.index] = alternator.color
                 if (
                     alternator.index + (alternator.direction * alternator.step) >= self._VirtualLEDCount

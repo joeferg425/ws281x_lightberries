@@ -108,3 +108,4 @@ runLights.py
 test.py
 LightBerries/Sphinx-docs/
 .vscode
+*.tar.gz
