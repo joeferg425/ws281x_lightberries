@@ -16,7 +16,7 @@ DEFAULT_BACKGROUND_COLOR = PixelColors.OFF
 DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE]
 
 
-def get_DEFAULT_COLOR_SEQUENCE() -> List[Pixel]:
+def get_DEFAULT_COLOR_SEQUENCE() -> NDArray[(3, Any), np.int32]:
     global DEFAULT_COLOR_SEQUENCE
     d = datetime.datetime.now()
     m = d.month
@@ -94,7 +94,7 @@ def get_DEFAULT_COLOR_SEQUENCE() -> List[Pixel]:
         ]
     elif m == 12:
         DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.WHITE, PixelColors.GREEN]
-    return DEFAULT_COLOR_SEQUENCE
+    return ConvertPixelArrayToNumpyArray(DEFAULT_COLOR_SEQUENCE)
 
 
 LOGGER = logging.getLogger(__name__)
@@ -141,7 +141,8 @@ def ConvertPixelArrayToNumpyArray(colorSequence: Sequence[Pixel]) -> NDArray[(3,
 
 
 def SolidColorArray(
-    arrayLength: int, color: Union[Pixel, NDArray[(3, Any), np.int32]] = DEFAULT_COLOR_SEQUENCE[0]
+    arrayLength: int,
+    color: Union[Pixel, NDArray[(3,), np.int32]] = DEFAULT_COLOR_SEQUENCE[0],
 ) -> NDArray[(3, Any), np.int32]:
     """Creates array of RGB tuples that are all one color
 

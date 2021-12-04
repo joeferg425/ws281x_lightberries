@@ -3,7 +3,7 @@ import logging
 import random
 import inspect
 from nptyping import NDArray
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, Any
 import numpy as np
 
 LOGGER = logging.getLogger(__name__)
@@ -167,7 +167,7 @@ class PixelColors:
     GRAY = Pixel((128, 118, 108), order=LED_ORDER.RGB)
 
     @classmethod
-    def pseudoRandom(self) -> NDArray:
+    def pseudoRandom(self) -> NDArray[(3,), np.int32]:
         """get a random color from the list of defined colors"""
         clrs = list(dir(PixelColors))
         clrs = [p for p in clrs if "__" not in p and "random" not in p.lower()]
@@ -177,7 +177,7 @@ class PixelColors:
         return getattr(PixelColors, randomColor).array
 
     @classmethod
-    def random(self) -> Pixel:
+    def random(self) -> NDArray[(3,), np.int32]:
         """get a randomly generated pixel value"""
         x = random.randint(0, 2)
         y = random.randint(0, 3)
@@ -193,4 +193,4 @@ class PixelColors:
             blueLED = random.randint(0, 255)
         else:
             blueLED = 0
-        return Pixel([redLED, greenLED, blueLED])
+        return Pixel([redLED, greenLED, blueLED]).array
