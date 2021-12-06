@@ -5,6 +5,7 @@ import numpy as np
 import time
 import random
 import logging
+from enum import IntEnum
 
 try:
     from numba import jit
@@ -127,29 +128,30 @@ class LightFunction:
             if True == verbose:
                 self._LEDArray.setDebugLevel(5)
             self._LEDCount: int = len(self._LEDArray)
-            self._VirtualLEDArray: NDArray = SolidColorArray(
+            self._VirtualLEDArray: NDArray[(3, Any), np.int32] = SolidColorArray(
                 arrayLength=self._LEDCount,
                 color=PixelColors.OFF,
             )
-            self._VirtualLEDBuffer: NDArray = np.copy(self._VirtualLEDArray)
+            self._VirtualLEDBuffer: NDArray[(3, Any), np.int32] = np.copy(self._VirtualLEDArray)
+            self.OverlayDict: Dict = {}
             self._VirtualLEDCount: int = len(self._VirtualLEDArray)
-            self._VirtualLEDIndexArray: NDArray = np.array(range(len(self._LEDArray)))
+            self._VirtualLEDIndexArray: NDArray[(Any,), np.int32] = np.array(range(len(self._LEDArray)))
             self._VirtualLEDIndexCount: int = len(self._VirtualLEDIndexArray)
             self._LastModeChange: float = time.time() - 1000
             self._NextModeChange: float = time.time()
 
             self.__refreshDelay: float = 0.001
             self.__secondsPerMode: float = 120.0
-            self.__backgroundColor: NDArray = PixelColors.OFF.array
-            self.__colorSequence: NDArray = ConvertPixelArrayToNumpyArray([])
+            self.__backgroundColor: NDArray[(3,), np.int32] = PixelColors.OFF.array
+            self.__colorSequence: NDArray[(3, Any), np.int32] = ConvertPixelArrayToNumpyArray([])
             self.__colorSequenceCount: int = 0
             self.__colorSequenceIndex: int = 0
-            self.__overlayColorSequence: NDArray = ConvertPixelArrayToNumpyArray([])
+            self.__overlayColorSequence: NDArray[(3, Any), np.int32] = ConvertPixelArrayToNumpyArray([])
             self.__overlayColorSequenceCount: int = 0
             self.__overlayColorSequenceIndex: int = 0
             self._LoopForever: bool = False
             self._LightDataObjects: List[LightData] = []
-            self._PreviousIndices: np.ndarray = np.array([])
+            self._PreviousIndices: NDArray[(Any,), np.int32] = np.array([])
 
             self.reset()
         except SystemExit:
@@ -402,12 +404,17 @@ class LightFunction:
             def set_pixel(irgb):
                 i = irgb[0]
                 rgb = irgb[1]
-                self._LEDArray[i] = rgb
+                if i < self._LEDCount:
+                    self._LEDArray[i] = rgb
 
             list(
                 map(
                     set_pixel,
-                    enumerate(self._VirtualLEDArray[self._VirtualLEDIndexArray]),
+                    enumerate(
+                        self._VirtualLEDArray[self._VirtualLEDIndexArray][
+                            np.where(self._VirtualLEDIndexArray < self._LEDCount)
+                        ]
+                    ),
                 )
             )
         except SystemExit:
@@ -486,6 +493,24 @@ class LightFunction:
             )
             raise
 
+    def _copyOverlays(self):
+        try:
+            for index, ledValue in self.OverlayDict.items():
+                self._LEDArray[index] = ledValue
+            self.OverlayDict = {}
+        except SystemExit:
+            raise
+        except KeyboardInterrupt:
+            raise
+        except Exception as ex:
+            LOGGER.exception(
+                "%s.%s Exception: %s",
+                self.__class__.__name__,
+                self._runFunctions.__name__,
+                ex,
+            )
+            raise
+
     def _getRandomIndex(self) -> int:
         """
         retrieve a random Pixel index
@@ -542,39 +567,6 @@ class LightFunction:
         """
         self._VirtualLEDArray[:] = self._VirtualLEDArray * (1 - fade.fadeAmount)
 
-    def _fadeLight(
-        self,
-        fadeLED: LightData,
-    ) -> None:
-        """
-        fade pixel colors
-        """
-        try:
-            if fadeLED.delayCounter >= fadeLED.delayCountMax:
-                fadeLED.delayCounter = 0
-                for rgbIndex in range(len(fadeLED.color)):
-                    if fadeLED.color[rgbIndex] != fadeLED.colorNext[rgbIndex]:
-                        if fadeLED.color[rgbIndex] - fadeLED.colorFade > fadeLED.colorNext[rgbIndex]:
-                            fadeLED.color[rgbIndex] -= fadeLED.colorFade
-                        elif fadeLED.color[rgbIndex] + fadeLED.colorFade < fadeLED.colorNext[rgbIndex]:
-                            fadeLED.color[rgbIndex] += fadeLED.colorFade
-                        else:
-                            fadeLED.color[rgbIndex] = fadeLED.colorNext[rgbIndex]
-            fadeLED.delayCounter += 1
-            self._VirtualLEDArray[fadeLED.index] = np.copy(fadeLED.color)
-        except SystemExit:
-            raise
-        except KeyboardInterrupt:
-            raise
-        except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self._fadeLight.__name__,
-                ex,
-            )
-            raise
-
     def _fadeColor(
         self, color: NDArray[(3,), np.int32], colorNext: NDArray[(3,), np.int32], fadeCount: int
     ) -> NDArray[(3,), np.int32]:
@@ -604,6 +596,7 @@ class LightFunction:
                 try:
                     self._runFunctions()
                     self._copyVirtualLedsToWS281X()
+                    self._copyOverlays()
                     self._refreshLEDs()
                     time.sleep(self.refreshDelay)
                 except KeyboardInterrupt:
@@ -677,7 +670,7 @@ class LightFunction:
         twinkleColors: set to true when assigning these colors to be used in a twinkle overlay
         """
         try:
-            LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSinglePseudoRandom)
+            LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSinglePseudoRandom.__name__)
             self.backgroundColor = DEFAULT_BACKGROUND_COLOR.array
             if twinkleColors == False:
                 self.colorSequence = ConvertPixelArrayToNumpyArray([PixelColors.pseudoRandom()])
@@ -1141,7 +1134,7 @@ class LightFunction:
     def functionNone(self) -> None:
         """ """
         try:
-            LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.functionNone.__name__)
+            LOGGER.debug("%s.%s:", self.__class__.__name__, self.functionNone.__name__)
             nothing = LightData(self.functionNone.__name__, self._None_Function)
             self._LightDataObjects.append(nothing)
         except SystemExit:
@@ -1189,7 +1182,7 @@ class LightFunction:
         delayCount: number of led updates between color updates
         """
         try:
-            LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.functionSolidColorCycle.__name__)
+            LOGGER.debug("%s.%s:", self.__class__.__name__, self.functionSolidColorCycle.__name__)
             if delayCount is None:
                 _delayCount = random.randint(15, 40)
             else:
@@ -1250,7 +1243,7 @@ class LightFunction:
         shiftAmount: the number of pixels the marquee shifts on each update
         """
         try:
-            LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.functionMarquee.__name__)
+            LOGGER.debug("%s.%s:", self.__class__.__name__, self.functionMarquee.__name__)
             if shiftAmount is None:
                 shiftAmount = random.randint(0, 2)
             self._LightDataObjects = []
@@ -1318,7 +1311,7 @@ class LightFunction:
                 smaller numbers = larger tails on the cylon eye fade
         """
         try:
-            LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.functionCylon.__name__)
+            LOGGER.debug("%s.%s:", self.__class__.__name__, self.functionCylon.__name__)
             _fadeAmount: float = 15.0 / 255.0
             if fadeAmount is None:
                 _fadeAmount = random.randint(5, 75) / 255.0
@@ -1414,7 +1407,7 @@ class LightFunction:
         mergeSegmentLength: length of reflected segments
         """
         try:
-            LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.functionMerge.__name__)
+            LOGGER.debug("%s.%s:", self.__class__.__name__, self.functionMerge.__name__)
             if shiftAmount is None:
                 shiftAmount = random.randint(1, 6)
             arrayLength = np.ceil(self._LEDCount / self.colorSequenceCount) * self.colorSequenceCount
@@ -1498,7 +1491,7 @@ class LightFunction:
         endDelay: final delay between color updates
         """
         try:
-            LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.functionAccelerate.__name__)
+            LOGGER.debug("%s.%s:", self.__class__.__name__, self.functionAccelerate.__name__)
 
             # off = LightData(self._off.__name__, self._off)
             # self._LightDataObjects.append(off)
@@ -1581,7 +1574,7 @@ class LightFunction:
         changeChance: chance that any one pixel will change colors each update (from 0.0, to 1.0)
         """
         try:
-            LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.functionRandomChange.__name__)
+            LOGGER.debug("%s.%s:", self.__class__.__name__, self.functionRandomChange.__name__)
             change = LightData(self.functionRandomChange.__name__, self._RandomChange_Function)
             if changeChance is None:
                 change.random = random.uniform(0.005, 0.05)
@@ -1648,7 +1641,7 @@ class LightFunction:
         fadeStepCount: number of steps in the transition from one color to the next
         """
         try:
-            LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.functionRandomFadeChange.__name__)
+            LOGGER.debug("%s.%s:", self.__class__.__name__, self.functionRandomFadeChange.__name__)
             change = LightData(self.functionRandomFadeChange.__name__, self._RandomFadeChange_Function)
             if changeChance is None:
                 _random = random.uniform(0.3, 0.5)
@@ -1709,7 +1702,7 @@ class LightFunction:
     ) -> None:
         """ """
         try:
-            self._fadeLight(change)
+            self._fadeOff(change)
             if np.array_equal(change.color, change.colorNext):
                 if np.array_equal(change.color, self.backgroundColor):
                     change.index = self._getRandomIndex()
@@ -1752,7 +1745,7 @@ class LightFunction:
         cycleColors:
         """
         try:
-            LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.functionMeteors.__name__)
+            LOGGER.debug("%s.%s:", self.__class__.__name__, self.functionMeteors.__name__)
             if fadeAmount is None:
                 _fadeAmount = random.randint(50, 90)
             else:
@@ -1798,7 +1791,7 @@ class LightFunction:
                     meteor.step += 1
                 meteor.index = (meteor.index + (meteor.step * meteor.direction)) % self._VirtualLEDCount
                 meteor.colorCycle = _cycleColors
-                meteor.colors = np.copy(self.colorSequence)
+                meteor.colorSequence = np.copy(self.colorSequence)
                 otherSpeeds.append(abs(meteor.step))
                 self._LightDataObjects.append(meteor)
             # make sure there are at least two going to collide
@@ -1842,7 +1835,7 @@ class LightFunction:
                 # assign new index
                 meteor.index = newLocation
                 # positive step
-                meteor.moveRange = np.array(
+                meteor.indexRange = np.array(
                     list(
                         range(
                             meteor.indexPrevious,
@@ -1851,17 +1844,18 @@ class LightFunction:
                         )
                     )
                 )
-                modulo = np.where(meteor.moveRange >= self._VirtualLEDCount)
-                meteor.moveRange[modulo] -= self._VirtualLEDCount
-                modulo = np.where(meteor.moveRange < 0)
-                meteor.moveRange[modulo] += self._VirtualLEDCount
+                modulo = np.where(meteor.indexRange >= self._VirtualLEDCount)
+                meteor.indexRange[modulo] -= self._VirtualLEDCount
+                modulo = np.where(meteor.indexRange < 0)
+                meteor.indexRange[modulo] += self._VirtualLEDCount
 
                 if meteor.colorCycle:
-                    meteor.colorIndex = (meteor.colorIndex + (meteor.direction * meteor.step)) % len(
-                        meteor.colors
-                    )
+                    meteor.color = meteor.colorSequenceNext
+                    # meteor.colorIndex = (meteor.colorIndex + (meteor.direction * meteor.step)) % len(
+                    # meteor.colorSequence
+                    # )
 
-                self._VirtualLEDArray[meteor.moveRange] = meteor.color
+                self._VirtualLEDArray[meteor.indexRange] = meteor.color
 
             meteor.delayCounter += 1
         except SystemExit:
@@ -1888,11 +1882,11 @@ class LightFunction:
                     if index1 + 1 < len(self._LightDataObjects):
                         for index2, meteor2 in enumerate(self._LightDataObjects[index1 + 1 :]):
                             if meteor2.runFunction == self._Meteors_Function:
-                                if isinstance(meteor1.moveRange, np.ndarray) and isinstance(
-                                    meteor2.moveRange, np.ndarray
+                                if isinstance(meteor1.indexRange, np.ndarray) and isinstance(
+                                    meteor2.indexRange, np.ndarray
                                 ):
                                     # this detects the intersection of two self._LightDataObjects' movements across LEDs
-                                    intersection = np.intersect1d(meteor1.moveRange, meteor2.moveRange)
+                                    intersection = np.intersect1d(meteor1.indexRange, meteor2.indexRange)
                                     if len(intersection) > 0 and random.randint(0, 4) != 0:
                                         meteor1.bounce = True
                                         meteor1.collideWith = meteor2
@@ -1918,7 +1912,8 @@ class LightFunction:
                         meteor.bounce = False
                         meteor.collideWith = None
                         if collision.explode:
-                            middle = meteor.moveRange[len(meteor.moveRange) // 2]
+                            if isinstance(meteor.indexRange, np.ndarray):
+                                middle = meteor.indexRange[len(meteor.indexRange) // 2]
                             r = self._LEDCount // 20
                             for i in range(r):
                                 explosion_indices.append(
@@ -1944,7 +1939,7 @@ class LightFunction:
         wipes colors in the current sequence across the pixel strand in random directions and amounts
         """
         try:
-            LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.functionPaint.__name__)
+            LOGGER.debug("%s.%s:", self.__class__.__name__, self.functionPaint.__name__)
             if maxDelay is None:
                 maxDelay = random.randint(2, 10)
             for i in range(max(min(self.colorSequenceCount, 10), 2)):
@@ -2013,25 +2008,27 @@ class LightFunction:
         fadeSteps:
         """
         try:
-            LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.functionSprites.__name__)
+            LOGGER.debug("%s.%s:", self.__class__.__name__, self.functionSprites.__name__)
             if fadeSteps is None:
                 fadeSteps = random.randint(1, 6)
             for i in range(max(min(self.colorSequenceCount, 10), 2)):
                 sprite = LightData(self.functionSprites.__name__, self._Sprites_Function)
-                sprite.color = self.colorSequenceNext
-                sprite.colors = self.colorSequence
+                sprite.colorGoal = self.colorSequenceNext
+                sprite.color = PixelColors.OFF.array
+                sprite.colorSequence = self.colorSequence
                 sprite.colorNext = PixelColors.OFF.array
                 sprite.active = False
                 sprite.dying = False
+                sprite.waking = False
                 sprite.index = random.randint(0, self._VirtualLEDCount - 1)
                 sprite.indexPrevious = sprite.index
                 sprite.direction = [-1, 1][random.randint(0, 1)]
                 sprite.colorSequenceIndex = i
                 sprite.fadeSteps = fadeSteps
                 sprite.fadeAmount = np.ceil(255 / fadeSteps)
-                # sprite.LightDataObjects = []
                 self._LightDataObjects.append(sprite)
             self._LightDataObjects[0].active = True
+            self._LightDataObjects[0].waking = True
 
             fade = LightData(self._fadeOff.__name__, self._fadeOff)
             fade.fadeAmount = 25 / 255.0
@@ -2049,86 +2046,45 @@ class LightFunction:
             )
             raise
 
-    # def _Sprites_Configuration(self, fadeSteps: int):
-    #     """ """
-    #     try:
-    #         LOGGER.log(5, "%s.%s:", self.__class__.__name__, inspect.stack()[0][3])
-    #         self._fadeSteps = fadeSteps
-    #         self._fadeAmount = np.ceil(255 / fadeSteps)
-    #         self._LightDataObjects = []
-    #         for i in range(max(min(self.colorSequenceCount, 10), 2)):
-    #             sprite = LightData(self.colorSequenceNext)
-    #             sprite.active = False
-    #             sprite.dying = False
-    #             sprite.index = random.randint(0, self._VirtualLEDCount - 1)
-    #             sprite.lastindex = sprite.index
-    #             sprite.direction = [-1, 1][random.randint(0, 1)]
-    #             sprite.colorSequenceIndex = i
-    #             self._LightDataObjects.append(sprite)
-    #         self._LightDataObjects[0].active = True
-    #     except SystemExit:
-    #         raise
-    #     except KeyboardInterrupt:
-    #         raise
-    #     except Exception as ex:
-    #         LOGGER.exception(
-    #             "%s.%s Exception: %s",
-    #             self.__class__.__name__,
-    #             inspect.stack()[0][3],
-    #             ex,
-    #         )
-    #         raise
-
     def _Sprites_Function(
         self,
         sprite: LightData,
     ) -> None:
         """ """
         try:
-            # self._fadeOff()
-            # for sprite in self._LightDataObjects:
             if sprite.active:
-                if not sprite.dying:
+                if not sprite.dying and not sprite.waking:
                     sprite.dying = random.randint(6, self._VirtualLEDCount // 2) < sprite.duration
-                # if sprite.active:
-                sprite.indexPrevious = sprite.index
-                step_size = random.randint(1, 3) * sprite.direction
-                mi = min(sprite.index, sprite.index + step_size)
-                ma = max(sprite.index, sprite.index + step_size)
-                first = True
-                if sprite.direction > 0:
-                    for index in range(mi + 1, ma + 1):
-                        index = index % self._VirtualLEDCount
-                        sprite.index = index
-                        self._VirtualLEDArray[sprite.index] = sprite.color
-                        # if not first:
-                        # self._fadeLED(index, self.backgroundColor, self._fadeAmount)
-                        first - False
-                else:
-                    for index in range(ma - 1, mi - 1, -1):
-                        index = index % self._VirtualLEDCount
-                        sprite.index = index
-                        self._VirtualLEDArray[sprite.index] = sprite.color
-                        # if not first:
-                        # self._fadeLED(index, self.backgroundColor, self._fadeAmount)
-                        first - False
-                if sprite.dying:
+                sprite.step = random.randint(1, 3)
+                self.indexUpdated = False
+                if sprite.delayCounter >= sprite.delayCountMax:
+                    sprite.delayCounter = 0
+                    sprite.doMove(self._VirtualLEDCount)
+                if sprite.dying == True:
                     sprite.color = self._fadeColor(sprite.color, sprite.colorNext, 25)
+                    if np.array_equal(sprite.color, sprite.colorNext):
+                        sprite.active = False
+                if sprite.waking == True:
+                    sprite.color = self._fadeColor(sprite.color, sprite.colorGoal, 25)
+                    if np.array_equal(sprite.color, sprite.colorGoal):
+                        sprite.waking = False
                 sprite.duration += 1
-                if sum(sprite.color) == 0:
-                    sprite.active = False
-                # else:
-                # sprite.active = False
             else:
                 if random.randint(0, 999) > 800:
-                    next_sprite = random.randint(0, (len(self._LightDataObjects) - 1))
-                    sprite = self._LightDataObjects[next_sprite]
                     sprite.active = True
+                    sprite.waking = True
+                    sprite.dying = False
                     sprite.duration = 0
                     sprite.direction = [-1, 1][random.randint(0, 1)]
                     sprite.index = random.randint(0, self._VirtualLEDCount - 1)
                     sprite.indexPrevious = sprite.index
-                    sprite.color = self.colorSequenceNext
+                    sprite.colorGoal = self.colorSequenceNext
+                    sprite.color = PixelColors.OFF.array
+                    sprite.colorNext = PixelColors.OFF.array
+            if sprite.indexUpdated == True and isinstance(sprite.indexRange, np.ndarray):
+                sprite.indexUpdated = False
+                self._VirtualLEDArray[sprite.indexRange] = [sprite.color] * len(sprite.indexRange)
+
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -2144,29 +2100,58 @@ class LightFunction:
 
     def functionRaindrops(
         self,
-        refreshDelay: float = None,
         maxSize: int = None,
         fadeAmount: int = None,
         raindropChance: float = None,
         stepSize: int = None,
+        delayCount: int = None,
     ):
         """
         Uses colors in the current list to cause random "splats" across the led strand
         """
         try:
-            LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.functionRaindrops.__name__)
-            if refreshDelay is None:
-                refreshDelay = 0
+            LOGGER.debug("%s.%s:", self.__class__.__name__, self.functionRaindrops.__name__)
             if maxSize is None:
-                maxSize = random.randint(2, int(self._VirtualLEDCount // 8))
+                _maxSize = random.randint(2, int(self._VirtualLEDCount // 8))
+            else:
+                _maxSize = maxSize
             if fadeAmount is None:
-                fadeAmount = random.randint(50, 100)
+                _fadeAmount = random.randint(50, 100)
+            else:
+                _fadeAmount = fadeAmount
             if raindropChance is None:
-                raindropChance = random.uniform(0.005, 0.1)
+                _raindropChance = random.uniform(0.005, 0.1)
+            else:
+                _raindropChance = raindropChance
             if stepSize is None:
-                stepSize = random.randint(1, 5)
-                if stepSize > 3:
-                    raindropChance /= 3
+                _stepSize = random.randint(1, 5)
+            else:
+                _stepSize = stepSize
+            if delayCount is None:
+                _delayCount = random.randint(2, 5)
+            else:
+                _delayCount = delayCount
+            if _stepSize > 3:
+                _raindropChance /= 3
+            for i in range(max(min(self.colorSequenceCount, 10), 2)):
+                raindrop = LightData(self.functionRaindrops.__name__, self._Raindrops_Function)
+                raindrop.color = self.colorSequenceNext
+                raindrop.fadeAmount = int((255 - _fadeAmount) // 255)
+                raindrop.sizeMax = _maxSize
+                raindrop.index = random.randint(0, self._VirtualLEDCount - 1)
+                raindrop.stepCountMax = random.randint(2, raindrop.sizeMax)
+                raindrop.step = _stepSize
+                raindrop.fadeAmount = ((255 / raindrop.stepCountMax) / 255) * 2
+                raindrop.active = False
+                raindrop.activeChance = _raindropChance
+                raindrop.delayCountMax = _delayCount
+                self._LightDataObjects.append(raindrop)
+
+            self._LightDataObjects[0].active = True
+
+            fade = LightData(self._fadeOff.__name__, self._fadeOff)
+            fade.fadeAmount = 25 / 255.0
+            self._LightDataObjects.append(fade)
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -2180,51 +2165,21 @@ class LightFunction:
             )
             raise
 
-    # def _Raindrops_Configuration(self, fadeAmount: int, maxSize: int, raindropChance: float, stepSize: int):
-    #     """ """
-    #     try:
-    #         LOGGER.log(5, "%s.%s:", self.__class__.__name__, inspect.stack()[0][3])
-    #         self._fadeAmount = int((255 - fadeAmount) // 255)
-    #         self._LightDataObjects = []
-    #         for i in range(max(min(self.colorSequenceCount, 10), 2)):
-    #             raindrop = LightData(self.colorSequenceNext)
-    #             raindrop.sizeMax = maxSize
-    #             raindrop.index = random.randint(0, self._VirtualLEDCount - 1)
-    #             raindrop.stepCountMax = random.randint(2, raindrop.sizeMax)
-    #             raindrop.step = stepSize
-    #             raindrop.fadeAmount = ((255 / raindrop.stepCountMax) / 255) * 2
-    #             raindrop.active = False
-    #             raindrop.activeChance = raindropChance
-    #             self._LightDataObjects.append(raindrop)
-    #         self._LightDataObjects[0].active = True
-    #     except SystemExit:
-    #         raise
-    #     except KeyboardInterrupt:
-    #         raise
-    #     except Exception as ex:
-    #         LOGGER.exception(
-    #             "%s.%s Exception: %s",
-    #             self.__class__.__name__,
-    #             inspect.stack()[0][3],
-    #             ex,
-    #         )
-    #         raise
-
-    def _Raindrops_Function(self):
+    def _Raindrops_Function(self, raindrop: LightData):
         """ """
         try:
-            self._fadeOff(self._fadeAmount, False)
-            for raindrop in self._LightDataObjects:
-                if not raindrop.active:
-                    chance = random.randint(0, 1000) / 1000
-                    if chance < raindrop.activeChance:
-                        raindrop.active = True
-                        raindrop.stepCountMax = random.randint(2, raindrop.sizeMax)
-                        raindrop.fadeAmount = ((255 / raindrop.stepCountMax) / 255) * 2
-                        raindrop.colorScaler = (
-                            raindrop.stepCountMax - raindrop.stepCounter
-                        ) / raindrop.stepCountMax
-                if raindrop.active:
+            if not raindrop.active:
+                chance = random.randint(0, 1000) / 1000
+                if chance < raindrop.activeChance:
+                    raindrop.active = True
+                    raindrop.stepCountMax = random.randint(2, raindrop.sizeMax)
+                    raindrop.fadeAmount = ((255 / raindrop.stepCountMax) / 255) * 2
+                    raindrop.colorScaler = (
+                        raindrop.stepCountMax - raindrop.stepCounter
+                    ) / raindrop.stepCountMax
+            if raindrop.active:
+                if raindrop.delayCounter >= raindrop.delayCountMax:
+                    raindrop.delayCounter = 0
                     if raindrop.stepCounter < raindrop.stepCountMax:
                         s1 = max(raindrop.index - raindrop.stepCounter - raindrop.step, 0)
                         s2 = max(raindrop.index - raindrop.stepCounter, 0)
@@ -2233,20 +2188,18 @@ class LightFunction:
                             raindrop.index + raindrop.stepCounter + raindrop.step,
                             self._VirtualLEDCount,
                         )
-                        # self._VirtualLEDArray[(raindrop.index + raindrop.stepCounter) % self._VirtualLEDCount] = raindrop.color
-                        # self._VirtualLEDArray[(raindrop.index - raindrop.stepCounter) % self._VirtualLEDCount] = raindrop.color
                         if (s2 - s1) > 0:
                             self._VirtualLEDArray[s1:s2] = [raindrop.color] * (s2 - s1)
                         if (e2 - e1) > 0:
                             self._VirtualLEDArray[e1:e2] = [raindrop.color] * (e2 - e1)
                         raindrop.color[:] = raindrop.color * raindrop.colorScaler
-                        # p = Pixel(raindrop.color)
                         raindrop.stepCounter += raindrop.step
                     else:
                         raindrop.index = random.randint(0, self._VirtualLEDCount - 1)
                         raindrop.stepCounter = 0
                         raindrop.color = self.colorSequenceNext.copy()
                         raindrop.active = False
+                raindrop.delayCounter += 1
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -2260,15 +2213,26 @@ class LightFunction:
             )
             raise
 
-    def functionTwinkle(self, refreshDelay: float = None, twinkleChance: float = 0.02):
+    def functionTwinkle(
+        self,
+        twinkleChance: float = None,
+    ) -> None:
         """
         Randomly sets some lights to 'twinkleColor' temporarily
 
         """
         try:
-            LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.functionTwinkle.__name__)
-            if refreshDelay is None:
-                refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 5
+            LOGGER.debug("%s.%s:", self.__class__.__name__, self.functionTwinkle.__name__)
+
+            if twinkleChance is None:
+                _twinkleChance = 1 - (random.randint(1, 5) / 100.0)
+            else:
+                _twinkleChance = twinkleChance
+
+            twinkle = LightData(self.functionTwinkle.__name__, self._Twinkle_Overlay)
+            twinkle.random = _twinkleChance
+            twinkle.colorSequence = self.colorSequence
+            self._LightDataObjects.append(twinkle)
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -2282,40 +2246,12 @@ class LightFunction:
             )
             raise
 
-    # def _Twinkle_Configuration(self, twinkleChance: float):
-    #     """ """
-    #     try:
-    #         LOGGER.log(5, "%s.%s:", self.__class__.__name__, inspect.stack()[0][3])
-    #         self._TwinkleChance = float(twinkleChance)
-    #         if isinstance(self._colorFunction, dict):
-    #             self._overlayColorFunction = {k: v for k, v in self._colorFunction.items()}
-    #             self._overlayColorFunction["twinkleColors"] = True
-    #         else:
-    #             # TODO: make this exception useful
-    #             raise Exception("")
-    #         self.useColorSingle(PixelColors.OFF)
-    #     except SystemExit:
-    #         raise
-    #     except KeyboardInterrupt:
-    #         raise
-    #     except Exception as ex:
-    #         LOGGER.exception(
-    #             "%s.%s Exception: %s",
-    #             self.__class__.__name__,
-    #             inspect.stack()[0][3],
-    #             ex,
-    #         )
-    #         raise
-
-    def _Twinkle_Overlay(self):
+    def _Twinkle_Overlay(self, twinkle: LightData):
         """ """
         try:
-            maxVal = 1000
-            if self._TwinkleChance > 0.0:
-                for LEDIndex in range(self._LEDCount):
-                    doLight = random.randint(0, maxVal)
-                    if doLight > maxVal * (1.0 - self._TwinkleChance):
-                        self._LEDArray[LEDIndex] = self.overlayColorSequenceNext
+            for LEDIndex in range(self._LEDCount):
+                if random.random() > twinkle.random and isinstance(self._LEDArray, LightString):
+                    self.OverlayDict[LEDIndex] = twinkle.colorSequenceNext
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -2329,11 +2265,21 @@ class LightFunction:
             )
             raise
 
-    def functionBlink(self, refreshDelay: float = None, blinkChance: float = 0.02):
+    def functionBlink(
+        self,
+        blinkChance: float = None,
+    ) -> None:
         try:
-            LOGGER.log(5, "%s.%s:", self.__class__.__name__, self.functionBlink.__name__)
-            if refreshDelay is None:
-                refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 50
+            LOGGER.debug("%s.%s:", self.__class__.__name__, self.functionBlink.__name__)
+            if blinkChance is None:
+                _blinkChance = 1 - (random.randint(5, 15) / 1000.0)
+            else:
+                _blinkChance = blinkChance
+
+            blink = LightData(self.functionBlink.__name__, self._Blink_Overlay)
+            blink.random = _blinkChance
+            blink.colorSequence = self.colorSequence
+            self._LightDataObjects.append(blink)
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -2347,31 +2293,7 @@ class LightFunction:
             )
             raise
 
-    # def _Blink_Configuration(self, blinkChance: float):
-    #     try:
-    #         LOGGER.log(5, "%s.%s:", self.__class__.__name__, inspect.stack()[0][3])
-    #         self._BlinkChance = float(blinkChance)
-    #         if isinstance(self._colorFunction, dict):
-    #             self._overlayColorFunction = {k: v for k, v in self._colorFunction.items()}
-    #             self._overlayColorFunction["twinkleColors"] = True
-    #         else:
-    #             # TODO: make this exception useful
-    #             raise Exception("")
-    #         self.useColorSingle(PixelColors.OFF)
-    #     except SystemExit:
-    #         raise
-    #     except KeyboardInterrupt:
-    #         raise
-    #     except Exception as ex:
-    #         LOGGER.exception(
-    #             "%s.%s Exception: %s",
-    #             self.__class__.__name__,
-    #             inspect.stack()[0][3],
-    #             ex,
-    #         )
-    #         raise
-
-    def _Blink_Overlay(self):
+    def _Blink_Overlay(self, blink: LightData):
         """
         Randomly sets some lights to 'twinkleColor' without changing
         the _VirtualLEDArray buffer
@@ -2384,15 +2306,10 @@ class LightFunction:
                         the RGB color tuple to be used as the twinkle color
         """
         try:
-            self._Blink = not self._Blink
-            if self._Blink and self._BlinkChance > 0.0:
-                for i in range(self.overlayColorSequenceCount):
-                    color = self.overlayColorSequenceNext
-                    maxVal = 1000
-                    doBlink = random.randint(0, maxVal)
-                    if doBlink > maxVal * (1.0 - self._BlinkChance):
-                        for LEDIndex in range(self._LEDCount):
-                            self._LEDArray[LEDIndex] = color
+            color = blink.colorSequenceNext
+            if random.random() > blink.random:
+                for LEDIndex in range(self._LEDCount):
+                    self.OverlayDict[LEDIndex] = color
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -2406,11 +2323,38 @@ class LightFunction:
             )
             raise
 
-    def functionItsAlive(self, refreshDelay: float = None):
+    def functionItsAlive(
+        self,
+        fadeAmount: float = None,
+    ) -> None:
+        """ """
+        if fadeAmount is None:
+            _fadeAmount = random.randint(80, 192) / 255.0
+        else:
+            _fadeAmount = fadeAmount
         try:
-            LOGGER.log(5, "%s.%s:", self.__class__.__name__, self.functionItsAlive.__name__)
-            if refreshDelay is None:
-                refreshDelay = (DEFAULT_REFRESH_DELAY / self._LEDCount) / 5
+            LOGGER.debug("%s.%s:", self.__class__.__name__, self.functionItsAlive.__name__)
+            for i in range(2):
+                thing = LightData(self.functionItsAlive.__name__, self._itsAlive_Function)
+                thing.colorSequence = self.colorSequence
+                thing.color = thing.colorSequenceNext
+                thing.index = random.randint(0, self._VirtualLEDCount - 1)
+                thing.stepCountMax = random.randint(self._VirtualLEDCount // 10, self._VirtualLEDCount)
+                thing.fadeAmount = 255 / thing.stepCountMax
+                thing.sizeMax = self._VirtualLEDCount // 3
+                thing.size = 1
+                thing.fadeAmount = random.randint(80, 192)
+                thing.direction = [-1, 1][random.randint(0, 1)]
+                thing.step = random.randint(1, 3)
+                thing.stepSizeMax = random.randint(7, 12)
+                thing.state = 1
+                thing.delayCountMax = random.randint(6, 15)
+                self._LightDataObjects.append(thing)
+            self._LightDataObjects[0].active = True
+
+            fade = LightData(self._fadeOff.__name__, self._fadeOff)
+            fade.fadeAmount = _fadeAmount
+            self._LightDataObjects.append(fade)
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -2424,145 +2368,105 @@ class LightFunction:
             )
             raise
 
-    # def _itsAlive_Configuration(self):
-    #     """ """
-    #     try:
-    #         LOGGER.log(5, "%s.%s:", self.__class__.__name__, inspect.stack()[0][3])
-    #         self._LightDataObjects = []
-    #         for i in range(1):
-    #             thing = LightData(self.colorSequenceNext.copy())
-    #             thing.index = random.randint(0, self._VirtualLEDCount - 1)
-    #             thing.stepCountMax = random.randint(self._VirtualLEDCount // 10, self._VirtualLEDCount)
-    #             thing.fadeAmount = 255 / thing.stepCountMax
-    #             thing.sizeMax = self._VirtualLEDCount // 3
-    #             thing.size = 1
-    #             thing.fadeAmount = random.randint(80, 192)
-    #             thing.direction = [-1, 1][random.randint(0, 1)]
-    #             thing.step = random.randint(1, 3)
-    #             thing.state = 1
-    #             thing.delayCountMax = random.randint(6, 15)
-    #             self._LightDataObjects.append(thing)
-    #         self._LightDataObjects[0].active = True
-    #     except SystemExit:
-    #         raise
-    #     except KeyboardInterrupt:
-    #         raise
-    #     except Exception as ex:
-    #         LOGGER.exception(
-    #             "%s.%s Exception: %s",
-    #             self.__class__.__name__,
-    #             inspect.stack()[0][3],
-    #             ex,
-    #         )
-    #         raise
-
-    def _itsAlive_Function(self):
+    def _itsAlive_Function(self, thing: LightData):
         """ """
-        METEOR = 0x1
-        LIGHTSPEED = 0x2
-        TURTLE = 0x4
-        functions = [
-            METEOR,
-            LIGHTSPEED,
-            TURTLE,
-        ]
-        GROW = 0x10
-        SHRINK = 0x20
-        modifications = [
-            0,
-            GROW,
-            SHRINK,
-        ]
-        CYCLE = 0x100
-        color_modifications = [
-            0,
-            CYCLE,
-        ]
+
+        class ThingMoves(IntEnum):
+            NOTHING = 0x0
+            METEOR = 0x1
+            LIGHTSPEED = 0x2
+            TURTLE = 0x4
+
+        class ThingSizes(IntEnum):
+            NOTHING = 0x0
+            GROW = 0x10
+            SHRINK = 0x20
+
+        class ThingColors(IntEnum):
+            NOTHING = 0x0
+            CYCLE = 0x100
 
         SHORT_PERIOD = 10
 
         try:
-            self._fadeOff(self._LightDataObjects[0].fadeAmount)
-            for thing in self._LightDataObjects:
-                thing.indexPrevious = thing.index
-                if thing.stepCounter < thing.stepCountMax:
-                    if thing.state & METEOR:
-                        newLocation = (
-                            thing.index + (thing.step * thing.direction)
-                        ) % self._VirtualLEDIndexCount
-                        thing.index = newLocation
-                    if thing.state & LIGHTSPEED:
-                        if thing.stepCountMax > SHORT_PERIOD:
-                            thing.stepCountMax = SHORT_PERIOD
-                        thing.step = 15
-                        thing.index = (thing.index + (thing.step * thing.direction)) % self._VirtualLEDCount
-                        if random.randint(0, 99) > 95:
+            thing.indexPrevious = thing.index
+            if thing.stepCounter < thing.stepCountMax:
+                if thing.state & ThingMoves.METEOR.value:
+                    newLocation = (thing.index + (thing.step * thing.direction)) % self._VirtualLEDIndexCount
+                    thing.index = newLocation
+                if thing.state & ThingMoves.LIGHTSPEED.value:
+                    if thing.stepCountMax > SHORT_PERIOD:
+                        thing.stepCountMax = SHORT_PERIOD
+                    thing.step = random.randint(7, 12)
+                    thing.index = (thing.index + (thing.step * thing.direction)) % self._VirtualLEDCount
+                    if random.randint(0, 99) > 95:
+                        thing.direction *= -1
+                if thing.state & ThingMoves.TURTLE.value:
+                    thing.step = 0
+                    if thing.delayCounter > thing.delayCountMax:
+                        thing.delayCounter = 0
+                        thing.step = 1
+                        if random.randint(0, 99) > 80:
                             thing.direction *= -1
-                    if thing.state & TURTLE:
-                        thing.step = 0
-                        if thing.delayCounter > thing.delayCountMax:
-                            thing.delayCounter = 0
-                            thing.step = 1
-                            if random.randint(0, 99) > 80:
-                                thing.direction *= -1
-                        thing.delayCounter += 1
-                        thing.index = (thing.index + (thing.step * thing.direction)) % self._VirtualLEDCount
-                    if thing.state & GROW:
-                        if thing.stepCountMax > SHORT_PERIOD:
-                            thing.stepCountMax = SHORT_PERIOD
-                        if thing.size < thing.sizeMax:
-                            if random.randint(0, 99) > 80:
-                                thing.size += random.randint(1, 5)
-                            elif thing.size > 2:
-                                if random.randint(0, 99) > 90:
-                                    thing.size -= 1
-                        if thing.size > thing.sizeMax:
-                            thing.size = thing.sizeMax
-                        elif thing.size < 1:
-                            thing.size = 1
-                    if thing.state & SHRINK:
-                        if thing.stepCountMax > SHORT_PERIOD:
-                            thing.stepCountMax = SHORT_PERIOD
-                        if thing.size > 0:
-                            if random.randint(0, 99) > 80:
-                                thing.size -= random.randint(1, 5)
-                            elif thing.size < thing.sizeMax:
-                                if random.randint(0, 99) > 90:
-                                    thing.size += 1
-                        if thing.size > thing.sizeMax:
-                            thing.size = thing.sizeMax
-                        elif thing.size < 1:
-                            thing.size = 1
-                    if thing.state & CYCLE:
-                        if thing.stepCountMax > SHORT_PERIOD:
-                            thing.stepCountMax = SHORT_PERIOD
-                        if random.randint(0, 99) > 90:
-                            thing.color = self.colorSequenceNext
-                    x1 = thing.indexPrevious - (thing.size * thing.direction)
-                    x2 = thing.indexPrevious + ((thing.step + thing.size) * thing.direction)
-                    _x1 = min(x1, x2)
-                    _x2 = max(x1, x2)
-                    for i in range(_x1, _x2 + 1):
-                        idx = i % self._VirtualLEDCount
-                        self._VirtualLEDArray[idx] = thing.color
-                    thing.stepCounter += 1
-                else:
-                    thing.state = (
-                        functions[random.randint(0, len(functions) - 1)]
-                        + modifications[random.randint(0, len(modifications) - 1)]
-                        + color_modifications[random.randint(0, len(color_modifications) - 1)]
-                    )
-                    thing.stepCounter = 0
-                    if thing.state == 0:
-                        thing.stepCountMax = random.randint(
-                            self._VirtualLEDCount // 10, self._VirtualLEDCount
-                        )
-                        thing.delayCountMax = random.randint(6, 15)
-                        if random.randint(0, 99) > 75:
-                            thing.direction *= -1
-                        thing.step = random.randint(1, 3)
-                        thing.fadeAmount = random.randint(80, 192)
-                        thing.color = self.colorSequenceNext.copy()
+                    thing.delayCounter += 1
+                    thing.index = (thing.index + (thing.step * thing.direction)) % self._VirtualLEDCount
+                if thing.state & ThingSizes.GROW.value:
+                    if thing.stepCountMax > SHORT_PERIOD:
+                        thing.stepCountMax = SHORT_PERIOD
+                    if thing.size < thing.sizeMax:
+                        if random.randint(0, 99) > 80:
+                            thing.size += random.randint(1, 5)
+                        elif thing.size > 2:
+                            if random.randint(0, 99) > 90:
+                                thing.size -= 1
+                    if thing.size > thing.sizeMax:
+                        thing.size = thing.sizeMax
+                    elif thing.size < 1:
+                        thing.size = 1
+                if thing.state & ThingSizes.SHRINK.value:
+                    if thing.stepCountMax > SHORT_PERIOD:
+                        thing.stepCountMax = SHORT_PERIOD
+                    if thing.size > 0:
+                        if random.randint(0, 99) > 80:
+                            thing.size -= random.randint(1, 5)
+                        elif thing.size < thing.sizeMax:
+                            if random.randint(0, 99) > 90:
+                                thing.size += 1
+                    if thing.size > thing.sizeMax:
+                        thing.size = thing.sizeMax
+                    elif thing.size < 1:
+                        thing.size = 1
+                if thing.state & ThingColors.CYCLE.value:
+                    if thing.stepCountMax > SHORT_PERIOD:
+                        thing.stepCountMax = SHORT_PERIOD
+                    if random.randint(0, 99) > 90:
+                        thing.color = self.colorSequenceNext
+
+                x1 = thing.indexPrevious - (thing.size * thing.direction)
+                x2 = thing.indexPrevious + ((thing.step + thing.size) * thing.direction)
+                _x1 = min(x1, x2)
+                _x2 = max(x1, x2)
+                rng = np.array(range(_x1, _x2 + 1))
+                rng = thing.calcRange(_x1, _x2, self._VirtualLEDCount)
+                self._VirtualLEDArray[rng] = thing.color
+
+                thing.stepCounter += 1
+            else:
+                thing.state = (
+                    list(ThingMoves)[random.randint(0, len(ThingMoves) - 1)]
+                    + list(ThingSizes)[random.randint(0, len(ThingSizes) - 1)]
+                    + list(ThingColors)[random.randint(0, len(ThingColors) - 1)]
+                )
+                thing.stepCounter = 0
+                if thing.state == 0:
+                    thing.stepCountMax = random.randint(self._VirtualLEDCount // 10, self._VirtualLEDCount)
+                    thing.delayCountMax = random.randint(6, 15)
+                    if random.randint(0, 99) > 75:
+                        thing.direction *= -1
+                    thing.step = random.randint(1, 3)
+                    thing.fadeAmount = random.randint(80, 192)
+                    thing.color = self.colorSequenceNext
+
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -2610,9 +2514,6 @@ class LightFunction:
                             fnc = funcs_copy[0]
                         funcs_copy.remove(fnc)
                         getattr(self, fnc)()
-                        # c = self._colorFunction.copy()
-                        # c.pop("function")
-                        # self._colorFunction["function"](**c)
                         self.run()
                 except Exception as ex:
                     LOGGER.exception(ex)
