@@ -25,15 +25,15 @@ class LightData:
         self.indexPrevious: int = 0
         self.indexUpdated: bool = False
 
-        self.step: int = 0
+        self.step: int = 1
         self.stepLast: int = 0
         self.stepCounter: int = 0
         self.stepCountMax: int = 0
-        self.stepSizeMax: int = 0
+        self.stepSizeMax: int = 1
 
-        self.size: int = 0
-        self.sizeMin: int = 0
-        self.sizeMax: int = 0
+        self.size: int = 1
+        self.sizeMin: int = 1
+        self.sizeMax: int = 1
 
         self.delayCounter: int = 0
         self.delayCountMax: int = 0
@@ -46,16 +46,17 @@ class LightData:
         self.colorBegin: NDArray[(3,), np.int32] = PixelColors.OFF.array
         self.colorNext: NDArray[(3,), np.int32] = PixelColors.OFF.array
         self.colorGoal: NDArray[(3,), np.int32] = PixelColors.OFF.array
-        self.colorSequenceIndex: int = 0
+        # self.colorSequenceIndex: int = 0
         # self.colorIndex: int = 0
         self.colorScaler: float = 0
         self.colorFade: int = 1
         self.colorCycle: bool = False
-        self.explode: bool = False
 
         self.state: int = 0
         self.stateMax: int = 0
 
+        self.explode: bool = False
+        self.fade: bool = False
         self.bounce: bool = False
         self.collideWith: Optional[LightData] = None
         self.collideIntersect: int = 0
@@ -63,7 +64,7 @@ class LightData:
         self.dying: bool = False
         self.waking: bool = False
         self.duration: int = 0
-        self.direction: int = 0
+        self.direction: int = 1
         self.fadeAmount: float = 0
         self.fadeSteps: int = 0
         self.random: float = 0.5
