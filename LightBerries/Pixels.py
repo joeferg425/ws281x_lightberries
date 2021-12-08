@@ -6,10 +6,7 @@ from nptyping import NDArray
 from typing import List, Optional, Tuple, Union, Any
 import numpy as np
 
-LOGGER = logging.getLogger(__name__)
-streamHandler = logging.StreamHandler()
-LOGGER.addHandler(streamHandler)
-LOGGER.setLevel(logging.INFO)
+LOGGER = logging.getLogger("LightBerries")
 
 
 class LED_ORDER(enum.Enum):

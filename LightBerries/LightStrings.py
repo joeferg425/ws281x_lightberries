@@ -10,12 +10,7 @@ from LightBerries.rpi_ws281x_patch import rpi_ws281x
 from LightBerries.Pixels import Pixel, PixelColors
 from nptyping import NDArray
 
-LOGGER = logging.getLogger(__name__)
-logging.addLevelName(5, "VERBOSE")
-if not LOGGER.handlers:
-    streamHandler = logging.StreamHandler()
-    LOGGER.addHandler(streamHandler)
-LOGGER.setLevel(logging.INFO)
+LOGGER = logging.getLogger("LightBerries")
 
 
 class LightString(Sequence[np.int_]):

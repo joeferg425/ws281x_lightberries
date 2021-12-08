@@ -1,12 +1,7 @@
 import logging
 import sys
 
-LOGGER = logging.getLogger(__name__)
-logging.addLevelName(5, "VERBOSE")
-if not LOGGER.handlers:
-    streamHandler = logging.StreamHandler()
-    LOGGER.addHandler(streamHandler)
-LOGGER.setLevel(logging.INFO)
+LOGGER = logging.getLogger("LightBerries")
 
 if sys.platform != "linux":
     # this lets me debug the rpi code in windows

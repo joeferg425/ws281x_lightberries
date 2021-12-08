@@ -96,7 +96,7 @@ class LightsProcess:
                     elif msg[0] == "count":
                         try:
                             count = msg[1]
-                            if count < lf._LEDCount:
+                            if count < lf.__LEDCount:
                                 lf._VirtualLEDArray[:] *= 0
                                 lf._copyVirtualLedsToWS281X()
                                 lf._refreshLEDs()

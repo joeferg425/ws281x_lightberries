@@ -5,10 +5,10 @@ import logging
 import datetime
 from typing import Any, List, Optional, Sequence, Union
 from numpy.lib.arraysetops import isin
-
-# from numpy.typing import NDArray
 from LightBerries.Pixels import Pixel, PixelColors
 from LightBerries.LightStrings import LightString
+
+LOGGER = logging.getLogger("LightBerries")
 
 # set some constants
 DEFAULT_TWINKLE_COLOR = PixelColors.GRAY
@@ -95,13 +95,6 @@ def get_DEFAULT_COLOR_SEQUENCE() -> NDArray[(3, Any), np.int32]:
     elif m == 12:
         DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.WHITE, PixelColors.GREEN]
     return ConvertPixelArrayToNumpyArray(DEFAULT_COLOR_SEQUENCE)
-
-
-LOGGER = logging.getLogger(__name__)
-if not LOGGER.handlers:
-    streamHandler = logging.StreamHandler()
-    LOGGER.addHandler(streamHandler)
-LOGGER.setLevel(logging.INFO)
 
 
 def PixelArray(arrayLength: int) -> NDArray[(3, Any), np.int32]:

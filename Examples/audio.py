@@ -43,7 +43,7 @@ def plot_stuff(q):
                 fft_data = np.nan_to_num(fft_data)
 
                 # print(len(fft_data), lf._LEDCount)
-                chunk_length = len(fft_data) // lf._LEDCount
+                chunk_length = len(fft_data) // lf.__LEDCount
                 m = np.min(fft_data)
                 if m < 0:
                     fft_data -= m
