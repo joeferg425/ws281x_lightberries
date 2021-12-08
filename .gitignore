@@ -109,3 +109,4 @@ test.py
 LightBerries/Sphinx-docs/
 .vscode
 *.tar.gz
+*.log

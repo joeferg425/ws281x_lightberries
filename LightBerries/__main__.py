@@ -1,4 +1,4 @@
-from LightBerries.LightFunctions import LightFunction
+from LightBerries.LightControl import LightController
 
 if __name__ == "__main__":
     # the number of pixels in the light string
@@ -16,7 +16,7 @@ if __name__ == "__main__":
     PWM_CHANNEL = 0
     # create the light-function object
     brightness = 0.75
-    l = LightFunction(
+    l = LightController(
         ledCount=PIXEL_COUNT,
         pwmGPIOpin=GPIO_PWM_PIN,
         channelDMA=DMA_CHANNEL,

@@ -45,7 +45,7 @@ sudo python3 -m LightBerries
 
 ```python
 # import the library
-from LightBerries import LightFunction
+from LightBerries import LightController
 # the number of pixels in the light string
 PIXEL_COUNT = 100
 # GPIO pin to use for PWM signal
@@ -62,9 +62,9 @@ LED_STRIP_TYPE = None
 INVERT = False
 PWM_CHANNEL = 0
 # create the light-function object
-lightFunction = LightFunction(ledCount=PIXEL_COUNT, pwmGPIOpin=GPIO_PWM_PIN, channelDMA=DMA_CHANNEL, frequencyPWM=PWM_FREQUENCY, channelPWM=PWM_CHANNEL, invertSignalPWM=INVERT, gamma=GAMMA, stripTypeLED=LED_STRIP_TYPE, ledBrightnessFloat=BRIGHTNESS, debug=True)
+lightController = LightController(ledCount=PIXEL_COUNT, pwmGPIOpin=GPIO_PWM_PIN, channelDMA=DMA_CHANNEL, frequencyPWM=PWM_FREQUENCY, channelPWM=PWM_CHANNEL, invertSignalPWM=INVERT, gamma=GAMMA, stripTypeLED=LED_STRIP_TYPE, ledBrightnessFloat=BRIGHTNESS, debug=True)
 # choose a function
-lightFunction.demo(secondsPerMode=5)
+lightController.demo(secondsPerMode=5)
 ```
 
 ### Rainbow that scrolls across the lights ###
@@ -86,18 +86,18 @@ LED_STRIP_TYPE = None
 INVERT = False
 PWM_CHANNEL = 0
 # create the light-function object
-lightFunction = LightFunction(ledCount=PIXEL_COUNT, pwmGPIOpin=GPIO_PWM_PIN, channelDMA=DMA_CHANNEL, frequencyPWM=PWM_FREQUENCY, channelPWM=PWM_CHANNEL, invertSignalPWM=INVERT, gamma=GAMMA, stripTypeLED=LED_STRIP_TYPE, ledBrightnessFloat=BRIGHTNESS, debug=True)
+lightController = LightController(ledCount=PIXEL_COUNT, pwmGPIOpin=GPIO_PWM_PIN, channelDMA=DMA_CHANNEL, frequencyPWM=PWM_FREQUENCY, channelPWM=PWM_CHANNEL, invertSignalPWM=INVERT, gamma=GAMMA, stripTypeLED=LED_STRIP_TYPE, ledBrightnessFloat=BRIGHTNESS, debug=True)
 # choose a function
-lightFunction.useColorRainbow()
-lightFunction.functionMarquee()
-lightFunction.run()
+lightController.useColorRainbow()
+lightController.functionMarquee()
+lightController.run()
 ```
 
 ### Raindrop function ###
 
 ```python
 # import the library
-from LightBerries import LightFunction
+from LightBerries import LightController
 # the number of pixels in the light string
 PIXEL_COUNT = 100
 # GPIO pin to use for PWM signal
@@ -114,9 +114,9 @@ LED_STRIP_TYPE = None
 INVERT = False
 PWM_CHANNEL = 0
 # create the light-function object
-lightFunction = LightFunction(ledCount=PIXEL_COUNT, pwmGPIOpin=GPIO_PWM_PIN, channelDMA=DMA_CHANNEL, frequencyPWM=PWM_FREQUENCY, channelPWM=PWM_CHANNEL, invertSignalPWM=INVERT, gamma=GAMMA, stripTypeLED=LED_STRIP_TYPE, ledBrightnessFloat=BRIGHTNESS, debug=True)
+lightController = LightController(ledCount=PIXEL_COUNT, pwmGPIOpin=GPIO_PWM_PIN, channelDMA=DMA_CHANNEL, frequencyPWM=PWM_FREQUENCY, channelPWM=PWM_CHANNEL, invertSignalPWM=INVERT, gamma=GAMMA, stripTypeLED=LED_STRIP_TYPE, ledBrightnessFloat=BRIGHTNESS, debug=True)
 # choose a function
-lightFunction.useColorRandom()
-lightFunction.functionRaindrops()
-lightFunction.run()
+lightController.useColorRandom()
+lightController.functionRaindrops()
+lightController.run()
 ```
