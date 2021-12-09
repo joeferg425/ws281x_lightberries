@@ -17,7 +17,7 @@ setup(
         "nptyping>=1.4.4",
     ],
     name="LightBerries",
-    version="0.55dev",
+    version="0.99dev",
     packages=setuptools.find_packages(),
     license="MIT",
     description=("A wrapper for rpi_ws281x that does all the heavy lifting for you."),
