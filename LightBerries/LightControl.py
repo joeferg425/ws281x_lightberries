@@ -1,4 +1,4 @@
-"""Class defines methods for interacting with Light Strings, Patterns, and Functions"""
+"""Class defines methods for interacting with Light Strings, Patterns, and Functions."""
 import time
 import random
 import logging
@@ -20,6 +20,7 @@ from LightBerries.RpiWS281xPatch import rpi_ws281x
 from LightBerries.Pixels import Pixel, PixelColors
 from LightBerries.LightStrings import LightString
 from LightBerries.LightFunctions import LightFunction
+from LightBerries.LightBerryException import LightBerryControlException
 from LightBerries.LightPatterns import (
     SolidColorArray,
     ConvertPixelArrayToNumpyArray,
@@ -38,27 +39,26 @@ DEFAULT_REFRESH_DELAY = 50
 
 
 class LightController:
-    """
-    This library wraps the rpi_ws281x library and provides some lighting functions.
-    see https://github.com/rpi-ws281x/rpi-ws281x-python for questions about that library
+    """This library wraps the rpi_ws281x library and provides some lighting functions.
+
+    See https://github.com/rpi-ws281x/rpi-ws281x-python for questions about rpi_ws281x library.
 
     Quick Start:
-            1: Create a LightController object specifying ledCount:int, pwmGPIOpin:int,
-                channelDMA:int, frequencyPWM:int
-                    lf = LightController(10, 18, 10, 800000)
+        1: Create a LightController object specifying ledCount:int, pwmGPIOpin:int,
+            channelDMA:int, frequencyPWM:int
+                lf = LightController(10, 18, 10, 800000)
 
-            2: Choose a color pattern
-                    lf.useColorRainbow()
+        2: Choose a color pattern
+                lf.useColorRainbow()
 
-            3: Choose a function
-                    lf.useFunctionCylon()
+        3: Choose a function
+                lf.useFunctionCylon()
 
-            4: Choose a duration to run
-                    lf.secondsPerMode = 60
+        4: Choose a duration to run
+                lf.secondsPerMode = 60
 
-            5: Run
-                    lf.run()
-
+        5: Run
+                lf.run()
     """
 
     def __init__(
@@ -75,21 +75,27 @@ class LightController:
         debug: bool = False,
         verbose: bool = False,
     ) -> None:
-        """
-        Create a LightController object for running patterns across a rpi_ws281x LED string
+        """Create a LightController object for running patterns across a rpi_ws281x LED string.
 
-        ledCount: the number of Pixels in your string of LEDs
-        pwmGPIOpin: the GPIO pin number your lights are hooked up to (18 is a good choice since it does PWM)
-        channelDMA: the DMA channel to use (5 is a good option)
-        frequencyPWM: try 800,000
-        invertSignalPWM: set true to invert the PWM signal
-        ledBrightnessFloat: set to a value between 0.0 (OFF), and 1.0 (ON).
-                This setting tends to introduce flicker the lower it is
-        channelPWM: defaults to 0, see https://github.com/rpi-ws281x/rpi-ws281x-python
-        stripTypeLED: see https://github.com/rpi-ws281x/rpi-ws281x-python
-        gamma: see https://github.com/rpi-ws281x/rpi-ws281x-python
-        debug: set true for some debugging messages
-        verbose: set true for even more information
+        Args:
+            ledCount: the number of Pixels in your string of LEDs
+            pwmGPIOpin: the GPIO pin number your lights are hooked up to
+                (18 is a good choice since it does PWM)
+            channelDMA: the DMA channel to use (5 is a good option)
+            frequencyPWM: try 800,000
+            invertSignalPWM: set true to invert the PWM signal
+            ledBrightnessFloat: set to a value between 0.0 (OFF), and 1.0 (ON).
+                    This setting tends to introduce flicker the lower it is
+            channelPWM: defaults to 0, see https://github.com/rpi-ws281x/rpi-ws281x-python
+            stripTypeLED: see https://github.com/rpi-ws281x/rpi-ws281x-python
+            gamma: see https://github.com/rpi-ws281x/rpi-ws281x-python
+            debug: set true for some debugging messages
+            verbose: set true for even more information
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             if debug is True or verbose is True:
@@ -151,16 +157,20 @@ class LightController:
                 "__init__",
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def __del__(
         self,
     ) -> None:
-        """
-        disposes of the rpi_ws281x object (if it exists) to prevent memory leaks
+        """Disposes of the rpi_ws281x object (if it exists) to prevent memory leaks.
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
-            if hasattr(self, "_LEDArray") and not self.ws28xxLightString is None:
+            if hasattr(self, "_LEDArray") and self.ws28xxLightString is not None:
                 self.off()
                 self.copyVirtualLedsToWS281X()
                 self.refreshLEDs()
@@ -177,23 +187,35 @@ class LightController:
                 self.__del__.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     @property
     def virtualLEDCount(self) -> int:
-        """The number of virtual LEDs. These include ones that won't display."""
+        """The number of virtual LEDs. These include ones that won't display.
+
+        Returns:
+            the number of virtual LEDs
+        """
         return self.privateVirtualLEDCount
 
     @property
     def realLEDCount(self) -> int:
-        """The number of LEDs in the LED string"""
+        """The number of LEDs in the LED string.
+
+        Returns:
+            the number of actual LEDs in the string (as configured)
+        """
         return self.privateLEDCount
 
     @property
     def refreshDelay(
         self,
     ) -> float:
-        """The delay between starting LED refreshes"""
+        """The delay between starting LED refreshes.
+
+        Returns:
+            the delay between refreshes
+        """
         return self.privateRefreshDelay
 
     @refreshDelay.setter
@@ -201,14 +223,22 @@ class LightController:
         self,
         delay: float,
     ) -> None:
-        """ """
+        """Set the refresh delay.
+
+        Args:
+            delay: the delay in seconds
+        """
         self.privateRefreshDelay = float(delay)
 
     @property
     def backgroundColor(
         self,
     ) -> NDArray[(3,), np.int32]:
-        """The defined background, or "Off" color for the LED string"""
+        """The defined background, or "Off" color for the LED string.
+
+        Returns:
+            the rgb value
+        """
         return self.privateBackgroundColor
 
     @backgroundColor.setter
@@ -216,14 +246,22 @@ class LightController:
         self,
         color: NDArray[(3,), np.int32],
     ) -> None:
-        """ """
+        """Set the background color.
+
+        Args:
+            color: an RGB value
+        """
         self.privateBackgroundColor = Pixel(color).array
 
     @property
     def secondsPerMode(
         self,
     ) -> float:
-        """The number of seconds to run the configuration"""
+        """The number of seconds to run the configuration.
+
+        Returns:
+            the seconds to run the current configuration
+        """
         return self.privateSecondsPerMode
 
     @secondsPerMode.setter
@@ -231,14 +269,22 @@ class LightController:
         self,
         seconds: float,
     ) -> None:
-        """ """
+        """Set the seconds per mode.
+
+        Args:
+            seconds: the number of seconds
+        """
         self.privateSecondsPerMode = float(seconds)
 
     @property
     def colorSequence(
         self,
     ) -> NDArray[(3, Any), np.int32]:
-        """The sequence of RGB values to use for generating patterns when using the functions"""
+        """The sequence of RGB values to use for generating patterns when using the functions.
+
+        Returns:
+            the sequence of RGB values
+        """
         return self.privateColorSequence
 
     @colorSequence.setter
@@ -246,7 +292,11 @@ class LightController:
         self,
         colorSequence: NDArray[(3, Any), np.int32],
     ) -> None:
-        """ """
+        """Set the color sequence.
+
+        Args:
+            colorSequence: the sequence of RGB values
+        """
         self.privateColorSequence = np.copy(ConvertPixelArrayToNumpyArray(colorSequence))
         self.colorSequenceCount = len(self.privateColorSequence)
         self.colorSequenceIndex = 0
@@ -255,7 +305,11 @@ class LightController:
     def colorSequenceCount(
         self,
     ) -> int:
-        """The number of colors in the defined sequence"""
+        """The number of colors in the defined sequence.
+
+        Returns:
+            the number of LEDs in the sequence
+        """
         return self.privateColorSequenceCount
 
     @colorSequenceCount.setter
@@ -263,14 +317,22 @@ class LightController:
         self,
         colorSequenceCount: int,
     ) -> None:
-        """ """
+        """Set the Color sequence count.
+
+        Args:
+            colorSequenceCount: the number of colors in the sequence
+        """
         self.privateColorSequenceCount = colorSequenceCount
 
     @property
     def colorSequenceIndex(
         self,
     ) -> int:
-        """The index we are on in the current color sequence"""
+        """The index we are on in the current color sequence.
+
+        Returns:
+            the current index into the color sequence
+        """
         return self.privateColorSequenceIndex
 
     @colorSequenceIndex.setter
@@ -278,14 +340,22 @@ class LightController:
         self,
         colorSequenceIndex: int,
     ) -> None:
-        """ """
+        """Set the color sequence index.
+
+        Args:
+            colorSequenceIndex: the new index
+        """
         self.privateColorSequenceIndex = colorSequenceIndex
 
     @property
     def colorSequenceNext(
         self,
     ) -> NDArray[(3,), np.int32]:
-        """Get the next color in the sequence"""
+        """Get the next color in the sequence.
+
+        Returns:
+            the next RGB value
+        """
         temp = self.colorSequence[self.colorSequenceIndex]
         self.colorSequenceIndex += 1
         if self.colorSequenceIndex >= self.colorSequenceCount:
@@ -297,19 +367,31 @@ class LightController:
 
     @property
     def functionList(self) -> List[LightFunction]:
-        """The list of function objects that will be used to modify the light pattern"""
+        """The list of function objects that will be used to modify the light pattern.
+
+        Returns:
+            the list of functions
+        """
         return self.privateLightFunctions
 
     @property
     def overlayDictionary(self) -> Dict[int, Any]:
-        """the list of indices and associated colors to temporarily assign LEDs"""
+        """The list of indices and associated colors to temporarily assign LEDs.
+
+        Returns:
+            the dictionary of LEDs and values
+        """
         return self.privateOverlayDict
 
     def reset(
         self,
     ) -> None:
-        """
-        reset class variables to default state
+        """Reset class variables to default state.
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             self.privateLightFunctions = []
@@ -326,13 +408,22 @@ class LightController:
                 self.reset.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def setVirtualLEDArray(
         self,
         ledArray: Union[List[Pixel], NDArray[(3, Any), np.int32]],
     ) -> None:
-        """Assign a sequence of pixel data to the LED buffer"""
+        """Assign a sequence of pixel data to the LED.
+
+        Args:
+            ledArray: array of RGB values
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
+        """
         try:
             # make sure the passed LED array is the correct type
             if isinstance(ledArray, list):
@@ -377,13 +468,17 @@ class LightController:
                 self.setVirtualLEDArray.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def copyVirtualLedsToWS281X(
         self,
     ) -> None:
-        """
-        Sets each Pixel in the rpi_ws281x object to the buffered array value
+        """Sets each Pixel in the rpi_ws281x object to the buffered array value.
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             # callback function to do work
@@ -415,13 +510,17 @@ class LightController:
                 self.copyVirtualLedsToWS281X.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def refreshLEDs(
         self,
     ) -> None:
-        """
-        Display current LED buffer
+        """Display current LED buffer.
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             # call light string's refresh method to send the communications out to the addressable LEDs
@@ -438,13 +537,17 @@ class LightController:
                 self.refreshLEDs.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def off(
         self,
     ) -> None:
-        """
-        set all Pixels to RGD background color
+        """Set all Pixels to RGD background color.
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             # clear all current values
@@ -462,13 +565,17 @@ class LightController:
                 self.off.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def _runFunctions(
         self,
     ) -> None:
-        """
-        Run each function in the configured function list
+        """Run each function in the configured function list.
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             # invoke the function pointer saved in the light data object
@@ -485,12 +592,18 @@ class LightController:
                 self._runFunctions.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def _copyOverlays(
         self,
     ):
-        """ """
+        """Copy overlays directly to output array, bypassing the buffer.
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
+        """
         try:
             # iterate over the dictionary key-value pairs, assign LED values
             # directly to output buffer skipping the virtual LED copies.
@@ -510,13 +623,20 @@ class LightController:
                 self._runFunctions.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def getRandomIndex(
         self,
     ) -> int:
-        """
-        retrieve a random Pixel index
+        """Retrieve a random Pixel index.
+
+        Returns:
+            a random index into the virtual LED buffer
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             return random.randint(0, (self.virtualLEDCount - 1))
@@ -531,14 +651,24 @@ class LightController:
                 self.getRandomIndex.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def getRandomIndices(
         self,
         count: int,
     ) -> NDArray[(Any), np.int32]:
-        """
-        retrieve a random list of Pixel indices
+        """Retrieve a random list of Pixel indices.
+
+        Args:
+            count: the number of random indices to get
+
+        Returns:
+            a list of random indices into the virtual LED buffer
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             temp = []
@@ -556,16 +686,29 @@ class LightController:
                 self.getRandomIndices.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def getRandomDirection(self) -> int:
-        """Get a random one or negative one to determine direction for light functions"""
+        """Get a random one or negative one to determine direction for light functions.
+
+        Returns:
+            one or negative one, randomly
+        """
         return [-1, 1][random.randint(0, 1)]
 
     def fadeColor(
         self, color: NDArray[(3,), np.int32], colorNext: NDArray[(3,), np.int32], fadeCount: int
     ) -> NDArray[(3,), np.int32]:
-        """fade an LED's color by the given amount and return the new RGB values"""
+        """Fade an LED's color by the given amount and return the new RGB value.
+
+        Args:
+            color: current color
+            colorNext: desired color
+            fadeCount: amount to adjust each RGB value by
+
+        Returns:
+            new RGB value
+        """
         # copy it to make sure we dont change the original by reference
         _color = np.copy(color)
         # loop through RGB values
@@ -582,8 +725,12 @@ class LightController:
         return _color
 
     def run(self):
-        """
-        Run the configured color pattern and function either forever or for self.secondsPerMode
+        """Run the configured color pattern and function either forever or for self.secondsPerMode.
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.info("%s.%s:", self.__class__.__name__, self.run.__name__)
@@ -611,7 +758,7 @@ class LightController:
                     raise
                 except Exception as ex:
                     LOGGER.exception("_Run Loop Error: %s", (str(ex),))
-                    raise
+                    raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
             self.privateLastModeChange = time.time()
             if self.secondsPerMode is None:
                 self.privateNextModeChange = self.privateLastModeChange + (random.random(30, 120))
@@ -628,17 +775,23 @@ class LightController:
                 self.run.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorSingle(
         self,
         foregroundColor: Pixel = None,
         backgroundColor: Pixel = None,
     ) -> None:
-        """
-        Sets the the color sequence used by light functions to a single color of your choice
+        """Sets the the color sequence used by light functions to a single color of your choice.
 
-        foregroundColor: the color that each pixel will be set to
+        Args:
+            foregroundColor: the color that each pixel will be set to
+            backgroundColor: the "off" color
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSingle.__name__)
@@ -669,14 +822,21 @@ class LightController:
                 self.useColorSingle.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorSinglePseudoRandom(
         self,
         backgroundColor: Pixel = None,
     ) -> None:
-        """
-        Sets the the color sequence used by light functions to a single random named color
+        """Sets the the color sequence used by light functions to a single random named color.
+
+        Args:
+            backgroundColor: the "off" color
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSinglePseudoRandom.__name__)
@@ -700,14 +860,21 @@ class LightController:
                 self.useColorSinglePseudoRandom.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorSingleRandom(
         self,
         backgroundColor: Pixel = None,
     ) -> None:
-        """
-        Sets the the color sequence to a single random RGB value
+        """Sets the the color sequence to a single random RGB value.
+
+        Args:
+            backgroundColor: the "off" color
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSingleRandom.__name__)
@@ -731,17 +898,23 @@ class LightController:
                 self.useColorSingleRandom.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorSequence(
         self,
         colorSequence: List[Pixel] = None,
         backgroundColor: Pixel = None,
     ) -> None:
-        """
-        Sets the the color sequence used by light functions to one of your choice
+        """Sets the the color sequence used by light functions to one of your choice.
 
-        colorSequence: list of colors in the pattern
+        Args:
+            colorSequence: list of colors in the pattern
+            backgroundColor: the "off" color
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSequence.__name__)
@@ -771,17 +944,23 @@ class LightController:
                 self.useColorSequence.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorSequencePseudoRandom(
         self,
         sequenceLength: int = None,
         backgroundColor: Pixel = None,
     ) -> None:
-        """
-        Sets the color sequence used in light functions to a random list of named colors
+        """Sets the color sequence used in light functions to a random list of named colors.
 
-        sequenceLength: the number of random colors to use in the generated sequence
+        Args:
+            sequenceLength: the number of random colors to use in the generated sequence
+            backgroundColor: the "off" color
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSequencePseudoRandom.__name__)
@@ -813,17 +992,23 @@ class LightController:
                 self.useColorSequencePseudoRandom.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorSequenceRandom(
         self,
         sequenceLength: int = None,
         backgroundColor: Pixel = None,
     ) -> None:
-        """
-        Sets the color sequence used in light functions to a random list of RGB values
+        """Sets the color sequence used in light functions to a random list of RGB values.
 
-        sequenceLength: the number of random colors to use in the generated sequence
+        Args:
+            sequenceLength: the number of random colors to use in the generated sequence
+            backgroundColor: the "off" color
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSequenceRandom.__name__)
@@ -855,19 +1040,26 @@ class LightController:
                 self.useColorSequenceRandom.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorSequenceRepeating(
-        self, colorSequence: List[Pixel] = None, backgroundColor: Pixel = None
+        self,
+        colorSequence: List[Pixel] = None,
+        backgroundColor: Pixel = None,
     ) -> None:
-        """
-        Sets the color sequence used by light functions to the sequence given,
-        buts repeats it across the entire light string
-        If the sequence will not fill perfectly when repeated,
-        the virtual LED string is extended until it fits
+        """Sets the color sequence used by light functions.
 
-        colorSequence: list of colors to in the pattern being
-        shifted across the LED string
+        Repeats it across the entire light string. If the sequence will not
+        fill perfectly when repeated, the virtual LED string is extended until it fits.
+
+        Args:
+            colorSequence: list of colors to in the pattern being shifted across the LED string
+            backgroundColor: the "off" color
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSequenceRepeating.__name__)
@@ -902,7 +1094,7 @@ class LightController:
                 self.useColorSequenceRepeating.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorTransition(
         self,
@@ -911,17 +1103,21 @@ class LightController:
         wrap: bool = None,
         backgroundColor: Pixel = None,
     ) -> None:
-        """
-        sets the color sequence used by light functions to
-        the one specified in the argument, but
-        makes a smooth transition from one color to the
-        next over the length specified
+        """Makes a smooth transition from one color to the next over the length specified.
 
-        colorSequence: list of colors to transition between
-            stepsPerTransition:  how many pixels it takes to
-            transition from one color to the next
-        wrap: if true, the last color of the sequence will
-            transition to the first color as the final transition
+        Args:
+            colorSequence: list of colors to transition between
+                stepsPerTransition:  how many pixels it takes to
+                transition from one color to the next
+            stepsPerTransition: number of steps to fade for
+            wrap: if true, the last color of the sequence will
+                transition to the first color as the final transition
+            backgroundColor: the "off" color
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorTransition.__name__)
@@ -964,7 +1160,7 @@ class LightController:
                 self.useColorTransition.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorTransitionRepeating(
         self,
@@ -973,8 +1169,20 @@ class LightController:
         wrap: bool = None,
         backgroundColor: Pixel = None,
     ) -> None:
-        """
-        colorSequence: list of colors to in the pattern being shifted across the LED string
+        """Makes a smooth transition from one color to the next over the length specified.
+
+        Repeats the sequence as neccesary
+
+        Args:
+            colorSequence: list of colors to in the pattern being shifted across the LED string
+            stepsPerTransition: number of steps per transition
+            wrap: wrap
+            backgroundColor: off color
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorTransitionRepeating.__name__)
@@ -1021,19 +1229,24 @@ class LightController:
                 self.useColorTransitionRepeating.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorRainbow(
         self,
         rainbowPixelCount: int = None,
         backgroundColor: Pixel = None,
     ) -> None:
-        """
-        Set the entire LED string to a single color, but cycle
-        through the colors of the rainbow a bit at a time
+        """Cycle through the colors of the rainbow.
 
-        rainbowPixels: when creating the rainbow gradient, make the
-        transition through ROYGBIV take this many steps
+        Args:
+            rainbowPixelCount: when creating the rainbow gradient, make the
+                transition through ROYGBIV take this many steps
+            backgroundColor: off color
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorRainbow.__name__)
@@ -1060,19 +1273,24 @@ class LightController:
                 self.useColorRainbow.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorRainbowRepeating(
         self,
         rainbowPixelCount: int = None,
         backgroundColor: Pixel = None,
     ) -> None:
-        """
-        Set the entire LED string to a single color, but cycle
-        through the colors of the rainbow a bit at a time
+        """Cycle through the colors of the rainbow repeatedly.
 
-        rainbowPixels: when creating the rainbow gradient, make
-            the transition through ROYGBIV take this many steps
+        Args:
+            rainbowPixelCount: when creating the rainbow gradient, make the
+                transition through ROYGBIV take this many steps
+            backgroundColor: off color
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorRainbowRepeating.__name__)
@@ -1103,12 +1321,18 @@ class LightController:
                 self.useColorRainbowRepeating.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionNone(
         self,
     ) -> None:
-        """Use the "do nothing" function"""
+        """Use the "do nothing" function.
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
+        """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionNone.__name__)
             # create an object to put in the light data list so we dont just abort the run
@@ -1125,16 +1349,21 @@ class LightController:
                 self.useFunctionNone.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionSolidColorCycle(
         self,
         delayCount: int = None,
     ) -> None:
-        """
-        Set all LEDs to a single color at once, but cycle between entries in a list of colors
+        """Set all LEDs to a single color at once, but cycle between entries in a list of colors.
 
-        delayCount: number of led updates between color updates
+        Args:
+            delayCount: number of led updates between color updates
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionSolidColorCycle.__name__)
@@ -1166,18 +1395,23 @@ class LightController:
                 self.useFunctionSolidColorCycle.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionMarquee(
         self,
         shiftAmount: int = None,
         delayCount: int = None,
     ) -> None:
-        """
-        Shifts a color pattern across the LED string marquee style.
-        Uses the provided sequence of colors.
+        """Shifts a color pattern across the LED string marquee style.
 
-        shiftAmount: the number of pixels the marquee shifts on each update
+        Args:
+            shiftAmount: the number of pixels the marquee shifts on each update
+            delayCount: number of refreshes to delay for each cycle
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionMarquee.__name__)
@@ -1223,18 +1457,24 @@ class LightController:
                 self.useFunctionMarquee.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionCylon(
         self,
         fadeAmount: int = None,
         delayCount: int = None,
     ) -> None:
-        """
-        Shift a pixel across the LED string marquee style and then bounce back leaving a comet tail.
+        """Shift a pixel across the LED string marquee style and then bounce back leaving a comet tail.
 
-        fadeAmount: how much each pixel fades per refresh
+        Args:
+            fadeAmount: how much each pixel fades per refresh
                 smaller numbers = larger tails on the cylon eye fade
+            delayCount: number of delays
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionCylon.__name__)
@@ -1253,19 +1493,6 @@ class LightController:
             # by this amount
             fade.fadeAmount = _fadeAmount
             self.privateLightFunctions.append(fade)
-
-            # # use marquee function
-            # for i in range(self.colorSequenceCount):
-            #     # Create cylon tracking object
-            #     cylon = LightFunction(
-            #         LightFunction.functionMarquee, ConvertPixelArrayToNumpyArray([self.colorSequenceNext])
-            #     )
-            #     # shift eye by this much for each update
-            #     cylon.index = i
-            #     # cylon.color=self.colorSequenceNext
-            #     # set counter limit for skipping LED refreshes
-            #     cylon.delayCountMax = _delayCount
-            #     self.__LightFunctions.append(cylon)
 
             # use cylon function
             cylon = LightFunction(LightFunction.functionCylon, self.colorSequence)
@@ -1291,16 +1518,21 @@ class LightController:
                 self.useFunctionCylon.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionMerge(
         self,
         delayCount: int = None,
     ) -> None:
-        """
-        Reflect a color sequence and shift the reflections toward each other in the middle
+        """Reflect a color sequence and shift the reflections toward each other in the middle.
 
-        mergeSegmentLength: length of reflected segments
+        Args:
+            delayCount: length of reflected segments
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionMerge.__name__)
@@ -1350,7 +1582,7 @@ class LightController:
                 self.useFunctionMerge.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionAccelerate(
         self,
@@ -1359,12 +1591,18 @@ class LightController:
         fadeAmount: float = None,
         cycleColors: bool = None,
     ) -> None:
-        """
-        Shifts a color pattern across the LED string marquee style, but accelerates as it goes.
-        Uses the provided sequence of colors.
+        """Shifts a color pattern across the LED string accelerating as it goes.
 
-        beginDelay: initial delay between color updates
-        endDelay: final delay between color updates
+        Args:
+            delayCountMax: max delay between color updates
+            stepCountMax: speed limit
+            fadeAmount: speed of color fade
+            cycleColors: set true to cycle as the LED goes across
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionAccelerate.__name__)
@@ -1421,7 +1659,7 @@ class LightController:
                 self.useFunctionAccelerate.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionRandomChange(
         self,
@@ -1430,14 +1668,18 @@ class LightController:
         fadeStepCount: int = None,
         fade: bool = None,
     ) -> None:
-        """
-        Randomly changes pixels on the string to one of the
-        provided colors by fading from one color to the next
+        """Randomly changes pixels from one color to the next.
 
-        changeChance: chance that any one pixel will change
-            colors each update (from 0.0, to 1.0)
-        fadeStepCount: number of steps in the transition from
-            one color to the next
+        Args:
+            delayCount: refresh delay
+            changeCount: how many LEDs to have in the change queue at once
+            fadeStepCount: number of steps in the transition from one color to the next
+            fade: set true to fade colors, false for instant on/off
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionRandomChange.__name__)
@@ -1501,7 +1743,7 @@ class LightController:
                 self.useFunctionRandomChange.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionMeteors(
         self,
@@ -1513,17 +1755,21 @@ class LightController:
         cycleColors: bool = None,
         delayCount: int = None,
     ) -> None:
-        """
-        Creates several 'meteors' from the given color list that will
-        fly around the light string leaving a comet trail.
-        In this version each meteor contains all colors of the colorSequence.
+        """Creates several 'meteors' that will fly around.
 
-        fadeAmount: the amount by which meteors are faded
-        maxSpeed: the amount be which the meteor moves each refresh
-        explode: if True, the meteors will light up in an explosion when they collide
-        collide:
-        cycleColors:
-        delayCount:
+        Args:
+            fadeAmount: the amount by which meteors are faded
+            maxSpeed: the amount be which the meteor moves each refresh
+            explode: if True, the meteors will light up in an explosion when they collide
+            meteorCount: number of meteors
+            collide: set true to make them bounce off each other randomly
+            cycleColors: set true to make the meteors shift color as they move
+            delayCount: refresh delay
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionMeteors.__name__)
@@ -1613,14 +1859,21 @@ class LightController:
                 self.useFunctionMeteors.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionPaint(
         self,
         maxDelay: int = None,
     ) -> None:
-        """
-        wipes colors in the current sequence across the pixel strand in random directions and amounts
+        """Wipes colors across the pixel strand in random directions.
+
+        Args:
+            maxDelay: refresh delay0
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionPaint.__name__)
@@ -1657,17 +1910,21 @@ class LightController:
                 self.useFunctionPaint.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionSprites(
         self,
         fadeSteps: int = None,
     ) -> None:
-        """
-        Uses colors in the current list to fly meteor style across
-        the pixel strand in short bursts of random length and direction.
+        """Meteors fade in and out in short bursts of random length and direction.
 
-        fadeSteps:
+        Args:
+            fadeSteps: amount to fade
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionSprites.__name__)
@@ -1712,18 +1969,25 @@ class LightController:
                 self.useFunctionSprites.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionRaindrops(
         self,
         maxSize: int = None,
-        fadeAmount: int = None,
         raindropChance: float = None,
         stepSize: int = None,
-        delayCount: int = None,
     ):
-        """
-        Uses colors in the current list to cause random "splats" across the led strand
+        """Cause random "splashes" across the LED strand.
+
+        Args:
+            maxSize: max splash size
+            raindropChance: chance of raindrop
+            stepSize: splash speed
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionRaindrops.__name__)
@@ -1732,11 +1996,6 @@ class LightController:
                 _maxSize = random.randint(2, int(self.virtualLEDCount // 8))
             else:
                 _maxSize = int(maxSize)
-
-            if fadeAmount is None:
-                _fadeAmount = random.randint(50, 100)
-            else:
-                _fadeAmount = int(fadeAmount)
 
             if raindropChance is None:
                 _raindropChance = random.uniform(0.005, 0.1)
@@ -1747,11 +2006,6 @@ class LightController:
                 _stepSize = random.randint(2, 5)
             else:
                 _stepSize = int(stepSize)
-
-            if delayCount is None:
-                _delayCount = random.randint(2, 5)
-            else:
-                _delayCount = int(delayCount)
 
             if _stepSize > 3:
                 _raindropChance /= 3.0
@@ -1768,8 +2022,6 @@ class LightController:
                 raindrop.stepCountMax = random.randint(2, raindrop.sizeMax)
                 # chance of raindrop
                 raindrop.activeChance = _raindropChance
-                # delay between refreshes to LEDs
-                raindrop.delayCountMax = _delayCount
                 # assign color
                 raindrop.color = self.colorSequenceNext
                 raindrop.colorSequence = self.colorSequence
@@ -1795,15 +2047,21 @@ class LightController:
                 self.useFunctionRaindrops.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useOverlayTwinkle(
         self,
         twinkleChance: float = None,
     ) -> None:
-        """
-        Randomly sets some lights to 'twinkleColor' temporarily
+        """Randomly sets some lights to 'twinkleColor' temporarily.
 
+        Args:
+            twinkleChance: chance of a twinkle
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useOverlayTwinkle.__name__)
@@ -1828,13 +2086,22 @@ class LightController:
                 self.useOverlayTwinkle.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useOverlayBlink(
         self,
         blinkChance: float = None,
     ) -> None:
-        """Use the overlay that causes all LEDs to light up the same color at once"""
+        """Use the overlay that causes all LEDs to light up the same color at once.
+
+        Args:
+            blinkChance: chance of a blink
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
+        """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useOverlayBlink.__name__)
             if blinkChance is None:
@@ -1857,7 +2124,7 @@ class LightController:
                 self.useOverlayBlink.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionAlive(
         self,
@@ -1865,10 +2132,20 @@ class LightController:
         sizeMax: int = None,
         stepCountMax: int = None,
         stepSizeMax: int = None,
-        # delayCountMax: int = None,
     ) -> None:
-        """Use the function that uses a series of behaviors that
-        move around in odd ways"""
+        """Use the function that uses a series of behaviors that move around in odd ways.
+
+        Args:
+            fadeAmount: amount of fade
+            sizeMax: max size of LED pattern
+            stepCountMax: max duration of effect
+            stepSizeMax: max speed
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
+        """
         if fadeAmount is None:
             _fadeAmount = random.randint(20, 50) / 255.0
         else:
@@ -1940,16 +2217,19 @@ class LightController:
                 self.useFunctionAlive.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def demo(
         self,
         secondsPerMode: int = 20,
     ) -> None:
-        """
-        do random color sequences and random functions.
+        """Do random color sequences and random functions.
 
-        secondsPerMode: how many seconds to run each combination for before switching things up
+        Args:
+            secondsPerMode: how many seconds to run each combination for before switching things up
+
+        Raises:
+            LightBerryControlException: if something bad happens
         """
         try:
             self.secondsPerMode = secondsPerMode
@@ -1961,7 +2241,7 @@ class LightController:
                 LightController.useOverlayBlink.__name__,
             ]
             attrs = list(dir(self))
-            attrs = [a for a in attrs if not a in omitted]
+            attrs = [a for a in attrs if a not in omitted]
             funcs = [f for f in attrs if f[:11] == "useFunction"]
             colors = [c for c in attrs if c[:8] == "useColor"]
             funcs.sort()
@@ -1998,7 +2278,7 @@ class LightController:
                 self.demo.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def test(
         self,
@@ -2008,8 +2288,19 @@ class LightController:
         skipFunctions: List[str] = None,
         skipColors: List[str] = None,
     ):
-        """
-        run colors and functions semi-randomly. can use arguments as filters.
+        """Run colors and functions semi-randomly.
+
+        Args:
+            secondsPerMode: seconds to run current function
+            functionNames: function names to run
+            colorNames: color pattern names to run
+            skipFunctions: function strings to omit (run if "skipFunction not in name")
+            skipColors: color pattern strings to omit (run if "skipColor not in name")
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryControlException: if something bad happens
         """
         try:
             self.secondsPerMode = secondsPerMode
@@ -2079,4 +2370,4 @@ class LightController:
                 self.test.__name__,
                 ex,
             )
-            raise
+            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)

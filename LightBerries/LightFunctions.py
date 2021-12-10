@@ -1,4 +1,4 @@
-"""This file defines functions that modify the LED patterns in interesting ways"""
+"""This file defines functions that modify the LED patterns in interesting ways."""
 from typing import Callable, Any, ClassVar, Optional
 import logging
 import random
@@ -7,6 +7,7 @@ from nptyping import NDArray
 import numpy as np
 from LightBerries.Pixels import Pixel, PixelColors
 from LightBerries.LightPatterns import ConvertPixelArrayToNumpyArray
+from LightBerries.LightBerryException import LightBerryFunctionException
 import LightBerries.LightControl  # pylint: disable = unused-import
 
 # pylint: disable=no-member
@@ -15,7 +16,7 @@ LOGGER = logging.getLogger("LightBerries")
 
 
 class LightFunction:
-    """This class defines everything neccesary to modify LED patterns in interesting ways"""
+    """This class defines everything neccesary to modify LED patterns in interesting ways."""
 
     Controller: ClassVar["LightBerries.LightControl.LightController"]
 
@@ -24,6 +25,12 @@ class LightFunction:
         funcPointer: Callable,
         colorSequence: NDArray[(3, Any), np.int32],
     ) -> None:
+        """Initialize the Light Function tracking object.
+
+        Args:
+            funcPointer: a function pointer that updates LEDs in the LightController object.
+            colorSequence: a sequence of RGB values.
+        """
         self.privateColorSequence: NDArray[(3, Any), np.int32] = ConvertPixelArrayToNumpyArray([])
         self.privateColorSequenceCount: int = 0
         self.privateColorSequenceIndex: int = 0
@@ -84,19 +91,32 @@ class LightFunction:
     def __str__(
         self,
     ) -> str:
+        """String representation of this object.
+
+        Returns:
+            String representation of this object
+        """
         return f'[{self.index}]: "{self.funcName}" {Pixel(self.color)}'
 
     def __repr__(
         self,
     ) -> str:
-        """return a string representation of this class(not de-serializable)"""
+        """Return a string representation of this class(not de-serializable).
+
+        Returns:
+            string representation of this class(not de-serializable)
+        """
         return f"<{self.__class__.__name__}> {str(self)}"
 
     @property
     def colorSequence(
         self,
     ) -> NDArray[(3, Any), np.int32]:
-        """return the color sequence"""
+        """Return the color sequence.
+
+        Returns:
+            the color sequence
+        """
         return self.privateColorSequence
 
     @colorSequence.setter
@@ -104,6 +124,11 @@ class LightFunction:
         self,
         colorSequence: NDArray[(3, Any), np.int32],
     ) -> None:
+        """Sets the color sequence.
+
+        Args:
+            colorSequence: desired color sequence
+        """
         self.privateColorSequence = np.copy(ConvertPixelArrayToNumpyArray(colorSequence))
         self.colorSequenceCount = len(self.privateColorSequence)
         self.colorSequenceIndex = 0
@@ -112,7 +137,11 @@ class LightFunction:
     def colorSequenceCount(
         self,
     ) -> int:
-        """get the color sequence count"""
+        """Get the color sequence count.
+
+        Returns:
+            the color sequence count
+        """
         return self.privateColorSequenceCount
 
     @colorSequenceCount.setter
@@ -120,14 +149,22 @@ class LightFunction:
         self,
         colorSequenceCount: int,
     ) -> None:
-        """setter for color sequence count"""
+        """Setter for color sequence count.
+
+        Args:
+            colorSequenceCount: the number of colors in the sequence
+        """
         self.privateColorSequenceCount = colorSequenceCount
 
     @property
     def colorSequenceIndex(
         self,
     ) -> int:
-        """color sequence index"""
+        """Color sequence index.
+
+        Returns:
+            the current color sequence index
+        """
         return self.privateColorSequenceIndex
 
     @colorSequenceIndex.setter
@@ -135,14 +172,22 @@ class LightFunction:
         self,
         colorSequenceIndex: int,
     ) -> None:
-        """color sequence index"""
+        """Color sequence index.
+
+        Args:
+            colorSequenceIndex: the current index being used for the color sequence
+        """
         self.privateColorSequenceIndex = colorSequenceIndex
 
     @property
     def colorSequenceNext(
         self,
     ) -> NDArray[(3,), np.int32]:
-        """get the next color in the sequence"""
+        """Get the next color in the sequence.
+
+        Returns:
+            the next color in the sequence
+        """
         temp = self.colorSequence[self.colorSequenceIndex]
         self.colorSequenceIndex += 1
         if self.colorSequenceIndex >= self.colorSequenceCount:
@@ -155,8 +200,12 @@ class LightFunction:
     def doFade(
         self,
     ) -> None:
-        """
-        fade pixel colors
+        """Fade pixel colors.
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryFunctionException: if something bad happens
         """
         try:
             if self.delayCounter >= self.delayCountMax:
@@ -182,16 +231,17 @@ class LightFunction:
                 self.doFade.__name__,
                 ex,
             )
-            raise
+            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     def doMove(
         self,
-        ledCount: int,
     ) -> None:
-        """update the object index"""
+        """Update the object index."""
         self.indexPrevious = self.index
         newIndexNoModulo = self.index + (self.step * self.direction)
-        self.index = (self.index + (self.step * self.direction)) % (ledCount - 1)
+        self.index = (self.index + (self.step * self.direction)) % (
+            LightFunction.Controller.virtualLEDCount - 1
+        )
         self.indexRange = np.array(
             list(
                 range(
@@ -201,10 +251,10 @@ class LightFunction:
                 )
             )
         )
-        modulo = np.where(self.indexRange >= (ledCount - 1))
-        self.indexRange[modulo] -= ledCount
+        modulo = np.where(self.indexRange >= (LightFunction.Controller.virtualLEDCount - 1))
+        self.indexRange[modulo] -= LightFunction.Controller.virtualLEDCount
         modulo = np.where(self.indexRange < 0)
-        self.indexRange[modulo] += ledCount
+        self.indexRange[modulo] += LightFunction.Controller.virtualLEDCount
         self.index = self.indexRange[-1]
         self.indexUpdated = True
 
@@ -212,32 +262,41 @@ class LightFunction:
         self,
         indexFrom: int,
         indexTo: int,
-        ledCount: int,
     ) -> NDArray[(Any,), np.int32]:
-        """calculate index range"""
+        """Calculate index range.
+
+        Args:
+            indexFrom: from index
+            indexTo: to index
+
+        Returns:
+            array of indices
+        """
         if indexTo >= indexFrom:
             direction = 1
         else:
             direction = -1
-        rng = np.arange(
-            start=indexFrom,
-            stop=indexTo,
-            step=direction,
-            dtype=np.int32
-            # )
-            # )
-        )
-        modulo = np.where(rng >= (ledCount - 1))
-        rng[modulo] -= ledCount
+        rng = np.arange(start=indexFrom, stop=indexTo, step=direction, dtype=np.int32)
+        modulo = np.where(rng >= (LightFunction.Controller.virtualLEDCount - 1))
+        rng[modulo] -= LightFunction.Controller.virtualLEDCount
         modulo = np.where(rng < 0)
-        rng[modulo] += ledCount
+        rng[modulo] += LightFunction.Controller.virtualLEDCount
         return rng
 
     @staticmethod
     def functionCollisionDetection(
         collision: "LightFunction",
     ) -> None:
-        """perform collision detection on the list of light function objects"""
+        """Perform collision detection on the list of light function objects.
+
+        Args:
+            collision: tracking object
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryFunctionException: if something bad happens
+        """
         try:
             foundBounce = False
             lightFunctions = LightFunction.Controller.functionList
@@ -282,7 +341,9 @@ class LightFunction:
                                 meteor.index = (
                                     meteor.collideIntersect + (meteor.step * meteor.direction)
                                 ) % LightFunction.Controller.virtualLEDCount
-                                othermeteor.index = meteor.index
+                                othermeteor.index = (
+                                    meteor.index + othermeteor.direction
+                                ) % LightFunction.Controller.virtualLEDCount
                                 meteor.indexPrevious = meteor.collideIntersect
                                 othermeteor.indexPrevious = othermeteor.collideIntersect
                                 meteor.bounce = False
@@ -321,14 +382,21 @@ class LightFunction:
                 collision.functionCollisionDetection.__name__,
                 ex,
             )
-            raise
+            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionOff(
         off: "LightFunction",
     ) -> None:
-        """
-        turn all Pixels OFF
+        """Turn all Pixels OFF.
+
+        Args:
+            off: tracking object
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryFunctionException: if something bad happens
         """
         try:
             LightFunction.Controller.virtualLEDArray[:] *= 0
@@ -343,14 +411,21 @@ class LightFunction:
                 off.functionOff.__name__,
                 ex,
             )
-            raise
+            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionFadeOff(
         fade: "LightFunction",
     ) -> None:
-        """
-        Fade all Pixels toward OFF
+        """Fade all Pixels toward OFF.
+
+        Args:
+            fade: tracking object
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryFunctionException: if something bad happens
         """
         try:
             LightFunction.Controller.virtualLEDArray[:] = LightFunction.Controller.virtualLEDArray * (
@@ -367,14 +442,21 @@ class LightFunction:
                 fade.functionFadeOff.__name__,
                 ex,
             )
-            raise
+            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionNone(
         nothing: "LightFunction",
     ) -> None:
-        """
-        do nothing
+        """Do nothing.
+
+        Args:
+            nothing: tracking object
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryFunctionException: if something bad happens
         """
         try:
             pass
@@ -389,14 +471,21 @@ class LightFunction:
                 nothing.functionNone.__name__,
                 ex,
             )
-            raise
+            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionSolidColorCycle(
         cycle: "LightFunction",
     ) -> None:
-        """
-        set all pixels to the next color
+        """Set all pixels to the next color.
+
+        Args:
+            cycle: tracking object
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryFunctionException: if something bad happens
         """
         try:
             # wait for delay count before changing LEDs
@@ -420,17 +509,21 @@ class LightFunction:
                 cycle.functionSolidColorCycle.__name__,
                 ex,
             )
-            raise
+            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionMarquee(
         marquee: "LightFunction",
     ) -> None:
-        """
-        move the LEDs in the color sequence from one end of
-        the LED string to the other continuously
+        """Move the LEDs in the color sequence from one end of the LED string to the other continuously.
 
-        marquee: the object used for tracking marquee status
+        Args:
+            marquee: the object used for tracking marquee status
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryFunctionException: if something bad happens
         """
         try:
             # wait for several LED cycles to change LEDs
@@ -484,13 +577,22 @@ class LightFunction:
                 marquee.functionMarquee.__name__,
                 ex,
             )
-            raise
+            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionCylon(
         cylon: "LightFunction",
     ) -> None:
-        """do cylon eye things"""
+        """Do cylon eye things.
+
+        Args:
+            cylon: tracking object
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryFunctionException: if something bad happens
+        """
         try:
             # wait for several LED cycles to change LEDs
             if cylon.delayCounter >= cylon.delayCountMax:
@@ -552,13 +654,22 @@ class LightFunction:
                 cylon.functionCylon.__name__,
                 ex,
             )
-            raise
+            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionMerge(
         merge: "LightFunction",
     ) -> None:
-        """do merge function things"""
+        """Do merge function things.
+
+        Args:
+            merge: tracking object
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryFunctionException: if something bad happens
+        """
         try:
             # check delay counter
             if merge.delayCounter >= merge.delayCountMax:
@@ -602,13 +713,22 @@ class LightFunction:
                 merge.functionMerge.__name__,
                 ex,
             )
-            raise
+            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionAccelerate(
         accelerate: "LightFunction",
     ) -> None:
-        """do accelerate function things"""
+        """Do accelerate function things.
+
+        Args:
+            accelerate: tracking object
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryFunctionException: if something bad happens
+        """
         try:
             accelerate.indexPrevious = accelerate.index
             splash = False
@@ -701,16 +821,25 @@ class LightFunction:
                 accelerate.functionAccelerate.__name__,
                 ex,
             )
-            raise
+            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionRandomChange(
         change: "LightFunction",
     ) -> None:
-        """do random change function things"""
+        """Do random change function things.
+
+        Args:
+            change: tracking object
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryFunctionException: if something bad happens
+        """
 
         class ChangeStates(IntEnum):
-            """states for random change"""
+            """States for random change."""
 
             FADING_ON = 0
             ON = 1
@@ -792,13 +921,22 @@ class LightFunction:
                 change.functionRandomChange.__name__,
                 ex,
             )
-            raise
+            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionMeteors(
         meteor: "LightFunction",
     ) -> None:
-        """do meteor function things"""
+        """Do meteor function things.
+
+        Args:
+            meteor: tracking object
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryFunctionException: if something bad happens
+        """
         try:
             # check if we are done delaying
             if meteor.delayCounter >= meteor.delayCountMax:
@@ -846,13 +984,22 @@ class LightFunction:
                 meteor.functionMeteors.__name__,
                 ex,
             )
-            raise
+            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionPaint(
         paintBrush: "LightFunction",
     ) -> None:
-        """do paint function things"""
+        """Do paint function things.
+
+        Args:
+            paintBrush: tracking object
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryFunctionException: if something bad happens
+        """
         try:
             # are we done delaying
             if paintBrush.delayCounter >= paintBrush.delayCountMax:
@@ -892,17 +1039,26 @@ class LightFunction:
                 paintBrush.functionPaint.__name__,
                 ex,
             )
-            raise
+            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionSprites(
         sprite: "LightFunction",
     ) -> None:
-        """do sprite function things"""
+        """Do sprite function things.
+
+        Args:
+            sprite: tracking object
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryFunctionException: if something bad happens
+        """
         try:
             # states for sprites
             class SpriteState(IntEnum):
-                """sprite function things"""
+                """Sprite function enum."""
 
                 OFF = 0
                 FADING_ON = 1
@@ -923,7 +1079,7 @@ class LightFunction:
                     # reset delay counter
                     sprite.delayCounter = 0
                     # move index
-                    sprite.doMove(LightFunction.Controller.virtualLEDCount)
+                    sprite.doMove()
                 # if we are fading off
                 if sprite.state == SpriteState.FADING_OFF.value:
                     # fade the color
@@ -980,17 +1136,26 @@ class LightFunction:
                 sprite.functionSprites.__name__,
                 ex,
             )
-            raise
+            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionRaindrops(
         raindrop: "LightFunction",
     ) -> None:
-        """do raindrop function things"""
+        """Do raindrop function things.
+
+        Args:
+            raindrop: tracking object
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryFunctionException: if something bad happens
+        """
         try:
             # raindrop states
             class RaindropStates(IntEnum):
-                """raindrop function states"""
+                """Raindrop function states."""
 
                 OFF = 0
                 SPLASH = 1
@@ -1011,42 +1176,40 @@ class LightFunction:
             # if raindrop is splashing
             if raindrop.state == RaindropStates.SPLASH.value:
                 # if we are done delaying
-                if raindrop.delayCounter >= raindrop.delayCountMax:
-                    # reset delay
-                    raindrop.delayCounter = 0
-                    # if splash is still growing
-                    if raindrop.stepCounter < raindrop.stepCountMax:
-                        # TODO old math, should check/update it
-                        s1 = max(raindrop.index - raindrop.stepCounter - raindrop.step, 0)
-                        s2 = max(raindrop.index - raindrop.stepCounter, 0)
-                        e1 = min(
-                            raindrop.index + raindrop.stepCounter, LightFunction.Controller.virtualLEDCount
-                        )
-                        e2 = min(
-                            raindrop.index + raindrop.stepCounter + raindrop.step,
-                            LightFunction.Controller.virtualLEDCount,
-                        )
-                        if (s2 - s1) > 0:
-                            LightFunction.Controller.virtualLEDArray[s1:s2] = [raindrop.color] * (s2 - s1)
-                        if (e2 - e1) > 0:
-                            LightFunction.Controller.virtualLEDArray[e1:e2] = [raindrop.color] * (e2 - e1)
-                        # TODO old fade method
-                        raindrop.color[:] = raindrop.color * raindrop.colorScaler
-                        # increment splash growth counter
-                        raindrop.stepCounter += raindrop.step
-                    # splash is done growing
-                    else:
-                        # raindomize next splash start index
-                        raindrop.index = random.randint(0, LightFunction.Controller.virtualLEDCount - 1)
-                        # reset growth counter
-                        raindrop.stepCounter = 0
-                        # semi-randomize next color
-                        for _ in range(1, random.randint(2, 4)):
-                            raindrop.color = raindrop.colorSequenceNext
-                        # set state to off
-                        raindrop.state = RaindropStates.OFF.value
-                # increment delay
-                raindrop.delayCounter += 1
+                # if raindrop.delayCounter >= raindrop.delayCountMax:
+                # reset delay
+                # raindrop.delayCounter = 0
+                # if splash is still growing
+                if raindrop.stepCounter < raindrop.stepCountMax:
+                    # TODO old math, should check/update it
+                    s1 = max(raindrop.index - raindrop.stepCounter - raindrop.step, 0)
+                    s2 = max(raindrop.index - raindrop.stepCounter, 0)
+                    e1 = min(raindrop.index + raindrop.stepCounter, LightFunction.Controller.virtualLEDCount)
+                    e2 = min(
+                        raindrop.index + raindrop.stepCounter + raindrop.step,
+                        LightFunction.Controller.virtualLEDCount,
+                    )
+                    if (s2 - s1) > 0:
+                        LightFunction.Controller.virtualLEDArray[s1:s2] = [raindrop.color] * (s2 - s1)
+                    if (e2 - e1) > 0:
+                        LightFunction.Controller.virtualLEDArray[e1:e2] = [raindrop.color] * (e2 - e1)
+                    # TODO old fade method
+                    raindrop.color[:] = raindrop.color * raindrop.colorScaler
+                    # increment splash growth counter
+                    raindrop.stepCounter += raindrop.step
+                # splash is done growing
+                else:
+                    # raindomize next splash start index
+                    raindrop.index = random.randint(0, LightFunction.Controller.virtualLEDCount - 1)
+                    # reset growth counter
+                    raindrop.stepCounter = 0
+                    # semi-randomize next color
+                    for _ in range(1, random.randint(2, 4)):
+                        raindrop.color = raindrop.colorSequenceNext
+                    # set state to off
+                    raindrop.state = RaindropStates.OFF.value
+            # increment delay
+            # raindrop.delayCounter += 1
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -1058,16 +1221,25 @@ class LightFunction:
                 LightFunction.functionRaindrops.__name__,
                 ex,
             )
-            raise
+            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionAlive(
         thing: "LightFunction",
     ) -> None:
-        """do alive function things"""
+        """Do alive function things.
+
+        Args:
+            thing: tracking object
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryFunctionException: if something bad happens
+        """
 
         class ThingMoves(IntEnum):
-            """states for thing movement"""
+            """States for thing movement."""
 
             NOTHING = 0x0
             METEOR = 0x1
@@ -1075,14 +1247,14 @@ class LightFunction:
             TURTLE = 0x4
 
         class ThingSizes(IntEnum):
-            """states for thing sizes"""
+            """States for thing sizes."""
 
             NOTHING = 0x0
             GROW = 0x10
             SHRINK = 0x20
 
         class ThingColors(IntEnum):
-            """states for thing colors"""
+            """States for thing colors."""
 
             NOTHING = 0x0
             CYCLE = 0x100
@@ -1186,7 +1358,7 @@ class LightFunction:
                     _x1 = min(x1, x2)
                     _x2 = max(x1, x2)
                     # rng = np.array(range(_x1, _x2 + 1))
-                    thing.indexRange = thing.calcRange(_x1, _x2, LightFunction.Controller.virtualLEDCount)
+                    thing.indexRange = thing.calcRange(_x1, _x2)
                     # increment step counter
                     thing.stepCounter += 1
                 # we hit our step goal, randomize next state
@@ -1226,7 +1398,7 @@ class LightFunction:
                     _x1 = min(x1, x2)
                     _x2 = max(x1, x2)
                     # rng = np.array(range(_x1, _x2 + 1))
-                    thing.indexRange = thing.calcRange(_x1, _x2, LightFunction.Controller.virtualLEDCount)
+                    thing.indexRange = thing.calcRange(_x1, _x2)
             # increment delay
             thing.delayCounter += 1
             # assign colors to indices
@@ -1242,13 +1414,22 @@ class LightFunction:
                 thing.functionAlive.__name__,
                 ex,
             )
-            raise
+            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def overlayTwinkle(
         twinkle: "LightFunction",
     ) -> None:
-        """do temporary twinkle modifications"""
+        """Do temporary twinkle modifications.
+
+        Args:
+            twinkle: tracking object
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryFunctionException: if something bad happens
+        """
         try:
             for index in range(LightFunction.Controller.realLEDCount):
                 if random.random() > twinkle.random:
@@ -1264,22 +1445,21 @@ class LightFunction:
                 twinkle.overlayTwinkle.__name__,
                 ex,
             )
-            raise
+            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def overlayBlink(
         blink: "LightFunction",
     ) -> None:
-        """
-        Randomly sets some lights to 'twinkleColor' without changing
-        the _VirtualLEDArray buffer
+        """Randomly sets some lights to 'twinkleColor' without changing the virtual LED buffer.
 
-        Parameters:
-                twinkleChance: float
-                        chance of of any LED being set to 'twinkleColor'
+        Args:
+            blink: object for tracking blinking
 
-                twinkleColor: tuple(int,int,int)
-                        the RGB color tuple to be used as the twinkle color
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightBerryFunctionException: if something bad happens
         """
         try:
             color = blink.colorSequenceNext
@@ -1297,4 +1477,4 @@ class LightFunction:
                 blink.overlayBlink.__name__,
                 ex,
             )
-            raise
+            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)

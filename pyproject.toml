@@ -14,6 +14,9 @@ plugins = "numpy.typing.mypy_plugin"
 [tool.bandit]
 skips = ["B311"]
 
+[tool.pylint.'MASTER']
+#load-plugins = "pylint.extensions.docparams"
+
 [tool.pylint.'FORMAT']
 max-line-length=110
 max-module-lines=2100
