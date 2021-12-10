@@ -1,19 +1,22 @@
+"""Defines basic light string data and functions"""
 import os
 import sys
 import atexit
 import inspect
-import numpy as np
 import time
 import logging
-from typing import Any, Optional, Sequence, Union, List, overload
-from LightBerries.rpi_ws281x_patch import rpi_ws281x
-from LightBerries.Pixels import Pixel, PixelColors
+from typing import Any, Optional, Sequence, Union, overload
 from nptyping import NDArray
+import numpy as np
+from LightBerries.RpiWS281xPatch import rpi_ws281x
+from LightBerries.Pixels import Pixel, PixelColors
 
 LOGGER = logging.getLogger("LightBerries")
 
 
 class LightString(Sequence[np.int_]):
+    """defines basic LED array data and functions"""
+
     def __init__(
         self,
         ledCount: Optional[int] = None,
@@ -40,7 +43,7 @@ class LightString(Sequence[np.int_]):
 
         # cant run GPIO stuff without root, tell the user if they forgot
         # linux check is just for debugging with fake GPIO on windows
-        if sys.platform == "linux" and not os.getuid() == 0:
+        if sys.platform == "linux" and not os.getuid() == 0:  # pylint: disable = no-member
             raise Exception("GPIO functionality requires root privilege. Please run command again as root")
 
         # catch error cases first
@@ -51,7 +54,8 @@ class LightString(Sequence[np.int_]):
         # catch error cases first
         if ledCount is not None and pixelStrip is not None:
             raise Warning(
-                "ledCount is overridden when pixelStrip is and ledcount are both passed to LightString constructor"
+                "ledCount is overridden when pixelStrip is and ledcount "
+                + "are both passed to LightString constructor"
             )
 
         try:
@@ -86,7 +90,7 @@ class LightString(Sequence[np.int_]):
             # validate led count
             if not isinstance(self._ledCount, int):
                 raise Exception(
-                    'Cannot create LightString object with LED count "{}"'.format(self._ledCount),
+                    f'Cannot create LightString object with LED count "{self._ledCount}"',
                 )
             # if led count is good, create our pixel sequence
             else:
@@ -130,7 +134,7 @@ class LightString(Sequence[np.int_]):
             except KeyboardInterrupt:
                 raise
             except Exception as ex:
-                LOGGER.exception("Failed to clean up WS281X object: {}".format(ex))
+                LOGGER.exception("Failed to clean up WS281X object: %s", str(ex))
                 raise
 
     def __len__(self) -> int:
@@ -243,7 +247,7 @@ class LightString(Sequence[np.int_]):
         update ws281x signal using the numpy array
         """
         # should be faster than method below?
-        def set_pixel(irgb):
+        def SetPixel(irgb):
             i = irgb[0]
             rgb = irgb[1]
             value = (int(rgb[0]) << 16) + (int(rgb[1]) << 8) + int(rgb[2])
@@ -251,7 +255,7 @@ class LightString(Sequence[np.int_]):
 
         list(
             map(
-                set_pixel,
+                SetPixel,
                 enumerate(self._lights),
             )
         )
@@ -281,7 +285,7 @@ class LightString(Sequence[np.int_]):
         except KeyboardInterrupt:
             raise
         except Exception as ex:
-            LOGGER.exception('Function call "show" in WS281X object failed: {}'.format(ex))
+            LOGGER.exception('Function call "show" in WS281X object failed: %s', str(ex))
             raise
 
 

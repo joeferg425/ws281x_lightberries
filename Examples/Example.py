@@ -1,10 +1,14 @@
+"""
+An example of using this module
+"""
 import tkinter as tk
+
+from tkinter.colorchooser import askcolor
+import time
+import multiprocessing
 from LightBerries.LightControl import LightController
 from LightBerries.Pixels import Pixel
 from LightBerries.LightPatterns import ConvertPixelArrayToNumpyArray, PixelArray
-from tkinter.colorchooser import *
-import time
-import multiprocessing
 
 # the number of pixels in the light string
 PIXEL_COUNT = 196
@@ -16,7 +20,8 @@ DMA_CHANNEL = 10
 PWM_FREQUENCY = 800000
 # brightness of LEDs in range [0.0, 1.0]
 BRIGHTNESS = 0.75
-# to understand the rest of these arguments read their documentation: https://github.com/rpi-ws281x/rpi-ws281x-python
+# to understand the rest of these arguments read
+# their documentation: https://github.com/rpi-ws281x/rpi-ws281x-python
 GAMMA = None
 LED_STRIP_TYPE = None
 INVERT = False
@@ -24,6 +29,8 @@ PWM_CHANNEL = 0
 
 
 class LightsProcess:
+    """class for handling lights"""
+
     def __init__(self):
         self.inQ = multiprocessing.Queue(2)
         self.outQ = multiprocessing.Queue(2)
@@ -37,9 +44,10 @@ class LightsProcess:
         print("goodbye")
 
     @classmethod
-    def lupe(cls, inQ, outQ):
+    def lupe(cls, inQ, _):
+        """the looop"""
         try:
-            lf = LightController(
+            lightControl = LightController(
                 ledCount=PIXEL_COUNT,
                 pwmGPIOpin=GPIO_PWM_PIN,
                 channelDMA=DMA_CHANNEL,
@@ -52,9 +60,9 @@ class LightsProcess:
                 debug=True,
             )
             # print(dir(lf))
-            lf._setVirtualLEDArray(ConvertPixelArrayToNumpyArray(PixelArray(PIXEL_COUNT)))
-            lf._copyVirtualLedsToWS281X()
-            lf._refreshLEDs()
+            lightControl.setVirtualLEDArray(ConvertPixelArrayToNumpyArray(PixelArray(PIXEL_COUNT)))
+            lightControl.copyVirtualLedsToWS281X()
+            lightControl.refreshLEDs()
             time.sleep(0.05)
             count = PIXEL_COUNT
             color = 0
@@ -65,20 +73,20 @@ class LightsProcess:
                 msg = None
                 try:
                     msg = inQ.get()
-                except:
+                except Exception:
                     pass
                 if not msg is None:
                     print(msg)
                     if msg[0] == "go":
                         try:
-                            lf.reset()
-                            getattr(lf, pattern)()
-                            getattr(lf, function)()
-                            lf.secondsPerMode = duration
-                            lf.run()
-                            lf._off()
-                            lf._copyVirtualLedsToWS281X()
-                            lf._refreshLEDs()
+                            lightControl.reset()
+                            getattr(lightControl, pattern)()
+                            getattr(lightControl, function)()
+                            lightControl.secondsPerMode = duration
+                            lightControl.run()
+                            lightControl.off()
+                            lightControl.copyVirtualLedsToWS281X()
+                            lightControl.refreshLEDs()
                             time.sleep(0.05)
                         except Exception as ex:
                             print(ex)
@@ -86,22 +94,22 @@ class LightsProcess:
                         try:
                             color = msg[1]
                             print("setting color")
-                            lf._VirtualLEDArray[:] *= 0
-                            lf._VirtualLEDArray[:] += Pixel(color).array
-                            lf._copyVirtualLedsToWS281X()
-                            lf._refreshLEDs()
+                            lightControl.virtualLEDArray[:] *= 0
+                            lightControl.virtualLEDArray[:] += Pixel(color).array
+                            lightControl.copyVirtualLedsToWS281X()
+                            lightControl.refreshLEDs()
                             time.sleep(0.05)
                         except Exception as ex:
                             print(ex)
                     elif msg[0] == "count":
                         try:
                             count = msg[1]
-                            if count < lf.__LEDCount:
-                                lf._VirtualLEDArray[:] *= 0
-                                lf._copyVirtualLedsToWS281X()
-                                lf._refreshLEDs()
+                            if count < lightControl.privateLEDCount:
+                                lightControl.virtualLEDArray[:] *= 0
+                                lightControl.copyVirtualLedsToWS281X()
+                                lightControl.refreshLEDs()
                                 time.sleep(0.05)
-                            lf = LightController(
+                            lightControl = LightController(
                                 ledCount=count,
                                 pwmGPIOpin=GPIO_PWM_PIN,
                                 channelDMA=DMA_CHANNEL,
@@ -113,10 +121,10 @@ class LightsProcess:
                                 ledBrightnessFloat=BRIGHTNESS,
                                 debug=True,
                             )
-                            lf.secondsPerMode = duration
-                            lf._VirtualLEDArray[:] += Pixel(color).array
-                            lf._copyVirtualLedsToWS281X()
-                            lf._refreshLEDs()
+                            lightControl.secondsPerMode = duration
+                            lightControl.virtualLEDArray[:] += Pixel(color).array
+                            lightControl.copyVirtualLedsToWS281X()
+                            lightControl.refreshLEDs()
                             time.sleep(0.05)
                         except Exception as ex:
                             print(ex)
@@ -141,51 +149,53 @@ class LightsProcess:
             pass
         except Exception as ex:
             print(ex)
-        lf.__del__()
+        lightControl.__del__()
         time.sleep(0.05)
 
 
 class App:
+    """tkinter app"""
+
     def __init__(self):
         self.root = tk.Tk()
         self.lights = LightsProcess()
 
-        self.LEDCountInt = tk.IntVar()
-        self.LEDCountInt.trace(
-            "w", lambda name, index, mode, var=self.LEDCountInt: self.updateLEDCount(var.get())
+        self.ledCountInt = tk.IntVar()
+        self.ledCountInt.trace(
+            "w", lambda name, index, mode, var=self.ledCountInt: self.updateLEDCount(var.get())
         )
-        self.LEDCountlabel = tk.Label(text="LED Count")
-        self.LEDCountlabel.grid(row=0, column=0)
-        self.LEDCountslider = tk.Scale(
-            self.root, from_=0, to=500, variable=self.LEDCountInt, orient="horizontal"
+        self.ledCountlabel = tk.Label(text="LED Count")
+        self.ledCountlabel.grid(row=0, column=0)
+        self.ledCountslider = tk.Scale(
+            self.root, from_=0, to=500, variable=self.ledCountInt, orient="horizontal"
         )
-        self.LEDCountslider.grid(row=0, column=1)
-        self.LEDCountPressed = False
+        self.ledCountslider.grid(row=0, column=1)
+        self.ledCountPressed = False
 
-        self.LEDCounttext = tk.Entry(self.root, textvariable=self.LEDCountInt)
-        self.LEDCounttext.grid(row=0, column=2)
-        self.LEDCountInt.set(PIXEL_COUNT)
+        self.ledCounttext = tk.Entry(self.root, textvariable=self.ledCountInt)
+        self.ledCounttext.grid(row=0, column=2)
+        self.ledCountInt.set(PIXEL_COUNT)
         try:
             self.lights.inQ.put_nowait(("count", PIXEL_COUNT))
         except multiprocessing.queues.Full:
             pass
 
-        self.ColorInt = tk.IntVar()
-        self.ColorString = tk.StringVar()
-        self.ColorInt.trace("w", lambda name, index, mode, var=self.ColorInt: self.updateColor(var.get()))
-        self.ColorString.trace(
-            "w", lambda name, index, mode, var=self.ColorString: self.updateColorHex(var.get())
+        self.colorInt = tk.IntVar()
+        self.colorString = tk.StringVar()
+        self.colorInt.trace("w", lambda name, index, mode, var=self.colorInt: self.updateColor(var.get()))
+        self.colorString.trace(
+            "w", lambda name, index, mode, var=self.colorString: self.updateColorHex(var.get())
         )
-        self.Colorlabel = tk.Label(text="Color")
-        self.Colorlabel.grid(row=1, column=0)
-        self.Colorslider = tk.Scale(
-            self.root, from_=0, to=0xFFFFFF, variable=self.ColorInt, orient="horizontal"
+        self.colorlabel = tk.Label(text="Color")
+        self.colorlabel.grid(row=1, column=0)
+        self.colorslider = tk.Scale(
+            self.root, from_=0, to=0xFFFFFF, variable=self.colorInt, orient="horizontal"
         )
-        self.Colorslider.grid(row=1, column=1)
-        self.Colortext = tk.Entry(self.root, textvariable=self.ColorString)
-        self.Colortext.grid(row=1, column=2)
-        self.Colorbutton = tk.Button(text="Select Color", command=self.getColor)
-        self.Colorbutton.grid(row=1, column=3)
+        self.colorslider.grid(row=1, column=1)
+        self.colortext = tk.Entry(self.root, textvariable=self.colorString)
+        self.colortext.grid(row=1, column=2)
+        self.colorbutton = tk.Button(text="Select Color", command=self.getColor)
+        self.colorbutton.grid(row=1, column=3)
         self.updateColor(0xFF0000)
 
         self.functionString = tk.StringVar()
@@ -216,7 +226,7 @@ class App:
         self.durationLabel.grid(row=3, column=1)
         self.durationText = tk.Entry(self.root, textvariable=self.durationInt)
         self.durationText.grid(row=3, column=2)
-        self.buttonGo = tk.Button(self.root, height=1, width=10, text="Go", command=self.go)
+        self.buttonGo = tk.Button(self.root, height=1, width=10, text="Go", command=self.goNow)
         self.buttonGo.grid(row=3, column=3)
         self.root.protocol("WM_DELETE_WINDOW", self.destroy)
         try:
@@ -229,46 +239,53 @@ class App:
         self.root.mainloop()
 
     def destroy(self):
+        """destroy this thing"""
         self.root.destroy()
         self.__del__()
 
     def __del__(self):
         del self.lights
 
-    def go(self):
+    def goNow(self):
+        """go function"""
         try:
             self.lights.inQ.put_nowait(("go",))
         except multiprocessing.queues.Full:
             pass
 
     def getColor(self):
+        """get a color"""
         color = askcolor()
         color = int(color[1][1:], 16)
-        self.ColorInt.set(color)
+        self.colorInt.set(color)
         try:
             self.lights.inQ.put_nowait(("color", color))
         except multiprocessing.queues.Full:
             pass
 
     def updateFunction(self, function):
+        """update the function"""
         try:
             self.lights.inQ.put_nowait(("function", function))
         except multiprocessing.queues.Full:
             pass
 
     def updatePattern(self, pattern):
+        """update the color pattern"""
         try:
             self.lights.inQ.put_nowait(("pattern", pattern))
         except multiprocessing.queues.Full:
             pass
 
     def updateDuration(self, duration):
+        """update function direction"""
         try:
             self.lights.inQ.put_nowait(("duration", duration))
         except multiprocessing.queues.Full:
             pass
 
     def updateLEDCount(self, count):
+        """update the led string count"""
         try:
             count = int(count)
             self.lights.inQ.put_nowait(("count", count))
@@ -276,16 +293,18 @@ class App:
             pass
 
     def updateColor(self, color):
-        if self.root.focus_get() != self.Colortext:
-            self.ColorString.set("{:06X}".format(color))
+        """update the color"""
+        if self.root.focus_get() != self.colortext:
+            self.colorString.set(f"{color:06X}")
         try:
             self.lights.inQ.put_nowait(("color", color))
         except multiprocessing.queues.Full:
             pass
 
     def updateColorHex(self, color):
+        """update the color, but in hex"""
         color = int(color, 16)
-        self.ColorInt.set(color)
+        self.colorInt.set(color)
 
 
 if __name__ == "__main__":

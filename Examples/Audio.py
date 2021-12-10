@@ -1,32 +1,31 @@
-import pyaudio
+"""example syncing lights to audio"""
+import multiprocessing
+import pyaudio  # pylint: disable = import-error
 import numpy as np
 import matplotlib.pyplot as plt
-import multiprocessing
 from LightBerries.LightControl import LightController
-from LightBerries.Pixels import Pixel
 from LightBerries.LightPatterns import ConvertPixelArrayToNumpyArray, SolidColorArray, PixelColors
 
 
-sampleRate = 44100
-chunkCount = 4
-sampleCountTotal = 20000
-sampleCountPerChunk = sampleCountTotal // chunkCount
-dataFrame = np.zeros((sampleCountTotal))
+SAMPLE_RATE = 44100
+CHUNK_COUNT = 4
+SAMPLE_COUNT_TOTAL = 20000
+SAMPLE_COUNT_PER_CHUNK = SAMPLE_COUNT_TOTAL // CHUNK_COUNT
+DATA_FRAME = np.zeros((SAMPLE_COUNT_TOTAL))
 
 
-def plot_stuff(q):
-    global dataFrame
+def PlotStuff(_):
+    """plots audio FFT to graphic plot and/or lights"""
+    global DATA_FRAME  # pylint: disable = global-statement
     plt.ion()
-    l1 = None
-    l2 = None
-    l3 = None
+    line1 = None
+    line2 = None
+    line3 = None
     i = 0
-    last = None
-    plot_time = False
-    plot_ffts = False
-    plot_fft_chunks = True
-    lf = LightController(100, 18, 10, 800000, debug=True)
-    lfArray = ConvertPixelArrayToNumpyArray(SolidColorArray(100, PixelColors.GREEN))
+    plotTime = False
+    plotFfts = False
+    plotFftChunks = True
+    LIGHT_CONTROL = LightController(100, 18, 10, 800000, debug=True)
 
     try:
         while True:
@@ -36,53 +35,53 @@ def plot_stuff(q):
             except multiprocessing.queues.Empty:
                 pass
             if not msg is None:
-                dataFrame = np.roll(dataFrame, sampleCountPerChunk)
-                dataFrame[-sampleCountPerChunk:] = msg
-                fft_data = 10 * np.log10(np.abs(np.fft.fft(dataFrame)))
-                fft_data = fft_data[len(fft_data) // 2 :]
-                fft_data = np.nan_to_num(fft_data)
+                DATA_FRAME = np.roll(DATA_FRAME, SAMPLE_COUNT_PER_CHUNK)
+                DATA_FRAME[-SAMPLE_COUNT_PER_CHUNK:] = msg
+                fftData = 10 * np.log10(np.abs(np.fft.fft(DATA_FRAME)))
+                fftData = fftData[len(fftData) // 2 :]
+                fftData = np.nan_to_num(fftData)
 
                 # print(len(fft_data), lf._LEDCount)
-                chunk_length = len(fft_data) // lf.__LEDCount
-                m = np.min(fft_data)
-                if m < 0:
-                    fft_data -= m
-                fft_data = fft_data ** 3
-                fft_chunks = np.array(
+                chunkLength = len(fftData) // LIGHT_CONTROL.privateLEDCount
+                fftMin = np.min(fftData)
+                if fftMin < 0:
+                    fftData -= fftMin
+                fftData = fftData ** 3
+                fftChunks = np.array(
                     [
-                        np.sum(fft_data[i : i + chunk_length]) / chunk_length
-                        for i in range(0, len(fft_data), chunk_length)
+                        np.sum(fftData[i : i + chunkLength]) / chunkLength
+                        for i in range(0, len(fftData), chunkLength)
                     ]
                 )
-                fft_chunks = fft_chunks ** 8
-                if plot_fft_chunks:
-                    if l3 is None:
-                        f3, a3 = plt.subplots(1)
-                        (l3,) = a3.semilogy(fft_chunks)
+                fftChunks = fftChunks ** 8
+                if plotFftChunks:
+                    if line3 is None:
+                        figure3, axis3 = plt.subplots(1)
+                        (line3,) = axis3.semilogy(fftChunks)
                         plt.show()
                     else:
-                        l3.set_ydata(fft_chunks)
-                        a3.relim()
-                        a3.autoscale_view(True, True, True)
-                        f3.canvas.draw()
+                        line3.set_ydata(fftChunks)
+                        axis3.relim()
+                        axis3.autoscale_view(True, True, True)
+                        figure3.canvas.draw()
 
-                if plot_ffts:
-                    f1, a1 = plt.subplots(1)
+                if plotFfts:
+                    figure1, axis1 = plt.subplots(1)
                     # if msg[0] == 'f':
                     print("fft")
-                    msg = msg
-                    if l1 is None:
+                    # msg = msg
+                    if line1 is None:
                         # freqs = sp.fftpack.fftfreq(len(msg))
                         # l1, = a1.semilogy(freqs, msg)
 
                         # dataFrame[i*sampleCountPerChunk:(i+1)*sampleCountPerChunk] = msg
                         # msg = 10 * np.log(np.abs(np.fft.fft(dataFrame)))
 
-                        msg = 10 * np.log10(np.abs(np.fft.fft(dataFrame)))
+                        msg = 10 * np.log10(np.abs(np.fft.fft(DATA_FRAME)))
                         msg = msg[len(msg) // 2 :]
                         msg = np.nan_to_num(msg)
                         # l1, = a1.plot(msg)
-                        (l1,) = a1.semilogy(msg)
+                        (line1,) = axis1.semilogy(msg)
                         # a1.set_ylim(1e-10, 10)
                         plt.show()
                     else:
@@ -90,31 +89,31 @@ def plot_stuff(q):
                         # msg = 10 * np.log(np.abs(np.fft.fft(dataFrame)))
 
                         print(msg)
-                        l1.set_ydata(msg)
-                        a1.relim()
-                        a1.autoscale_view(True, True, True)
-                        f1.canvas.draw()
+                        line1.set_ydata(msg)
+                        axis1.relim()
+                        axis1.autoscale_view(True, True, True)
+                        figure1.canvas.draw()
                     # elif msg[0] == 't':
                     # print('time')
                     # msg = msg[1]
-                if plot_time:
-                    f2, a2 = plt.subplots(1)
-                    if l2 is None:
+                if plotTime:
+                    figure2, axis2 = plt.subplots(1)
+                    if line2 is None:
                         # print(msg)
                         # last = np.zeros(len(msg)*2)
                         # last[len(last)//2:] = msg
-                        (l2,) = a2.plot(dataFrame)
+                        (line2,) = axis2.plot(DATA_FRAME)
                         plt.show()
                     else:
                         # last[:len(last)//2] = last[len(last)//2:]
                         # last[len(last)//2:] = msg
-                        l2.set_ydata(dataFrame)
+                        line2.set_ydata(DATA_FRAME)
                         # l2.set_xlim()
-                        a2.relim()
-                        a2.autoscale_view(True, True, True)
-                        f2.canvas.draw()
+                        axis2.relim()
+                        axis2.autoscale_view(True, True, True)
+                        figure2.canvas.draw()
                 i += 1
-                if i >= chunkCount:
+                if i >= CHUNK_COUNT:
                     i = 0
 
     except KeyboardInterrupt:
@@ -125,25 +124,25 @@ def plot_stuff(q):
 
 
 q: multiprocessing.Queue = multiprocessing.Queue()
-process = multiprocessing.Process(target=plot_stuff, args=(q,))
+process = multiprocessing.Process(target=PlotStuff, args=(q,))
 process.start()
 
-p = None
-stream = None
+PY_AUDIO = None
+AUDIO_STREAM = None
 try:
     #
     form_1 = pyaudio.paInt16  # 16-bit resolution
-    chans = 1  # 1 channel
-    bytesPerChunk = sampleCountPerChunk * 2  # 2^12 sampleCountPerChunk for buffer
+    CHANNEL = 1  # 1 channel
+    BYTES_PER_CHUNK = SAMPLE_COUNT_PER_CHUNK * 2  # 2^12 sampleCountPerChunk for buffer
     # record_secs = 0.5 # seconds to record
-    dev_index = 0  # device index found by p.get_device_info_by_index(ii)
-    wav_output_filename = "test1.wav"  # name of .wav file
-    _max = 0
-    p = pyaudio.PyAudio()
+    DEVICE_INDEX = 0  # device index found by p.get_device_info_by_index(ii)
+    WAV_OUTPUT_FILENAME = "test1.wav"  # name of .wav file
+    # _max = 0
+    PY_AUDIO = pyaudio.PyAudio()
     # print(sampleCountPerChunk, sample_bytes)
-    print(p.get_device_info_by_index(0))
+    print(PY_AUDIO.get_device_info_by_index(0))
 
-    data_frame_counter = 0
+    DATA_FRAME_COUNTER = 0
     # fft_data = np.log(np.abs(sp.fftpack.fft(dataFrame * 0.5)))
     # fft_data = np.log(np.abs(np.fft.fft(dataFrame * 0.5)))
     # fft_data = np.nan_to_num(fft_data)
@@ -153,20 +152,21 @@ try:
 
     try:
 
-        stream = p.open(
+        AUDIO_STREAM = PY_AUDIO.open(
             format=form_1,
-            rate=sampleRate,
-            channels=chans,
-            input_device_index=dev_index,
+            rate=SAMPLE_RATE,
+            channels=CHANNEL,
+            input_device_index=DEVICE_INDEX,
             input=True,
-            frames_per_buffer=bytesPerChunk,
+            frames_per_buffer=BYTES_PER_CHUNK,
         )
         # frames: List[] = []
         while True:
-            data = stream.read(sampleCountPerChunk)
+            data = AUDIO_STREAM.read(SAMPLE_COUNT_PER_CHUNK)
             data = np.frombuffer(data, dtype=np.int16)
             print(len(data))
-            # dataFrame[data_frame_counter*sampleCountPerChunk:(data_frame_counter+1)*sampleCountPerChunk] = np.nan_to_num(data)
+            # dataFrame[data_frame_counter*sampleCountPerChunk:
+            # (data_frame_counter+1)*sampleCountPerChunk] = np.nan_to_num(data)
             # fft_data = 10 * np.log(np.abs(np.fft.fft(dataFrame * 0.5)))
             # fft_data = np.nan_to_num(fft_data)
             # fft_data = fft_data[len(fft_data)//2:][:1048]
@@ -190,7 +190,8 @@ try:
             # if m < 0:
             # 	fft_data -= m
             # fft_data = fft_data**3
-            # fft_chunks = np.array([np.sum(fft_data[i:i+chunk_length])/chunk_length for i in range(0, len(fft_data), chunk_length)])
+            # fft_chunks = np.array([np.sum(fft_data[i:i+chunk_length])/
+            # chunk_length for i in range(0, len(fft_data), chunk_length)])
             # fft_chunks = fft_chunks**8
             # fft_chunks[0] = 0.01
             # fft_chunks[-1] = 0.01
@@ -207,8 +208,10 @@ try:
             # 			(fft_chunks[3] > 0.9)) and not np.isnan(fft_chunks[1]):
             # 			for i in range(count):
             # 				lf._LEDArray[i] = Pixel(ary[i] * fft_chunks[i])
-            # 				# lf._LEDArray[i] = lf._FadeColor(lf._LEDArray[i], Pixel(ary[i] * fft_chunks[i]), 50)
-            # 			# [lf._LEDArray[i] = lf._FadeColor(lf._LEDArray[i], Pixel(ary[i] * fft_chunks[i]), 50) for i in range(count)]
+            # 				# lf._LEDArray[i] = lf._FadeColor(lf._LEDArray[i],
+            # Pixel(ary[i] * fft_chunks[i]), 50)
+            # 			# [lf._LEDArray[i] = lf._FadeColor(lf._LEDArray[i],
+            # Pixel(ary[i] * fft_chunks[i]), 50) for i in range(count)]
             # lf._refreshLEDs()
             # if data_frame_counter < (chunkCount - 1):
             # 	data_frame_counter += 1
@@ -219,18 +222,18 @@ try:
     except:
         raise
     finally:
-        if not stream is None:
+        if not AUDIO_STREAM is None:
             # print("finished recording")
-            stream.stop_stream()
-            stream.close()
+            AUDIO_STREAM.stop_stream()
+            AUDIO_STREAM.close()
 except KeyboardInterrupt:
     pass
 except:
     raise
 finally:
-    if not p is None:
-        p.terminate()
-lf = None
+    if not PY_AUDIO is None:
+        PY_AUDIO.terminate()
+LIGHT_CONTROL = None
 # waveFile = wave.open(wav_output_filename, 'wb')
 # waveFile.setnchannels(chans)
 # waveFile.setsampwidth(p.get_sample_size(form_1))

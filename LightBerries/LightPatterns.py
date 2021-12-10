@@ -1,10 +1,10 @@
-from nptyping import NDArray
-import numpy as np
+"""defines a bunch of color patterns and color sequence methods"""
 import random
 import logging
 import datetime
-from typing import Any, List, Optional, Sequence, Union
-from numpy.lib.arraysetops import isin
+from typing import Any, List, Sequence, Union
+from nptyping import NDArray
+import numpy as np
 from LightBerries.Pixels import Pixel, PixelColors
 from LightBerries.LightStrings import LightString
 
@@ -16,84 +16,93 @@ DEFAULT_BACKGROUND_COLOR = PixelColors.OFF
 DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE]
 
 
-def get_DEFAULT_COLOR_SEQUENCE() -> NDArray[(3, Any), np.int32]:
-    global DEFAULT_COLOR_SEQUENCE
-    d = datetime.datetime.now()
-    m = d.month
-    if m == 1:
-        DEFAULT_COLOR_SEQUENCE = [
-            PixelColors.CYAN2,
-            PixelColors.WHITE,
-            PixelColors.CYAN,
-            PixelColors.BLUE2,
-            PixelColors.BLUE,
-        ]
-    elif m == 2:
-        DEFAULT_COLOR_SEQUENCE = [
-            PixelColors.PINK,
-            PixelColors.WHITE,
-            PixelColors.RED,
-            PixelColors.WHITE,
-        ]
-    elif m == 3:
-        DEFAULT_COLOR_SEQUENCE = [
-            PixelColors.GREEN,
-            PixelColors.WHITE,
-            PixelColors.ORANGE,
-            PixelColors.WHITE,
-            PixelColors.YELLOW,
-        ]
-    elif m == 4:
-        DEFAULT_COLOR_SEQUENCE = [
-            PixelColors.PINK,
-            PixelColors.CYAN,
-            PixelColors.YELLOW,
-            PixelColors.GREEN,
-            PixelColors.WHITE,
-        ]
-    elif m == 5:
-        DEFAULT_COLOR_SEQUENCE = [
-            PixelColors.PINK,
-            PixelColors.CYAN,
-            PixelColors.YELLOW,
-            PixelColors.GREEN,
-            PixelColors.WHITE,
-        ]
-    elif m == 6:
-        DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.WHITE, PixelColors.BLUE]
-    elif m == 7:
-        DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.WHITE, PixelColors.BLUE]
-    elif m == 8:
-        DEFAULT_COLOR_SEQUENCE = [
-            PixelColors.ORANGE,
-            PixelColors.WHITE,
-            PixelColors.YELLOW,
-            PixelColors.ORANGE2,
-        ]
-    elif m == 9:
-        DEFAULT_COLOR_SEQUENCE = [
-            PixelColors.ORANGE,
-            PixelColors.WHITE,
-            PixelColors.YELLOW,
-            PixelColors.ORANGE2,
-            PixelColors.RED,
-            PixelColors.RED2,
-        ]
-    elif m == 10:
-        DEFAULT_COLOR_SEQUENCE = [
-            PixelColors.MIDNIGHT,
-            PixelColors.RED,
-            PixelColors.ORANGE,
-            PixelColors.OFF,
-        ]
-    elif m == 11:
-        DEFAULT_COLOR_SEQUENCE = [
-            PixelColors.RED,
-            PixelColors.MIDNIGHT,
-            PixelColors.GRAY,
-        ]
-    elif m == 12:
-        DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.WHITE, PixelColors.GREEN]
+def DefaultColorSequence() -> NDArray[(3, Any), np.int32]:
+    """get the default sequence of colors defined for this month"""
+    global DEFAULT_COLOR_SEQUENCE  # pylint: disable = global-statement
+    try:
+        date = datetime.datetime.now()
+        month = date.month
+        if month == 1:
+            DEFAULT_COLOR_SEQUENCE = [
+                PixelColors.CYAN2,
+                PixelColors.WHITE,
+                PixelColors.CYAN,
+                PixelColors.BLUE2,
+                PixelColors.BLUE,
+            ]
+        elif month == 2:
+            DEFAULT_COLOR_SEQUENCE = [
+                PixelColors.PINK,
+                PixelColors.WHITE,
+                PixelColors.RED,
+                PixelColors.WHITE,
+            ]
+        elif month == 3:
+            DEFAULT_COLOR_SEQUENCE = [
+                PixelColors.GREEN,
+                PixelColors.WHITE,
+                PixelColors.ORANGE,
+                PixelColors.WHITE,
+                PixelColors.YELLOW,
+            ]
+        elif month == 4:
+            DEFAULT_COLOR_SEQUENCE = [
+                PixelColors.PINK,
+                PixelColors.CYAN,
+                PixelColors.YELLOW,
+                PixelColors.GREEN,
+                PixelColors.WHITE,
+            ]
+        elif month == 5:
+            DEFAULT_COLOR_SEQUENCE = [
+                PixelColors.PINK,
+                PixelColors.CYAN,
+                PixelColors.YELLOW,
+                PixelColors.GREEN,
+                PixelColors.WHITE,
+            ]
+        elif month == 6:
+            DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.WHITE, PixelColors.BLUE]
+        elif month == 7:
+            DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.WHITE, PixelColors.BLUE]
+        elif month == 8:
+            DEFAULT_COLOR_SEQUENCE = [
+                PixelColors.ORANGE,
+                PixelColors.WHITE,
+                PixelColors.YELLOW,
+                PixelColors.ORANGE2,
+            ]
+        elif month == 9:
+            DEFAULT_COLOR_SEQUENCE = [
+                PixelColors.ORANGE,
+                PixelColors.WHITE,
+                PixelColors.YELLOW,
+                PixelColors.ORANGE2,
+                PixelColors.RED,
+                PixelColors.RED2,
+            ]
+        elif month == 10:
+            DEFAULT_COLOR_SEQUENCE = [
+                PixelColors.MIDNIGHT,
+                PixelColors.RED,
+                PixelColors.ORANGE,
+                PixelColors.OFF,
+            ]
+        elif month == 11:
+            DEFAULT_COLOR_SEQUENCE = [
+                PixelColors.RED,
+                PixelColors.MIDNIGHT,
+                PixelColors.GRAY,
+            ]
+        elif month == 12:
+            DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.WHITE, PixelColors.GREEN]
+    except SystemExit:
+        raise
+    except KeyboardInterrupt:
+        raise
+    except Exception as ex:
+        LOGGER.exception("Error in %s.%s: %s", __file__, DefaultColorSequence.__name__, str(ex))
+        raise
     return ConvertPixelArrayToNumpyArray(DEFAULT_COLOR_SEQUENCE)
 
 
@@ -111,7 +120,7 @@ def PixelArray(arrayLength: int) -> NDArray[(3, Any), np.int32]:
     except KeyboardInterrupt:
         raise
     except Exception as ex:
-        LOGGER.exception("Error in {}.PixelArray: {}".format("LightPatterns", ex))
+        LOGGER.exception("Error in %s.%s: %s", __file__, PixelArray.__name__, str(ex))
         raise
 
 
@@ -129,7 +138,7 @@ def ConvertPixelArrayToNumpyArray(colorSequence: Sequence[Pixel]) -> NDArray[(3,
     except KeyboardInterrupt:
         raise
     except Exception as ex:
-        LOGGER.exception("Error in {}.ConvertPixelArrayToNumpyArray: {}".format("LightPatterns", ex))
+        LOGGER.exception("Error in %s.%s: %s", __name__, ConvertPixelArrayToNumpyArray.__name__, str(ex))
         raise
 
 
@@ -156,7 +165,7 @@ def SolidColorArray(
     except KeyboardInterrupt:
         raise
     except Exception as ex:
-        LOGGER.exception("Error in {}.SolidColorArray: {}".format("LightPatterns", ex))
+        LOGGER.exception("Error in %s.SolidColorArray: %s", __name__, str(ex))
         raise
 
 
@@ -181,14 +190,14 @@ def WesArray() -> NDArray[(3, Any), np.int32]:
     except KeyboardInterrupt:
         raise
     except Exception as ex:
-        LOGGER.exception("Error in {}.WesArray: {}".format("LightPatterns", ex))
+        LOGGER.exception("Error in %s.WesArray: %s", __name__, str(ex))
         raise
 
 
 def ColorTransitionArray(
     arrayLength: int,
     wrap: bool = True,
-    colorSequence: Union[List[Pixel], NDArray[(3, Any), np.int32]] = DEFAULT_COLOR_SEQUENCE,
+    colorSequence: Union[List[Pixel], NDArray[(3, Any), np.int32]] = None,
 ) -> NDArray[(3, Any), np.int32]:
     """
     This is a slightly more versatile version of CreateRainbow.
@@ -218,8 +227,7 @@ def ColorTransitionArray(
         elif isinstance(colorSequence, np.ndarray):
             inputSequence = np.array(colorSequence)
         else:
-            # TODO make this exception useful
-            raise Exception("")
+            inputSequence = DEFAULT_COLOR_SEQUENCE
         # get length of sequence
         sequenceLength = len(inputSequence)
         # derive=False
@@ -261,7 +269,7 @@ def ColorTransitionArray(
     except KeyboardInterrupt:
         raise
     except Exception as ex:
-        LOGGER.exception("Error in {}.ColorTransitionArray: {}".format("LightPatterns", ex))
+        LOGGER.exception("Error in %s.ColorTransitionArray: %s", __name__, str(ex))
         raise
 
 
@@ -289,13 +297,13 @@ def RainbowArray(arrayLength: int, wrap: bool = False) -> NDArray[(3, Any), np.i
     except KeyboardInterrupt:
         raise
     except Exception as ex:
-        LOGGER.exception("Error in {}.RainbowArray: {}".format("LightPatterns", ex))
+        LOGGER.exception("Error in %s.RainbowArray: %s", __name__, str(ex))
         raise
 
 
 def RepeatingColorSequenceArray(
     arrayLength: int,
-    colorSequence: Union[List[Pixel], NDArray[(3, Any), np.int32]] = DEFAULT_COLOR_SEQUENCE,
+    colorSequence: Union[List[Pixel], NDArray[(3, Any), np.int32]] = None,
 ) -> NDArray[(3, Any), np.int32]:
     """
     Creates a repeating LightPattern from a given sequence
@@ -314,8 +322,7 @@ def RepeatingColorSequenceArray(
         elif isinstance(colorSequence, np.ndarray):
             inputSequence = np.array(colorSequence)
         else:
-            # TODO: make this useful
-            raise Exception("")
+            inputSequence = DEFAULT_COLOR_SEQUENCE
         sequenceLength = len(inputSequence)
         arry = PixelArray(arrayLength=arrayLength)
         arry[0:sequenceLength] = inputSequence
@@ -332,7 +339,7 @@ def RepeatingColorSequenceArray(
     except KeyboardInterrupt:
         raise
     except Exception as ex:
-        LOGGER.exception("Error in {}.RepeatingColorSequenceArray: {}".format("LightPatterns", ex))
+        LOGGER.exception("Error in %s.RepeatingColorSequenceArray: %s", __name__, str(ex))
         raise
 
 
@@ -358,13 +365,13 @@ def RepeatingRainbowArray(arrayLength: int, segmentLength: int = None) -> NDArra
     except KeyboardInterrupt:
         raise
     except Exception as ex:
-        LOGGER.exception("Error in {}.RepeatingRainbowArray: {}".format("LightPatterns", ex))
+        LOGGER.exception("Error in %s.RepeatingRainbowArray: %s", __name__, str(ex))
         raise
 
 
 def ReflectArray(
     arrayLength: int,
-    colorSequence: Union[List[Pixel], NDArray[(3, Any), np.int32]] = DEFAULT_COLOR_SEQUENCE,
+    colorSequence: Union[List[Pixel], NDArray[(3, Any), np.int32]] = None,
     foldLength=None,
 ) -> NDArray[(3, Any), np.int32]:
     """
@@ -385,8 +392,7 @@ def ReflectArray(
         elif isinstance(colorSequence, np.ndarray):
             inputSequence = np.array(colorSequence)
         else:
-            # TODO: make this useful
-            raise Exception("")
+            inputSequence = DEFAULT_COLOR_SEQUENCE
         colorSequenceLen = len(inputSequence)
         if foldLength is None:
             foldLength = arrayLength // 2
@@ -422,7 +428,7 @@ def ReflectArray(
     except KeyboardInterrupt:
         raise
     except Exception as ex:
-        LOGGER.exception("Error in {}.ReflectArray: {}".format("LightPatterns", ex))
+        LOGGER.exception("Error in %s.%s: %s", __name__, ReflectArray.__name__, str(ex))
         raise
 
 
@@ -438,16 +444,16 @@ def RandomArray(arrayLength: int) -> NDArray[(3, Any), np.int32]:
         arry = PixelArray(arrayLength)
         for i in range(arrayLength):
             # prevent 255, 255, 255
-            x = random.randint(0, 2)
-            if x != 0:
+            exclusion = random.randint(0, 2)
+            if exclusion != 0:
                 redLED = random.randint(0, 255)
             else:
                 redLED = 0
-            if x != 1:
+            if exclusion != 1:
                 greenLED = random.randint(0, 255)
             else:
                 greenLED = 0
-            if x != 2:
+            if exclusion != 2:
                 blueLED = random.randint(0, 255)
             else:
                 blueLED = 0
@@ -458,7 +464,7 @@ def RandomArray(arrayLength: int) -> NDArray[(3, Any), np.int32]:
     except KeyboardInterrupt:
         raise
     except Exception as ex:
-        LOGGER.exception("Error in {}.PseudoRandomArray: {}".format("LightPatterns", ex))
+        LOGGER.exception("Error in %s.%s: %s", __name__, RandomArray.__name__, str(ex))
         raise
 
 
@@ -480,8 +486,7 @@ def PseudoRandomArray(
         elif isinstance(colorSequence, np.ndarray):
             inputSequence = np.array(colorSequence)
         else:
-            # TODO: make this usefule
-            raise Exception("")
+            inputSequence = DEFAULT_COLOR_SEQUENCE
         for i in range(arrayLength):
             if inputSequence is None:
                 arry[i] = PixelColors.pseudoRandom()
@@ -493,13 +498,13 @@ def PseudoRandomArray(
     except KeyboardInterrupt:
         raise
     except Exception as ex:
-        LOGGER.exception("Error in {}.PseudoRandomArray: {}".format("LightPatterns", ex))
+        LOGGER.exception("Error in %s.%s: %s", __name__, PseudoRandomArray.__name__, str(ex))
         raise
 
 
 def ColorStretchArray(
     repeats=5,
-    colorSequence: Union[List[Pixel], NDArray[(3, Any), np.int32]] = DEFAULT_COLOR_SEQUENCE,
+    colorSequence: Union[List[Pixel], NDArray[(3, Any), np.int32]] = None,
 ) -> NDArray[(3, Any), np.int32]:
     """takes a sequence of input colors and repeats each element the requested number of times
 
@@ -515,8 +520,7 @@ def ColorStretchArray(
         elif isinstance(colorSequence, np.ndarray):
             inputSequence = np.array(colorSequence)
         else:
-            # TODO: make this useful
-            raise Exception("")
+            inputSequence = DEFAULT_COLOR_SEQUENCE
         colorSequenceLength = len(inputSequence)
         # repeats = arrayLength // colorSequenceLength
         arry = PixelArray(colorSequenceLength * repeats)
@@ -528,7 +532,7 @@ def ColorStretchArray(
     except KeyboardInterrupt:
         raise
     except Exception as ex:
-        LOGGER.exception("Error in {}.PseudoRandomArray: {}".format("LightPatterns", ex))
+        LOGGER.exception("Error in %s.%s: %s", __name__, ColorStretchArray.__name__, str(ex))
         raise
 
 
@@ -560,7 +564,7 @@ def Emily1() -> NDArray[(3, Any), np.int32]:
     except KeyboardInterrupt:
         raise
     except Exception as ex:
-        LOGGER.exception("Error in {}.PseudoRandomArray: {}".format("LightPatterns", ex))
+        LOGGER.exception("Error in %s.%s: %s", __name__, Emily1.__name__, str(ex))
         raise
 
 
@@ -568,73 +572,73 @@ if __name__ == "__main__":
     import time
 
     lights = LightString(ledCount=100)
-    lightLength = len(lights)
-    delay = 2
+    LIGHT_LENGTH = len(lights)
+    DELAY = 2
 
-    p = PixelArray(lightLength)
+    p = PixelArray(LIGHT_LENGTH)
     lights[: len(p)] = p
     lights.refresh()
-    time.sleep(delay)
+    time.sleep(DELAY)
 
-    p = PixelArray(lightLength)
+    p = PixelArray(LIGHT_LENGTH)
     lights[: len(p)] = p
-    p = SolidColorArray(lightLength, PixelColors.WHITE)
+    p = SolidColorArray(LIGHT_LENGTH, PixelColors.WHITE)
     lights[: len(p)] = p
     lights.refresh()
-    time.sleep(delay)
+    time.sleep(DELAY)
 
-    p = PixelArray(lightLength)
+    p = PixelArray(LIGHT_LENGTH)
     lights[: len(p)] = p
     p = WesArray()
     lights[: len(p)] = p
     lights.refresh()
-    time.sleep(delay)
+    time.sleep(DELAY)
 
-    p = PixelArray(lightLength)
+    p = PixelArray(LIGHT_LENGTH)
     lights[: len(p)] = p
-    p = ColorTransitionArray(lightLength)
+    p = ColorTransitionArray(LIGHT_LENGTH)
     lights[: len(p)] = p
     lights.refresh()
-    time.sleep(delay)
+    time.sleep(DELAY)
 
-    p = PixelArray(lightLength)
+    p = PixelArray(LIGHT_LENGTH)
     lights[: len(p)] = p
-    p = RainbowArray(lightLength)
+    p = RainbowArray(LIGHT_LENGTH)
     lights[: len(p)] = p
     lights.refresh()
-    time.sleep(delay)
+    time.sleep(DELAY)
 
-    p = PixelArray(lightLength)
+    p = PixelArray(LIGHT_LENGTH)
     lights[: len(p)] = p
-    p = RepeatingColorSequenceArray(lightLength)
+    p = RepeatingColorSequenceArray(LIGHT_LENGTH)
     lights[: len(p)] = p
     lights.refresh()
-    time.sleep(delay)
+    time.sleep(DELAY)
 
-    p = PixelArray(lightLength)
+    p = PixelArray(LIGHT_LENGTH)
     lights[: len(p)] = p
-    p = RepeatingRainbowArray(lightLength)
+    p = RepeatingRainbowArray(LIGHT_LENGTH)
     lights[: len(p)] = p
     lights.refresh()
-    time.sleep(delay)
+    time.sleep(DELAY)
 
-    p = PixelArray(lightLength)
+    p = PixelArray(LIGHT_LENGTH)
     lights[: len(p)] = p
-    p = ReflectArray(lightLength)
+    p = ReflectArray(LIGHT_LENGTH)
     lights[: len(p)] = p
     lights.refresh()
-    time.sleep(delay)
+    time.sleep(DELAY)
 
-    p = PixelArray(lightLength)
+    p = PixelArray(LIGHT_LENGTH)
     lights[: len(p)] = p
-    p = PseudoRandomArray(lightLength)
+    p = PseudoRandomArray(LIGHT_LENGTH)
     lights[: len(p)] = p
     lights.refresh()
-    time.sleep(delay)
+    time.sleep(DELAY)
 
-    p = PixelArray(lightLength)
+    p = PixelArray(LIGHT_LENGTH)
     lights[: len(p)] = p
-    p = ColorStretchArray(lightLength)
+    p = ColorStretchArray(LIGHT_LENGTH)
     lights[: len(p)] = p
     lights.refresh()
-    time.sleep(delay)
+    time.sleep(DELAY)

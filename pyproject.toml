@@ -8,5 +8,25 @@ build-backend = "setuptools.build_meta"
 [tool.black]
 line-length = 110
 
-[mypy]
+[tool.mypy]
 plugins = "numpy.typing.mypy_plugin"
+
+[tool.bandit]
+skips = ["B311"]
+
+[tool.pylint.'FORMAT']
+max-line-length=110
+max-module-lines=2100
+
+[tool.pylint.BASIC]
+module-naming-style="PascalCase"
+class-naming-style="PascalCase"
+function-naming-style="PascalCase"
+argument-naming-style="camelCase"
+method-naming-style="camelCase"
+variable-naming-style="camelCase"
+attr-naming-style="camelCase"
+const-naming-style="UPPER_CASE"
+
+[tool.pylint.'MESSAGES CONTROL']
+disable=["try-except-raise","broad-except","consider-using-enumerate"]

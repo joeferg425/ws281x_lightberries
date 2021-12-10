@@ -1,3 +1,7 @@
+"""
+defines callable behaviors for this module
+"""
+
 from LightBerries.LightControl import LightController
 
 if __name__ == "__main__":
@@ -9,13 +13,14 @@ if __name__ == "__main__":
     DMA_CHANNEL = 5
     # frequency to run the PWM signal at
     PWM_FREQUENCY = 800000
-    # to understand the rest of these arguments read their documentation: https://github.com/rpi-ws281x/rpi-ws281x-python
+    # to understand the rest of these arguments read their
+    # documentation: https://github.com/rpi-ws281x/rpi-ws281x-python
     GAMMA = None
     LED_STRIP_TYPE = None
     INVERT = False
     PWM_CHANNEL = 0
     # create the light-function object
-    brightness = 0.75
+    BRIGHTNESS = 0.75
     l = LightController(
         ledCount=PIXEL_COUNT,
         pwmGPIOpin=GPIO_PWM_PIN,
@@ -26,7 +31,7 @@ if __name__ == "__main__":
         gamma=GAMMA,
         stripTypeLED=LED_STRIP_TYPE,
         debug=True,
-        ledBrightnessFloat=brightness,
+        ledBrightnessFloat=BRIGHTNESS,
     )
     # run the demo!
     l.demo(20)

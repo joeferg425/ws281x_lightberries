@@ -1,3 +1,7 @@
+"""
+wraps rpi_ws281x module (https://github.com/rpi-ws281x/rpi-ws281x-python)
+and provides a bunch of helpers
+"""
 import sys
 import logging
 import LightBerries.LightControl

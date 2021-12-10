@@ -110,3 +110,4 @@ LightBerries/Sphinx-docs/
 .vscode
 *.tar.gz
 *.log
+*.sh
