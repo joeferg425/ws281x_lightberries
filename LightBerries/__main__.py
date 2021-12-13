@@ -1,10 +1,8 @@
-"""
-defines callable behaviors for this module
-"""
+"""Defines callable behaviors for this module."""
 
 from LightBerries.LightControl import LightController
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pylint: disable=invalid-name
     # the number of pixels in the light string
     PIXEL_COUNT = 100
     # GPIO pin to use for PWM signal
@@ -21,7 +19,7 @@ if __name__ == "__main__":
     PWM_CHANNEL = 0
     # create the light-function object
     BRIGHTNESS = 0.75
-    l = LightController(
+    lightControl = LightController(
         ledCount=PIXEL_COUNT,
         pwmGPIOpin=GPIO_PWM_PIN,
         channelDMA=DMA_CHANNEL,
@@ -34,4 +32,4 @@ if __name__ == "__main__":
         ledBrightnessFloat=BRIGHTNESS,
     )
     # run the demo!
-    l.demo(20)
+    lightControl.demo(20)

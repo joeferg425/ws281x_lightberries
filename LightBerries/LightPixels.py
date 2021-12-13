@@ -1,4 +1,4 @@
-"""define basic RGB pixel data and objects"""
+"""Define basic RGB pixel data and objects."""
 import enum
 import logging
 import random
@@ -7,13 +7,15 @@ from typing import List, Optional, Tuple, Union
 from nptyping import NDArray
 import numpy as np
 
+from LightBerries.LightBerryException import LightPixelException
+
 LOGGER = logging.getLogger("LightBerries")
 
 
 class EnumLEDOrder(enum.Enum):
-    """This enum is for LED order in the physical pixels
+    """This enum is for LED order in the physical pixels.
 
-    If your colors are all wrong, try a different enum
+    If your colors are all wrong, try a different enum.
     """
 
     RGB: List[int] = [0, 1, 2]
@@ -24,18 +26,23 @@ DEFAULT_PIXEL_ORDER: List[int] = EnumLEDOrder.GRB.value
 
 
 class Pixel:
-    """This class defines a single LED pixel"""
+    """This class defines a single LED pixel."""
 
     def __init__(
         self,
         rgb: Optional[Union[int, tuple, list, NDArray, "Pixel"]] = None,
         order: Union[EnumLEDOrder, List[int]] = DEFAULT_PIXEL_ORDER,
-    ):
+    ) -> None:
         """Create a single RGB LED pixel.
 
-        rgb: pixel color definition
+        Args:
+            rgb: pixel color definition
+            order: enum determining the order of the colors (e.g. RGB vs GRB)
 
-        order: enum determining the order of the colors (e.g. RGB vs GRB)
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightPixelException: if something bad happens
         """
         try:
             # initialize to zero
@@ -64,7 +71,7 @@ class Pixel:
                 # and has length three
             ) and len(rgb) == 3:
                 if rgb[0] > 255 or rgb[1] > 255 or rgb[2] > 255:
-                    raise Exception(f"Invalid Pixel values: {rgb}")
+                    raise LightPixelException(f"Invalid Pixel values: {rgb}")
                 # create a 3-byte int from the three bytes
                 self._value = (
                     # this is where the rgb order comes into play
@@ -83,10 +90,7 @@ class Pixel:
 
             # we've got an error boys!
             else:
-                raise Exception(
-                    f"{self.__class__.__name__}.{'__init__'} Exception: "
-                    + "Cannot assign pixel using value: {rgb}"
-                )
+                raise LightPixelException(f"Cannot assign pixel using value: {str(rgb)} ({type(rgb)})")
 
         except SystemExit:
             raise
@@ -99,18 +103,36 @@ class Pixel:
                 inspect.stack()[0][3],
                 ex,
             )
-            raise
+            raise LightPixelException(str(ex)).with_traceback(ex.__traceback__)
 
-    def __len__(self) -> int:
-        """return the length of the pixel color array"""
+    def __len__(
+        self,
+    ) -> int:
+        """Return the length of the pixel color array.
+
+        Returns:
+            the number of colors in the array
+        """
         return len(self.array)
 
-    def __int__(self) -> int:
-        """return the pixel value as a single integer value"""
+    def __int__(
+        self,
+    ) -> int:
+        """Return the pixel value as a single integer value.
+
+        Returns:
+            the integer value of the RGB values
+        """
         return self._value
 
-    def __str__(self) -> str:
-        """return value of pixel as a string"""
+    def __str__(
+        self,
+    ) -> str:
+        """Return the value of the pixel as a string.
+
+        Returns:
+            a string representation of the pixel
+        """
         rgbValue = (
             (self._value & 0xFF0000) >> 16,
             (self._value & 0xFF00) >> 8,
@@ -123,13 +145,25 @@ class Pixel:
             + f"{rgbValue[self._order[2]]:02X}"
         )
 
-    def __repr__(self) -> str:
-        """represent Pixel class as a string"""
+    def __repr__(
+        self,
+    ) -> str:
+        """Represent the Pixel class as a string.
+
+        Returns:
+            a string representation of the Pixel instance
+        """
         return f"<{self.__class__.__name__}> {self.__str__()}"
 
     @property
-    def tuple(self) -> Tuple[int, int, int]:
-        """return Pixel value as a tuple of ints"""
+    def tuple(
+        self,
+    ) -> Tuple[int, int, int]:
+        """Return Pixel value as a tuple of ints.
+
+        Returns:
+            the RGB value into tuple
+        """
         rgbTuple = (
             (self._value & 0xFF0000) >> 16,
             (self._value & 0xFF00) >> 8,
@@ -142,13 +176,19 @@ class Pixel:
         )
 
     @property
-    def array(self) -> NDArray[(3,), np.int32]:
-        """return Pixel value as a numpy array"""
+    def array(
+        self,
+    ) -> NDArray[(3,), np.int32]:
+        """Return Pixel value as a numpy array.
+
+        Returns:
+            RGB value as a numpy array
+        """
         return np.array(self.tuple)
 
 
 class PixelColors:
-    """List of commonly used colors for ease of use"""
+    """List of commonly used colors for ease of use."""
 
     OFF = Pixel((0, 0, 0), order=EnumLEDOrder.RGB)
     RED2 = Pixel((128, 0, 0), order=EnumLEDOrder.RGB)
@@ -174,8 +214,14 @@ class PixelColors:
     GRAY = Pixel((128, 118, 108), order=EnumLEDOrder.RGB)
 
     @classmethod
-    def pseudoRandom(cls) -> NDArray[(3,), np.int32]:
-        """get a random color from the list of defined colors"""
+    def pseudoRandom(
+        cls,
+    ) -> NDArray[(3,), np.int32]:
+        """Get a random color from the list of defined colors.
+
+        Returns:
+            a single random color from the list of defined colors
+        """
         clrs = list(dir(PixelColors))
         clrs = [p for p in clrs if "__" not in p and "random" not in p.lower()]
         randomColor = clrs[random.randint(0, len(clrs) - 1)]
@@ -184,8 +230,14 @@ class PixelColors:
         return getattr(PixelColors, randomColor).array
 
     @classmethod
-    def random(cls) -> NDArray[(3,), np.int32]:
-        """get a randomly generated pixel value"""
+    def random(
+        cls,
+    ) -> NDArray[(3,), np.int32]:
+        """Get a randomly generated pixel value.
+
+        Returns:
+            a truly random RGB values int the range ([0,255], [0,255], [0,255])
+        """
         colorOne = random.randint(0, 2)
         colorTwo = random.randint(0, 3)
         if colorOne != 0 or colorTwo == 0:

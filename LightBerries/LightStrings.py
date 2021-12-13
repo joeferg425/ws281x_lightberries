@@ -1,4 +1,4 @@
-"""Defines basic light string data and functions"""
+"""Defines basic light string data and functions."""
 import os
 import sys
 import atexit
@@ -8,47 +8,43 @@ import logging
 from typing import Any, Optional, Sequence, Union, overload
 from nptyping import NDArray
 import numpy as np
+from LightBerries.LightBerryException import LightStringException
 from LightBerries.RpiWS281xPatch import rpi_ws281x
-from LightBerries.Pixels import Pixel, PixelColors
+from LightBerries.LightPixels import Pixel, PixelColors
 
 LOGGER = logging.getLogger("LightBerries")
 
 
 class LightString(Sequence[np.int_]):
-    """defines basic LED array data and functions"""
+    """Defines basic LED array data and functions."""
 
     def __init__(
         self,
         ledCount: Optional[int] = None,
         pixelStrip: rpi_ws281x.PixelStrip = None,
-        debug: bool = False,
-    ):
+    ) -> None:
+        """Creates a pixel array using the rpipixelStrip library and Pixels.
+
+        Args:
+            ledCount: the number of LEDs desired in the LightString
+            pixelStrip: the ws281x object that actually controls the LED signaling
+
+        Raises:
+            Warning: if something unexpected could happen
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightStringException: if something bad happens
         """
-        Creates a pixel array using the rpipixelStrip library and Pixels.
-
-        ledCount: int
-            the number of LEDs desired in the LightString
-
-        pixelStrip: rpipixelStrip.PixelStrip
-            the ws281x object that actually controls the LED signaling
-
-        debug: bool
-            set true for debug messages
-        """
-
-        # use debug setting
-        if debug is True:
-            LOGGER.setLevel(logging.DEBUG)
-            LOGGER.debug("%s.%s Debugging mode", self.__class__.__name__, inspect.stack()[0][3])
-
         # cant run GPIO stuff without root, tell the user if they forgot
         # linux check is just for debugging with fake GPIO on windows
         if sys.platform == "linux" and not os.getuid() == 0:  # pylint: disable = no-member
-            raise Exception("GPIO functionality requires root privilege. Please run command again as root")
+            raise LightStringException(
+                "GPIO functionality requires root privilege. Please run command again as root"
+            )
 
         # catch error cases first
         if ledCount is None and pixelStrip is None:
-            raise Exception(
+            raise LightStringException(
                 "Cannot create LightString object without ledCount or " + "pixelStrip object being specified"
             )
         # catch error cases first
@@ -84,23 +80,22 @@ class LightString(Sequence[np.int_]):
                 inspect.stack()[0][3],
                 ex,
             )
-            raise
+            raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
 
         try:
             # validate led count
             if not isinstance(self._ledCount, int):
-                raise Exception(
+                raise LightStringException(
                     f'Cannot create LightString object with LED count "{self._ledCount}"',
                 )
             # if led count is good, create our pixel sequence
-            else:
-                self._lights: NDArray[(3, Any), np.int32] = np.zeros((self._ledCount, 3))
-                self._lights[:] = np.array([Pixel().array for i in range(self._ledCount)])
-                LOGGER.debug(
-                    "%s.%s Created Numpy Light array",
-                    self.__class__.__name__,
-                    inspect.stack()[0][3],
-                )
+            self._lights: NDArray[(3, Any), np.int32] = np.zeros((self._ledCount, 3))
+            self._lights[:] = np.array([Pixel().array for i in range(self._ledCount)])
+            LOGGER.debug(
+                "%s.%s Created Numpy Light array",
+                self.__class__.__name__,
+                inspect.stack()[0][3],
+            )
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -112,15 +107,22 @@ class LightString(Sequence[np.int_]):
                 inspect.stack()[0][3],
                 ex,
             )
-            raise
+            raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
 
         # try to force cleanup of underlying c objects when user exits
         atexit.register(self.__del__)
 
-    def __del__(self) -> None:
-        """
-        Properly disposes of the rpipixelStrip object.
-        Prevents (hopefully) memory leaks that were happening in the rpipixelStrip module.
+    def __del__(
+        self,
+    ) -> None:
+        """Properly disposes of the rpipixelStrip object.
+
+        Prevents memory leaks (hopefully) that were happening in the rpi.PixelStrip module.
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightStringException: if something bad happens
         """
         # check if pixel strip has been created
         if isinstance(self.pixelStrip, rpi_ws281x.PixelStrip):
@@ -135,11 +137,15 @@ class LightString(Sequence[np.int_]):
                 raise
             except Exception as ex:
                 LOGGER.exception("Failed to clean up WS281X object: %s", str(ex))
-                raise
+                raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
 
-    def __len__(self) -> int:
-        """
-        return length of the light string (the number of LEDs)
+    def __len__(
+        self,
+    ) -> int:
+        """Return length of the light string (the number of LEDs).
+
+        Returns:
+            the number of LEDs in the array
         """
         if self._lights is not None:
             return len(self._lights)
@@ -147,39 +153,63 @@ class LightString(Sequence[np.int_]):
             return 0
 
     @overload
-    def __getitem__(self, idx: int) -> NDArray[(3,), np.int32]:
-        """for mypy"""
+    def __getitem__(  # noqa D105
+        self,
+        idx: int,
+    ) -> NDArray[(3,), np.int32]:
         ...
 
     @overload
-    def __getitem__(self, s: slice) -> NDArray[(3, Any), np.int32]:
-        """for mypy"""
+    def __getitem__(  # noqa D105
+        self,
+        s: slice,
+    ) -> NDArray[(3, Any), np.int32]:
         ...
 
     def __getitem__(
         self, key: Union[int, slice]
     ) -> Union[NDArray[(3,), np.int32], NDArray[(3, Any), np.int32]]:
-        """
-        return a LED(s) from array
+        """Return a LED index or slice from LED array.
+
+        Args:
+            key: an index of a single LED, or a slice specifying a range of LEDs
+
+        Returns:
+            the LED value or values as requested
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightStringException: if something bad happens
         """
         try:
             if isinstance(self._lights, np.ndarray):
                 return self._lights[key].array
             else:
-                raise Exception("Cannot index into uninitialized LightString object")
+                raise LightStringException("Cannot index into uninitialized LightString object")
         except SystemExit:
             raise
         except KeyboardInterrupt:
             raise
         except Exception as ex:
             LOGGER.exception('Failed to get key "%s" from %s: %s', key, self._lights, ex)
-            raise
+            raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
 
     def __setitem__(
-        self, key: Union[int, slice], value: Union[NDArray[(3,), np.int32], NDArray[(3, Any), np.int32]]
+        self,
+        key: Union[int, slice],
+        value: Union[NDArray[(3,), np.int32], NDArray[(3, Any), np.int32]],
     ) -> None:
-        """
-        set LED value(s) in array
+        """Set LED value(s) in the array.
+
+        Args:
+            key: the index or slice specifying one or more LED indices
+            value: the RGB value or values to assign to the given LED indices
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightStringException: if something bad happens
         """
         try:
             if isinstance(self._lights, np.ndarray):
@@ -189,41 +219,58 @@ class LightString(Sequence[np.int_]):
                     elif isinstance(value, Sequence):
                         self._lights.__setitem__(key, [Pixel(v).array for v in value])
                     else:
-                        raise Exception("Cannot assign multiple indices of LightString using a single value")
+                        raise LightStringException(
+                            "Cannot assign multiple indices of LightString using a single value"
+                        )
                 else:
                     if isinstance(value, np.ndarray):
                         self._lights.__setitem__(key, value)
                     elif isinstance(value, Pixel):
                         self._lights.__setitem__(key, Pixel(value).array)
                     else:
-                        raise Exception("Cannot assign single index of LightString using multiple values")
+                        raise LightStringException(
+                            "Cannot assign single index of LightString using multiple values"
+                        )
             else:
-                raise Exception("Cannot index into uninitialized LightString object")
+                raise LightStringException("Cannot index into uninitialized LightString object")
         except SystemExit:
             raise
         except KeyboardInterrupt:
             raise
         except Exception as ex:
             LOGGER.exception("Failed to set light %s to value %s: %s", key, value, ex)
-            raise
+            raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
 
-    def __enter__(self) -> "LightString":
-        """ """
+    def __enter__(
+        self,
+    ) -> "LightString":
+        """Get an instance of this object object.
+
+        Returns:
+            an instance of LightString
+        """
         return self
 
-    def __exit__(self, *args) -> None:
-        """ """
+    def __exit__(
+        self,
+        *args,
+    ) -> None:
+        """Cleanup the instance of this object.
+
+        Args:
+            args: ignored
+        """
         self.__del__()
 
-    def setDebugLevel(self, level: int):
-        """
-        set the logging level
-        """
-        LOGGER.setLevel(level)
+    def off(
+        self,
+    ) -> None:
+        """Turn all of the LEDs in the LightString off.
 
-    def off(self):
-        """
-        turn all of the LEDs in the LightString off
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightStringException: if something bad happens
         """
         for index in range(len(self._lights)):
             try:
@@ -239,46 +286,35 @@ class LightString(Sequence[np.int_]):
                     LightString(0),
                     ex,
                 )
-                raise
+                raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
         self.refresh()
 
-    def refresh(self):
-        """
-        update ws281x signal using the numpy array
-        """
-        # should be faster than method below?
-        def SetPixel(irgb):
-            i = irgb[0]
-            rgb = irgb[1]
-            value = (int(rgb[0]) << 16) + (int(rgb[1]) << 8) + int(rgb[2])
-            self.pixelStrip.setPixelColor(i, value)
+    def refresh(
+        self,
+    ) -> None:
+        """Update the ws281x signal using the numpy array.
 
-        list(
-            map(
-                SetPixel,
-                enumerate(self._lights),
-            )
-        )
-
-        # for index, light in enumerate(self._lights):
-        #     try:
-        #         if index > 0:
-        #             self.pixelStrip.setPixelColor(int(index), light._value)
-        #         else:
-        #             self.pixelStrip.setPixelColor(int(index), 0)
-        #     except SystemExit:
-        #         raise
-        #     except KeyboardInterrupt:
-        #         raise
-        #     except Exception as ex:
-        #         LOGGER.exception(
-        #             "Failed to set pixel %s in WS281X to value %s: %s",
-        #             index,
-        #             light._value,
-        #             ex,
-        #         )
-        #         raise
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightStringException: if something bad happens
+        """
         try:
+            # define callback for map method (fast iterator)
+            def SetPixel(irgb):
+                i = irgb[0]
+                rgb = irgb[1]
+                value = (int(rgb[0]) << 16) + (int(rgb[1]) << 8) + int(rgb[2])
+                self.pixelStrip.setPixelColor(i, value)
+
+            # copy this class's array into the ws281x array
+            list(
+                map(
+                    SetPixel,
+                    enumerate(self._lights),
+                )
+            )
+            # send the signal out
             self.pixelStrip.show()
         except SystemExit:
             raise
@@ -286,7 +322,7 @@ class LightString(Sequence[np.int_]):
             raise
         except Exception as ex:
             LOGGER.exception('Function call "show" in WS281X object failed: %s', str(ex))
-            raise
+            raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
 
 
 if __name__ == "__main__":
@@ -314,7 +350,6 @@ if __name__ == "__main__":
             gamma=GAMMA,
             strip_type=LED_STRIP_TYPE,
         ),
-        debug=True,
     ) as liteStr:
         liteStr.refresh()
         p = Pixel((255, 0, 0))

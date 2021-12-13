@@ -1,11 +1,12 @@
-"""defines a bunch of color patterns and color sequence methods"""
+"""Defines a bunch of color patterns and color sequence methods."""
 import random
 import logging
 import datetime
 from typing import Any, List, Sequence, Union
 from nptyping import NDArray
 import numpy as np
-from LightBerries.Pixels import Pixel, PixelColors
+from LightBerries.LightBerryException import LightPatternException
+from LightBerries.LightPixels import Pixel, PixelColors
 from LightBerries.LightStrings import LightString
 
 LOGGER = logging.getLogger("LightBerries")
@@ -17,7 +18,16 @@ DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE]
 
 
 def DefaultColorSequence() -> NDArray[(3, Any), np.int32]:
-    """get the default sequence of colors defined for this month"""
+    """Get the default sequence of colors defined for this month.
+
+    Returns:
+        the default sequence of colors as determined by the current month
+
+    Raises:
+        SystemExit: if exiting
+        KeyboardInterrupt: if user quits
+        LightPatternException: if something bad happens
+    """
     global DEFAULT_COLOR_SEQUENCE  # pylint: disable = global-statement
     try:
         date = datetime.datetime.now()
@@ -102,16 +112,25 @@ def DefaultColorSequence() -> NDArray[(3, Any), np.int32]:
         raise
     except Exception as ex:
         LOGGER.exception("Error in %s.%s: %s", __file__, DefaultColorSequence.__name__, str(ex))
-        raise
+        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
     return ConvertPixelArrayToNumpyArray(DEFAULT_COLOR_SEQUENCE)
 
 
-def PixelArray(arrayLength: int) -> NDArray[(3, Any), np.int32]:
-    """Creates array of RGB tuples that are all off
+def PixelArray(
+    arrayLength: int,
+) -> NDArray[(3, Any), np.int32]:
+    """Creates array of RGB tuples that are all off.
 
-    arrayLength: the number of pixels desired in the returned pixel array
+    Args:
+        arrayLength: the number of pixels desired in the returned pixel array
 
-    returns: a list of Pixel objects in the pattern you requested
+    Returns:
+        a list of Pixel objects in the pattern you requested
+
+    Raises:
+        SystemExit: if exiting
+        KeyboardInterrupt: if user quits
+        LightPatternException: if something bad happens
     """
     try:
         return np.array([PixelColors.OFF.array for i in range(int(arrayLength))])
@@ -121,15 +140,24 @@ def PixelArray(arrayLength: int) -> NDArray[(3, Any), np.int32]:
         raise
     except Exception as ex:
         LOGGER.exception("Error in %s.%s: %s", __file__, PixelArray.__name__, str(ex))
-        raise
+        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
 
 
-def ConvertPixelArrayToNumpyArray(colorSequence: Sequence[Pixel]) -> NDArray[(3, Any), np.int32]:
-    """Convert an array of Pixels into a numpy array of rgb arrays
+def ConvertPixelArrayToNumpyArray(
+    colorSequence: Sequence[Pixel],
+) -> NDArray[(3, Any), np.int32]:
+    """Convert an array of Pixels into a numpy array of rgb arrays.
 
-    colorSequence: a list of Pixel objects
+    Args:
+        colorSequence: a list of Pixel objects
 
-    returns: a numpy array of int arrays representing a string of rgb values
+    Returns:
+        a numpy array of int arrays representing a string of rgb values
+
+    Raises:
+        SystemExit: if exiting
+        KeyboardInterrupt: if user quits
+        LightPatternException: if something bad happens
     """
     try:
         return np.array([Pixel(p).tuple for p in colorSequence])
@@ -139,20 +167,26 @@ def ConvertPixelArrayToNumpyArray(colorSequence: Sequence[Pixel]) -> NDArray[(3,
         raise
     except Exception as ex:
         LOGGER.exception("Error in %s.%s: %s", __name__, ConvertPixelArrayToNumpyArray.__name__, str(ex))
-        raise
+        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
 
 
 def SolidColorArray(
     arrayLength: int,
     color: Union[Pixel, NDArray[(3,), np.int32]] = DEFAULT_COLOR_SEQUENCE[0],
 ) -> NDArray[(3, Any), np.int32]:
-    """Creates array of RGB tuples that are all one color
+    """Creates array of RGB tuples that are all one color.
 
-    arrayLength: the total desired length of the return array
+    Args:
+        arrayLength: the total desired length of the return array
+        color: a pixel object defining the rgb values you want in the pattern
 
-    color: a pixel object defining the rgb values you want in the pattern
+    Returns:
+        a list of Pixel objects in the pattern you requested
 
-    returns: a list of Pixel objects in the pattern you requested
+    Raises:
+        SystemExit: if exiting
+        KeyboardInterrupt: if user quits
+        LightPatternException: if something bad happens
     """
     try:
         if isinstance(color, np.ndarray):
@@ -165,33 +199,8 @@ def SolidColorArray(
     except KeyboardInterrupt:
         raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.SolidColorArray: %s", __name__, str(ex))
-        raise
-
-
-def WesArray() -> NDArray[(3, Any), np.int32]:
-    """creates a color array that Wes wanted
-
-    returns: a list of Pixel objects in the pattern you requested
-    """
-    try:
-        return ConvertPixelArrayToNumpyArray(
-            [
-                PixelColors.WHITE,
-                PixelColors.ORANGE,
-                PixelColors.YELLOW,
-                PixelColors.RED,
-                PixelColors.BLUE,
-                PixelColors.GREEN,
-            ]
-        )
-    except SystemExit:
-        raise
-    except KeyboardInterrupt:
-        raise
-    except Exception as ex:
-        LOGGER.exception("Error in %s.WesArray: %s", __name__, str(ex))
-        raise
+        LOGGER.exception("Error in %s.%s: %s", __name__, SolidColorArray.__name__, str(ex))
+        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
 
 
 def ColorTransitionArray(
@@ -199,27 +208,24 @@ def ColorTransitionArray(
     wrap: bool = True,
     colorSequence: Union[List[Pixel], NDArray[(3, Any), np.int32]] = None,
 ) -> NDArray[(3, Any), np.int32]:
-    """
-    This is a slightly more versatile version of CreateRainbow.
+    """This is a slightly more versatile version of CreateRainbow.
+
     The user specifies a color sequence and the number of steps (LEDs)
     in the transition from one color to the next.
 
-    arrayLength: int
-            The total totalArrayLength of the final sequence in LEDs
-            This parameter is optional and defaults to LED_INDEX_COUNT
+    Args:
+        arrayLength: The total totalArrayLength of the final sequence in LEDs. This
+            parameter is optional and defaults to LED_INDEX_COUNT
+        wrap: set true to wrap the transition from the last color back to the first
+        colorSequence: a sequence of colors to merge between
 
-    wrap: bool
-            set true to wrap the transition from the last color back to the first
+    Returns:
+        a list of Pixel objects in the pattern you requested
 
-    colorSequence: array(tuple(int,int,int))
-            a sequence of colors to merge between
-
-    stepCount: int
-            The number of LEDs it takes to transition between one color and the next.
-            This parameter is optional and defaults to 'totalArrayLength / len(sequence)'.
-
-    returns: List[Pixel]
-            a list of Pixel objects in the pattern you requested
+    Raises:
+        SystemExit: if exiting
+        KeyboardInterrupt: if user quits
+        LightPatternException: if something bad happens
     """
     try:
         if isinstance(colorSequence, list):
@@ -269,17 +275,27 @@ def ColorTransitionArray(
     except KeyboardInterrupt:
         raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.ColorTransitionArray: %s", __name__, str(ex))
-        raise
+        LOGGER.exception("Error in %s.%s: %s", __name__, ColorTransitionArray.__name__, str(ex))
+        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
 
 
-def RainbowArray(arrayLength: int, wrap: bool = False) -> NDArray[(3, Any), np.int32]:
-    """create a color gradient array
+def RainbowArray(
+    arrayLength: int,
+    wrap: bool = False,
+) -> NDArray[(3, Any), np.int32]:
+    """Create a color gradient array.
 
-    arrayLength: The length of the gradient array to create.
-            (the number of LEDs in the rainbow)
+    Args:
+        arrayLength: The length of the gradient array to create. (the number of LEDs in the rainbow)
+        wrap: set true to wrap the transition from the last color back to the first
 
-    returns: a list of Pixel objects in the pattern you requested
+    Returns:
+        a list of Pixel objects in the pattern you requested
+
+    Raises:
+        SystemExit: if exiting
+        KeyboardInterrupt: if user quits
+        LightPatternException: if something bad happens
     """
     try:
         return ColorTransitionArray(
@@ -297,23 +313,27 @@ def RainbowArray(arrayLength: int, wrap: bool = False) -> NDArray[(3, Any), np.i
     except KeyboardInterrupt:
         raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.RainbowArray: %s", __name__, str(ex))
-        raise
+        LOGGER.exception("Error in %s.%s: %s", __name__, RainbowArray.__name__, str(ex))
+        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
 
 
 def RepeatingColorSequenceArray(
     arrayLength: int,
     colorSequence: Union[List[Pixel], NDArray[(3, Any), np.int32]] = None,
 ) -> NDArray[(3, Any), np.int32]:
-    """
-    Creates a repeating LightPattern from a given sequence
+    """Creates a repeating LightPattern from a given sequence.
 
-    arrayLength: The length of the gradient array to create.
-            (the number of LEDs in the rainbow)
+    Args:
+        arrayLength: The length of the gradient array to create. (the number of LEDs in the rainbow)
+        colorSequence: sequence of RGB tuples
 
-    colorSequence: sequence of RGB tuples
+    Returns:
+        a list of Pixel objects in the pattern you requested
 
-    returns: a list of Pixel objects in the pattern you requested
+    Raises:
+        SystemExit: if exiting
+        KeyboardInterrupt: if user quits
+        LightPatternException: if something bad happens
     """
     try:
         arrayLength = int(arrayLength)
@@ -339,19 +359,27 @@ def RepeatingColorSequenceArray(
     except KeyboardInterrupt:
         raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.RepeatingColorSequenceArray: %s", __name__, str(ex))
-        raise
+        LOGGER.exception("Error in %s.%s: %s", __name__, RepeatingColorSequenceArray.__name__, str(ex))
+        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
 
 
-def RepeatingRainbowArray(arrayLength: int, segmentLength: int = None) -> NDArray[(3, Any), np.int32]:
-    """
-    Creates a repeating gradient for you
+def RepeatingRainbowArray(
+    arrayLength: int,
+    segmentLength: int = None,
+) -> NDArray[(3, Any), np.int32]:
+    """Creates a repeating gradient for you.
 
-    arrayLength: the number of LEDs to involve in the rainbow
+    Args:
+        arrayLength: the number of LEDs to involve in the rainbow
+        segmentLength: the length of each mini rainbow in the repeating sequence
 
-    segmentLength: the length of each mini rainbow in the repeating sequence
+    Returns:
+        a list of Pixel objects in the pattern you requested
 
-    returns: a list of Pixel objects in the pattern you requested
+    Raises:
+        SystemExit: if exiting
+        KeyboardInterrupt: if user quits
+        LightPatternException: if something bad happens
     """
     if segmentLength is None:
         segmentLength = arrayLength // 4
@@ -365,8 +393,8 @@ def RepeatingRainbowArray(arrayLength: int, segmentLength: int = None) -> NDArra
     except KeyboardInterrupt:
         raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.RepeatingRainbowArray: %s", __name__, str(ex))
-        raise
+        LOGGER.exception("Error in %s.%s: %s", __name__, RepeatingRainbowArray.__name__, str(ex))
+        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
 
 
 def ReflectArray(
@@ -374,15 +402,20 @@ def ReflectArray(
     colorSequence: Union[List[Pixel], NDArray[(3, Any), np.int32]] = None,
     foldLength=None,
 ) -> NDArray[(3, Any), np.int32]:
-    """
-    generates an array where each repetition of the input
-    sequence is reversed from the previous
+    """Generates an array where each repetition of the input. Sequence is reversed from the previous one.
 
-    arrayLength: the number of LEDs to involve in the rainbow
+    Args:
+        arrayLength: the number of LEDs to involve in the rainbow
+        colorSequence: an array of RGB tuples
+        foldLength: the length of each segment wto be copied and reflected
 
-    colorSequence: an array of RGB tuples
+    Returns:
+        a list of Pixel objects in the pattern you requested
 
-    returns: a list of Pixel objects in the pattern you requested
+    Raises:
+        SystemExit: if exiting
+        KeyboardInterrupt: if user quits
+        LightPatternException: if something bad happens
     """
     # if user didn't specify otherwise, fold in middle
     try:
@@ -429,16 +462,24 @@ def ReflectArray(
         raise
     except Exception as ex:
         LOGGER.exception("Error in %s.%s: %s", __name__, ReflectArray.__name__, str(ex))
-        raise
+        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
 
 
-def RandomArray(arrayLength: int) -> NDArray[(3, Any), np.int32]:
-    """
-    Creates an array of random colors
+def RandomArray(
+    arrayLength: int,
+) -> NDArray[(3, Any), np.int32]:
+    """Creates an array of random colors.
 
-    arrayLength: the number of random colors to generate for the array
+    Args:
+        arrayLength: the number of random colors to generate for the array
 
-    returns: a list of Pixel objects in the pattern you requested
+    Returns:
+        a list of Pixel objects in the pattern you requested
+
+    Raises:
+        SystemExit: if exiting
+        KeyboardInterrupt: if user quits
+        LightPatternException: if something bad happens
     """
     try:
         arry = PixelArray(arrayLength)
@@ -465,18 +506,26 @@ def RandomArray(arrayLength: int) -> NDArray[(3, Any), np.int32]:
         raise
     except Exception as ex:
         LOGGER.exception("Error in %s.%s: %s", __name__, RandomArray.__name__, str(ex))
-        raise
+        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
 
 
 def PseudoRandomArray(
-    arrayLength: int, colorSequence: Union[List[Pixel], NDArray[(3, Any), np.int32]] = None
+    arrayLength: int,
+    colorSequence: Union[List[Pixel], NDArray[(3, Any), np.int32]] = None,
 ) -> NDArray[(3, Any), np.int32]:
-    """
-    Creates an array of random colors
+    """Creates an array of random colors.
 
-    arrayLength: the number of random colors to generate for the array
+    Args:
+        arrayLength: the number of random colors to generate for the array
+        colorSequence: optional parameter from which to draw the pseudo random colors from
 
-    returns: a list of Pixel objects in the pattern you requested
+    Returns:
+        a list of Pixel objects in the pattern you requested
+
+    Raises:
+        SystemExit: if exiting
+        KeyboardInterrupt: if user quits
+        LightPatternException: if something bad happens
     """
     try:
         inputSequence = None
@@ -499,20 +548,26 @@ def PseudoRandomArray(
         raise
     except Exception as ex:
         LOGGER.exception("Error in %s.%s: %s", __name__, PseudoRandomArray.__name__, str(ex))
-        raise
+        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
 
 
 def ColorStretchArray(
     repeats=5,
     colorSequence: Union[List[Pixel], NDArray[(3, Any), np.int32]] = None,
 ) -> NDArray[(3, Any), np.int32]:
-    """takes a sequence of input colors and repeats each element the requested number of times
+    """Takes a sequence of input colors and repeats each element the requested number of times.
 
-    repeats: the number of times to repeat each element oc colorSequence
+    Args:
+        repeats: the number of times to repeat each element oc colorSequence
+        colorSequence: a list of pixels defining the desired colors in the output array
 
-    colorSequence: a list of pixels defining the desired colors in the output array
+    Returns:
+        a list of Pixel objects in the pattern you requested
 
-    returns: a list of Pixel objects in the pattern you requested
+    Raises:
+        SystemExit: if exiting
+        KeyboardInterrupt: if user quits
+        LightPatternException: if something bad happens
     """
     try:
         if isinstance(colorSequence, list):
@@ -533,39 +588,7 @@ def ColorStretchArray(
         raise
     except Exception as ex:
         LOGGER.exception("Error in %s.%s: %s", __name__, ColorStretchArray.__name__, str(ex))
-        raise
-
-
-def Emily1() -> NDArray[(3, Any), np.int32]:
-    """
-    defines a color pattern that emily requested
-
-    returns: a list of Pixel objects in the pattern you requested
-    """
-    try:
-        return ConvertPixelArrayToNumpyArray(
-            [
-                PixelColors.RED,
-                PixelColors.ORANGE,
-                PixelColors.YELLOW,
-                PixelColors.GREEN,
-                PixelColors.ORANGE,
-                PixelColors.YELLOW,
-                PixelColors.GREEN,
-                PixelColors.PURPLE,
-                PixelColors.YELLOW,
-                PixelColors.GREEN,
-                PixelColors.PURPLE,
-                PixelColors.BLUE,
-            ]
-        )
-    except SystemExit:
-        raise
-    except KeyboardInterrupt:
-        raise
-    except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, Emily1.__name__, str(ex))
-        raise
+        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
 
 
 if __name__ == "__main__":
@@ -583,13 +606,6 @@ if __name__ == "__main__":
     p = PixelArray(LIGHT_LENGTH)
     lights[: len(p)] = p
     p = SolidColorArray(LIGHT_LENGTH, PixelColors.WHITE)
-    lights[: len(p)] = p
-    lights.refresh()
-    time.sleep(DELAY)
-
-    p = PixelArray(LIGHT_LENGTH)
-    lights[: len(p)] = p
-    p = WesArray()
     lights[: len(p)] = p
     lights.refresh()
     time.sleep(DELAY)

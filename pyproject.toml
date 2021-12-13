@@ -32,4 +32,4 @@ attr-naming-style="camelCase"
 const-naming-style="UPPER_CASE"
 
 [tool.pylint.'MESSAGES CONTROL']
-disable=["try-except-raise","broad-except","consider-using-enumerate"]
+disable=["try-except-raise","broad-except","consider-using-enumerate","too-many-lines"]

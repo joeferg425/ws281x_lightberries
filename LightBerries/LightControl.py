@@ -12,15 +12,15 @@ from typing import (
 from nptyping import NDArray
 
 try:
-    from numba import jit  # pylint: disable = unused-import
+    from numba import jit  # pylint: disable = unused-import # noqa F401
 except ImportError:
     print("install numba for possible speed boost")
 import numpy as np
 from LightBerries.RpiWS281xPatch import rpi_ws281x
-from LightBerries.Pixels import Pixel, PixelColors
+from LightBerries.LightPixels import Pixel, PixelColors
 from LightBerries.LightStrings import LightString
-from LightBerries.LightFunctions import LightFunction
-from LightBerries.LightBerryException import LightBerryControlException
+from LightBerries.LightFunctions import LightFunction, LEDFadeType
+from LightBerries.LightBerryException import LightControlException
 from LightBerries.LightPatterns import (
     SolidColorArray,
     ConvertPixelArrayToNumpyArray,
@@ -95,7 +95,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             if debug is True or verbose is True:
@@ -115,11 +115,8 @@ class LightController:
             )
             self.ws28xxLightString: Optional[LightString] = LightString(
                 pixelStrip=pixelStrip,
-                debug=verbose,
             )
 
-            if verbose is True:
-                self.ws28xxLightString.setDebugLevel(5)
             self.privateLEDCount: int = len(self.ws28xxLightString)
             self.virtualLEDArray: NDArray[(3, Any), np.int32] = SolidColorArray(
                 arrayLength=self.privateLEDCount,
@@ -157,7 +154,7 @@ class LightController:
                 "__init__",
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def __del__(
         self,
@@ -167,7 +164,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             if hasattr(self, "_LEDArray") and self.ws28xxLightString is not None:
@@ -187,7 +184,7 @@ class LightController:
                 self.__del__.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     @property
     def virtualLEDCount(self) -> int:
@@ -391,7 +388,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             self.privateLightFunctions = []
@@ -408,7 +405,7 @@ class LightController:
                 self.reset.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def setVirtualLEDArray(
         self,
@@ -422,7 +419,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             # make sure the passed LED array is the correct type
@@ -468,7 +465,7 @@ class LightController:
                 self.setVirtualLEDArray.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def copyVirtualLedsToWS281X(
         self,
@@ -478,7 +475,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             # callback function to do work
@@ -510,7 +507,7 @@ class LightController:
                 self.copyVirtualLedsToWS281X.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def refreshLEDs(
         self,
@@ -520,7 +517,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             # call light string's refresh method to send the communications out to the addressable LEDs
@@ -537,7 +534,7 @@ class LightController:
                 self.refreshLEDs.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def off(
         self,
@@ -547,7 +544,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             # clear all current values
@@ -565,7 +562,7 @@ class LightController:
                 self.off.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def _runFunctions(
         self,
@@ -575,7 +572,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             # invoke the function pointer saved in the light data object
@@ -592,7 +589,7 @@ class LightController:
                 self._runFunctions.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def _copyOverlays(
         self,
@@ -602,7 +599,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             # iterate over the dictionary key-value pairs, assign LED values
@@ -623,7 +620,7 @@ class LightController:
                 self._runFunctions.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def getRandomIndex(
         self,
@@ -636,7 +633,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             return random.randint(0, (self.virtualLEDCount - 1))
@@ -651,7 +648,7 @@ class LightController:
                 self.getRandomIndex.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def getRandomIndices(
         self,
@@ -668,7 +665,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             temp = []
@@ -686,7 +683,7 @@ class LightController:
                 self.getRandomIndices.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def getRandomDirection(self) -> int:
         """Get a random one or negative one to determine direction for light functions.
@@ -730,7 +727,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.info("%s.%s:", self.__class__.__name__, self.run.__name__)
@@ -758,7 +755,7 @@ class LightController:
                     raise
                 except Exception as ex:
                     LOGGER.exception("_Run Loop Error: %s", (str(ex),))
-                    raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+                    raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
             self.privateLastModeChange = time.time()
             if self.secondsPerMode is None:
                 self.privateNextModeChange = self.privateLastModeChange + (random.random(30, 120))
@@ -775,7 +772,7 @@ class LightController:
                 self.run.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorSingle(
         self,
@@ -791,7 +788,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSingle.__name__)
@@ -822,7 +819,7 @@ class LightController:
                 self.useColorSingle.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorSinglePseudoRandom(
         self,
@@ -836,7 +833,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSinglePseudoRandom.__name__)
@@ -860,7 +857,7 @@ class LightController:
                 self.useColorSinglePseudoRandom.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorSingleRandom(
         self,
@@ -874,7 +871,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSingleRandom.__name__)
@@ -898,7 +895,7 @@ class LightController:
                 self.useColorSingleRandom.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorSequence(
         self,
@@ -914,7 +911,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSequence.__name__)
@@ -944,7 +941,7 @@ class LightController:
                 self.useColorSequence.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorSequencePseudoRandom(
         self,
@@ -960,7 +957,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSequencePseudoRandom.__name__)
@@ -992,7 +989,7 @@ class LightController:
                 self.useColorSequencePseudoRandom.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorSequenceRandom(
         self,
@@ -1008,7 +1005,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSequenceRandom.__name__)
@@ -1040,7 +1037,7 @@ class LightController:
                 self.useColorSequenceRandom.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorSequenceRepeating(
         self,
@@ -1059,7 +1056,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSequenceRepeating.__name__)
@@ -1094,7 +1091,7 @@ class LightController:
                 self.useColorSequenceRepeating.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorTransition(
         self,
@@ -1117,7 +1114,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorTransition.__name__)
@@ -1160,7 +1157,7 @@ class LightController:
                 self.useColorTransition.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorTransitionRepeating(
         self,
@@ -1182,7 +1179,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorTransitionRepeating.__name__)
@@ -1229,7 +1226,7 @@ class LightController:
                 self.useColorTransitionRepeating.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorRainbow(
         self,
@@ -1246,7 +1243,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorRainbow.__name__)
@@ -1273,7 +1270,7 @@ class LightController:
                 self.useColorRainbow.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useColorRainbowRepeating(
         self,
@@ -1290,7 +1287,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorRainbowRepeating.__name__)
@@ -1321,7 +1318,7 @@ class LightController:
                 self.useColorRainbowRepeating.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionNone(
         self,
@@ -1331,7 +1328,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionNone.__name__)
@@ -1349,7 +1346,7 @@ class LightController:
                 self.useFunctionNone.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionSolidColorCycle(
         self,
@@ -1363,7 +1360,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionSolidColorCycle.__name__)
@@ -1395,7 +1392,7 @@ class LightController:
                 self.useFunctionSolidColorCycle.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionMarquee(
         self,
@@ -1411,7 +1408,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionMarquee.__name__)
@@ -1457,7 +1454,7 @@ class LightController:
                 self.useFunctionMarquee.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionCylon(
         self,
@@ -1474,7 +1471,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionCylon.__name__)
@@ -1518,7 +1515,7 @@ class LightController:
                 self.useFunctionCylon.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionMerge(
         self,
@@ -1532,7 +1529,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionMerge.__name__)
@@ -1582,7 +1579,7 @@ class LightController:
                 self.useFunctionMerge.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionAccelerate(
         self,
@@ -1602,7 +1599,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionAccelerate.__name__)
@@ -1659,14 +1656,14 @@ class LightController:
                 self.useFunctionAccelerate.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionRandomChange(
         self,
         delayCount: int = None,
         changeCount: int = None,
         fadeStepCount: int = None,
-        fade: bool = None,
+        fadeType: LEDFadeType = None,
     ) -> None:
         """Randomly changes pixels from one color to the next.
 
@@ -1674,12 +1671,12 @@ class LightController:
             delayCount: refresh delay
             changeCount: how many LEDs to have in the change queue at once
             fadeStepCount: number of steps in the transition from one color to the next
-            fade: set true to fade colors, false for instant on/off
+            fadeType: set to fade colors, or instant on/off
 
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionRandomChange.__name__)
@@ -1694,15 +1691,30 @@ class LightController:
             else:
                 _fadeStepCount = int(fadeStepCount)
 
+            _fadeAmount = _fadeStepCount / 255.0
+
             if delayCount is None:
                 _delayCountMax = random.randint(30, 50)
             else:
                 _delayCountMax = int(delayCount)
 
-            if fade is None:
-                _fade = [True, False][random.randint(0, 1)]
+            if fadeType is None:
+                fadeTypes = list(LEDFadeType)
+                _fadeType = fadeTypes[random.randint(0, len(fadeTypes) - 1)]
             else:
-                _fade = bool(fade)
+                _fadeType = LEDFadeType(fadeType)
+
+            # make comet trails
+            if _fadeType == LEDFadeType.FADE_OFF:
+                fade = LightFunction(LightFunction.functionFadeOff, self.colorSequence)
+                fade.fadeAmount = _fadeAmount
+                self.privateLightFunctions.append(fade)
+            elif _fadeType == LEDFadeType.INSTANT_OFF:
+                off = LightFunction(LightFunction.functionOff, self.colorSequence)
+                self.privateLightFunctions.append(off)
+            else:
+                # do nothing
+                pass
 
             _fadeAmount = _fadeStepCount / 255.0
 
@@ -1730,7 +1742,7 @@ class LightController:
                     # we want all the delays random, so dont start them all at zero
                     change.delayCounter = random.randint(0, change.delayCountMax)
                     # set true to fade, false to "instant on/off"
-                    change.fade = _fade
+                    change.fadeType = _fadeType
                     self.privateLightFunctions.append(change)
         except SystemExit:
             raise
@@ -1743,7 +1755,7 @@ class LightController:
                 self.useFunctionRandomChange.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionMeteors(
         self,
@@ -1754,6 +1766,7 @@ class LightController:
         collide: bool = None,
         cycleColors: bool = None,
         delayCount: int = None,
+        fadeType: LEDFadeType = None,
     ) -> None:
         """Creates several 'meteors' that will fly around.
 
@@ -1765,11 +1778,12 @@ class LightController:
             collide: set true to make them bounce off each other randomly
             cycleColors: set true to make the meteors shift color as they move
             delayCount: refresh delay
+            fadeType: set the type of fade to use using the enumeration
 
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionMeteors.__name__)
@@ -1812,6 +1826,24 @@ class LightController:
             else:
                 _cycleColors = bool(cycleColors)
 
+            if fadeType is None:
+                fadeTypes = list(LEDFadeType)
+                _fadeType = fadeTypes[random.randint(0, len(fadeTypes) - 1)]
+            else:
+                _fadeType = LEDFadeType(fadeType)
+
+            # make comet trails
+            if _fadeType == LEDFadeType.FADE_OFF:
+                fade = LightFunction(LightFunction.functionFadeOff, self.colorSequence)
+                fade.fadeAmount = _fadeAmount
+                self.privateLightFunctions.append(fade)
+            elif _fadeType == LEDFadeType.INSTANT_OFF:
+                off = LightFunction(LightFunction.functionOff, self.colorSequence)
+                self.privateLightFunctions.append(off)
+            else:
+                # do nothing
+                pass
+
             for _ in range(_meteorCount):
                 meteor = LightFunction(LightFunction.functionMeteors, self.colorSequence)
                 # assign meteor color
@@ -1838,11 +1870,6 @@ class LightController:
             if self.privateLightFunctions[0].direction * self.privateLightFunctions[1].direction > 0:
                 self.privateLightFunctions[1].direction *= -1
 
-            # make comet trails
-            fade = LightFunction(LightFunction.functionFadeOff, self.colorSequence)
-            fade.fadeAmount = _fadeAmount
-            self.privateLightFunctions.append(fade)
-
             # this object calculates collisions between other objects based on index and previous/next index
             if _collide is True:
                 collision = LightFunction(LightFunction.functionCollisionDetection, self.colorSequence)
@@ -1859,58 +1886,7 @@ class LightController:
                 self.useFunctionMeteors.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
-
-    def useFunctionPaint(
-        self,
-        maxDelay: int = None,
-    ) -> None:
-        """Wipes colors across the pixel strand in random directions.
-
-        Args:
-            maxDelay: refresh delay0
-
-        Raises:
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
-        """
-        try:
-            LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionPaint.__name__)
-
-            if maxDelay is None:
-                _maxDelay = random.randint(2, 10)
-            else:
-                _maxDelay = int(maxDelay)
-
-            for _ in range(max(min(self.colorSequenceCount, 10), 2)):
-                paintBrush = LightFunction(LightFunction.functionPaint, self.colorSequence)
-                # randomly initialize starting index
-                paintBrush.index = random.randint(0, self.virtualLEDCount - 1)
-                # randomly initialize the direction
-                paintBrush.direction = (-1, 1)[random.randint(0, 1)]
-                # set refresh delay
-                paintBrush.delayCountMax = _maxDelay
-                # set max brush stroke of paintbrush
-                paintBrush.stepCountMax = random.randint(2, self.virtualLEDCount * 2)
-                # assign the paintbrush a color
-                for _ in range(random.randint(1, 5)):
-                    paintBrush.color = self.colorSequenceNext
-                # copy the color sequence
-                paintBrush.colorSequence = self.colorSequence
-                self.privateLightFunctions.append(paintBrush)
-        except SystemExit:
-            raise
-        except KeyboardInterrupt:
-            raise
-        except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useFunctionPaint.__name__,
-                ex,
-            )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionSprites(
         self,
@@ -1924,7 +1900,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionSprites.__name__)
@@ -1969,7 +1945,7 @@ class LightController:
                 self.useFunctionSprites.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionRaindrops(
         self,
@@ -1987,7 +1963,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionRaindrops.__name__)
@@ -2047,7 +2023,7 @@ class LightController:
                 self.useFunctionRaindrops.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useOverlayTwinkle(
         self,
@@ -2061,7 +2037,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useOverlayTwinkle.__name__)
@@ -2086,7 +2062,7 @@ class LightController:
                 self.useOverlayTwinkle.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useOverlayBlink(
         self,
@@ -2100,7 +2076,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useOverlayBlink.__name__)
@@ -2124,7 +2100,7 @@ class LightController:
                 self.useOverlayBlink.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def useFunctionAlive(
         self,
@@ -2144,7 +2120,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         if fadeAmount is None:
             _fadeAmount = random.randint(20, 50) / 255.0
@@ -2217,7 +2193,7 @@ class LightController:
                 self.useFunctionAlive.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def demo(
         self,
@@ -2229,7 +2205,7 @@ class LightController:
             secondsPerMode: how many seconds to run each combination for before switching things up
 
         Raises:
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             self.secondsPerMode = secondsPerMode
@@ -2278,7 +2254,7 @@ class LightController:
                 self.demo.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def test(
         self,
@@ -2300,7 +2276,7 @@ class LightController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryControlException: if something bad happens
+            LightControlException: if something bad happens
         """
         try:
             self.secondsPerMode = secondsPerMode
@@ -2370,4 +2346,4 @@ class LightController:
                 self.test.__name__,
                 ex,
             )
-            raise LightBerryControlException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)

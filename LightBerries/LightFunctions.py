@@ -5,14 +5,22 @@ import random
 from enum import IntEnum
 from nptyping import NDArray
 import numpy as np
-from LightBerries.Pixels import Pixel, PixelColors
+from LightBerries.LightPixels import Pixel, PixelColors
 from LightBerries.LightPatterns import ConvertPixelArrayToNumpyArray
-from LightBerries.LightBerryException import LightBerryFunctionException
+from LightBerries.LightBerryException import LightFunctionException
 import LightBerries.LightControl  # pylint: disable = unused-import
 
 # pylint: disable=no-member
 
 LOGGER = logging.getLogger("LightBerries")
+
+
+class LEDFadeType(IntEnum):
+    """Enumeration of types of LED fade for use in functions."""
+
+    FADE_OFF = 0
+    INSTANT_OFF = 1
+    DONT = 2
 
 
 class LightFunction:
@@ -74,7 +82,7 @@ class LightFunction:
         self.stateMax: int = 0
 
         self.explode: bool = False
-        self.fade: bool = False
+        self.fadeType: LEDFadeType = LEDFadeType.FADE_OFF
         self.bounce: bool = False
         self.collideWith: Optional[LightFunction] = None
         self.collideIntersect: int = 0
@@ -205,7 +213,7 @@ class LightFunction:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryFunctionException: if something bad happens
+            LightFunctionException: if something bad happens
         """
         try:
             if self.delayCounter >= self.delayCountMax:
@@ -231,7 +239,7 @@ class LightFunction:
                 self.doFade.__name__,
                 ex,
             )
-            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     def doMove(
         self,
@@ -295,7 +303,7 @@ class LightFunction:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryFunctionException: if something bad happens
+            LightFunctionException: if something bad happens
         """
         try:
             foundBounce = False
@@ -382,7 +390,7 @@ class LightFunction:
                 collision.functionCollisionDetection.__name__,
                 ex,
             )
-            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionOff(
@@ -396,7 +404,7 @@ class LightFunction:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryFunctionException: if something bad happens
+            LightFunctionException: if something bad happens
         """
         try:
             LightFunction.Controller.virtualLEDArray[:] *= 0
@@ -411,7 +419,7 @@ class LightFunction:
                 off.functionOff.__name__,
                 ex,
             )
-            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionFadeOff(
@@ -425,7 +433,7 @@ class LightFunction:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryFunctionException: if something bad happens
+            LightFunctionException: if something bad happens
         """
         try:
             LightFunction.Controller.virtualLEDArray[:] = LightFunction.Controller.virtualLEDArray * (
@@ -442,7 +450,7 @@ class LightFunction:
                 fade.functionFadeOff.__name__,
                 ex,
             )
-            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionNone(
@@ -456,7 +464,7 @@ class LightFunction:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryFunctionException: if something bad happens
+            LightFunctionException: if something bad happens
         """
         try:
             pass
@@ -471,7 +479,7 @@ class LightFunction:
                 nothing.functionNone.__name__,
                 ex,
             )
-            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionSolidColorCycle(
@@ -485,7 +493,7 @@ class LightFunction:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryFunctionException: if something bad happens
+            LightFunctionException: if something bad happens
         """
         try:
             # wait for delay count before changing LEDs
@@ -509,7 +517,7 @@ class LightFunction:
                 cycle.functionSolidColorCycle.__name__,
                 ex,
             )
-            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionMarquee(
@@ -523,7 +531,7 @@ class LightFunction:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryFunctionException: if something bad happens
+            LightFunctionException: if something bad happens
         """
         try:
             # wait for several LED cycles to change LEDs
@@ -577,7 +585,7 @@ class LightFunction:
                 marquee.functionMarquee.__name__,
                 ex,
             )
-            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionCylon(
@@ -591,7 +599,7 @@ class LightFunction:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryFunctionException: if something bad happens
+            LightFunctionException: if something bad happens
         """
         try:
             # wait for several LED cycles to change LEDs
@@ -654,7 +662,7 @@ class LightFunction:
                 cylon.functionCylon.__name__,
                 ex,
             )
-            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionMerge(
@@ -668,7 +676,7 @@ class LightFunction:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryFunctionException: if something bad happens
+            LightFunctionException: if something bad happens
         """
         try:
             # check delay counter
@@ -713,7 +721,7 @@ class LightFunction:
                 merge.functionMerge.__name__,
                 ex,
             )
-            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionAccelerate(
@@ -727,7 +735,7 @@ class LightFunction:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryFunctionException: if something bad happens
+            LightFunctionException: if something bad happens
         """
         try:
             accelerate.indexPrevious = accelerate.index
@@ -821,7 +829,7 @@ class LightFunction:
                 accelerate.functionAccelerate.__name__,
                 ex,
             )
-            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionRandomChange(
@@ -835,7 +843,7 @@ class LightFunction:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryFunctionException: if something bad happens
+            LightFunctionException: if something bad happens
         """
 
         class ChangeStates(IntEnum):
@@ -899,7 +907,7 @@ class LightFunction:
                     # increment delay counter
                     change.delayCounter += 1
             # if fading LEDs
-            if change.fade is True:
+            if change.fadeType == LEDFadeType.FADE_OFF:
                 # fade the color
                 change.color = LightFunction.Controller.fadeColor(
                     change.color, change.colorNext, change.colorFade
@@ -921,7 +929,7 @@ class LightFunction:
                 change.functionRandomChange.__name__,
                 ex,
             )
-            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionMeteors(
@@ -935,7 +943,7 @@ class LightFunction:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryFunctionException: if something bad happens
+            LightFunctionException: if something bad happens
         """
         try:
             # check if we are done delaying
@@ -984,62 +992,7 @@ class LightFunction:
                 meteor.functionMeteors.__name__,
                 ex,
             )
-            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
-
-    @staticmethod
-    def functionPaint(
-        paintBrush: "LightFunction",
-    ) -> None:
-        """Do paint function things.
-
-        Args:
-            paintBrush: tracking object
-
-        Raises:
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightBerryFunctionException: if something bad happens
-        """
-        try:
-            # are we done delaying
-            if paintBrush.delayCounter >= paintBrush.delayCountMax:
-                # reset delay counter
-                paintBrush.delayCounter = 0
-                # calculate next index
-                paintBrush.index = (
-                    paintBrush.index + (paintBrush.step * paintBrush.direction)
-                ) % LightFunction.Controller.virtualLEDCount
-                # check if paintbrush has moved its maximum amount
-                if paintBrush.stepCounter >= paintBrush.stepCountMax:
-                    # reset step counter
-                    paintBrush.stepCounter = 0
-                    # randomize next direction
-                    paintBrush.direction = LightFunction.Controller.getRandomDirection()
-                    # randomize next delay
-                    paintBrush.delayCountMax = random.randint(0, paintBrush.delayCountMax)
-                    # randomize next step count
-                    paintBrush.stepCountMax = random.randint(2, LightFunction.Controller.virtualLEDCount * 2)
-                    # semi-randomize next color
-                    for _ in range(random.randint(1, 5)):
-                        paintBrush.color = paintBrush.colorSequenceNext
-                # increment step counter
-                paintBrush.stepCounter += 1
-            # increment delay counter
-            paintBrush.delayCounter += 1
-            # assign LED to LED string
-            LightFunction.Controller.virtualLEDArray[paintBrush.index] = paintBrush.color
-        except SystemExit:
-            raise
-        except KeyboardInterrupt:
-            raise
-        except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                paintBrush.__class__.__name__,
-                paintBrush.functionPaint.__name__,
-                ex,
-            )
-            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionSprites(
@@ -1053,7 +1006,7 @@ class LightFunction:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryFunctionException: if something bad happens
+            LightFunctionException: if something bad happens
         """
         try:
             # states for sprites
@@ -1136,7 +1089,7 @@ class LightFunction:
                 sprite.functionSprites.__name__,
                 ex,
             )
-            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionRaindrops(
@@ -1150,7 +1103,7 @@ class LightFunction:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryFunctionException: if something bad happens
+            LightFunctionException: if something bad happens
         """
         try:
             # raindrop states
@@ -1221,7 +1174,7 @@ class LightFunction:
                 LightFunction.functionRaindrops.__name__,
                 ex,
             )
-            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def functionAlive(
@@ -1235,7 +1188,7 @@ class LightFunction:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryFunctionException: if something bad happens
+            LightFunctionException: if something bad happens
         """
 
         class ThingMoves(IntEnum):
@@ -1414,7 +1367,7 @@ class LightFunction:
                 thing.functionAlive.__name__,
                 ex,
             )
-            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def overlayTwinkle(
@@ -1428,7 +1381,7 @@ class LightFunction:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryFunctionException: if something bad happens
+            LightFunctionException: if something bad happens
         """
         try:
             for index in range(LightFunction.Controller.realLEDCount):
@@ -1445,7 +1398,7 @@ class LightFunction:
                 twinkle.overlayTwinkle.__name__,
                 ex,
             )
-            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightFunctionException(str(ex)).with_traceback(ex.__traceback__)
 
     @staticmethod
     def overlayBlink(
@@ -1459,7 +1412,7 @@ class LightFunction:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryFunctionException: if something bad happens
+            LightFunctionException: if something bad happens
         """
         try:
             color = blink.colorSequenceNext
@@ -1477,4 +1430,4 @@ class LightFunction:
                 blink.overlayBlink.__name__,
                 ex,
             )
-            raise LightBerryFunctionException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightFunctionException(str(ex)).with_traceback(ex.__traceback__)

@@ -1,5 +1,7 @@
-"""patches the module after import to allow easier
-interaction from the rest of LightBerries"""
+"""Patches the rpi_ws281x module after import.
+
+This allows easier interaction from the rest of LightBerries
+"""
 import logging
 import sys
 
@@ -8,37 +10,51 @@ LOGGER = logging.getLogger("LightBerries")
 if sys.platform != "linux":
     # this lets me debug the rpi code in windows
     class rpi_ws281x:  # pylint: disable = invalid-name
-        """fake class"""
+        """Fake class that lets me debug rpi code in windows."""
 
         class PixelStrip:
-            """fake class also"""
+            """Fake class that lets me debug the ws281x code in windows."""
 
             rpi_ws281x = None
 
             def __init__(self, *_, **kwargs):
-                """fake method"""
+                """Fake method.
+
+                Args:
+                    _: ignored
+                    kwargs: ignored
+                """
                 self.count = 0
                 if "num" in kwargs:
                     self.count = kwargs["num"]
 
             def begin(self):
-                """fake method"""
+                """Fake method."""
                 pass  # pylint: disable = unnecessary-pass
 
             def setPixelColor(self, index, color):
-                """fake method"""
+                """Fake method.
+
+                Args:
+                    index: ignored
+                    color: ignored
+                """
                 pass  # pylint: disable = unnecessary-pass
 
             def show(self):
-                """fake method"""
+                """Fake method."""
                 pass  # pylint: disable = unnecessary-pass
 
             def _cleanup(self):
-                """fake method"""
+                """Fake method."""
                 pass  # pylint: disable = unnecessary-pass
 
             def numPixels(self):
-                """fake method"""
+                """Fake method.
+
+                Returns:
+                    count
+                """
                 return self.count
 
     RpiWS281xClass = rpi_ws281x
@@ -48,11 +64,18 @@ else:
     import rpi_ws281x as RpiWS281xClass  # pylint: disable = import-error
 
     def _monkeypatch__setitem__(self, pos, value):  # pylint: disable = invalid-name
-        """Set the 24-bit RGB color value at the provided position or slice of
-            positions.
+        """Set the 24-bit RGB color value at the position or slice.
 
-        joeferg425: MONKEY PATCH: calls to 'ws2811_led_set' needed to have the
+        MONKEY PATCH: calls to 'ws2811_led_set' needed to have the
             third argument forced to int type
+
+        Args:
+            self: the self object
+            pos: LED position (index)
+            value: LED value (color)
+
+        Returns:
+            patch
         """
         # Handle if a slice of positions are passed in by setting the
         # appropriate LED data values to the provided values.

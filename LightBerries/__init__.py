@@ -1,14 +1,14 @@
-"""
-wraps rpi_ws281x module (https://github.com/rpi-ws281x/rpi-ws281x-python)
-and provides a bunch of helpers
+"""Wraps rpi_ws281x module and provides a bunch of helpers.
+
+See https://github.com/rpi-ws281x/rpi-ws281x-python for referenced module.
 """
 import sys
 import logging
-import LightBerries.LightControl
-import LightBerries.LightFunctions
-import LightBerries.LightPatterns
-import LightBerries.LightStrings
-import LightBerries.Pixels
+import LightBerries.LightPixels  # noqa F401
+import LightBerries.LightPatterns  # noqa F401
+import LightBerries.LightStrings  # noqa F401
+import LightBerries.LightFunctions  # noqa F401
+import LightBerries.LightControl  # noqa F401
 
 # setup logging
 LOGGER = logging.getLogger("LightBerries")

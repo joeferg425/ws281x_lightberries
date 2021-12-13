@@ -1,13 +1,25 @@
-"""creates custom exception classes to catch"""
+"""Defines custom exception classes to catch from this modeule."""
 
 
 class LightBerryException(Exception):
-    """a custom exception for LightBerries"""
+    """Custom exception for the LightBerries module."""
 
 
-class LightBerryFunctionException(LightBerryException):
-    """exception for LightFunction to raise"""
+class LightFunctionException(LightBerryException):
+    """Exception for LightFunction to raise."""
 
 
-class LightBerryControlException(LightBerryException):
-    """exception for LightFunction to raise"""
+class LightStringException(LightBerryException):
+    """Exception for LightString to raise."""
+
+
+class LightControlException(LightBerryException):
+    """Exception for LightControl to raise."""
+
+
+class LightPatternException(LightBerryException):
+    """Exception for LightPattern to raise."""
+
+
+class LightPixelException(LightBerryException):
+    """Exception for LightPixel to raise."""
