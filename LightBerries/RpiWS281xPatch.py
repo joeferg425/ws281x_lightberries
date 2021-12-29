@@ -57,6 +57,20 @@ if sys.platform != "linux":
                 """
                 return self.count
 
+        @staticmethod
+        def ws2811_led_set(channel, index, value):
+            """Fake method.
+
+            Args:
+                channel: ignored
+                index: ignored
+                value: ignored
+
+            Returns:
+                garbage
+            """
+            return (channel, index, value)  # pylint: disable = unnecessary-pass
+
     RpiWS281xClass = rpi_ws281x
 
 else:
@@ -82,11 +96,13 @@ else:
         if isinstance(pos, slice):
             index = 0
             for index in range(*pos.indices(self.size)):
-                RpiWS281xClass.ws2811_led_set(self.channel, index, int(value[index]))
+                RpiWS281xClass.ws2811_led_set(  # pylint: disable=no-member
+                    self.channel, index, int(value[index])
+                )
                 index += 1
         # Else assume the passed in value is a number to the position.
         else:
-            return RpiWS281xClass.ws2811_led_set(self.channel, pos, int(value))
+            return RpiWS281xClass.ws2811_led_set(self.channel, pos, int(value))  # pylint: disable=no-member
 
     try:
         rpi_ws281x.rpi_ws281x._LED_Data.__setitem__ = (  # pylint: disable = protected-access

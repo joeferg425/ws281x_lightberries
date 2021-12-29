@@ -1,8 +1,8 @@
 [build-system]
 requires = [
     "setuptools >= 40.9.0",
-    "wheel"
-]
+    "wheel",
+    ]
 build-backend = "setuptools.build_meta"
 
 [tool.black]
@@ -33,3 +33,7 @@ const-naming-style="UPPER_CASE"
 
 [tool.pylint.'MESSAGES CONTROL']
 disable=["try-except-raise","broad-except","consider-using-enumerate","too-many-lines"]
+
+[tool.pylint.messages_control]
+disable = ["C0330", "C0326"]
+max-line-length = 110

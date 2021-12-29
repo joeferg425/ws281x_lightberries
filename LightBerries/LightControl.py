@@ -11,6 +11,8 @@ from typing import (
 )
 from nptyping import NDArray
 
+from LightBerries import LightPatterns
+
 try:
     from numba import jit  # pylint: disable = unused-import # noqa F401
 except ImportError:
@@ -394,6 +396,10 @@ class LightController:
             self.privateLightFunctions = []
             if self.virtualLEDCount > self.realLEDCount:
                 self.setVirtualLEDArray(self.virtualLEDArray[: self.realLEDCount])
+            elif self.virtualLEDCount < self.realLEDCount:
+                array = LightPatterns.SolidColorArray(arrayLength=self.realLEDCount, color=PixelColors.OFF)
+                array[: self.virtualLEDCount] = self.virtualLEDArray
+                self.setVirtualLEDArray(array)
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -1480,6 +1486,14 @@ class LightController:
             else:
                 _fadeAmount = int(fadeAmount)
 
+            if _fadeAmount > 0 and _fadeAmount < 1:
+                pass
+            elif _fadeAmount > 0 and _fadeAmount < 256:
+                _fadeAmount /= 255
+
+            if _fadeAmount < 0 or _fadeAmount > 1:
+                _fadeAmount = 0.1
+
             if delayCount is None:
                 _delayCount = random.randint(1, 6)
             else:
@@ -1495,10 +1509,11 @@ class LightController:
             cylon = LightFunction(LightFunction.functionCylon, self.colorSequence)
 
             # shift eye by this much for each update
-            # cylon.step = i
             cylon.size = self.colorSequenceCount
-            # set counter limit for skipping LED refreshes
-
+            if self.virtualLEDCount < cylon.size:
+                array = LightPatterns.SolidColorArray(arrayLength=cylon.size + 3, color=PixelColors.OFF)
+                array[: self.virtualLEDCount] = self.virtualLEDArray
+                self.setVirtualLEDArray(array)
             cylon.index = self.virtualLEDCount - cylon.size - 3
             cylon.indexNext = cylon.index
             cylon.delayCounter = _delayCount
@@ -1619,6 +1634,14 @@ class LightController:
             else:
                 _fadeAmount = float(fadeAmount)
 
+            if _fadeAmount > 0 and _fadeAmount < 1:
+                pass
+            elif _fadeAmount > 0 and _fadeAmount < 256:
+                _fadeAmount /= 255
+
+            if _fadeAmount < 0 or _fadeAmount > 1:
+                _fadeAmount = 0.1
+
             if cycleColors is None:
                 _cycleColors = [True, False][random.randint(0, 1)]
             else:
@@ -1693,6 +1716,14 @@ class LightController:
 
             _fadeAmount = _fadeStepCount / 255.0
 
+            if _fadeAmount > 0 and _fadeAmount < 1:
+                pass
+            elif _fadeAmount > 0 and _fadeAmount < 256:
+                _fadeAmount /= 255
+
+            if _fadeAmount < 0 or _fadeAmount > 1:
+                _fadeAmount = 0.1
+
             if delayCount is None:
                 _delayCountMax = random.randint(30, 50)
             else:
@@ -1717,6 +1748,14 @@ class LightController:
                 pass
 
             _fadeAmount = _fadeStepCount / 255.0
+
+            if _fadeAmount > 0 and _fadeAmount < 1:
+                pass
+            elif _fadeAmount > 0 and _fadeAmount < 256:
+                _fadeAmount /= 255
+
+            if _fadeAmount < 0 or _fadeAmount > 1:
+                _fadeAmount = 0.1
 
             # create a bunch of tracking objects
             for index in self.getRandomIndices(int(_changeCount)):
@@ -1792,6 +1831,14 @@ class LightController:
                 _fadeAmount = random.randint(20, 40) / 100.0
             else:
                 _fadeAmount = float(fadeAmount)
+
+            if _fadeAmount > 0 and _fadeAmount < 1:
+                pass
+            elif _fadeAmount > 0 and _fadeAmount < 256:
+                _fadeAmount /= 255
+
+            if _fadeAmount < 0 or _fadeAmount > 1:
+                _fadeAmount = 0.1
 
             if explode is None:
                 _explode = [True, False][random.randint(0, 1)]
@@ -1908,6 +1955,17 @@ class LightController:
                 _fadeSteps = random.randint(1, 6)
             else:
                 _fadeSteps = int(fadeSteps)
+
+            _fadeAmount = np.ceil(255 / _fadeSteps)
+
+            if _fadeAmount > 0 and _fadeAmount < 1:
+                pass
+            elif _fadeAmount > 0 and _fadeAmount < 256:
+                _fadeAmount /= 255
+
+            if _fadeAmount < 0 or _fadeAmount > 1:
+                _fadeAmount = 0.1
+
             for _ in range(max(min(self.colorSequenceCount, 10), 2)):
                 sprite = LightFunction(LightFunction.functionSprites, self.colorSequence)
                 # randomize index
@@ -1926,7 +1984,7 @@ class LightController:
                 sprite.colorNext = PixelColors.OFF.array
                 # set fade step/amount
                 sprite.fadeSteps = _fadeSteps
-                sprite.fadeAmount = np.ceil(255 / _fadeSteps)
+                sprite.fadeAmount = _fadeAmount
                 self.privateLightFunctions.append(sprite)
             # set one sprite to "fading on"
             self.privateLightFunctions[0].state = 1
@@ -1986,6 +2044,16 @@ class LightController:
             if _stepSize > 3:
                 _raindropChance /= 3.0
 
+            _fadeAmount = ((255 / _maxSize) / 255) * 2
+
+            if _fadeAmount > 0 and _fadeAmount < 1:
+                pass
+            elif _fadeAmount > 0 and _fadeAmount < 256:
+                _fadeAmount /= 255
+
+            if _fadeAmount < 0 or _fadeAmount > 1:
+                _fadeAmount = 0.1
+
             for _ in range(max(min(self.colorSequenceCount, 10), 2)):
                 raindrop = LightFunction(LightFunction.functionRaindrops, self.colorSequence)
                 # randomize start index
@@ -2001,8 +2069,7 @@ class LightController:
                 # assign color
                 raindrop.color = self.colorSequenceNext
                 raindrop.colorSequence = self.colorSequence
-                # raindrop.fadeAmount = int((255 - _fadeAmount) // 255)
-                raindrop.fadeAmount = ((255 / raindrop.stepCountMax) / 255) * 2
+                raindrop.fadeAmount = _fadeAmount
                 # set raindrop to be inactive initially
                 raindrop.active = False
                 self.privateLightFunctions.append(raindrop)
@@ -2122,33 +2189,41 @@ class LightController:
             KeyboardInterrupt: if user quits
             LightControlException: if something bad happens
         """
-        if fadeAmount is None:
-            _fadeAmount = random.randint(20, 50) / 255.0
-        else:
-            _fadeAmount = float(fadeAmount)
-
-        if sizeMax is None:
-            _sizeMax = random.randint(self.virtualLEDCount // 6, self.virtualLEDCount // 3)
-        else:
-            _sizeMax = int(sizeMax)
-
-        if stepCountMax is None:
-            _stepCountMax = random.randint(self.virtualLEDCount // 10, self.virtualLEDCount)
-        else:
-            _stepCountMax = int(stepCountMax)
-
-        if stepSizeMax is None:
-            _stepSizeMax = random.randint(6, 10)
-        else:
-            _stepSizeMax = int(stepSizeMax)
-
-        # if delayCountMax is None:
-        # _delayCountMax = random.randint(10, 25)
-        # else:
-        # _delayCountMax = int(delayCountMax)
-
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionAlive.__name__)
+            if fadeAmount is None:
+                _fadeAmount = random.randint(20, 50) / 255.0
+            else:
+                _fadeAmount = float(fadeAmount)
+
+            if _fadeAmount > 0 and _fadeAmount < 1:
+                pass
+            elif _fadeAmount > 0 and _fadeAmount < 256:
+                _fadeAmount /= 255
+
+            if _fadeAmount < 0 or _fadeAmount > 1:
+                _fadeAmount = 0.1
+
+            if sizeMax is None:
+                _sizeMax = random.randint(self.virtualLEDCount // 6, self.virtualLEDCount // 3)
+            else:
+                _sizeMax = int(sizeMax)
+
+            if stepCountMax is None:
+                _stepCountMax = random.randint(self.virtualLEDCount // 10, self.virtualLEDCount)
+            else:
+                _stepCountMax = int(stepCountMax)
+
+            if stepSizeMax is None:
+                _stepSizeMax = random.randint(6, 10)
+            else:
+                _stepSizeMax = int(stepSizeMax)
+
+            # if delayCountMax is None:
+            # _delayCountMax = random.randint(10, 25)
+            # else:
+            # _delayCountMax = int(delayCountMax)
+
             for _ in range(random.randint(2, 5)):
                 thing = LightFunction(LightFunction.functionAlive, self.colorSequence)
                 # randomize start index
@@ -2196,67 +2271,6 @@ class LightController:
             raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
 
     def demo(
-        self,
-        secondsPerMode: int = 20,
-    ) -> None:
-        """Do random color sequences and random functions.
-
-        Args:
-            secondsPerMode: how many seconds to run each combination for before switching things up
-
-        Raises:
-            LightControlException: if something bad happens
-        """
-        try:
-            self.secondsPerMode = secondsPerMode
-            omitted = [
-                LightController.useFunctionNone.__name__,
-                LightController.useColorSingle.__name__,
-                LightController.useColorSinglePseudoRandom.__name__,
-                LightController.useColorSingleRandom.__name__,
-                LightController.useOverlayBlink.__name__,
-            ]
-            attrs = list(dir(self))
-            attrs = [a for a in attrs if a not in omitted]
-            funcs = [f for f in attrs if f[:11] == "useFunction"]
-            colors = [c for c in attrs if c[:8] == "useColor"]
-            funcs.sort()
-            colors.sort()
-            while True:
-                funcsCopy = funcs.copy()
-                colorsCopy = colors.copy()
-                try:
-                    while len(funcsCopy) > 0 and len(colorsCopy) > 0:
-                        self.reset()
-                        if len(colorsCopy) > 1:
-                            clr = colorsCopy[random.randint(0, len(colorsCopy) - 1)]
-                        else:
-                            clr = colorsCopy[0]
-                        colorsCopy.remove(clr)
-                        getattr(self, clr)()
-                        if len(funcsCopy) > 1:
-                            fnc = funcsCopy[random.randint(0, len(funcsCopy) - 1)]
-                        else:
-                            fnc = funcsCopy[0]
-                        funcsCopy.remove(fnc)
-                        getattr(self, fnc)()
-                        self.run()
-                except Exception as ex:
-                    LOGGER.exception(ex)
-        except SystemExit:
-            pass
-        except KeyboardInterrupt:
-            pass
-        except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.demo.__name__,
-                ex,
-            )
-            raise LightControlException(str(ex)).with_traceback(ex.__traceback__)
-
-    def test(
         self,
         secondsPerMode: float = 0.5,
         functionNames: List[str] = None,
@@ -2322,19 +2336,20 @@ class LightController:
             elif len(colors) == 0:
                 LOGGER.error("No colors selected")
             else:
-                while (len(functions) * len(colors)) > 0:
-                    if len(functions) > 0:
-                        function = functions[random.randint(0, len(functions) - 1)]
-                        functions.remove(function)
-                    if len(colors) > 0:
-                        color = colors[random.randint(0, len(colors) - 1)]
-                        colors.remove(color)
-                    # for f in funcs:
-                    # for c in colors:
-                    self.reset()
-                    getattr(self, color)()
-                    getattr(self, function)()
-                    self.run()
+                while True:
+                    functionsCopy = functions.copy()
+                    colorsCopy = colors.copy()
+                    while (len(functionsCopy) * len(colorsCopy)) > 0:
+                        if len(functionsCopy) > 0:
+                            function = functionsCopy[random.randint(0, len(functionsCopy) - 1)]
+                            functionsCopy.remove(function)
+                        if len(colorsCopy) > 0:
+                            color = colorsCopy[random.randint(0, len(colorsCopy) - 1)]
+                            colorsCopy.remove(color)
+                        self.reset()
+                        getattr(self, color)()
+                        getattr(self, function)()
+                        self.run()
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -2343,7 +2358,7 @@ class LightController:
             LOGGER.exception(
                 "%s.%s Exception: %s",
                 self.__class__.__name__,
-                self.test.__name__,
+                self.demo.__name__,
                 ex,
             )
             raise LightControlException(str(ex)).with_traceback(ex.__traceback__)

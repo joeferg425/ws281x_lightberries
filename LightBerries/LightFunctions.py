@@ -5,10 +5,10 @@ import random
 from enum import IntEnum
 from nptyping import NDArray
 import numpy as np
+import LightBerries  # pylint:disable=unused-import
 from LightBerries.LightPixels import Pixel, PixelColors
 from LightBerries.LightPatterns import ConvertPixelArrayToNumpyArray
 from LightBerries.LightBerryException import LightFunctionException
-import LightBerries.LightControl  # pylint: disable = unused-import
 
 # pylint: disable=no-member
 
@@ -602,6 +602,8 @@ class LightFunction:
             LightFunctionException: if something bad happens
         """
         try:
+            # if cylon.size > LightFunction.Controller.virtualLEDCount:
+            # cylon.size = LightFunction.Controller.virtualLEDCount - 1
             # wait for several LED cycles to change LEDs
             if cylon.delayCounter >= cylon.delayCountMax:
                 # reset delay counter
@@ -650,7 +652,9 @@ class LightFunction:
             # update index
             cylon.index = cylon.indexNext
             # update LEDs with new values
-            LightFunction.Controller.virtualLEDArray[cylon.indexRange] = cylon.colorSequence
+            LightFunction.Controller.virtualLEDArray[cylon.indexRange] = cylon.colorSequence[
+                : LightFunction.Controller.virtualLEDCount
+            ]
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -754,6 +758,8 @@ class LightFunction:
                 accelerate.indexRange = np.arange(
                     accelerate.indexPrevious, accelerate.index + accelerate.direction, accelerate.direction
                 )
+                if accelerate.colorCycle is True:
+                    accelerate.color = accelerate.colorSequenceNext
             # check index step counter, update speed state when it hits step count max
             if accelerate.stepCounter >= accelerate.stepCountMax:
                 # reset step counter
@@ -810,8 +816,6 @@ class LightFunction:
                 accelerate.indexRange = np.arange(accelerate.indexPrevious, accelerate.index + 1)
             # increment delay counter
             accelerate.delayCounter += 1
-            if accelerate.colorCycle is True:
-                accelerate.color = accelerate.colorSequenceNext
             LightFunction.Controller.virtualLEDArray[accelerate.indexRange] = accelerate.color
             if splash is True:
                 LightFunction.Controller.virtualLEDArray[splashRange, :] = LightFunction.Controller.fadeColor(

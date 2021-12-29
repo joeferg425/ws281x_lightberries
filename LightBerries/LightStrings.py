@@ -69,9 +69,9 @@ class LightString(Sequence[np.int_]):
                 self.__class__.__name__,
                 inspect.stack()[0][3],
             )
-        except SystemExit:
+        except SystemExit:  # pylint:disable=try-except-raise
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pylint:disable=try-except-raise
             raise
         except Exception as ex:
             LOGGER.exception(
@@ -96,9 +96,9 @@ class LightString(Sequence[np.int_]):
                 self.__class__.__name__,
                 inspect.stack()[0][3],
             )
-        except SystemExit:
+        except SystemExit:  # pylint:disable=try-except-raise
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pylint:disable=try-except-raise
             raise
         except Exception as ex:
             LOGGER.exception(
@@ -131,9 +131,9 @@ class LightString(Sequence[np.int_]):
             # cleanup c memory usage
             try:
                 self.pixelStrip._cleanup()
-            except SystemExit:
+            except SystemExit:  # pylint:disable=try-except-raise
                 raise
-            except KeyboardInterrupt:
+            except KeyboardInterrupt:  # pylint:disable=try-except-raise
                 raise
             except Exception as ex:
                 LOGGER.exception("Failed to clean up WS281X object: %s", str(ex))
@@ -157,16 +157,16 @@ class LightString(Sequence[np.int_]):
         self,
         idx: int,
     ) -> NDArray[(3,), np.int32]:
-        ...
+        ...  # pylint: disable=pointless-statement
 
     @overload
-    def __getitem__(  # noqa D105
+    def __getitem__(  # noqa D105 # pylint: disable=function-redefined
         self,
         s: slice,
     ) -> NDArray[(3, Any), np.int32]:
-        ...
+        ...  # pylint: disable=pointless-statement
 
-    def __getitem__(
+    def __getitem__(  # pylint: disable=function-redefined
         self, key: Union[int, slice]
     ) -> Union[NDArray[(3,), np.int32], NDArray[(3, Any), np.int32]]:
         """Return a LED index or slice from LED array.
@@ -187,9 +187,9 @@ class LightString(Sequence[np.int_]):
                 return self._lights[key].array
             else:
                 raise LightStringException("Cannot index into uninitialized LightString object")
-        except SystemExit:
+        except SystemExit:  # pylint:disable=try-except-raise
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pylint:disable=try-except-raise
             raise
         except Exception as ex:
             LOGGER.exception('Failed to get key "%s" from %s: %s', key, self._lights, ex)
@@ -233,9 +233,9 @@ class LightString(Sequence[np.int_]):
                         )
             else:
                 raise LightStringException("Cannot index into uninitialized LightString object")
-        except SystemExit:
+        except SystemExit:  # pylint:disable=try-except-raise
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pylint:disable=try-except-raise
             raise
         except Exception as ex:
             LOGGER.exception("Failed to set light %s to value %s: %s", key, value, ex)
@@ -275,9 +275,9 @@ class LightString(Sequence[np.int_]):
         for index in range(len(self._lights)):
             try:
                 self[index] = PixelColors.OFF.array
-            except SystemExit:
+            except SystemExit:  # pylint:disable=try-except-raise
                 raise
-            except KeyboardInterrupt:
+            except KeyboardInterrupt:  # pylint:disable=try-except-raise
                 raise
             except Exception as ex:
                 LOGGER.exception(
@@ -302,10 +302,23 @@ class LightString(Sequence[np.int_]):
         try:
             # define callback for map method (fast iterator)
             def SetPixel(irgb):
-                i = irgb[0]
-                rgb = irgb[1]
-                value = (int(rgb[0]) << 16) + (int(rgb[1]) << 8) + int(rgb[2])
-                self.pixelStrip.setPixelColor(i, value)
+                try:
+                    i = irgb[0]
+                    rgb = irgb[1]
+                    value = (int(rgb[0]) << 16) + (int(rgb[1]) << 8) + int(rgb[2])
+                    self.pixelStrip.setPixelColor(i, value)
+                except SystemExit:  # pylint:disable=try-except-raise
+                    raise
+                except KeyboardInterrupt:  # pylint:disable=try-except-raise
+                    raise
+                except Exception as ex:
+                    LOGGER.exception(
+                        "Failed to set pixel %d in WS281X to value %d: %s",
+                        i,
+                        value,
+                        str(ex),
+                    )
+                    raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
 
             # copy this class's array into the ws281x array
             list(
@@ -316,9 +329,9 @@ class LightString(Sequence[np.int_]):
             )
             # send the signal out
             self.pixelStrip.show()
-        except SystemExit:
+        except SystemExit:  # pylint:disable=try-except-raise
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pylint:disable=try-except-raise
             raise
         except Exception as ex:
             LOGGER.exception('Function call "show" in WS281X object failed: %s', str(ex))
