@@ -1448,7 +1448,14 @@ class LightController:
             self.privateLightFunctions.append(marquee)
 
             # this function just shifts the existing buffer, so make sure the buffer is initialized here
-            self.setVirtualLEDArray(self.colorSequence)
+            if self.colorSequenceCount >= self.virtualLEDCount - 10:
+                array = LightPatterns.SolidColorArray(
+                    arrayLength=self.colorSequenceCount + 10, color=PixelColors.OFF
+                )
+                array[: self.colorSequenceCount] = self.colorSequence
+                self.setVirtualLEDArray(array)
+            else:
+                self.setVirtualLEDArray(self.colorSequence)
         except KeyboardInterrupt:
             raise
         except SystemExit:
@@ -2337,19 +2344,31 @@ class LightController:
                 LOGGER.error("No colors selected")
             else:
                 while True:
-                    functionsCopy = functions.copy()
-                    colorsCopy = colors.copy()
-                    while (len(functionsCopy) * len(colorsCopy)) > 0:
-                        if len(functionsCopy) > 0:
-                            function = functionsCopy[random.randint(0, len(functionsCopy) - 1)]
-                            functionsCopy.remove(function)
-                        if len(colorsCopy) > 0:
-                            color = colorsCopy[random.randint(0, len(colorsCopy) - 1)]
-                            colorsCopy.remove(color)
-                        self.reset()
-                        getattr(self, color)()
-                        getattr(self, function)()
-                        self.run()
+                    try:
+                        functionsCopy = functions.copy()
+                        colorsCopy = colors.copy()
+                        while (len(functionsCopy) * len(colorsCopy)) > 0:
+                            if len(functionsCopy) > 0:
+                                function = functionsCopy[random.randint(0, len(functionsCopy) - 1)]
+                                functionsCopy.remove(function)
+                            if len(colorsCopy) > 0:
+                                color = colorsCopy[random.randint(0, len(colorsCopy) - 1)]
+                                colorsCopy.remove(color)
+                            self.reset()
+                            getattr(self, color)()
+                            getattr(self, function)()
+                            self.run()
+                    except SystemExit:
+                        raise
+                    except KeyboardInterrupt:
+                        raise
+                    except Exception as ex:
+                        LOGGER.exception(
+                            "%s.%s Exception: %s",
+                            self.__class__.__name__,
+                            self.demo.__name__,
+                            ex,
+                        )
         except SystemExit:
             raise
         except KeyboardInterrupt:
