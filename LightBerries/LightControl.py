@@ -2017,6 +2017,8 @@ class LightController:
         maxSize: int = None,
         raindropChance: float = None,
         stepSize: int = None,
+        maxRaindrops: int = None,
+        fadeAmount: float = None,
     ):
         """Cause random "splashes" across the LED strand.
 
@@ -2024,6 +2026,7 @@ class LightController:
             maxSize: max splash size
             raindropChance: chance of raindrop
             stepSize: splash speed
+            maxRaindrops: number of raindrops
 
         Raises:
             SystemExit: if exiting
@@ -2041,7 +2044,7 @@ class LightController:
             if raindropChance is None:
                 _raindropChance = random.uniform(0.005, 0.1)
             else:
-                _raindropChance = int(raindropChance)
+                _raindropChance = float(raindropChance)
 
             if stepSize is None:
                 _stepSize = random.randint(2, 5)
@@ -2051,7 +2054,10 @@ class LightController:
             if _stepSize > 3:
                 _raindropChance /= 3.0
 
-            _fadeAmount = ((255 / _maxSize) / 255) * 2
+            if fadeAmount is None:
+                _fadeAmount = ((255 / _maxSize) / 255) * 2
+            else:
+                _fadeAmount = float(fadeAmount)
 
             if _fadeAmount > 0 and _fadeAmount < 1:
                 pass
@@ -2061,7 +2067,12 @@ class LightController:
             if _fadeAmount < 0 or _fadeAmount > 1:
                 _fadeAmount = 0.1
 
-            for _ in range(max(min(self.colorSequenceCount, 10), 2)):
+            if maxRaindrops is None:
+                _maxRaindrops = max(min(self.colorSequenceCount, 10), 2)
+            else:
+                _maxRaindrops = int(maxRaindrops)
+
+            for _ in range(_maxRaindrops):
                 raindrop = LightFunction(LightFunction.functionRaindrops, self.colorSequence)
                 # randomize start index
                 raindrop.index = random.randint(0, self.virtualLEDCount - 1)
@@ -2084,7 +2095,7 @@ class LightController:
             self.privateLightFunctions[0].state = 1
             # add fading
             fade = LightFunction(LightFunction.functionFadeOff, self.colorSequence)
-            fade.fadeAmount = 25 / 255.0
+            fade.fadeAmount = _fadeAmount
             self.privateLightFunctions.append(fade)
         except SystemExit:
             raise
