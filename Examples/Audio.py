@@ -1,31 +1,42 @@
+#!/usr/bin/python3
 """example syncing lights to audio"""
+import time
 import multiprocessing
 import pyaudio  # pylint: disable = import-error
 import numpy as np
-import matplotlib.pyplot as plt
+from LightBerries import LightControl
+from LightBerries import LightPatterns
+from LightBerries.LightPixels import Pixel, EnumLEDOrder
+import scipy
+
+# import matplotlib.pyplot as plt
 from LightBerries.LightControl import LightController
 from LightBerries.LightPatterns import ConvertPixelArrayToNumpyArray, SolidColorArray, PixelColors
 
 
 SAMPLE_RATE = 44100
 CHUNK_COUNT = 4
-SAMPLE_COUNT_TOTAL = 20000
+SAMPLE_COUNT_TOTAL = 44100
 SAMPLE_COUNT_PER_CHUNK = SAMPLE_COUNT_TOTAL // CHUNK_COUNT
 DATA_FRAME = np.zeros((SAMPLE_COUNT_TOTAL))
+LED_COUNT = 100
+PLOT_DATA = np.zeros((LED_COUNT))
 
 
 def PlotStuff(_):
     """plots audio FFT to graphic plot and/or lights"""
-    global DATA_FRAME  # pylint: disable = global-statement
-    plt.ion()
+    global DATA_FRAME, PLOT_DATA  # pylint: disable = global-statement
+    # plt.ion()
     line1 = None
     line2 = None
     line3 = None
     i = 0
     plotTime = False
     plotFfts = False
-    plotFftChunks = True
-    LIGHT_CONTROL = LightController(100, 18, 10, 800000, debug=True)
+    plotFftChunks = False
+    LIGHT_CONTROL = LightController(LED_COUNT, 18, 10, 800000, debug=True)
+    LIGHT_CONTROL.off()
+    LIGHT_CONTROL.refreshLEDs()
 
     try:
         while True:
@@ -37,7 +48,8 @@ def PlotStuff(_):
             if not msg is None:
                 DATA_FRAME = np.roll(DATA_FRAME, SAMPLE_COUNT_PER_CHUNK)
                 DATA_FRAME[-SAMPLE_COUNT_PER_CHUNK:] = msg
-                fftData = 10 * np.log10(np.abs(np.fft.fft(DATA_FRAME)))
+                # fftData = 10 * np.log10(np.abs(np.fft.fft(DATA_FRAME)))
+                fftData = 10 * np.log10(np.abs(scipy.fft(DATA_FRAME)))
                 fftData = fftData[len(fftData) // 2 :]
                 fftData = np.nan_to_num(fftData)
 
@@ -93,9 +105,28 @@ def PlotStuff(_):
                         axis1.relim()
                         axis1.autoscale_view(True, True, True)
                         figure1.canvas.draw()
-                    # elif msg[0] == 't':
-                    # print('time')
-                    # msg = msg[1]
+
+                msg_len = len(DATA_FRAME)
+
+                x = LIGHT_CONTROL.virtualLEDCount
+                y = int(np.floor(msg_len / x))
+
+                msg = np.reshape(DATA_FRAME[: (x * y)], (x, y))
+                msg = np.apply_along_axis(np.sum, 1, msg)
+                # msg = msg.astype(np.int32)
+                msg -= np.min(msg)
+                msg = msg / np.max(msg)
+                msg *= float(255 * 2 / 3)
+                msg = np.array(msg, dtype=np.int32)
+                PLOT_DATA = PLOT_DATA * 1 / 3
+                PLOT_DATA += msg
+                LIGHT_CONTROL.setVirtualLEDArray(
+                    LightPatterns.ConvertPixelArrayToNumpyArray(
+                        [Pixel(int(p), order=EnumLEDOrder.RGB) for p in PLOT_DATA]
+                    )
+                )
+                LIGHT_CONTROL.copyVirtualLedsToWS281X()
+                LIGHT_CONTROL.refreshLEDs()
                 if plotTime:
                     figure2, axis2 = plt.subplots(1)
                     if line2 is None:
@@ -112,6 +143,8 @@ def PlotStuff(_):
                         axis2.relim()
                         axis2.autoscale_view(True, True, True)
                         figure2.canvas.draw()
+
+                # LightController.setVirtualLEDArray(msg)
                 i += 1
                 if i >= CHUNK_COUNT:
                     i = 0
@@ -121,6 +154,13 @@ def PlotStuff(_):
     except Exception as ex:
         print("error in loop", ex)
         raise
+
+    print("off?")
+    LIGHT_CONTROL.off()
+    LIGHT_CONTROL.copyVirtualLedsToWS281X()
+    LIGHT_CONTROL.refreshLEDs()
+    time.sleep(0.2)
+    del LIGHT_CONTROL
 
 
 q: multiprocessing.Queue = multiprocessing.Queue()
@@ -233,6 +273,7 @@ except:
 finally:
     if not PY_AUDIO is None:
         PY_AUDIO.terminate()
+time.sleep(0.2)
 LIGHT_CONTROL = None
 # waveFile = wave.open(wav_output_filename, 'wb')
 # waveFile.setnchannels(chans)
