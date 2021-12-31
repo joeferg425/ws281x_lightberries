@@ -1,10 +1,10 @@
-"""example of using this module with a GUI"""
+"""Example of using LightBerries module with a GUI."""
 import time
 import multiprocessing
 from tkinter.colorchooser import askcolor
 import tkinter as tk
 from LightBerries.LightControl import LightController
-from LightBerries.Pixels import Pixel
+from LightBerries.LightPixels import Pixel
 from LightBerries.LightPatterns import ConvertPixelArrayToNumpyArray, PixelArray
 
 # the number of pixels in the light string
@@ -26,23 +26,28 @@ PWM_CHANNEL = 0
 
 
 class LightsProcess:
-    """handles lights in a seperate process"""
+    """Handles LightBerries functions in a seperate process."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Handles LightBerries functions in a seperate process."""
         self.inQ = multiprocessing.Queue(2)
         self.outQ = multiprocessing.Queue(2)
-        self.process = multiprocessing.Process(target=LightsProcess.lupe, args=[self.inQ, self.outQ])
-        # self.process = multiprocessing.Process(target=App)
+        self.process = multiprocessing.Process(target=LightsProcess.mainLoop, args=[self.inQ, self.outQ])
         self.process.start()
-        # LightsProcess.lupe(1, 2)
 
-    def __del__(self):
+    def __del__(self) -> None:
+        """Cleans up ws281X memory."""
         self.process.terminate()
         print("goodbye")
 
     @classmethod
-    def lupe(cls, inQ, _):
-        """loooop"""
+    def mainLoop(cls, inQ, _):
+        """The main loop.
+
+        Args:
+            inQ: multiprocess queue for getting input
+            _ : [description]
+        """
         try:
             lightControl = LightController(
                 ledCount=PIXEL_COUNT,
@@ -72,7 +77,7 @@ class LightsProcess:
                     msg = inQ.get()
                 except Exception:
                     pass
-                if not msg is None:
+                if msg is not None:
                     print(msg)
                     if msg[0] == "go":
                         try:
@@ -151,9 +156,10 @@ class LightsProcess:
 
 
 class App:
-    """the application for tkinter"""
+    """The application object for tkinter GUI."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """The application object for tkinter GUI."""
         self.root = tk.Tk()
         self.lights = LightsProcess()
 
@@ -235,23 +241,24 @@ class App:
 
         self.root.mainloop()
 
-    def destroy(self):
-        """destroy this object"""
+    def destroy(self) -> None:
+        """Destroy this object cleanly."""
         self.root.destroy()
         self.__del__()
 
-    def __del__(self):
+    def __del__(self) -> None:
+        """Destroy this object cleanly."""
         del self.lights
 
     def goNow(self):
-        """go"""
+        """Go."""
         try:
             self.lights.inQ.put_nowait(("go",))
         except multiprocessing.queues.Full:
             pass
 
-    def getColor(self):
-        """get a color"""
+    def getColor(self) -> None:
+        """Get a color, pass it through multiprocess queue."""
         color = askcolor()
         color = int(color[1][1:], 16)
         self.colorInt.set(color)
@@ -260,37 +267,57 @@ class App:
         except multiprocessing.queues.Full:
             pass
 
-    def updateFunction(self, function):
-        """update the function"""
+    def updateFunction(self, function: str) -> None:
+        """Update the selected function, pass it through multiprocess queue.
+
+        Args:
+            function: the function name
+        """
         try:
             self.lights.inQ.put_nowait(("function", function))
         except multiprocessing.queues.Full:
             pass
 
-    def updatePattern(self, pattern):
-        """update the color pattern"""
+    def updatePattern(self, pattern: str) -> None:
+        """Update the selected pattern, pass it through multiprocess queue.
+
+        Args:
+            pattern: the pattern name
+        """
         try:
             self.lights.inQ.put_nowait(("pattern", pattern))
         except multiprocessing.queues.Full:
             pass
 
-    def updateDuration(self, duration):
-        """update the duration"""
+    def updateDuration(self, duration: float) -> None:
+        """Update the selected duration, pass it through multiprocess queue.
+
+        Args:
+            duration: the duration in seconds
+        """
         try:
             self.lights.inQ.put_nowait(("duration", duration))
         except multiprocessing.queues.Full:
             pass
 
-    def updateLEDCount(self, count):
-        """update the number of LEDs"""
+    def updateLEDCount(self, count: int) -> None:
+        """Update the selected LED count, pass it through multiprocess queue.
+
+        Args:
+            count: the LED count
+        """
         try:
             count = int(count)
             self.lights.inQ.put_nowait(("count", count))
         except multiprocessing.queues.Full:
             pass
 
-    def updateColor(self, color):
-        """update color"""
+    def updateColor(self, color: int) -> None:
+        """Update color of all LEDs.
+
+        Args:
+            color: the LED colors
+        """
         if self.root.focus_get() != self.colortext:
             self.colorString.set(f"{color:06X}")
         try:
@@ -298,8 +325,12 @@ class App:
         except multiprocessing.queues.Full:
             pass
 
-    def updateColorHex(self, color):
-        """update color in hex"""
+    def updateColorHex(self, color: str) -> None:
+        """Update color of all LEDs.
+
+        Args:
+            color: the LED colors
+        """
         color = int(color, 16)
         self.colorInt.set(color)
 

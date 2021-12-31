@@ -1,16 +1,14 @@
 #!/usr/bin/python3
-"""example of using this module's functions with a GUI"""
+"""Example of using LightBerries module functions with a GUI."""
 import time
 import multiprocessing
 import multiprocessing.queues
 from tkinter.colorchooser import askcolor
 import tkinter as tk
-
-from numpy import true_divide
 import LightBerries.LightPixels
 from LightBerries.LightControl import LightController
 from LightBerries.LightPixels import Pixel
-from LightBerries.LightPatterns import ConvertPixelArrayToNumpyArray, PixelArray, SolidColorArray
+from LightBerries.LightPatterns import ConvertPixelArrayToNumpyArray, SolidColorArray
 
 
 # the number of pixels in the light string
@@ -33,26 +31,36 @@ LightBerries.LightPixels.DEFAULT_PIXEL_ORDER = LightBerries.LightPixels.EnumLEDO
 
 
 class LightsProcess:
-    """handles lights in a seperate process"""
+    """Handles LightBerries functions in a seperate process."""
 
     selfObject = None
     appObject = None
 
-    def __init__(self, app):
+    def __init__(self, app) -> None:
+        """Handles LightBerries functions in a seperate process.
+
+        Args:
+            app: the tkinter app
+        """
         LightsProcess.selfObject = self
         LightsProcess.appObject = app
         self.inQ = multiprocessing.Queue(2)
         self.outQ = multiprocessing.Queue(2)
-        self.process = multiprocessing.Process(target=LightsProcess.lupe, args=[self.inQ, self.outQ])
+        self.process = multiprocessing.Process(target=LightsProcess.mainLoop, args=[self.inQ, self.outQ])
         self.process.start()
 
-    def __del__(self):
+    def __del__(self) -> None:
+        """Clean up memory."""
         self.process.terminate()
-        print("goodbye")
 
     @classmethod
-    def lupe(cls, inQ, _):
-        """loooop"""
+    def mainLoop(cls, inQ, _):
+        """The main loop.
+
+        Args:
+            inQ: multiprocess queue for getting input
+            _ : [description]
+        """
         try:
             lightControl = LightController(
                 ledCount=PIXEL_COUNT,
@@ -73,26 +81,23 @@ class LightsProcess:
             )
             lightControl.copyVirtualLedsToWS281X()
             lightControl.refreshLEDs()
-            time.sleep(0.05)
-            count = PIXEL_COUNT
-            color = 0
-            duration = 0
-            pattern = ""
-            function = ""
+            # time.sleep(0.05)
+            # count = PIXEL_COUNT
+            # color = 0
+            # duration = 0
             while True:
                 msg = None
                 try:
                     msg = inQ.get()
                 except Exception:
                     pass
-                if not msg is None:
+                if msg is not None:
                     print(msg)
                     if msg[0] == "color":
                         try:
                             index, color = msg[1:]
                             print("setting color")
-                            # lightControl.virtualLEDArray[:] *= 0
-                            lightControl.virtualLEDArray[index] += Pixel(
+                            lightControl.virtualLEDArray[index] = Pixel(
                                 color, order=LightBerries.LightPixels.EnumLEDOrder.RGB
                             ).array
                             lightControl.copyVirtualLedsToWS281X()
@@ -100,49 +105,6 @@ class LightsProcess:
                             time.sleep(0.05)
                         except Exception as ex:
                             print(ex)
-                    elif msg[0] == "count":
-                        try:
-                            count = msg[1]
-                            if count < lightControl.privateLEDCount:
-                                lightControl.virtualLEDArray[:] *= 0
-                                lightControl.copyVirtualLedsToWS281X()
-                                lightControl.refreshLEDs()
-                                time.sleep(0.05)
-                            lightControl = LightController(
-                                ledCount=count,
-                                pwmGPIOpin=GPIO_PWM_PIN,
-                                channelDMA=DMA_CHANNEL,
-                                frequencyPWM=PWM_FREQUENCY,
-                                channelPWM=PWM_CHANNEL,
-                                invertSignalPWM=INVERT,
-                                gamma=GAMMA,
-                                stripTypeLED=LED_STRIP_TYPE,
-                                ledBrightnessFloat=BRIGHTNESS,
-                                debug=True,
-                            )
-                            lightControl.secondsPerMode = duration
-                            lightControl.virtualLEDArray[:] += Pixel(color).array
-                            lightControl.copyVirtualLedsToWS281X()
-                            lightControl.refreshLEDs()
-                            time.sleep(0.05)
-                        except Exception as ex:
-                            print(ex)
-                    elif msg[0] == "duration":
-                        try:
-                            duration = msg[1]
-                        except Exception as ex:
-                            print(ex)
-                    elif msg[0] == "function":
-                        try:
-                            function = msg[1]
-                        except Exception as ex:
-                            print(ex)
-                    elif msg[0] == "pattern":
-                        try:
-                            pattern = msg[1]
-                        except Exception as ex:
-                            print(ex)
-
                 time.sleep(0.001)
         except KeyboardInterrupt:
             pass
@@ -153,9 +115,10 @@ class LightsProcess:
 
 
 class App:
-    """the application for tkinter"""
+    """The application for tkinter."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """The application for tkinter."""
         self.root = tk.Tk()
 
         self.canvas = tk.Canvas(self.root)
@@ -167,13 +130,11 @@ class App:
         self.scrollbarX.pack(side=tk.BOTTOM, fill="y")
 
         self.mainFrame = tk.Frame(self.canvas)
-        # self.mainFrame = tk.Frame(self.canvas, width=600, height=400)
         self.canvas.create_window((0, 0), window=self.mainFrame, anchor="nw")
         self.canvas.configure(yscrollcommand=self.scrollbarY.set)
         self.canvas.configure(xscrollcommand=self.scrollbarX.set)
 
         self.mainFrame.pack(fill="both", anchor=tk.NW, expand=True)
-        # self.mainFrame.grid(row=0, column=0, sticky="news")
         self.mainFrame.rowconfigure(1, weight=1)
         self.mainFrame.columnconfigure(0, weight=1)
         self.mainFrame.columnconfigure(0, weight=1)
@@ -184,7 +145,7 @@ class App:
 
         # update scrollregion after starting 'mainloop'
         # when all widgets are in canvas
-        self.canvas.bind("<Configure>", lambda event: self.on_configure(event))
+        self.canvas.bind("<Configure>", lambda _: self.onConfigure())
 
         self.rowInt = tk.IntVar(value=3)
         self.rowString = tk.StringVar()
@@ -195,27 +156,38 @@ class App:
             self.mainFrame,
             text="Row Count",
         )
-        # self.rowlabel.min
         self.rowlabel.grid(
             row=0,
             column=0,
             sticky="news",
         )
 
-        self.rowInput = tk.Entry(self.mainFrame, textvariable=self.rowString).grid(
+        self.rowInput = tk.Entry(
+            self.mainFrame,
+            textvariable=self.rowString,
+        )
+        self.rowInput.grid(
             row=0,
             column=1,
             sticky="news",
         )
         self.rowString.set(str(self.rowInt.get()))
 
-        self.columnLabel = tk.Label(self.mainFrame, text="Column Count",).grid(
+        self.columnLabel = tk.Label(
+            self.mainFrame,
+            text="Column Count",
+        )
+        self.columnLabel.grid(
             row=0,
             column=2,
             sticky="news",
         )
 
-        self.columnInput = tk.Entry(self.mainFrame, textvariable=self.columnString,).grid(
+        self.columnInput = tk.Entry(
+            self.mainFrame,
+            textvariable=self.columnString,
+        )
+        self.columnInput.grid(
             row=0,
             column=3,
             sticky="news",
@@ -225,12 +197,23 @@ class App:
         self.configureButton = tk.Button(
             self.mainFrame,
             text="Configure",
-            command=self.configure,
+            command=self.configureLightBerries,
         )
-        self.configureButton.grid(row=0, column=4, sticky="news")
+        self.configureButton.grid(
+            row=0,
+            column=4,
+            sticky="news",
+        )
 
-        self.buttonFrame = tk.Frame(self.mainFrame)
-        self.buttonFrame.grid(row=1, column=0, columnspan=5, sticky="news")
+        self.buttonFrame = tk.Frame(
+            self.mainFrame,
+        )
+        self.buttonFrame.grid(
+            row=1,
+            column=0,
+            columnspan=5,
+            sticky="news",
+        )
 
         self.lights = LightsProcess(self)
 
@@ -239,12 +222,14 @@ class App:
         self.root.title("Color Chooser")
         self.root.mainloop()
 
-    def on_configure(self, event):
+    def onConfigure(self):
+        """Configure the convas widget."""
         # update scrollregion after starting 'mainloop'
         # when all widgets are in canvas
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
-    def configure(self):
+    def configureLightBerries(self):
+        """Configure LightBerries."""
         counter = 0
         try:
             for row in range(int(self.rowString.get())):
@@ -259,38 +244,42 @@ class App:
                         column=column,
                         sticky="nw",
                     )
-                    btn.bind("<Button-1>", lambda event: self.getColor(event, btn))
+                    btn.bind("<Button-1>", self.getColor)
                     btn.grid(column=column, row=row, sticky="nw")
                     btn.ledIndex = counter
                     counter += 1
             self.configureButton["state"] = "disabled"
-        except:
+        except Exception:
             pass
 
-    def destroy(self):
-        """destroy this object"""
+    def destroy(self) -> None:
+        """Destroy this object."""
         self.root.destroy()
         self.__del__()
 
-    def getColor(self, event, btn):
-        """get a color"""
-        print(event.widget.ledIndex)
+    def getColor(self, event) -> None:
+        """Get a color from user, pass it to LightBerries.
+
+        Args:
+            event: tkinter widget event object
+        """
         color = askcolor(event.widget["background"])
         if color is not None:
             color = int(color[1][1:], 16)
-            hx = "#{:06X}".format(color)
-            event.widget.configure(bg=hx)
-            hx = "#" + "{:06X}".format(0xFFFFFF - color)[-6:]
-            event.widget.configure(fg=hx)
+            colorHex = f"#{color:06X}"
+            event.widget.configure(bg=colorHex)
+            colorHex = "#" + "{(0xFFFFFF - color):06X}"[-6:]
+            event.widget.configure(fg=colorHex)
             try:
                 self.lights.inQ.put_nowait(("color", event.widget.ledIndex, color))
             except multiprocessing.queues.Full:
                 pass
 
-    def __del__(self):
+    def __del__(self) -> None:
+        """Destroy the object cleanly."""
         del self.lights
 
 
 if __name__ == "__main__":
-    app = App()
-    del app
+    theApp = App()
+    del theApp
