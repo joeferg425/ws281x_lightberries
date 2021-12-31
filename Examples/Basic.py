@@ -1,11 +1,8 @@
 #!/usr/bin/python3
-"""
-An example of using this module
-"""
+"""An example of using this module."""
 import LightBerries.LightPatterns
 from LightBerries.LightControl import LightController
-from LightBerries.LightPixels import Pixel, PixelColors
-from LightBerries.LightPatterns import ConvertPixelArrayToNumpyArray, PixelArray
+from LightBerries.LightPixels import PixelColors
 
 # the number of pixels in the light string
 PIXEL_COUNT = 100

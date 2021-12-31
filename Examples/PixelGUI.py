@@ -204,6 +204,7 @@ class App:
             column=4,
             sticky="news",
         )
+        self.root.bind("<Return>", lambda event: self.configureLightBerries())
 
         self.buttonFrame = tk.Frame(
             self.mainFrame,
@@ -219,7 +220,7 @@ class App:
 
         self.root.protocol("WM_DELETE_WINDOW", self.destroy)
 
-        self.root.title("Color Chooser")
+        self.root.title("LightBerries Pixel Color Chooser")
         self.root.mainloop()
 
     def onConfigure(self):
@@ -268,8 +269,9 @@ class App:
             color = int(color[1][1:], 16)
             colorHex = f"#{color:06X}"
             event.widget.configure(bg=colorHex)
-            colorHex = "#" + "{(0xFFFFFF - color):06X}"[-6:]
-            event.widget.configure(fg=colorHex)
+            invertColor = 0xFFFFFF - color
+            invertColorHex = "#" + f"{invertColor:06X}"[-6:]
+            event.widget.configure(fg=invertColorHex)
             try:
                 self.lights.inQ.put_nowait(("color", event.widget.ledIndex, color))
             except multiprocessing.queues.Full:

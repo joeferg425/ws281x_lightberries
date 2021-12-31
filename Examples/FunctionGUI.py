@@ -8,7 +8,7 @@ from LightBerries.LightPixels import Pixel
 from LightBerries.LightPatterns import ConvertPixelArrayToNumpyArray, PixelArray
 
 # the number of pixels in the light string
-PIXEL_COUNT = 196
+PIXEL_COUNT = 100
 # GPIO pin to use for PWM signal
 GPIO_PWM_PIN = 18
 # DMA channel
@@ -28,11 +28,18 @@ PWM_CHANNEL = 0
 class LightsProcess:
     """Handles LightBerries functions in a seperate process."""
 
-    def __init__(self) -> None:
-        """Handles LightBerries functions in a seperate process."""
+    def __init__(self, app) -> None:
+        """Handles LightBerries functions in a seperate process.
+
+        Args:
+            app: the tkinter app
+        """
+        self.app = app
         self.inQ = multiprocessing.Queue(2)
         self.outQ = multiprocessing.Queue(2)
-        self.process = multiprocessing.Process(target=LightsProcess.mainLoop, args=[self.inQ, self.outQ])
+        self.process = multiprocessing.Process(
+            target=LightsProcess.mainLoop, args=[self, self.inQ, self.outQ]
+        )
         self.process.start()
 
     def __del__(self) -> None:
@@ -40,8 +47,7 @@ class LightsProcess:
         self.process.terminate()
         print("goodbye")
 
-    @classmethod
-    def mainLoop(cls, inQ, _):
+    def mainLoop(self, inQ, _):
         """The main loop.
 
         Args:
@@ -69,8 +75,8 @@ class LightsProcess:
             count = PIXEL_COUNT
             color = 0
             duration = 0
-            pattern = ""
-            function = ""
+            pattern = self.app.patternChoices[0]
+            function = self.app.functionChoices[0]
             while True:
                 msg = None
                 try:
@@ -161,12 +167,8 @@ class App:
     def __init__(self) -> None:
         """The application object for tkinter GUI."""
         self.root = tk.Tk()
-        self.lights = LightsProcess()
 
         self.ledCountInt = tk.IntVar()
-        self.ledCountInt.trace(
-            "w", lambda name, index, mode, var=self.ledCountInt: self.updateLEDCount(var.get())
-        )
         self.ledCountlabel = tk.Label(text="LED Count")
         self.ledCountlabel.grid(row=0, column=0)
         self.ledCountslider = tk.Scale(
@@ -178,17 +180,9 @@ class App:
         self.ledCounttext = tk.Entry(self.root, textvariable=self.ledCountInt)
         self.ledCounttext.grid(row=0, column=2)
         self.ledCountInt.set(PIXEL_COUNT)
-        try:
-            self.lights.inQ.put_nowait(("count", PIXEL_COUNT))
-        except multiprocessing.queues.Full:
-            pass
 
         self.colorInt = tk.IntVar()
         self.colorString = tk.StringVar()
-        self.colorInt.trace("w", lambda name, index, mode, var=self.colorInt: self.updateColor(var.get()))
-        self.colorString.trace(
-            "w", lambda name, index, mode, var=self.colorString: self.updateColorHex(var.get())
-        )
         self.colorlabel = tk.Label(text="Color")
         self.colorlabel.grid(row=1, column=0)
         self.colorslider = tk.Scale(
@@ -199,21 +193,14 @@ class App:
         self.colortext.grid(row=1, column=2)
         self.colorbutton = tk.Button(text="Select Color", command=self.getColor)
         self.colorbutton.grid(row=1, column=3)
-        self.updateColor(0xFF0000)
 
         self.functionString = tk.StringVar()
-        self.functionString.trace(
-            "w", lambda name, index, mode, var=self.functionString: self.updateFunction(var.get())
-        )
-        self.functionChoices = [f for f in dir(LightController) if f[:8] == "function"]
+        self.functionChoices = [f for f in dir(LightController) if f[:11] == "useFunction"]
         self.functionChoices.sort()
         self.functionString.set(self.functionChoices[0])
         self.functionDropdown = tk.OptionMenu(self.root, self.functionString, *self.functionChoices)
         self.functionDropdown.grid(row=2, column=1)
         self.patternString = tk.StringVar()
-        self.patternString.trace(
-            "w", lambda name, index, mode, var=self.patternString: self.updatePattern(var.get())
-        )
         self.patternChoices = [f for f in dir(LightController) if f[:8] == "useColor"]
         self.patternChoices.sort()
         self.patternString.set(self.patternChoices[0])
@@ -222,22 +209,39 @@ class App:
 
         self.durationInt = tk.IntVar()
         self.durationInt.set(10)
-        self.durationInt.trace(
-            "w", lambda name, index, mode, var=self.durationInt: self.updateDuration(var.get())
-        )
         self.durationLabel = tk.Label(text="Duration (Seconds)")
         self.durationLabel.grid(row=3, column=1)
         self.durationText = tk.Entry(self.root, textvariable=self.durationInt)
         self.durationText.grid(row=3, column=2)
         self.buttonGo = tk.Button(self.root, height=1, width=10, text="Go", command=self.goNow)
         self.buttonGo.grid(row=3, column=3)
+
         self.root.protocol("WM_DELETE_WINDOW", self.destroy)
+        self.root.title("LightBerries GUI")
+
+        self.lights = LightsProcess(self)
+        self.colorInt.trace("w", lambda name, index, mode, var=self.colorInt: self.updateColor(var.get()))
+        self.colorString.trace(
+            "w", lambda name, index, mode, var=self.colorString: self.updateColorHex(var.get())
+        )
+        self.ledCountInt.trace(
+            "w", lambda name, index, mode, var=self.ledCountInt: self.updateLEDCount(var.get())
+        )
+        self.functionString.trace(
+            "w", lambda name, index, mode, var=self.functionString: self.updateFunction(var.get())
+        )
+        self.patternString.trace(
+            "w", lambda name, index, mode, var=self.patternString: self.updatePattern(var.get())
+        )
+        self.durationInt.trace(
+            "w", lambda name, index, mode, var=self.durationInt: self.updateDuration(var.get())
+        )
         try:
+            self.lights.inQ.put_nowait(("count", PIXEL_COUNT))
             self.lights.inQ.put_nowait(("duration", self.durationInt.get()))
         except multiprocessing.queues.Full:
             pass
-
-        self.root.title("Color Chooser")
+        self.updateColor(0xFF0000)
 
         self.root.mainloop()
 
@@ -336,5 +340,5 @@ class App:
 
 
 if __name__ == "__main__":
-    app = App()
-    del app
+    theApp = App()
+    del theApp
