@@ -89,8 +89,8 @@ class LightString(Sequence[np.int_]):
                     f'Cannot create LightString object with LED count "{self._ledCount}"',
                 )
             # if led count is good, create our pixel sequence
-            self._lights: NDArray[(3, Any), np.int32] = np.zeros((self._ledCount, 3))
-            self._lights[:] = np.array([Pixel().array for i in range(self._ledCount)])
+            self.rgbArray: NDArray[(3, Any), np.int32] = np.zeros((self._ledCount, 3))
+            self.rgbArray[:] = np.array([Pixel().array for i in range(self._ledCount)])
             LOGGER.debug(
                 "%s.%s Created Numpy Light array",
                 self.__class__.__name__,
@@ -147,8 +147,8 @@ class LightString(Sequence[np.int_]):
         Returns:
             the number of LEDs in the array
         """
-        if self._lights is not None:
-            return len(self._lights)
+        if self.rgbArray is not None:
+            return len(self.rgbArray)
         else:
             return 0
 
@@ -183,8 +183,8 @@ class LightString(Sequence[np.int_]):
             LightStringException: if something bad happens
         """
         try:
-            if isinstance(self._lights, np.ndarray):
-                return self._lights[key].array
+            if isinstance(self.rgbArray, np.ndarray):
+                return self.rgbArray[key].array
             else:
                 raise LightStringException("Cannot index into uninitialized LightString object")
         except SystemExit:  # pylint:disable=try-except-raise
@@ -192,7 +192,7 @@ class LightString(Sequence[np.int_]):
         except KeyboardInterrupt:  # pylint:disable=try-except-raise
             raise
         except Exception as ex:
-            LOGGER.exception('Failed to get key "%s" from %s: %s', key, self._lights, ex)
+            LOGGER.exception('Failed to get key "%s" from %s: %s', key, self.rgbArray, ex)
             raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
 
     def __setitem__(
@@ -212,21 +212,21 @@ class LightString(Sequence[np.int_]):
             LightStringException: if something bad happens
         """
         try:
-            if isinstance(self._lights, np.ndarray):
+            if isinstance(self.rgbArray, np.ndarray):
                 if isinstance(key, slice):
                     if isinstance(value, np.ndarray):
-                        self._lights.__setitem__(key, value)
+                        self.rgbArray.__setitem__(key, value)
                     elif isinstance(value, Sequence):
-                        self._lights.__setitem__(key, [Pixel(v).array for v in value])
+                        self.rgbArray.__setitem__(key, [Pixel(v).array for v in value])
                     else:
                         raise LightStringException(
                             "Cannot assign multiple indices of LightString using a single value"
                         )
                 else:
                     if isinstance(value, np.ndarray):
-                        self._lights.__setitem__(key, value)
+                        self.rgbArray.__setitem__(key, value)
                     elif isinstance(value, Pixel):
-                        self._lights.__setitem__(key, Pixel(value).array)
+                        self.rgbArray.__setitem__(key, Pixel(value).array)
                     else:
                         raise LightStringException(
                             "Cannot assign single index of LightString using multiple values"
@@ -272,7 +272,7 @@ class LightString(Sequence[np.int_]):
             KeyboardInterrupt: if user quits
             LightStringException: if something bad happens
         """
-        for index in range(len(self._lights)):
+        for index in range(len(self.rgbArray)):
             try:
                 self[index] = PixelColors.OFF.array
             except SystemExit:  # pylint:disable=try-except-raise
@@ -324,7 +324,7 @@ class LightString(Sequence[np.int_]):
             list(
                 map(
                     SetPixel,
-                    enumerate(self._lights),
+                    enumerate(self.rgbArray),
                 )
             )
             # send the signal out
