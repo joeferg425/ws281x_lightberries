@@ -1132,25 +1132,28 @@ class LightFunction:
                     ) / raindrop.stepCountMax
             # if raindrop is splashing
             if raindrop.state == RaindropStates.SPLASH.value:
-                # if we are done delaying
-                # if raindrop.delayCounter >= raindrop.delayCountMax:
-                # reset delay
-                # raindrop.delayCounter = 0
                 # if splash is still growing
                 if raindrop.stepCounter < raindrop.stepCountMax:
-                    # TODO old math, should check/update it
-                    s1 = max(raindrop.index - raindrop.stepCounter - raindrop.step, 0)
-                    s2 = max(raindrop.index - raindrop.stepCounter, 0)
-                    e1 = min(raindrop.index + raindrop.stepCounter, LightFunction.Controller.virtualLEDCount)
-                    e2 = min(
+                    # lower valued side of "splash"
+                    indexLowerMin = max(raindrop.index - raindrop.stepCounter - raindrop.step, 0)
+                    indexLowerMax = max(raindrop.index - raindrop.stepCounter, 0)
+                    # higher valued side of "splash"
+                    indexHigherMin = min(
+                        raindrop.index + raindrop.stepCounter, LightFunction.Controller.virtualLEDCount
+                    )
+                    indexHigherMax = min(
                         raindrop.index + raindrop.stepCounter + raindrop.step,
                         LightFunction.Controller.virtualLEDCount,
                     )
-                    if (s2 - s1) > 0:
-                        LightFunction.Controller.virtualLEDArray[s1:s2] = [raindrop.color] * (s2 - s1)
-                    if (e2 - e1) > 0:
-                        LightFunction.Controller.virtualLEDArray[e1:e2] = [raindrop.color] * (e2 - e1)
-                    # TODO old fade method
+                    if (indexLowerMax - indexLowerMin) > 0:
+                        LightFunction.Controller.virtualLEDArray[indexLowerMin:indexLowerMax] = [
+                            raindrop.color
+                        ] * (indexLowerMax - indexLowerMin)
+                    if (indexHigherMax - indexHigherMin) > 0:
+                        LightFunction.Controller.virtualLEDArray[indexHigherMin:indexHigherMax] = [
+                            raindrop.color
+                        ] * (indexHigherMax - indexHigherMin)
+                    # scaled fading as splash grows
                     raindrop.color[:] = raindrop.color * raindrop.colorScaler
                     # increment splash growth counter
                     raindrop.stepCounter += raindrop.step
@@ -1310,12 +1313,12 @@ class LightFunction:
                             for _ in range(0, random.randint(1, 3)):
                                 thing.color = thing.colorSequenceNext
                     # calculate range of affected indices
-                    x1 = thing.indexPrevious - (thing.size * thing.direction)
-                    x2 = thing.indexPrevious + ((thing.step + thing.size) * thing.direction)
-                    _x1 = min(x1, x2)
-                    _x2 = max(x1, x2)
-                    # rng = np.array(range(_x1, _x2 + 1))
-                    thing.indexRange = thing.calcRange(_x1, _x2)
+                    index1 = thing.indexPrevious - (thing.size * thing.direction)
+                    index2 = thing.indexPrevious + ((thing.step + thing.size) * thing.direction)
+                    indexLower = min(index1, index2)
+                    indexHigher = max(index1, index2)
+                    # calculate affected range
+                    thing.indexRange = thing.calcRange(indexLower, indexHigher)
                     # increment step counter
                     thing.stepCounter += 1
                 # we hit our step goal, randomize next state
@@ -1350,12 +1353,12 @@ class LightFunction:
                     else:
                         thing.delayCountMax = random.randint(1, 7)
                     # calculate affected range
-                    x1 = thing.indexPrevious - (thing.size * thing.direction)
-                    x2 = thing.indexPrevious + ((thing.step + thing.size) * thing.direction)
-                    _x1 = min(x1, x2)
-                    _x2 = max(x1, x2)
+                    index1 = thing.indexPrevious - (thing.size * thing.direction)
+                    index2 = thing.indexPrevious + ((thing.step + thing.size) * thing.direction)
+                    indexLower = min(index1, index2)
+                    indexHigher = max(index1, index2)
                     # rng = np.array(range(_x1, _x2 + 1))
-                    thing.indexRange = thing.calcRange(_x1, _x2)
+                    thing.indexRange = thing.calcRange(indexLower, indexHigher)
             # increment delay
             thing.delayCounter += 1
             # assign colors to indices

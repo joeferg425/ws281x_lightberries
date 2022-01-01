@@ -11,13 +11,13 @@ from typing import (
 )
 from nptyping import NDArray
 
-from LightBerries import LightPatterns
 
 try:
     from numba import jit  # pylint: disable = unused-import # noqa F401
 except ImportError:
     print("install numba for possible speed boost")
 import numpy as np
+from LightBerries import LightPatterns
 from LightBerries.RpiWS281xPatch import rpi_ws281x
 from LightBerries.LightPixels import Pixel, PixelColors
 from LightBerries.LightStrings import LightString
@@ -48,19 +48,19 @@ class LightController:
     Quick Start:
         1: Create a LightController object specifying ledCount:int, pwmGPIOpin:int,
             channelDMA:int, frequencyPWM:int
-                lf = LightController(10, 18, 10, 800000)
+                lights = LightController(10, 18, 10, 800000)
 
         2: Choose a color pattern
-                lf.useColorRainbow()
+                lights.useColorRainbow()
 
         3: Choose a function
-                lf.useFunctionCylon()
+                lights.useFunctionCylon()
 
         4: Choose a duration to run
-                lf.secondsPerMode = 60
+                lights.secondsPerMode = 60
 
         5: Run
-                lf.run()
+                lights.run()
     """
 
     def __init__(
@@ -72,8 +72,8 @@ class LightController:
         invertSignalPWM: bool = False,
         ledBrightnessFloat: float = 0.75,
         channelPWM: int = 0,
-        stripTypeLED=None,
-        gamma=None,
+        stripTypeLED: Any = None,
+        gamma: Any = None,
         debug: bool = False,
         verbose: bool = False,
     ) -> None:
@@ -100,10 +100,12 @@ class LightController:
             LightControlException: if something bad happens
         """
         try:
+            # configure logging
             if debug is True or verbose is True:
                 LOGGER.setLevel(logging.DEBUG)
             if verbose is True:
                 LOGGER.setLevel(5)
+            # create ws281x pixel strip
             pixelStrip = rpi_ws281x.PixelStrip(
                 pin=pwmGPIOpin,
                 dma=channelDMA,
@@ -115,24 +117,25 @@ class LightController:
                 strip_type=stripTypeLED,
                 brightness=int(255 * ledBrightnessFloat),
             )
+            # wrap pixel strip in my own interface object
             self.ws28xxLightString: Optional[LightString] = LightString(
                 pixelStrip=pixelStrip,
             )
 
+            # initialize instance variables
             self.privateLEDCount: int = len(self.ws28xxLightString)
             self.virtualLEDArray: NDArray[(3, Any), np.int32] = SolidColorArray(
                 arrayLength=self.privateLEDCount,
                 color=PixelColors.OFF,
             )
-            self.privateOverlayDict: Dict[int, NDArray[(3,), np.int32]] = {}
-            self.privateVirtualLEDCount: int = len(self.virtualLEDArray)
             self.virtualLEDIndexArray: NDArray[(Any,), np.int32] = np.array(
                 range(len(self.ws28xxLightString))
             )
+            self.privateOverlayDict: Dict[int, NDArray[(3,), np.int32]] = {}
+            self.privateVirtualLEDCount: int = len(self.virtualLEDArray)
             self.privateVirtualLEDIndexCount: int = len(self.virtualLEDIndexArray)
             self.privateLastModeChange: float = time.time() - 1000
             self.privateNextModeChange: float = time.time()
-
             self.privateRefreshDelay: float = 0.001
             self.privateSecondsPerMode: float = 120.0
             self.privateBackgroundColor: NDArray[(3,), np.int32] = PixelColors.OFF.array
@@ -142,8 +145,10 @@ class LightController:
             self.privateLoopForever: bool = False
             self.privateLightFunctions: List[LightFunction] = []
 
+            # give LightFunction class a pointer to this class
             LightFunction.Controller = self
 
+            # initialize stuff
             self.reset()
         except SystemExit:
             raise
@@ -2027,6 +2032,7 @@ class LightController:
             raindropChance: chance of raindrop
             stepSize: splash speed
             maxRaindrops: number of raindrops
+            fadeAmount: amount to fade LED each refresh
 
         Raises:
             SystemExit: if exiting

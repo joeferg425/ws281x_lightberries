@@ -55,6 +55,7 @@ class LightsProcess:
             _ : [description]
         """
         try:
+            # set up LightBerries controller
             lightControl = LightController(
                 ledCount=PIXEL_COUNT,
                 pwmGPIOpin=GPIO_PWM_PIN,
@@ -67,7 +68,7 @@ class LightsProcess:
                 ledBrightnessFloat=BRIGHTNESS,
                 debug=True,
             )
-            # print(dir(lf))
+            # create virtual LED array
             lightControl.setVirtualLEDArray(ConvertPixelArrayToNumpyArray(PixelArray(PIXEL_COUNT)))
             lightControl.copyVirtualLedsToWS281X()
             lightControl.refreshLEDs()
@@ -78,6 +79,7 @@ class LightsProcess:
             pattern = self.app.patternChoices[0]
             function = self.app.functionChoices[0]
             while True:
+                # check for user input
                 msg = None
                 try:
                     msg = inQ.get()
@@ -87,11 +89,17 @@ class LightsProcess:
                     print(msg)
                     if msg[0] == "go":
                         try:
+                            # reset LightBerry controller
                             lightControl.reset()
+                            # get color pattern method by name, run it
                             getattr(lightControl, pattern)()
+                            # get function method by name, run it
                             getattr(lightControl, function)()
+                            # set duration
                             lightControl.secondsPerMode = duration
+                            # run
                             lightControl.run()
+                            # turn lights off when (if) method exits
                             lightControl.off()
                             lightControl.copyVirtualLedsToWS281X()
                             lightControl.refreshLEDs()
@@ -102,6 +110,7 @@ class LightsProcess:
                         try:
                             color = msg[1]
                             print("setting color")
+                            # turn all LEDs off, then set them to new color
                             lightControl.virtualLEDArray[:] *= 0
                             lightControl.virtualLEDArray[:] += Pixel(color).array
                             lightControl.copyVirtualLedsToWS281X()
@@ -112,11 +121,14 @@ class LightsProcess:
                     elif msg[0] == "count":
                         try:
                             count = msg[1]
+                            # turn off all LEDs
                             if count < lightControl.privateLEDCount:
                                 lightControl.virtualLEDArray[:] *= 0
                                 lightControl.copyVirtualLedsToWS281X()
                                 lightControl.refreshLEDs()
                                 time.sleep(0.05)
+                            # create new LightBerry controller with new pixel count in
+                            # underlying ws281x object
                             lightControl = LightController(
                                 ledCount=count,
                                 pwmGPIOpin=GPIO_PWM_PIN,
@@ -151,7 +163,6 @@ class LightsProcess:
                             pattern = msg[1]
                         except Exception as ex:
                             print(ex)
-
                 time.sleep(0.001)
         except KeyboardInterrupt:
             pass
@@ -166,6 +177,7 @@ class App:
 
     def __init__(self) -> None:
         """The application object for tkinter GUI."""
+        # create tKinter GUI
         self.root = tk.Tk()
 
         self.ledCountInt = tk.IntVar()
@@ -219,7 +231,10 @@ class App:
         self.root.protocol("WM_DELETE_WINDOW", self.destroy)
         self.root.title("LightBerries GUI")
 
+        # create seperate process for controlling lights
         self.lights = LightsProcess(self)
+
+        # connect callbacks to GUI widgets/controls
         self.colorInt.trace("w", lambda name, index, mode, var=self.colorInt: self.updateColor(var.get()))
         self.colorString.trace(
             "w", lambda name, index, mode, var=self.colorString: self.updateColorHex(var.get())
@@ -243,6 +258,7 @@ class App:
             pass
         self.updateColor(0xFF0000)
 
+        # run the GUI thread
         self.root.mainloop()
 
     def destroy(self) -> None:

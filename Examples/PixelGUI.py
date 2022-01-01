@@ -1,5 +1,8 @@
 #!/usr/bin/python3
-"""Example of using LightBerries module functions with a GUI."""
+"""Example of using LightBerries module functions with a GUI.
+
+Use GUI to interact with individual LEDs.
+"""
 import time
 import multiprocessing
 import multiprocessing.queues
@@ -62,6 +65,7 @@ class LightsProcess:
             _ : [description]
         """
         try:
+            # create LightBerry controller
             lightControl = LightController(
                 ledCount=PIXEL_COUNT,
                 pwmGPIOpin=GPIO_PWM_PIN,
@@ -81,11 +85,10 @@ class LightsProcess:
             )
             lightControl.copyVirtualLedsToWS281X()
             lightControl.refreshLEDs()
-            # time.sleep(0.05)
-            # count = PIXEL_COUNT
-            # color = 0
-            # duration = 0
+
+            # run loop forever
             while True:
+                # check for new user input
                 msg = None
                 try:
                     msg = inQ.get()
@@ -119,6 +122,7 @@ class App:
 
     def __init__(self) -> None:
         """The application for tkinter."""
+        # create tKinter GUI. This GUI could really use some help
         self.root = tk.Tk()
 
         self.canvas = tk.Canvas(self.root)
