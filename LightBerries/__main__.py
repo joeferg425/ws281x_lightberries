@@ -2,7 +2,7 @@
 import argparse
 import logging
 import LightBerries
-from LightBerries.LightControl import LightController
+from LightBerries.LightControls import LightController
 
 LOGGER = logging.getLogger("LightBerries")
 

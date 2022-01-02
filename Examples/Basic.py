@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 """An example of using this module."""
 import LightBerries.LightPatterns
-from LightBerries.LightControl import LightController
+from LightBerries.LightControls import LightController
 from LightBerries.LightPixels import PixelColors
 
 # the number of pixels in the light string

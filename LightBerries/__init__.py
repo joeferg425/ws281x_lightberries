@@ -4,11 +4,12 @@ See https://github.com/rpi-ws281x/rpi-ws281x-python for referenced module.
 """
 import sys
 import logging
-import LightBerries.LightPixels  # noqa F401
-import LightBerries.LightPatterns  # noqa F401
-import LightBerries.LightStrings  # noqa F401
-import LightBerries.LightFunctions  # noqa F401
-import LightBerries.LightControl  # noqa F401
+from LightBerries import LightBerryExceptions  # noqa F401
+from LightBerries import LightPixels  # noqa F401
+from LightBerries import LightPatterns  # noqa F401
+from LightBerries import LightStrings  # noqa F401
+from LightBerries import LightFunctions  # noqa F401
+from LightBerries import LightControls  # noqa F401
 
 # setup logging
 LOGGER = logging.getLogger("LightBerries")

@@ -5,7 +5,7 @@ import datetime
 from typing import Any, List, Sequence, Union
 from nptyping import NDArray
 import numpy as np
-from LightBerries.LightBerryException import LightPatternException
+from LightBerries.LightBerryExceptions import LightPatternException
 from LightBerries.LightPixels import Pixel, PixelColors
 from LightBerries.LightStrings import LightString
 

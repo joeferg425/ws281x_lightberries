@@ -9,7 +9,7 @@ import multiprocessing.queues
 from tkinter.colorchooser import askcolor
 import tkinter as tk
 import LightBerries.LightPixels
-from LightBerries.LightControl import LightController
+from LightBerries.LightControls import LightController
 from LightBerries.LightPixels import Pixel
 from LightBerries.LightPatterns import ConvertPixelArrayToNumpyArray, SolidColorArray
 

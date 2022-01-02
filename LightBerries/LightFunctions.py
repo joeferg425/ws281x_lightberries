@@ -6,9 +6,9 @@ from enum import IntEnum
 from nptyping import NDArray
 import numpy as np
 import LightBerries  # pylint:disable=unused-import
+from LightBerries.LightBerryExceptions import LightFunctionException
 from LightBerries.LightPixels import Pixel, PixelColors
 from LightBerries.LightPatterns import ConvertPixelArrayToNumpyArray
-from LightBerries.LightBerryException import LightFunctionException
 
 # pylint: disable=no-member
 
@@ -21,6 +21,46 @@ class LEDFadeType(IntEnum):
     FADE_OFF = 0
     INSTANT_OFF = 1
     DONT = 2
+
+
+class SpriteState(IntEnum):
+    """Sprite function enum."""
+
+    OFF = 0
+    FADING_ON = 1
+    ON = 2
+    FADING_OFF = 3
+
+
+class RaindropStates(IntEnum):
+    """Raindrop function states."""
+
+    OFF = 0
+    SPLASH = 1
+
+
+class ThingMoves(IntEnum):
+    """States for thing movement."""
+
+    NOTHING = 0x0
+    METEOR = 0x1
+    LIGHTSPEED = 0x2
+    TURTLE = 0x4
+
+
+class ThingSizes(IntEnum):
+    """States for thing sizes."""
+
+    NOTHING = 0x0
+    GROW = 0x10
+    SHRINK = 0x20
+
+
+class ThingColors(IntEnum):
+    """States for thing colors."""
+
+    NOTHING = 0x0
+    CYCLE = 0x100
 
 
 class LightFunction:
@@ -884,7 +924,7 @@ class LightFunction:
                     # increment delay counter
                     change.delayCounter += 1
                 # if state is "fading off"
-                elif change.state == ChangeStates.FADING_OFF:
+                elif change.state == ChangeStates.FADING_OFF.value:
                     # if we are done delaying
                     if change.delayCounter >= change.delayCountMax:
                         # set state to "waiting"
@@ -894,7 +934,7 @@ class LightFunction:
                     # increment delay counter
                     change.delayCounter += 1
                 # if state is "waiting"
-                elif change.state == ChangeStates.WAIT:
+                elif change.state == ChangeStates.WAIT.value:
                     # if we are done waiting
                     if change.delayCounter >= change.delayCountMax:
                         # randomize next index
@@ -1013,15 +1053,6 @@ class LightFunction:
             LightFunctionException: if something bad happens
         """
         try:
-            # states for sprites
-            class SpriteState(IntEnum):
-                """Sprite function enum."""
-
-                OFF = 0
-                FADING_ON = 1
-                ON = 2
-                FADING_OFF = 3
-
             # if not off
             if sprite.state != SpriteState.OFF.value:
                 # semi-randomly die
@@ -1110,13 +1141,6 @@ class LightFunction:
             LightFunctionException: if something bad happens
         """
         try:
-            # raindrop states
-            class RaindropStates(IntEnum):
-                """Raindrop function states."""
-
-                OFF = 0
-                SPLASH = 1
-
             # if raindrop is off
             if raindrop.state == RaindropStates.OFF.value:
                 # randomly turn on
@@ -1197,27 +1221,6 @@ class LightFunction:
             KeyboardInterrupt: if user quits
             LightFunctionException: if something bad happens
         """
-
-        class ThingMoves(IntEnum):
-            """States for thing movement."""
-
-            NOTHING = 0x0
-            METEOR = 0x1
-            LIGHTSPEED = 0x2
-            TURTLE = 0x4
-
-        class ThingSizes(IntEnum):
-            """States for thing sizes."""
-
-            NOTHING = 0x0
-            GROW = 0x10
-            SHRINK = 0x20
-
-        class ThingColors(IntEnum):
-            """States for thing colors."""
-
-            NOTHING = 0x0
-            CYCLE = 0x100
 
         shortPeriod = 10
 
@@ -1326,9 +1329,9 @@ class LightFunction:
                     # states are mutually exclusive bits, can just add one of each
                     for _ in range(random.randint(1, 3)):
                         thing.state = (
-                            list(ThingMoves)[random.randint(0, len(ThingMoves) - 1)]
-                            + list(ThingSizes)[random.randint(0, len(ThingSizes) - 1)]
-                            + list(ThingColors)[random.randint(0, len(ThingColors) - 1)]
+                            list(ThingMoves)[random.randint(0, len(ThingMoves) - 1)].value
+                            + list(ThingSizes)[random.randint(0, len(ThingSizes) - 1)].value
+                            + list(ThingColors)[random.randint(0, len(ThingColors) - 1)].value
                         )
                     # reset step counter
                     thing.stepCounter = 0

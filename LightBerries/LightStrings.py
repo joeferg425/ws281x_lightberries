@@ -8,7 +8,7 @@ import logging
 from typing import Any, Optional, Sequence, Union, overload
 from nptyping import NDArray
 import numpy as np
-from LightBerries.LightBerryException import LightStringException
+from LightBerries.LightBerryExceptions import LightStringException
 from LightBerries.RpiWS281xPatch import rpi_ws281x
 from LightBerries.LightPixels import Pixel, PixelColors
 

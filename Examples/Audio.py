@@ -7,7 +7,7 @@ import pyaudio
 import scipy.signal
 import numpy as np
 import matplotlib.pyplot as plt
-from LightBerries.LightControl import LightController
+from LightBerries.LightControls import LightController
 
 
 class RollingDataFromQueue:

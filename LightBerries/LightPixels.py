@@ -7,7 +7,7 @@ from typing import List, Optional, Tuple, Union
 from nptyping import NDArray
 import numpy as np
 
-from LightBerries.LightBerryException import LightPixelException
+from LightBerries.LightBerryExceptions import LightPixelException
 
 LOGGER = logging.getLogger("LightBerries")
 

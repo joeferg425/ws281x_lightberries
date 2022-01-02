@@ -3,7 +3,7 @@ import time
 import multiprocessing
 from tkinter.colorchooser import askcolor
 import tkinter as tk
-from LightBerries.LightControl import LightController
+from LightBerries.LightControls import LightController
 from LightBerries.LightPixels import Pixel
 from LightBerries.LightPatterns import ConvertPixelArrayToNumpyArray, PixelArray
 
