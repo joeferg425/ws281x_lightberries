@@ -55,7 +55,12 @@ class LightOutput:
                 except multiprocessing.queues.Empty:
                     pass
             self.lightController = LightController(
-                ledCount, 18, 10, 800000, refreshCallback=lambda: self.update()
+                ledCount,
+                18,
+                10,
+                800000,
+                simulate=True,
+                refreshCallback=lambda: self.update(),
             )
             # print("started lights")
             while True:

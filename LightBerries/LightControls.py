@@ -72,6 +72,7 @@ class LightController:
         debug: bool = False,
         verbose: bool = False,
         refreshCallback: Callable = None,
+        simulate: bool = False,
     ) -> None:
         """Create a LightController object for running patterns across a rpi_ws281x LED string.
 
@@ -90,6 +91,7 @@ class LightController:
             debug: set true for some debugging messages
             verbose: set true for even more information
             refreshCallback: callback method is called whenever new LED values are sent to LED string
+            simulate: only call refreshCallback, dont use GPIO
 
         Raises:
             SystemExit: if exiting
@@ -102,21 +104,24 @@ class LightController:
                 LOGGER.setLevel(logging.DEBUG)
             if verbose is True:
                 LOGGER.setLevel(5)
+            self.simulate = simulate
             # create ws281x pixel strip
-            pixelStrip = rpi_ws281x.PixelStrip(
-                pin=pwmGPIOpin,
-                dma=channelDMA,
-                num=ledCount,
-                freq_hz=frequencyPWM,
-                channel=channelPWM,
-                invert=invertSignalPWM,
-                gamma=gamma,
-                strip_type=stripTypeLED,
-                brightness=int(255 * ledBrightnessFloat),
-            )
+            pixelStrip = None
+            if self.simulate is False:
+                pixelStrip = rpi_ws281x.PixelStrip(
+                    pin=pwmGPIOpin,
+                    dma=channelDMA,
+                    num=ledCount,
+                    freq_hz=frequencyPWM,
+                    channel=channelPWM,
+                    invert=invertSignalPWM,
+                    gamma=gamma,
+                    strip_type=stripTypeLED,
+                    brightness=int(255 * ledBrightnessFloat),
+                )
             # wrap pixel strip in my own interface object
             self.ws28xxLightString: Optional[LightString] = LightString(
-                pixelStrip=pixelStrip,
+                pixelStrip=pixelStrip, ledCount=ledCount, simulate=self.simulate
             )
 
             # initialize instance variables

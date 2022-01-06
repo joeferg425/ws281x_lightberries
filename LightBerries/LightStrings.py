@@ -22,12 +22,14 @@ class LightString(Sequence[np.int_]):
         self,
         ledCount: Optional[int] = None,
         pixelStrip: rpi_ws281x.PixelStrip = None,
+        simulate: bool = False,
     ) -> None:
         """Creates a pixel array using the rpipixelStrip library and Pixels.
 
         Args:
             ledCount: the number of LEDs desired in the LightString
             pixelStrip: the ws281x object that actually controls the LED signaling
+            simulate: dont use GPIO
 
         Raises:
             Warning: if something unexpected could happen
@@ -43,18 +45,19 @@ class LightString(Sequence[np.int_]):
             )
 
         # catch error cases first
-        if ledCount is None and pixelStrip is None:
+        if ledCount is None and pixelStrip is None and simulate is False:
             raise LightStringException(
                 "Cannot create LightString object without ledCount or " + "pixelStrip object being specified"
             )
         # catch error cases first
-        if ledCount is not None and pixelStrip is not None:
-            raise Warning(
-                "ledCount is overridden when pixelStrip is and ledcount "
-                + "are both passed to LightString constructor"
-            )
+        # if ledCount is not None and pixelStrip is not None:
+        # raise Warning(
+        # "ledCount is overridden when pixelStrip is and ledcount "
+        # + "are both passed to LightString constructor"
+        # )
 
         try:
+            self.simulate = simulate
             # use passed led count if it is valid
             if ledCount is not None:
                 self._ledCount = ledCount
@@ -301,34 +304,37 @@ class LightString(Sequence[np.int_]):
         """
         try:
             # define callback for map method (fast iterator)
-            def SetPixel(irgb):
-                try:
-                    i = irgb[0]
-                    rgb = irgb[1]
-                    value = (int(rgb[0]) << 16) + (int(rgb[1]) << 8) + int(rgb[2])
-                    self.pixelStrip.setPixelColor(i, value)
-                except SystemExit:  # pylint:disable=try-except-raise
-                    raise
-                except KeyboardInterrupt:  # pylint:disable=try-except-raise
-                    raise
-                except Exception as ex:
-                    LOGGER.exception(
-                        "Failed to set pixel %d in WS281X to value %d: %s",
-                        i,
-                        value,
-                        str(ex),
-                    )
-                    raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
+            if self.simulate is False:
+
+                def SetPixel(irgb):
+                    try:
+                        i = irgb[0]
+                        rgb = irgb[1]
+                        value = (int(rgb[0]) << 16) + (int(rgb[1]) << 8) + int(rgb[2])
+                        self.pixelStrip.setPixelColor(i, value)
+                    except SystemExit:  # pylint:disable=try-except-raise
+                        raise
+                    except KeyboardInterrupt:  # pylint:disable=try-except-raise
+                        raise
+                    except Exception as ex:
+                        LOGGER.exception(
+                            "Failed to set pixel %d in WS281X to value %d: %s",
+                            i,
+                            value,
+                            str(ex),
+                        )
+                        raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
 
             # copy this class's array into the ws281x array
-            list(
-                map(
-                    SetPixel,
-                    enumerate(self.rgbArray),
+            if self.simulate is False:
+                list(
+                    map(
+                        SetPixel,
+                        enumerate(self.rgbArray),
+                    )
                 )
-            )
-            # send the signal out
-            self.pixelStrip.show()
+                # send the signal out
+                self.pixelStrip.show()
         except SystemExit:  # pylint:disable=try-except-raise
             raise
         except KeyboardInterrupt:  # pylint:disable=try-except-raise
