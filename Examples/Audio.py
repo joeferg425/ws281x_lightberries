@@ -4,10 +4,17 @@ from enum import IntEnum
 import time
 import multiprocessing
 import pyaudio
-import scipy.signal
+
+# import scipy.signal
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
+from LightBerries import LightPatterns
 from LightBerries.LightControls import LightController
+from LightBerries.LightPixels import Pixel
+
+
+matplotlib.use("Qt5Agg")
 
 
 class RollingDataFromQueue:
@@ -22,9 +29,10 @@ class RollingDataFromQueue:
     DURATION_IN_SECONDS = 1 / 4
     SAMPLE_COUNT_TOTAL = int(SAMPLE_RATE * DURATION_IN_SECONDS)
     SAMPLE_COUNT_PER_CHUNK = SAMPLE_COUNT_TOTAL // CHUNK_COUNT
-    LED_COUNT = 100
+    LED_COUNT = 64
     SUMMATION = SAMPLE_COUNT_PER_CHUNK // 2 // LED_COUNT
     MOVING_AVERAGE_LENGTH = 4
+    EQUALIZER_SECTION_COUNT = 16
 
     def __init__(self, inQ: multiprocessing.Queue, outQ: multiprocessing.Queue) -> None:
         """Parent class for rolling data frames.
@@ -37,9 +45,9 @@ class RollingDataFromQueue:
         self.outQ = outQ
         self.newDataChunk = np.zeros((RollingDataFromQueue.SAMPLE_COUNT_PER_CHUNK))
         self.fftData = np.zeros((RollingDataFromQueue.SAMPLE_COUNT_TOTAL // 2))
-        self.fftChunks = np.zeros((RollingDataFromQueue.SAMPLE_COUNT_TOTAL // 2))
+        self.fftChunks = np.zeros((RollingDataFromQueue.EQUALIZER_SECTION_COUNT))
         self.dataFrame = np.zeros((RollingDataFromQueue.SAMPLE_COUNT_TOTAL))
-        self.plotData = np.zeros((RollingDataFromQueue.LED_COUNT))
+        self.plotData = np.zeros((RollingDataFromQueue.EQUALIZER_SECTION_COUNT))
 
         # self.window = np.hamming(RollingDataFromQueue.SAMPLE_COUNT_TOTAL)
         self.window = np.hamming(RollingDataFromQueue.SAMPLE_COUNT_PER_CHUNK)
@@ -69,7 +77,7 @@ class RollingDataFromQueue:
             self.fftData = np.nan_to_num(self.fftData)
 
             # chunk the data up for display in fewer segments
-            chunkLength = lenfftData // LightOutput.LED_COUNT
+            chunkLength = lenfftData // LightOutput.EQUALIZER_SECTION_COUNT
             self.fftChunks = np.array(
                 [
                     np.sum(self.fftData[i : i + chunkLength]) / chunkLength
@@ -79,9 +87,9 @@ class RollingDataFromQueue:
             # mask any artifacts at the ends
             self.fftChunks[-1] = np.mean(self.fftChunks)
             # trim array
-            self.fftChunks = self.fftChunks[: LightOutput.LED_COUNT]
+            self.fftChunks = self.fftChunks[: LightOutput.EQUALIZER_SECTION_COUNT]
             # remove low-frequency bias
-            self.fftChunks = scipy.signal.detrend(self.fftChunks)
+            # self.fftChunks = scipy.signal.detrend(self.fftChunks)
             # normalize so data starts from zero
             self.fftChunks -= np.min(self.fftChunks)
             # cube it to exaggurate differences
@@ -92,6 +100,10 @@ class RollingDataFromQueue:
             self.fftChunks /= np.max(self.fftChunks)
             # scale to range (0 - 255)
             self.fftChunks *= 255
+
+            # self.fftChunks = LightPatterns.ColorTransitionArray(
+            #     LightOutput.LED_COUNT, False, [Pixel(int(p)) for p in self.fftChunks]
+            # )
 
             # do moving average calculation
             self.plotData = (
@@ -132,31 +144,40 @@ class LightOutput(RollingDataFromQueue):
             while True:
                 # see if we got data
                 if self.getNewData():
-                    # define callback function
-                    def SetPixel(irgb):
-                        try:
-                            i = irgb[0]
-                            rgb = irgb[1]
-                            value = int(rgb)
-                            # bypass virtual LED array in LightBerries to try for better update speeds
-                            self.lightController.ws28xxLightString.pixelStrip.setPixelColor(i, value)
-                        except SystemExit:  # pylint:disable=try-except-raise
-                            raise
-                        except KeyboardInterrupt:  # pylint:disable=try-except-raise
-                            raise
-                        except Exception as ex:
-                            print(f"Failed to set pixel {i} in WS281X to value {value}: {str(ex)}")
-
-                    # copy this class's array into the ws281x array using fast mapping method
-                    list(
-                        map(
-                            SetPixel,
-                            enumerate(self.plotData),
+                    self.lightController.setVirtualLEDArray(
+                        LightPatterns.ColorTransitionArray(
+                            LightOutput.LED_COUNT, False, [Pixel(int(p)) for p in self.plotData]
                         )
                     )
 
+                    # define callback function
+                    # def SetPixel(irgb):
+                    #     try:
+                    #         i = irgb[0]
+                    #         rgb = irgb[1]
+                    #         value = int(rgb)
+                    #         # bypass virtual LED array in LightBerries to try for better update speeds
+                    #         self.lightController.ws28xxLightString.pixelStrip.setPixelColor(i, value)
+                    #     except SystemExit:  # pylint:disable=try-except-raise
+                    #         raise
+                    #     except KeyboardInterrupt:  # pylint:disable=try-except-raise
+                    #         raise
+                    #     except Exception as ex:
+                    #         print(f"Failed to set pixel {i} in WS281X to value {value}: {str(ex)}")
+
+                    # # copy this class's array into the ws281x array using fast mapping method
+                    # list(
+                    #     map(
+                    #         SetPixel,
+                    #         enumerate(plotData),
+                    #     )
+                    # )
+
+                    # self.vi
                     # call ws281x update method to display modified LED values
-                    self.lightController.ws28xxLightString.pixelStrip.show()
+                    self.lightController.copyVirtualLedsToWS281X()
+                    self.lightController.refreshLEDs()
+                    # self.lightController.ws28xxLightString.pixelStrip.show()
         except KeyboardInterrupt:
             pass
         except Exception as ex:
@@ -202,18 +223,24 @@ class PlotAxisChoice(IntEnum):
 class PlotOutput(RollingDataFromQueue):
     """Plots audio FFT to matplotlib's pyplot graphic."""
 
-    def __init__(self, inQ: multiprocessing.Queue, outQ: multiprocessing.Queue) -> None:
+    def __init__(
+        self, inQ: multiprocessing.Queue, outQ: multiprocessing.Queue, plotChoice: PlotChoice = None
+    ) -> None:
         """Plots audio FFT to matplotlib's pyplot graphic.
 
         Args:
             inQ: multiprocessing queue for receiving data
             outQ: multiprocessing queue for sending data
+            plotChoice: choice of what to plot
         """
         super().__init__(inQ, outQ)
         # set pyplot to use live updating plots
         plt.ion()
         # make a selection for what to plot
-        self.plotChoice = PlotChoice.AVERAGED_FFT
+        if plotChoice is None:
+            self.plotChoice = PlotChoice.AVERAGED_FFT
+        else:
+            self.plotChoice = plotChoice
         # plot axis scaling
         self.plotAxisType = PlotAxisChoice.STANDARD
         # run the process
@@ -311,7 +338,7 @@ if __name__ == "__main__":
         if PROCESS_CHOICE == ProcessChoice.LIGHTS:
             process = multiprocessing.Process(target=LightOutput, args=(inq, outq))
         else:
-            process = multiprocessing.Process(target=PlotOutput, args=(inq, outq))
+            process = multiprocessing.Process(target=PlotOutput, args=(inq, outq, PlotChoice.AVERAGED_FFT))
 
         # start the selected process
         process.start()
