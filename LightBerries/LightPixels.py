@@ -176,6 +176,17 @@ class Pixel:
         )
 
     @property
+    def pixel(
+        self,
+    ) -> "Pixel":
+        """Return Pixel value with defaul RGB order.
+
+        Returns:
+            this pixel with default RGB order
+        """
+        return Pixel(self.tuple, DEFAULT_PIXEL_ORDER)
+
+    @property
     def array(
         self,
     ) -> NDArray[(3,), np.int32]:
@@ -186,32 +197,37 @@ class Pixel:
         """
         return np.array(self.tuple)
 
+    @property
+    def hexstr(self):
+        rgb = self.tuple
+        return f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
+
 
 class PixelColors:
     """List of commonly used colors for ease of use."""
 
-    OFF = Pixel((0, 0, 0), order=EnumLEDOrder.RGB)
-    RED2 = Pixel((128, 0, 0), order=EnumLEDOrder.RGB)
-    RED = Pixel((255, 0, 0), order=EnumLEDOrder.RGB)
-    ORANGE2 = Pixel((128, 128, 0), order=EnumLEDOrder.RGB)
-    ORANGE = Pixel((255, 128, 0), order=EnumLEDOrder.RGB)
-    YELLOW = Pixel((255, 210, 80), order=EnumLEDOrder.RGB)
-    LIME = Pixel((128, 255, 0), order=EnumLEDOrder.RGB)
-    GREEN2 = Pixel((0, 128, 0), order=EnumLEDOrder.RGB)
-    GREEN = Pixel((0, 255, 0), order=EnumLEDOrder.RGB)
-    TEAL = Pixel((0, 255, 128), order=EnumLEDOrder.RGB)
-    CYAN2 = Pixel((0, 128, 128), order=EnumLEDOrder.RGB)
-    CYAN = Pixel((0, 255, 255), order=EnumLEDOrder.RGB)
-    SKY = Pixel((0, 128, 255), order=EnumLEDOrder.RGB)
-    BLUE = Pixel((0, 0, 255), order=EnumLEDOrder.RGB)
-    BLUE2 = Pixel((0, 0, 128), order=EnumLEDOrder.RGB)
-    VIOLET = Pixel((128, 0, 255), order=EnumLEDOrder.RGB)
-    PURPLE = Pixel((128, 0, 128), order=EnumLEDOrder.RGB)
-    MIDNIGHT = Pixel((70, 0, 128), order=EnumLEDOrder.RGB)
-    MAGENTA = Pixel((255, 0, 255), order=EnumLEDOrder.RGB)
-    PINK = Pixel((255, 0, 128), order=EnumLEDOrder.RGB)
-    WHITE = Pixel((255, 255, 255), order=EnumLEDOrder.RGB)
-    GRAY = Pixel((128, 118, 108), order=EnumLEDOrder.RGB)
+    OFF = Pixel((0, 0, 0), order=EnumLEDOrder.RGB).pixel
+    RED2 = Pixel((128, 0, 0), order=EnumLEDOrder.RGB).pixel
+    RED = Pixel((255, 0, 0), order=EnumLEDOrder.RGB).pixel
+    ORANGE2 = Pixel((128, 128, 0), order=EnumLEDOrder.RGB).pixel
+    ORANGE = Pixel((255, 128, 0), order=EnumLEDOrder.RGB).pixel
+    YELLOW = Pixel((255, 210, 80), order=EnumLEDOrder.RGB).pixel
+    LIME = Pixel((128, 255, 0), order=EnumLEDOrder.RGB).pixel
+    GREEN2 = Pixel((0, 128, 0), order=EnumLEDOrder.RGB).pixel
+    GREEN = Pixel((0, 255, 0), order=EnumLEDOrder.RGB).pixel
+    TEAL = Pixel((0, 255, 128), order=EnumLEDOrder.RGB).pixel
+    CYAN2 = Pixel((0, 128, 128), order=EnumLEDOrder.RGB).pixel
+    CYAN = Pixel((0, 255, 255), order=EnumLEDOrder.RGB).pixel
+    SKY = Pixel((0, 128, 255), order=EnumLEDOrder.RGB).pixel
+    BLUE = Pixel((0, 0, 255), order=EnumLEDOrder.RGB).pixel
+    BLUE2 = Pixel((0, 0, 128), order=EnumLEDOrder.RGB).pixel
+    VIOLET = Pixel((128, 0, 255), order=EnumLEDOrder.RGB).pixel
+    PURPLE = Pixel((128, 0, 128), order=EnumLEDOrder.RGB).pixel
+    MIDNIGHT = Pixel((70, 0, 128), order=EnumLEDOrder.RGB).pixel
+    MAGENTA = Pixel((255, 0, 255), order=EnumLEDOrder.RGB).pixel
+    PINK = Pixel((255, 0, 128), order=EnumLEDOrder.RGB).pixel
+    WHITE = Pixel((255, 255, 255), order=EnumLEDOrder.RGB).pixel
+    GRAY = Pixel((128, 118, 108), order=EnumLEDOrder.RGB).pixel
 
     @classmethod
     def pseudoRandom(
