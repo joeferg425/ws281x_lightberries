@@ -3,6 +3,7 @@ import time
 import random
 import logging
 from typing import (
+    Callable,
     Dict,
     List,
     Optional,
@@ -70,6 +71,7 @@ class LightController:
         gamma: Any = None,
         debug: bool = False,
         verbose: bool = False,
+        refreshCallback: Callable = None,
     ) -> None:
         """Create a LightController object for running patterns across a rpi_ws281x LED string.
 
@@ -87,6 +89,7 @@ class LightController:
             gamma: see https://github.com/rpi-ws281x/rpi-ws281x-python
             debug: set true for some debugging messages
             verbose: set true for even more information
+            refreshCallback: callback method is called whenever new LED values are sent to LED string
 
         Raises:
             SystemExit: if exiting
@@ -142,6 +145,7 @@ class LightController:
             # give LightFunction class a pointer to this class
             LightFunction.Controller = self
 
+            self.refreshCallback: Callable = refreshCallback
             # initialize stuff
             self.reset()
         except SystemExit:
@@ -549,6 +553,8 @@ class LightController:
         """
         try:
             # call light string's refresh method to send the communications out to the addressable LEDs
+            if isinstance(self.refreshCallback, Callable):
+                self.refreshCallback()
             if self.ws28xxLightString is not None:
                 self.ws28xxLightString.refresh()
         except SystemExit:
@@ -766,7 +772,7 @@ class LightController:
             LightControlException: if something bad happens
         """
         try:
-            LOGGER.info("%s.%s:", self.__class__.__name__, self.run.__name__)
+            LOGGER.debug("%s.%s:", self.__class__.__name__, self.run.__name__)
             # set start time
             self.privateLastModeChange = time.time()
             # set a target time to change
@@ -1442,6 +1448,7 @@ class LightController:
         Args:
             shiftAmount: the number of pixels the marquee shifts on each update
             delayCount: number of refreshes to delay for each cycle
+            initialDirection: a positive or negative value for marquee start direction
 
         Raises:
             SystemExit: if exiting
@@ -1462,7 +1469,7 @@ class LightController:
                 _delayCount = int(delayCount)
 
             if initialDirection is not None:
-                _initialDirection: int = int(initialDirection)
+                _initialDirection: int = 1 if (initialDirection >= 1) else -1
 
             # turn off all LEDs every time so we can turn on new ones
             off: LightFunction = LightFunction(LightFunction.functionOff, self.colorSequence)
@@ -1587,6 +1594,7 @@ class LightController:
         """Reflect a color sequence and shift the reflections toward each other in the middle.
 
         Args:
+            shiftAmount: amount the merge will shift in each update
             delayCount: length of reflected segments
 
         Raises:
@@ -2248,6 +2256,7 @@ class LightController:
 
         Args:
             twinkleChance: chance of a twinkle
+            colorSequence: the list of colors to be used when briefly flashing an LED
 
         Raises:
             SystemExit: if exiting
