@@ -414,6 +414,7 @@ class LightController:
             LightControlException: if something bad happens
         """
         try:
+            LOGGER.debug("%s.%s:", self.__class__.__name__, self.reset.__name__)
             self.privateLightFunctions = []
             if self.virtualLEDCount > self.realLEDCount:
                 self.setVirtualLEDArray(self.virtualLEDArray[: self.realLEDCount])
@@ -466,13 +467,13 @@ class LightController:
             # assign new LED array to virtual LEDs
             self.privateVirtualLEDCount = len(self.virtualLEDArray)
             # set our indices for virtual LEDs
-            self.privateVirtualLEDIndexCount = self.privateVirtualLEDCount
+            self.privateVirtualLEDIndexCount = self.virtualLEDCount
             # create array of index values for manipulation if needed
-            self.virtualLEDIndexArray = np.array(range(self.privateVirtualLEDIndexCount))
+            self.virtualLEDIndexArray = np.arange(self.virtualLEDCount)
             # if the array is smaller than the actual light strand, make our entire strand addressable
             if self.privateVirtualLEDIndexCount < self.realLEDCount:
                 self.privateVirtualLEDIndexCount = self.realLEDCount
-                self.virtualLEDIndexArray = np.array(range(self.privateVirtualLEDIndexCount))
+                self.virtualLEDIndexArray = np.arange(self.privateVirtualLEDIndexCount)
                 self.virtualLEDArray = np.concatenate(
                     (
                         self.virtualLEDArray,
@@ -2241,6 +2242,7 @@ class LightController:
     def useOverlayTwinkle(
         self,
         twinkleChance: float = None,
+        colorSequence: NDArray[(3, Any), np.int32] = None,
     ) -> None:
         """Randomly sets some lights to 'twinkleColor' temporarily.
 
@@ -2256,13 +2258,16 @@ class LightController:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.useOverlayTwinkle.__name__)
 
             _twinkleChance: float = random.uniform(0.991, 0.995)
+            _colorSequence = self.colorSequence.copy()
 
             if twinkleChance is not None:
                 _twinkleChance = float(twinkleChance)
 
-            twinkle: LightFunction = LightFunction(LightFunction.overlayTwinkle, self.colorSequence)
+            if colorSequence is not None:
+                _colorSequence = colorSequence
+
+            twinkle: LightFunction = LightFunction(LightFunction.overlayTwinkle, _colorSequence)
             twinkle.random = _twinkleChance
-            twinkle.colorSequence = self.colorSequence
             self.privateLightFunctions.append(twinkle)
         except SystemExit:
             raise

@@ -146,6 +146,8 @@ class App:
         self.mainFrame.columnconfigure(2, weight=1)
         self.mainFrame.columnconfigure(3, weight=1)
         self.mainFrame.columnconfigure(4, weight=1)
+        self.mainFrame.columnconfigure(5, weight=1)
+        self.mainFrame.columnconfigure(6, weight=1)
 
         # update scrollregion after starting 'mainloop'
         # when all widgets are in canvas
@@ -210,6 +212,29 @@ class App:
         )
         self.root.bind("<Return>", lambda event: self.configureLightBerries())
 
+        self.leftClickColorBtn = tk.Button(
+            self.mainFrame, bg="black", fg="white", text="Left-Click\nColor", width=5, height=2
+        )
+        self.leftClickColorBtn.grid(
+            row=0,
+            column=5,
+            sticky="news",
+        )
+        self.leftClickColorBtn.ledIndex = None
+        self.leftClickColorBtn.bind("<Button-1>", self.getColor)
+
+        self.rightClickColorBtn = tk.Button(
+            self.mainFrame, bg="black", fg="white", text="Right-Click\nColor", width=5, height=2
+        )
+        self.rightClickColorBtn.grid(
+            row=0,
+            column=6,
+            sticky="news",
+        )
+        self.rightClickColorBtn.ledIndex = None
+        self.rightClickColorBtn.bind("<Button-1>", self.getColor)
+        self.rightClickColorBtn.bind("<Button-3>", self.getColor)
+
         self.buttonFrame = tk.Frame(
             self.mainFrame,
         )
@@ -250,6 +275,7 @@ class App:
                         sticky="nw",
                     )
                     btn.bind("<Button-1>", self.getColor)
+                    btn.bind("<Button-3>", self.getColor2)
                     btn.grid(column=column, row=row, sticky="nw")
                     btn.ledIndex = counter
                     counter += 1
@@ -268,18 +294,41 @@ class App:
         Args:
             event: tkinter widget event object
         """
-        color = askcolor(event.widget["background"])
-        if color is not None:
-            color = int(color[1][1:], 16)
-            colorHex = f"#{color:06X}"
-            event.widget.configure(bg=colorHex)
-            invertColor = 0xFFFFFF - color
-            invertColorHex = "#" + f"{invertColor:06X}"[-6:]
-            event.widget.configure(fg=invertColorHex)
+        if event.widget.ledIndex is None:
+            color = askcolor(event.widget["background"])
+            if color is not None:
+                color = int(color[1][1:], 16)
+                colorHex = f"#{color:06X}"
+                event.widget.configure(bg=colorHex)
+                invertColor = 0xFFFFFF - color
+                invertColorHex = "#" + f"{invertColor:06X}"[-6:]
+                event.widget.configure(fg=invertColorHex)
+        else:
+            color = self.leftClickColorBtn["background"]
+            event.widget.configure(bg=color)
+            invertColor = self.leftClickColorBtn["foreground"]
+            event.widget.configure(fg=invertColor)
             try:
+                color = int(color[1:], 16)
                 self.lights.inQ.put_nowait(("color", event.widget.ledIndex, color))
             except multiprocessing.queues.Full:
                 pass
+
+    def getColor2(self, event) -> None:
+        """Get a color from user, pass it to LightBerries.
+
+        Args:
+            event: tkinter widget event object
+        """
+        color = self.rightClickColorBtn["background"]
+        event.widget.configure(bg=color)
+        invertColor = self.rightClickColorBtn["foreground"]
+        event.widget.configure(fg=invertColor)
+        try:
+            color = int(color[1:], 16)
+            self.lights.inQ.put_nowait(("color", event.widget.ledIndex, color))
+        except multiprocessing.queues.Full:
+            pass
 
     def __del__(self) -> None:
         """Destroy the object cleanly."""
