@@ -112,7 +112,7 @@ def DefaultColorSequence() -> NDArray[(3, Any), np.int32]:
         raise
     except Exception as ex:
         LOGGER.exception("Error in %s.%s: %s", __file__, DefaultColorSequence.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
     return ConvertPixelArrayToNumpyArray(DEFAULT_COLOR_SEQUENCE)
 
 
@@ -140,7 +140,7 @@ def PixelArray(
         raise
     except Exception as ex:
         LOGGER.exception("Error in %s.%s: %s", __file__, PixelArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 def ConvertPixelArrayToNumpyArray(
@@ -167,7 +167,7 @@ def ConvertPixelArrayToNumpyArray(
         raise
     except Exception as ex:
         LOGGER.exception("Error in %s.%s: %s", __name__, ConvertPixelArrayToNumpyArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 def SolidColorArray(
@@ -200,7 +200,7 @@ def SolidColorArray(
         raise
     except Exception as ex:
         LOGGER.exception("Error in %s.%s: %s", __name__, SolidColorArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 def ColorTransitionArray(
@@ -276,7 +276,7 @@ def ColorTransitionArray(
         raise
     except Exception as ex:
         LOGGER.exception("Error in %s.%s: %s", __name__, ColorTransitionArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 def RainbowArray(
@@ -314,7 +314,7 @@ def RainbowArray(
         raise
     except Exception as ex:
         LOGGER.exception("Error in %s.%s: %s", __name__, RainbowArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 def RepeatingColorSequenceArray(
@@ -360,7 +360,7 @@ def RepeatingColorSequenceArray(
         raise
     except Exception as ex:
         LOGGER.exception("Error in %s.%s: %s", __name__, RepeatingColorSequenceArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 def RepeatingRainbowArray(
@@ -394,7 +394,7 @@ def RepeatingRainbowArray(
         raise
     except Exception as ex:
         LOGGER.exception("Error in %s.%s: %s", __name__, RepeatingRainbowArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 def ReflectArray(
@@ -462,7 +462,7 @@ def ReflectArray(
         raise
     except Exception as ex:
         LOGGER.exception("Error in %s.%s: %s", __name__, ReflectArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 def RandomArray(
@@ -506,7 +506,7 @@ def RandomArray(
         raise
     except Exception as ex:
         LOGGER.exception("Error in %s.%s: %s", __name__, RandomArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 def PseudoRandomArray(
@@ -548,7 +548,7 @@ def PseudoRandomArray(
         raise
     except Exception as ex:
         LOGGER.exception("Error in %s.%s: %s", __name__, PseudoRandomArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 def ColorStretchArray(
@@ -588,7 +588,7 @@ def ColorStretchArray(
         raise
     except Exception as ex:
         LOGGER.exception("Error in %s.%s: %s", __name__, ColorStretchArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 if __name__ == "__main__":

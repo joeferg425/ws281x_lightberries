@@ -3,9 +3,9 @@ import time
 import multiprocessing
 from tkinter.colorchooser import askcolor
 import tkinter as tk
-from LightBerries.LightControls import LightController
+from LightBerries.LightArrayControls import LightArrayController
 from LightBerries.LightPixels import Pixel
-from LightBerries.LightPatterns import ConvertPixelArrayToNumpyArray, PixelArray
+from LightBerries.LightArrayPatterns import ConvertPixelArrayToNumpyArray, PixelArray
 
 # the number of pixels in the light string
 PIXEL_COUNT = 100
@@ -56,7 +56,7 @@ class LightsProcess:
         """
         try:
             # set up LightBerries controller
-            lightControl = LightController(
+            lightControl = LightArrayController(
                 ledCount=PIXEL_COUNT,
                 pwmGPIOpin=GPIO_PWM_PIN,
                 channelDMA=DMA_CHANNEL,
@@ -69,7 +69,7 @@ class LightsProcess:
                 debug=True,
             )
             # create virtual LED array
-            lightControl.setVirtualLEDArray(ConvertPixelArrayToNumpyArray(PixelArray(PIXEL_COUNT)))
+            lightControl.setVirtualLEDBuffer(ConvertPixelArrayToNumpyArray(PixelArray(PIXEL_COUNT)))
             lightControl.copyVirtualLedsToWS281X()
             lightControl.refreshLEDs()
             time.sleep(0.05)
@@ -111,8 +111,8 @@ class LightsProcess:
                             color = msg[1]
                             print("setting color")
                             # turn all LEDs off, then set them to new color
-                            lightControl.virtualLEDArray[:] *= 0
-                            lightControl.virtualLEDArray[:] += Pixel(color).array
+                            lightControl.virtualLEDBuffer[:] *= 0
+                            lightControl.virtualLEDBuffer[:] += Pixel(color).array
                             lightControl.copyVirtualLedsToWS281X()
                             lightControl.refreshLEDs()
                             time.sleep(0.05)
@@ -123,13 +123,13 @@ class LightsProcess:
                             count = msg[1]
                             # turn off all LEDs
                             if count < lightControl.privateLEDCount:
-                                lightControl.virtualLEDArray[:] *= 0
+                                lightControl.virtualLEDBuffer[:] *= 0
                                 lightControl.copyVirtualLedsToWS281X()
                                 lightControl.refreshLEDs()
                                 time.sleep(0.05)
                             # create new LightBerry controller with new pixel count in
                             # underlying ws281x object
-                            lightControl = LightController(
+                            lightControl = LightArrayController(
                                 ledCount=count,
                                 pwmGPIOpin=GPIO_PWM_PIN,
                                 channelDMA=DMA_CHANNEL,
@@ -142,7 +142,7 @@ class LightsProcess:
                                 debug=True,
                             )
                             lightControl.secondsPerMode = duration
-                            lightControl.virtualLEDArray[:] += Pixel(color).array
+                            lightControl.virtualLEDBuffer[:] += Pixel(color).array
                             lightControl.copyVirtualLedsToWS281X()
                             lightControl.refreshLEDs()
                             time.sleep(0.05)
@@ -207,13 +207,13 @@ class App:
         self.colorbutton.grid(row=1, column=3)
 
         self.functionString = tk.StringVar()
-        self.functionChoices = [f for f in dir(LightController) if f[:11] == "useFunction"]
+        self.functionChoices = [f for f in dir(LightArrayController) if f[:11] == "useFunction"]
         self.functionChoices.sort()
         self.functionString.set(self.functionChoices[0])
         self.functionDropdown = tk.OptionMenu(self.root, self.functionString, *self.functionChoices)
         self.functionDropdown.grid(row=2, column=1)
         self.patternString = tk.StringVar()
-        self.patternChoices = [f for f in dir(LightController) if f[:8] == "useColor"]
+        self.patternChoices = [f for f in dir(LightArrayController) if f[:8] == "useColor"]
         self.patternChoices.sort()
         self.patternString.set(self.patternChoices[0])
         self.patternDropdown = tk.OptionMenu(self.root, self.patternString, *self.patternChoices)

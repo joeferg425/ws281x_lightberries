@@ -2,7 +2,7 @@
 import argparse
 import logging
 import LightBerries
-from LightBerries.LightControls import LightController
+from LightBerries.LightArrayControls import LightArrayController
 
 LOGGER = logging.getLogger("LightBerries")
 
@@ -37,13 +37,13 @@ if __name__ == "__main__":  # pylint: disable=invalid-name
     parser.add_argument(
         "-f",
         "--function",
-        choices=[f.replace("useFunction", "") for f in dir(LightController) if "useFunction" in f],
+        choices=[f.replace("useFunction", "") for f in dir(LightArrayController) if "useFunction" in f],
         help="the name of the function to demo using randomized parameters",
     )
     parser.add_argument(
         "-c",
         "--color",
-        choices=[f.replace("useColor", "") for f in dir(LightController) if "useColor" in f],
+        choices=[f.replace("useColor", "") for f in dir(LightArrayController) if "useColor" in f],
         help="the name of the color pattern to demo using randomized parameters",
     )
     args = parser.parse_args()
@@ -61,7 +61,7 @@ if __name__ == "__main__":  # pylint: disable=invalid-name
         COLORS = ["useColor" + args.color]
 
     # create the light-function object
-    lightControl = LightController(
+    lightControl = LightArrayController(
         ledCount=PIXEL_COUNT,
         pwmGPIOpin=GPIO_PWM_PIN,
         channelDMA=DMA_CHANNEL,

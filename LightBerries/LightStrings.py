@@ -83,7 +83,7 @@ class LightString(Sequence[np.int_]):
                 inspect.stack()[0][3],
                 ex,
             )
-            raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightStringException from ex
 
         try:
             # validate led count
@@ -110,7 +110,7 @@ class LightString(Sequence[np.int_]):
                 inspect.stack()[0][3],
                 ex,
             )
-            raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightStringException from ex
 
         # try to force cleanup of underlying c objects when user exits
         atexit.register(self.__del__)
@@ -140,7 +140,7 @@ class LightString(Sequence[np.int_]):
                 raise
             except Exception as ex:
                 LOGGER.exception("Failed to clean up WS281X object: %s", str(ex))
-                raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
+                raise LightStringException from ex
 
     def __len__(
         self,
@@ -196,7 +196,7 @@ class LightString(Sequence[np.int_]):
             raise
         except Exception as ex:
             LOGGER.exception('Failed to get key "%s" from %s: %s', key, self.rgbArray, ex)
-            raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightStringException from ex
 
     def __setitem__(
         self,
@@ -242,7 +242,7 @@ class LightString(Sequence[np.int_]):
             raise
         except Exception as ex:
             LOGGER.exception("Failed to set light %s to value %s: %s", key, value, ex)
-            raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightStringException from ex
 
     def __enter__(
         self,
@@ -289,7 +289,7 @@ class LightString(Sequence[np.int_]):
                     LightString(0),
                     ex,
                 )
-                raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
+                raise LightStringException from ex
         self.refresh()
 
     def refresh(
@@ -323,7 +323,7 @@ class LightString(Sequence[np.int_]):
                             value,
                             str(ex),
                         )
-                        raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
+                        raise LightStringException from ex
 
             # copy this class's array into the ws281x array
             if self.simulate is False:
@@ -341,7 +341,7 @@ class LightString(Sequence[np.int_]):
             raise
         except Exception as ex:
             LOGGER.exception('Function call "show" in WS281X object failed: %s', str(ex))
-            raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightStringException from ex
 
 
 if __name__ == "__main__":

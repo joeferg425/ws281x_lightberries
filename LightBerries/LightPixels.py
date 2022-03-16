@@ -103,7 +103,7 @@ class Pixel:
                 inspect.stack()[0][3],
                 ex,
             )
-            raise LightPixelException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightPixelException from ex
 
     def __len__(
         self,
