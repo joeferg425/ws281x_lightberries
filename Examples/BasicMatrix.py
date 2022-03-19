@@ -2,6 +2,7 @@
 """An example of using this module."""
 import LightBerries.LightMatrixPatterns
 from LightBerries.LightMatrixControls import LightMatrixController
+from LightBerries.LightPixels import PixelColors
 
 # the number of pixels in the light string
 PIXEL_ROW_COUNT = 16
@@ -42,15 +43,20 @@ lightControl = LightMatrixController(
 # lightControl.useColorMatrix(
 # matrix=LightBerries.LightMatrixPatterns.Spectrum2(PIXEL_ROW_COUNT * 10, PIXEL_COLUMN_COUNT),
 # )
-lightControl.setVirtualLEDBuffer(
-    LightBerries.LightMatrixPatterns.Spectrum2(PIXEL_ROW_COUNT, PIXEL_COLUMN_COUNT),
-)
+# lightControl.setVirtualLEDBuffer(
+# LightBerries.LightMatrixPatterns.Spectrum2(PIXEL_ROW_COUNT, PIXEL_COLUMN_COUNT),
+# )
 # lightControl.setVirtualLEDBuffer(
 # LightBerries.LightMatrixPatterns.SingleLED(PIXEL_ROW_COUNT, PIXEL_COLUMN_COUNT),
 # )
+lightControl.setVirtualLEDBuffer(
+    LightBerries.LightMatrixPatterns.TextMatrix("hello world", color=PixelColors.pseudoRandom()),
+)
 # configure a function using a "useFunction" method
-lightControl.useFunctionColorFlux()
-# lightControl.useFunctionNone()
+lightControl.useFunctionMatrixMarquee()
+# lightControl.useFunctionMatrixColorFlux()
+# lightControl.useColorSequencePseudoRandom()
+# lightControl.useFunctionMatrixBounce(colorChange=True)
 # run the configuration until killed
 try:
     lightControl.run()

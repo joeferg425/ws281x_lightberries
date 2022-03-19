@@ -15,7 +15,7 @@ from nptyping import NDArray
 import numpy as np
 from LightBerries import LightArrayPatterns
 from LightBerries.RpiWS281xPatch import rpi_ws281x
-from LightBerries.LightBerryExceptions import LightControlException
+from LightBerries.LightBerryExceptions import LightBerryException, LightControlException
 from LightBerries.LightPixels import Pixel, PixelColors
 from LightBerries.LightStrings import LightString
 from LightBerries.LightArrayFunctions import (
@@ -175,13 +175,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                "__init__",
-                ex,
-            )
             raise LightControlException from ex
 
     def __del__(
@@ -205,13 +201,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.__del__.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     @property
@@ -455,13 +447,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.reset.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def setVirtualLEDBuffer(
@@ -486,10 +474,14 @@ class LightArrayController:
                 _ledBuffer = ledBuffer
             else:
                 _ledBuffer = SolidColorArray(arrayLength=self.realLEDCount, color=self.backgroundColor)
-            _ledBufferLen = _ledBuffer.shape[0]
+            _ledBufferLen = int(_ledBuffer.size / 3)
 
             # check assignment length
-            if _ledBufferLen >= self.realLEDCount:
+            if (
+                _ledBufferLen >= self.realLEDCount
+                or len(_ledBuffer.shape) > 2
+                or len(self.virtualLEDBuffer.shape) > 2
+            ):
                 self.virtualLEDBuffer = _ledBuffer
             else:
                 self.virtualLEDBuffer[:_ledBufferLen] = _ledBuffer
@@ -501,7 +493,7 @@ class LightArrayController:
             # create array of index values for manipulation if needed
             self.virtualLEDIndexBuffer = np.arange(self.virtualLEDCount)
             # if the array is smaller than the actual light strand, make our entire strand addressable
-            if self.privateVirtualLEDIndexCount < self.realLEDCount:
+            if self.privateVirtualLEDIndexCount < self.realLEDCount and len(self.virtualLEDBuffer.shape) < 3:
                 self.privateVirtualLEDIndexCount = self.realLEDCount
                 self.virtualLEDIndexBuffer = np.arange(self.privateVirtualLEDIndexCount)
                 self.virtualLEDBuffer = np.concatenate(
@@ -516,13 +508,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.setVirtualLEDBuffer.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def copyVirtualLedsToWS281X(
@@ -559,13 +547,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.copyVirtualLedsToWS281X.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def refreshLEDs(
@@ -588,13 +572,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.refreshLEDs.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def off(
@@ -616,13 +596,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.off.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def _runFunctions(
@@ -643,13 +619,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self._runFunctions.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def _copyOverlays(
@@ -674,13 +646,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self._runFunctions.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def getRandomIndex(
@@ -702,13 +670,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.getRandomIndex.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def getRandomIndices(
@@ -737,13 +701,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.getRandomIndices.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def getRandomDirection(self) -> int:
@@ -825,8 +785,9 @@ class LightArrayController:
                     raise
                 except SystemExit:
                     raise
+                except LightBerryException:
+                    raise
                 except Exception as ex:
-                    LOGGER.exception("_Run Loop Error: %s", (str(ex),))
                     raise LightControlException from ex
             self.privateLastModeChange = time.time()
             if self.secondsPerMode is None:
@@ -885,13 +846,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useColorSingle.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useColorSinglePseudoRandom(
@@ -924,13 +881,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useColorSinglePseudoRandom.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useColorSingleRandom(
@@ -963,13 +916,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useColorSingleRandom.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useColorSequence(
@@ -1009,13 +958,9 @@ class LightArrayController:
             raise
         except SystemExit:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useColorSequence.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useColorSequencePseudoRandom(
@@ -1057,13 +1002,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useColorSequencePseudoRandom.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useColorSequenceRandom(
@@ -1105,13 +1046,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useColorSequenceRandom.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useColorSequenceRepeating(
@@ -1159,13 +1096,9 @@ class LightArrayController:
             raise
         except SystemExit:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useColorSequenceRepeating.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useColorTransition(
@@ -1223,13 +1156,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useColorTransition.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useColorTransitionRepeating(
@@ -1290,13 +1219,9 @@ class LightArrayController:
             raise
         except SystemExit:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useColorTransitionRepeating.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useColorRainbow(
@@ -1334,13 +1259,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useColorRainbow.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useColorRainbowRepeating(
@@ -1382,13 +1303,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useColorRainbowRepeating.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useFunctionNone(
@@ -1412,13 +1329,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useFunctionNone.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useFunctionSolidColorCycle(
@@ -1460,13 +1373,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useFunctionSolidColorCycle.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useFunctionMarquee(
@@ -1537,13 +1446,9 @@ class LightArrayController:
             raise
         except SystemExit:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useFunctionMarquee.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useFunctionCylon(
@@ -1615,13 +1520,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useFunctionCylon.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useFunctionMerge(
@@ -1689,13 +1590,9 @@ class LightArrayController:
             raise
         except SystemExit:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useFunctionMerge.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useFunctionAccelerate(
@@ -1776,13 +1673,9 @@ class LightArrayController:
             raise
         except SystemExit:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useFunctionAccelerate.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useFunctionRandomChange(
@@ -1886,13 +1779,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useFunctionRandomChange.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useFunctionMeteors(
@@ -2027,13 +1916,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useFunctionMeteors.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useFunctionSprites(
@@ -2103,13 +1988,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useFunctionSprites.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useFunctionRaindrops(
@@ -2205,13 +2086,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useFunctionRaindrops.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useFunctionAlive(
@@ -2302,13 +2179,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useFunctionAlive.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useOverlayTwinkle(
@@ -2348,13 +2221,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useOverlayTwinkle.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def useOverlayBlink(
@@ -2389,13 +2258,9 @@ class LightArrayController:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.useOverlayBlink.__name__,
-                ex,
-            )
             raise LightControlException from ex
 
     def demo(
