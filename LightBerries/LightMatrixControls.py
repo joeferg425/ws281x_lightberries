@@ -1,16 +1,11 @@
 import random
-from typing import Any, Callable, List
+from typing import Any, Callable
 
 import numpy as np
 from LightBerries.LightArrayControls import LightArrayController
 from nptyping import NDArray
 import logging
 from LightBerries.LightArrayFunctions import LightArrayFunction
-from LightBerries.LightArrayPatterns import (
-    DEFAULT_BACKGROUND_COLOR,
-    ConvertPixelArrayToNumpyArray,
-    DefaultColorSequence,
-)
 from LightBerries.LightBerryExceptions import LightBerryException, LightControlException
 from LightBerries.LightMatrixFunctions import LightMatrixFunction
 from LightBerries.LightMatrixPatterns import (
@@ -20,7 +15,7 @@ from LightBerries.LightMatrixPatterns import (
     Spectrum2,
     TextMatrix,
 )
-from LightBerries.LightPixels import Pixel, PixelColors
+from LightBerries.LightPixels import PixelColors
 
 LOGGER = logging.getLogger("LightBerries")
 
