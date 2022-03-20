@@ -5,7 +5,7 @@ import datetime
 from typing import Any, List, Sequence, Union
 from nptyping import NDArray
 import numpy as np
-from LightBerries.LightBerryExceptions import LightPatternException
+from LightBerries.LightBerryExceptions import LightBerryException, LightPatternException
 from LightBerries.LightPixels import Pixel, PixelColors
 from LightBerries.LightStrings import LightString
 
@@ -110,8 +110,9 @@ def DefaultColorSequence() -> NDArray[(3, Any), np.int32]:
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __file__, DefaultColorSequence.__name__, str(ex))
         raise LightPatternException from ex
     return ConvertPixelArrayToNumpyArray(DEFAULT_COLOR_SEQUENCE)
 
@@ -138,8 +139,9 @@ def PixelArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __file__, PixelArray.__name__, str(ex))
         raise LightPatternException from ex
 
 
@@ -165,8 +167,9 @@ def ConvertPixelArrayToNumpyArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, ConvertPixelArrayToNumpyArray.__name__, str(ex))
         raise LightPatternException from ex
 
 
@@ -198,8 +201,9 @@ def SolidColorArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, SolidColorArray.__name__, str(ex))
         raise LightPatternException from ex
 
 
@@ -274,8 +278,9 @@ def ColorTransitionArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, ColorTransitionArray.__name__, str(ex))
         raise LightPatternException from ex
 
 
@@ -312,8 +317,9 @@ def RainbowArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, RainbowArray.__name__, str(ex))
         raise LightPatternException from ex
 
 
@@ -358,8 +364,9 @@ def RepeatingColorSequenceArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, RepeatingColorSequenceArray.__name__, str(ex))
         raise LightPatternException from ex
 
 
@@ -392,8 +399,9 @@ def RepeatingRainbowArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, RepeatingRainbowArray.__name__, str(ex))
         raise LightPatternException from ex
 
 
@@ -460,8 +468,9 @@ def ReflectArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, ReflectArray.__name__, str(ex))
         raise LightPatternException from ex
 
 
@@ -504,8 +513,9 @@ def RandomArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, RandomArray.__name__, str(ex))
         raise LightPatternException from ex
 
 
@@ -546,8 +556,9 @@ def PseudoRandomArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, PseudoRandomArray.__name__, str(ex))
         raise LightPatternException from ex
 
 
@@ -586,8 +597,9 @@ def ColorStretchArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, ColorStretchArray.__name__, str(ex))
         raise LightPatternException from ex
 
 

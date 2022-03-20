@@ -8,7 +8,7 @@ import logging
 from typing import Any, Optional, Sequence, Union, overload
 from nptyping import NDArray
 import numpy as np
-from LightBerries.LightBerryExceptions import LightStringException
+from LightBerries.LightBerryExceptions import LightBerryException, LightStringException
 from LightBerries.RpiWS281xPatch import rpi_ws281x
 from LightBerries.LightPixels import Pixel, PixelColors
 
@@ -76,13 +76,9 @@ class LightString(Sequence[np.int_]):
             raise
         except KeyboardInterrupt:  # pylint:disable=try-except-raise
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                inspect.stack()[0][3],
-                ex,
-            )
             raise LightStringException from ex
 
         try:
@@ -103,13 +99,9 @@ class LightString(Sequence[np.int_]):
             raise
         except KeyboardInterrupt:  # pylint:disable=try-except-raise
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                inspect.stack()[0][3],
-                ex,
-            )
             raise LightStringException from ex
 
         # try to force cleanup of underlying c objects when user exits
@@ -138,8 +130,9 @@ class LightString(Sequence[np.int_]):
                 raise
             except KeyboardInterrupt:  # pylint:disable=try-except-raise
                 raise
+            except LightBerryException:
+                raise
             except Exception as ex:
-                LOGGER.exception("Failed to clean up WS281X object: %s", str(ex))
                 raise LightStringException from ex
 
     def __len__(
@@ -194,8 +187,9 @@ class LightString(Sequence[np.int_]):
             raise
         except KeyboardInterrupt:  # pylint:disable=try-except-raise
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception('Failed to get key "%s" from %s: %s', key, self.rgbArray, ex)
             raise LightStringException from ex
 
     def __setitem__(
@@ -240,8 +234,9 @@ class LightString(Sequence[np.int_]):
             raise
         except KeyboardInterrupt:  # pylint:disable=try-except-raise
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception("Failed to set light %s to value %s: %s", key, value, ex)
             raise LightStringException from ex
 
     def __enter__(
@@ -282,13 +277,9 @@ class LightString(Sequence[np.int_]):
                 raise
             except KeyboardInterrupt:  # pylint:disable=try-except-raise
                 raise
+            except LightBerryException:
+                raise
             except Exception as ex:
-                LOGGER.exception(
-                    "Failed to set pixel %s in WS281X to value %s: %s",
-                    index,
-                    LightString(0),
-                    ex,
-                )
                 raise LightStringException from ex
         self.refresh()
 
@@ -316,13 +307,9 @@ class LightString(Sequence[np.int_]):
                         raise
                     except KeyboardInterrupt:  # pylint:disable=try-except-raise
                         raise
+                    except LightBerryException:
+                        raise
                     except Exception as ex:
-                        LOGGER.exception(
-                            "Failed to set pixel %d in WS281X to value %d: %s",
-                            i,
-                            value,
-                            str(ex),
-                        )
                         raise LightStringException from ex
 
             # copy this class's array into the ws281x array
@@ -339,8 +326,9 @@ class LightString(Sequence[np.int_]):
             raise
         except KeyboardInterrupt:  # pylint:disable=try-except-raise
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception('Function call "show" in WS281X object failed: %s', str(ex))
             raise LightStringException from ex
 
 

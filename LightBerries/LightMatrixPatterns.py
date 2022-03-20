@@ -2,7 +2,7 @@ import logging
 from typing import Any
 from nptyping import NDArray
 import numpy as np
-from LightBerries.LightBerryExceptions import LightPatternException
+from LightBerries.LightBerryExceptions import LightBerryException, LightPatternException
 from LightBerries.LightPixels import Pixel
 from LightBerries.LightArrayPatterns import DEFAULT_COLOR_SEQUENCE
 from enum import IntEnum
@@ -85,8 +85,9 @@ def SolidColorMatrix(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, SolidColorMatrix.__name__, str(ex))
         raise LightPatternException from ex
 
 

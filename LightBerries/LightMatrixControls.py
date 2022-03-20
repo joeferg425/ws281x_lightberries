@@ -263,8 +263,8 @@ class LightMatrixController(LightArrayController):
             self.privateLightFunctions.append(flux)
 
             # clear LEDs, assign first color in sequence to all LEDs
-            # self.virtualLEDArray *= 0
-            # self.virtualLEDArray += self.colorSequence[0, :]
+            # self.virtualLEDBuffer *= 0
+            # self.virtualLEDBuffer += self.colorSequence[0, :]
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -306,7 +306,7 @@ class LightMatrixController(LightArrayController):
             # add this function to our function list
             self.privateLightFunctions.append(marquee)
 
-            self.virtualLEDArray[0, 0, :] += self.colorSequence[0, :]
+            self.virtualLEDBuffer[0, 0, :] += self.colorSequence[0, :]
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -485,6 +485,174 @@ class LightMatrixController(LightArrayController):
                 bounce.color = self.colorSequenceNext
                 bounce.colorCycle = bool(colorChange)
                 self.privateLightFunctions.append(bounce)
+        except SystemExit:
+            raise
+        except KeyboardInterrupt:
+            raise
+        except LightBerryException:
+            raise
+        except Exception as ex:
+            raise LightControlException from ex
+
+    def useFunctionMatrixFireworks(
+        self,
+        delayCount: int = None,
+        fireworkCount: int = None,
+        fadeAmount=None,
+        colorChange=True,
+    ) -> None:
+        """
+
+        Args:
+            delayCount: number of led updates between color updates
+            fireworkCount: number of fireworks
+            fadeAmount:fade amount
+            colorChange: change colors
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightControlException: if something bad happens
+        """
+        try:
+            LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionMatrixFireworks.__name__)
+
+            _fadeAmount: float = random.randint(10, 50) / 100.0
+            # _fadeAmount: float = 0.0
+            _delayCount: int = random.randint(1, 6)
+            # _delayCount: int = 1
+            _zoomyCount: int = random.randint(1, 6)
+            # _zoomyCount: int = 1
+            if fadeAmount is not None:
+                _fadeAmount = int(fadeAmount)
+
+            # make sure fade is valid
+            if fadeAmount >= 0.0 or fadeAmount <= 1.0:
+                # do nothing
+                _fadeAmount = float(fadeAmount)
+            elif fadeAmount > 1 and fadeAmount < 256:
+                _fadeAmount = float(fadeAmount) / 255
+            if _fadeAmount < 0 or _fadeAmount > 1:
+                _fadeAmount = 0.1
+
+            if delayCount is not None:
+                _delayCount = int(delayCount)
+
+            if fireworkCount is not None:
+                _zoomyCount = int(fireworkCount)
+
+            if _fadeAmount == 1.0:
+                off: LightArrayFunction = LightArrayFunction(
+                    LightMatrixFunction.functionOff, self.colorSequence
+                )
+                self.privateLightFunctions.append(off)
+            else:
+                # fade the whole LED strand
+                fade: LightArrayFunction = LightArrayFunction(
+                    LightArrayFunction.functionFadeOff, self.colorSequence
+                )
+                # by this amount
+                fade.fadeAmount = _fadeAmount
+                # add function to list
+                self.privateLightFunctions.append(fade)
+
+            # create the tracking object
+            for _ in range(_zoomyCount):
+                firework: LightMatrixFunction = LightMatrixFunction(
+                    LightMatrixFunction.functionsMatrixFireworks, self.colorSequence
+                )
+                firework.rowIndex = random.randint(0, self.realLEDRowCount - 1)
+                firework.columnIndex = random.randint(0, self.realLEDColumnCount - 1)
+                firework.size = 1
+                firework.step = 1
+                firework.sizeMax = max(self.realLEDRowCount, self.realLEDColumnCount)
+                firework.delayCounter = 0
+                # set refresh limit (after which this function will execute)
+                firework.delayCountMax = _delayCount
+                # add this function to our function list
+                firework.color = self.colorSequenceNext
+                firework.colorCycle = bool(colorChange)
+                self.privateLightFunctions.append(firework)
+        except SystemExit:
+            raise
+        except KeyboardInterrupt:
+            raise
+        except LightBerryException:
+            raise
+        except Exception as ex:
+            raise LightControlException from ex
+
+    def useFunctionMatrixRadar(
+        self,
+        delayCount: int = None,
+        fadeAmount=None,
+    ) -> None:
+        """
+
+        Args:
+            delayCount: number of led updates between color updates
+            fireworkCount: number of fireworks
+            fadeAmount:fade amount
+            colorChange: change colors
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightControlException: if something bad happens
+        """
+        try:
+            LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionMatrixRadar.__name__)
+
+            _fadeAmount: float = random.randint(1, 5) / 100.0
+            _delayCount: int = random.randint(1, 3)
+            if fadeAmount is not None:
+                _fadeAmount = float(fadeAmount)
+
+            # make sure fade is valid
+            if _fadeAmount > 0.0 or _fadeAmount < 1.0:
+                # do nothing
+                _fadeAmount = float(_fadeAmount)
+            elif _fadeAmount > 1 and _fadeAmount < 256:
+                _fadeAmount = float(fadeAmount) / 255
+            if _fadeAmount <= 0 or _fadeAmount >= 1:
+                _fadeAmount = 0.1
+
+            if delayCount is not None:
+                _delayCount = int(delayCount)
+
+            # fade the whole LED strand
+            fade: LightArrayFunction = LightArrayFunction(
+                LightArrayFunction.functionFadeOff, self.colorSequence
+            )
+            # by this amount
+            fade.fadeAmount = _fadeAmount
+            # add function to list
+            self.privateLightFunctions.append(fade)
+
+            # create the tracking object
+            radar: LightMatrixFunction = LightMatrixFunction(
+                LightMatrixFunction.functionsMatrixRadar, self.colorSequence
+            )
+            max_radius = max(int(self.realLEDRowCount / 2), int(self.realLEDColumnCount / 2))
+            radar.rowIndex = random.randint(0, self.realLEDRowCount - 1)
+            radar.columnIndex = random.randint(0, self.realLEDColumnCount - 1)
+            radar.delayCounter = 0
+            radar.radius = max_radius
+            radar.stepCountMax = 200
+            radar.t = np.linspace(-np.pi, np.pi, radar.stepCountMax)
+            radar.x = np.linspace(-max_radius, max_radius - 1, radar.stepCountMax)
+            # radar.sinx = np.sin(radar.t)
+            # radar.cosx = np.cos(radar.t)
+            # radar.thetas = np.arctan2(radar.sinx, radar.cosx)
+            radar.thetas = np.tan(radar.t)
+            radar.x = radar.x.astype(np.int32)
+            # set refresh limit (after which this function will execute)
+            radar.delayCountMax = _delayCount
+            # add this function to our function list
+            radar.color = self.colorSequenceNext
+            radar.activeChance = 0.01
+            radar.enemy = []
+            self.privateLightFunctions.append(radar)
         except SystemExit:
             raise
         except KeyboardInterrupt:

@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 """An example of using this module."""
-import LightBerries.LightMatrixPatterns
+import LightBerries.LightMatrixPatterns  # noqa: ignore
 from LightBerries.LightMatrixControls import LightMatrixController
-from LightBerries.LightPixels import PixelColors
+from LightBerries.LightPixels import PixelColors  # noqa: ignore
 
 # the number of pixels in the light string
 PIXEL_ROW_COUNT = 16
@@ -49,13 +49,15 @@ lightControl = LightMatrixController(
 # lightControl.setVirtualLEDBuffer(
 # LightBerries.LightMatrixPatterns.SingleLED(PIXEL_ROW_COUNT, PIXEL_COLUMN_COUNT),
 # )
-lightControl.setVirtualLEDBuffer(
-    LightBerries.LightMatrixPatterns.TextMatrix("hello world", color=PixelColors.pseudoRandom()),
-)
+# lightControl.setVirtualLEDBuffer(
+# LightBerries.LightMatrixPatterns.TextMatrix("hello world", color=PixelColors.pseudoRandom()),
+# )
 # configure a function using a "useFunction" method
-lightControl.useFunctionMatrixMarquee()
+# lightControl.useFunctionMatrixMarquee()
 # lightControl.useFunctionMatrixColorFlux()
 # lightControl.useColorSequencePseudoRandom()
+# lightControl.useFunctionMatrixFireworks(fireworkCount=5, fadeAmount=0.2)
+lightControl.useFunctionMatrixRadar()
 # lightControl.useFunctionMatrixBounce(colorChange=True)
 # run the configuration until killed
 try:

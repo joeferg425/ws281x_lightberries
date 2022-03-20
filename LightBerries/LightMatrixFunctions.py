@@ -6,7 +6,7 @@ import logging
 from LightBerries.LightArrayFunctions import LightArrayFunction
 import LightBerries.LightMatrixControls
 
-from LightBerries.LightBerryExceptions import LightFunctionException
+from LightBerries.LightBerryExceptions import LightBerryException, LightFunctionException
 from LightBerries.LightPixels import PixelColors
 
 LOGGER = logging.getLogger("LightBerries")
@@ -75,13 +75,9 @@ class LightMatrixFunction(LightArrayFunction):
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                flux.__class__.__name__,
-                flux.functionMatrixColorFlux.__name__,
-                ex,
-            )
             raise LightFunctionException from ex
 
     @staticmethod
@@ -112,13 +108,9 @@ class LightMatrixFunction(LightArrayFunction):
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                marquee.__class__.__name__,
-                marquee.functionMatrixMarquee.__name__,
-                ex,
-            )
             raise LightFunctionException from ex
 
     @staticmethod
@@ -159,13 +151,9 @@ class LightMatrixFunction(LightArrayFunction):
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                eye.__class__.__name__,
-                eye.functionMatrixMarquee.__name__,
-                ex,
-            )
             raise LightFunctionException from ex
 
     @staticmethod
@@ -223,11 +211,155 @@ class LightMatrixFunction(LightArrayFunction):
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                bounce.__class__.__name__,
-                bounce.functionMatrixBounce.__name__,
-                ex,
+            raise LightFunctionException from ex
+
+    @staticmethod
+    def functionsMatrixFireworks(
+        firework: "LightMatrixFunction",
+    ) -> None:
+        """
+        Args:
+            firework: the object used for tracking marquee status
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightFunctionException: if something bad happens
+        """
+        try:
+            if firework.delayCounter >= firework.delayCountMax:
+                if firework.size < firework.sizeMax:
+                    firework.size += firework.step
+                else:
+                    firework.size = 1
+                    firework.rowIndex = random.randint(0, firework.Controller.realLEDRowCount - 1)
+                    firework.columnIndex = random.randint(0, firework.Controller.realLEDColumnCount - 1)
+                    firework.delayCountMax = random.randint(1, 5)
+                    if firework.colorCycle and random.randint(0, 10) >= 7:
+                        firework.color = firework.colorSequenceNext
+                firework.delayCounter = 0
+
+            # _x = np.sin(np.linspace(0, np.pi, 1 + (4 * zoomy.size)) * (zoomy.size))
+            x = (
+                np.round(np.sin(np.linspace(0, 2 * np.pi, 1 + (4 * firework.size))) * (firework.size)).astype(
+                    dtype=np.int32
+                )
+                + firework.rowIndex
             )
+            i1 = np.where((x >= firework.Controller.realLEDRowCount) | (x < 0))[0]
+            y = (
+                np.round(np.cos(np.linspace(0, 2 * np.pi, 1 + (4 * firework.size))) * (firework.size)).astype(
+                    dtype=np.int32
+                )
+                + firework.columnIndex
+            )
+            i2 = np.where((y >= firework.Controller.realLEDColumnCount) | (y < 0))[0]
+            if len(i1) > 0 and len(i2) > 0:
+                i = np.concatenate((i1, i2))
+            elif len(i1) > 0:
+                i = i1
+            else:
+                i = i2
+            if len(i) > 0:
+                x = np.delete(x, i)
+                y = np.delete(y, i)
+            xy = (tuple(x), tuple(y))
+
+            firework.Controller.virtualLEDBuffer[xy] = firework.color
+
+            firework.delayCounter += 1
+        except SystemExit:
+            raise
+        except KeyboardInterrupt:
+            raise
+        except LightBerryException:
+            raise
+        except Exception as ex:
+            raise LightFunctionException from ex
+
+    @staticmethod
+    def functionsMatrixRadar(
+        radar: "LightMatrixFunction",
+    ) -> None:
+        """
+        Args:
+            radar: the object used for tracking marquee status
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightFunctionException: if something bad happens
+        """
+        try:
+            x = radar.x + radar.radius
+            y = radar.thetas[radar.stepCounter] * radar.x + radar.radius
+            # y = radar.thetas[radar.stepCounter] * radar.x + radar.stepCounter
+            # y = radar.thetas[radar.stepCounter] * radar.x + (radar.stepCountMax - 1 - radar.stepCounter)
+            y = y.astype(np.int32)
+            i1 = np.where((x >= radar.Controller.realLEDRowCount) | (x < 0))[0]
+            i2 = np.where((y >= radar.Controller.realLEDColumnCount) | (y < 0))[0]
+            if len(i1) > 0 and len(i2) > 0:
+                i = np.concatenate((i1, i2))
+            elif len(i1) > 0:
+                i = i1
+            else:
+                i = i2
+            if len(i) > 0:
+                x = np.delete(x, i)
+                y = np.delete(y, i)
+            xy = (tuple(x), tuple(y))
+
+            radar.Controller.virtualLEDBuffer[xy] = PixelColors.GREEN3.array * 0.5
+
+            if random.random() < radar.activeChance:
+                duration = 20
+                i = random.randint(0, len(x) - 1)
+                if x[i] != radar.radius and y[i] != radar.radius:
+                    # radar.enemy.append([duration, (x[i], y[i])])
+                    radar.enemy.append(
+                        [
+                            duration,
+                            (
+                                (
+                                    x[i],
+                                    x[i],
+                                    x[i - 1],
+                                    x[i - 1],
+                                ),
+                                (
+                                    y[i],
+                                    y[i - 1],
+                                    y[i - 1],
+                                    y[i],
+                                ),
+                            ),
+                        ]
+                    )
+
+            gone_enemies = []
+            for enemy in radar.enemy:
+                radar.Controller.virtualLEDBuffer[enemy[1]] = PixelColors.RED.array
+                enemy[0] -= 1
+                if enemy[0] <= 0:
+                    gone_enemies.append(enemy)
+
+            for enemy in gone_enemies:
+                radar.enemy.remove(enemy)
+
+            radar.delayCounter += 1
+            if radar.delayCounter >= radar.delayCountMax:
+                radar.stepCounter += 1
+                if radar.stepCounter >= radar.stepCountMax:
+                    radar.stepCounter = 0
+                radar.delayCounter = 0
+        except SystemExit:
+            raise
+        except KeyboardInterrupt:
+            raise
+        except LightBerryException:
+            raise
+        except Exception as ex:
             raise LightFunctionException from ex

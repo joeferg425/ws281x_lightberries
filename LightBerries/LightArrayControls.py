@@ -26,6 +26,7 @@ from LightBerries.LightArrayFunctions import (
     ThingMoves,
 )
 from LightBerries.LightArrayPatterns import (
+    DEFAULT_COLOR_SEQUENCE,
     SolidColorArray,
     ConvertPixelArrayToNumpyArray,
     RepeatingColorSequenceArray,
@@ -158,7 +159,9 @@ class LightArrayController:
             self.privateRefreshDelay: float = 0.001
             self.privateSecondsPerMode: float = 120.0
             self.privateBackgroundColor: NDArray[(3,), np.int32] = PixelColors.OFF.array
-            self.privateColorSequence: NDArray[(3, Any), np.int32] = ConvertPixelArrayToNumpyArray([])
+            self.privateColorSequence: NDArray[(3, Any), np.int32] = ConvertPixelArrayToNumpyArray(
+                DEFAULT_COLOR_SEQUENCE
+            )
             self.privateColorSequenceCount: int = 0
             self.privateColorSequenceIndex: int = 0
             self.privateLoopForever: bool = False

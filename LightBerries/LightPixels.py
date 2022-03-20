@@ -2,12 +2,11 @@
 import enum
 import logging
 import random
-import inspect
 from typing import List, Optional, Tuple, Union
 from nptyping import NDArray
 import numpy as np
 
-from LightBerries.LightBerryExceptions import LightPixelException
+from LightBerries.LightBerryExceptions import LightBerryException, LightPixelException
 
 LOGGER = logging.getLogger("LightBerries")
 
@@ -96,13 +95,9 @@ class Pixel:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                inspect.stack()[0][3],
-                ex,
-            )
             raise LightPixelException from ex
 
     def __len__(
@@ -207,22 +202,28 @@ class PixelColors:
     """List of commonly used colors for ease of use."""
 
     OFF = Pixel((0, 0, 0), order=EnumLEDOrder.RGB).pixel
+    RED3 = Pixel((64, 0, 0), order=EnumLEDOrder.RGB).pixel
     RED2 = Pixel((128, 0, 0), order=EnumLEDOrder.RGB).pixel
     RED = Pixel((255, 0, 0), order=EnumLEDOrder.RGB).pixel
+    ORANGE3 = Pixel((64, 64, 0), order=EnumLEDOrder.RGB).pixel
     ORANGE2 = Pixel((128, 128, 0), order=EnumLEDOrder.RGB).pixel
     ORANGE = Pixel((255, 128, 0), order=EnumLEDOrder.RGB).pixel
     YELLOW = Pixel((255, 210, 80), order=EnumLEDOrder.RGB).pixel
     LIME = Pixel((128, 255, 0), order=EnumLEDOrder.RGB).pixel
+    GREEN3 = Pixel((0, 64, 0), order=EnumLEDOrder.RGB).pixel
     GREEN2 = Pixel((0, 128, 0), order=EnumLEDOrder.RGB).pixel
     GREEN = Pixel((0, 255, 0), order=EnumLEDOrder.RGB).pixel
     TEAL = Pixel((0, 255, 128), order=EnumLEDOrder.RGB).pixel
+    CYAN3 = Pixel((0, 64, 64), order=EnumLEDOrder.RGB).pixel
     CYAN2 = Pixel((0, 128, 128), order=EnumLEDOrder.RGB).pixel
     CYAN = Pixel((0, 255, 255), order=EnumLEDOrder.RGB).pixel
     SKY = Pixel((0, 128, 255), order=EnumLEDOrder.RGB).pixel
     BLUE = Pixel((0, 0, 255), order=EnumLEDOrder.RGB).pixel
     BLUE2 = Pixel((0, 0, 128), order=EnumLEDOrder.RGB).pixel
+    BLUE3 = Pixel((0, 0, 64), order=EnumLEDOrder.RGB).pixel
     VIOLET = Pixel((128, 0, 255), order=EnumLEDOrder.RGB).pixel
     PURPLE = Pixel((128, 0, 128), order=EnumLEDOrder.RGB).pixel
+    PURPLE2 = Pixel((64, 0, 64), order=EnumLEDOrder.RGB).pixel
     MIDNIGHT = Pixel((70, 0, 128), order=EnumLEDOrder.RGB).pixel
     MAGENTA = Pixel((255, 0, 255), order=EnumLEDOrder.RGB).pixel
     PINK = Pixel((255, 0, 128), order=EnumLEDOrder.RGB).pixel
