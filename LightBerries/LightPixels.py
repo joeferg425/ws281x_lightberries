@@ -1,8 +1,8 @@
 """Define basic RGB pixel data and objects."""
+from __future__ import annotations
 import enum
 import logging
 import random
-from typing import List, Optional, Tuple, Union
 from nptyping import NDArray
 import numpy as np
 
@@ -17,11 +17,11 @@ class EnumLEDOrder(enum.Enum):
     If your colors are all wrong, try a different enum.
     """
 
-    RGB: List[int] = [0, 1, 2]
-    GRB: List[int] = [1, 0, 2]
+    RGB: list[int] = [0, 1, 2]
+    GRB: list[int] = [1, 0, 2]
 
 
-DEFAULT_PIXEL_ORDER: List[int] = EnumLEDOrder.GRB.value
+DEFAULT_PIXEL_ORDER: list[int] = EnumLEDOrder.GRB.value
 
 
 class Pixel:
@@ -29,8 +29,8 @@ class Pixel:
 
     def __init__(
         self,
-        rgb: Optional[Union[int, tuple, list, NDArray, "Pixel"]] = None,
-        order: Union[EnumLEDOrder, List[int]] = DEFAULT_PIXEL_ORDER,
+        rgb: int | NDArray[(3), np.float32] | "Pixel" | None = None,
+        order: EnumLEDOrder = DEFAULT_PIXEL_ORDER,
     ) -> None:
         """Create a single RGB LED pixel.
 
@@ -60,7 +60,14 @@ class Pixel:
 
             # if it is an int and in range
             elif isinstance(rgb, int) and rgb >= 0 and rgb <= 0xFFFFFF:
-                self._value = rgb
+                # convert to tuple
+                value = (((rgb & 0xFF0000) >> 16), ((rgb & 0x00FF00) >> 8), ((rgb & 0x0000FF) >> 0))
+                self._value = (
+                    # use order enum
+                    (int(value[_order[0]]) << 16)
+                    + (int(value[_order[1]]) << 8)
+                    + (int(value[_order[2]]))
+                )
 
             # if it is a tuple, list, or numpy array
             elif (
@@ -148,12 +155,18 @@ class Pixel:
         Returns:
             a string representation of the Pixel instance
         """
-        return f"<{self.__class__.__name__}> {self.__str__()}"
+        return f"<{self.__class__.__name__}> {self.__str__()} ({self._value}/{self._order})"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Pixel):
+            return False
+        # convert the pixel orders to the same order then compare
+        return self.pixel._value == other.pixel._value
 
     @property
     def tuple(
         self,
-    ) -> Tuple[int, int, int]:
+    ) -> tuple[int]:
         """Return Pixel value as a tuple of ints.
 
         Returns:
