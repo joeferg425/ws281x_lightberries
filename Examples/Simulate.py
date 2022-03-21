@@ -42,7 +42,7 @@ class LightOutput:
     def update(self):
         """Update the gui."""
         # print("led refresh")
-        self.plotQ.put(self.lightController.virtualLEDArray)
+        self.plotQ.put(self.lightController.virtualLEDBuffer)
         time.sleep(self.delay)
 
     def run(self):

@@ -139,7 +139,7 @@ class LightString(Sequence[np.int_]):
             the number of LEDs in the array
         """
         if self.ws281xPixelStrip is not None:
-            return self.ws281xPixelStrip.count
+            return self.ws281xPixelStrip.numPixels()
         else:
             return 0
 
@@ -254,9 +254,9 @@ class LightString(Sequence[np.int_]):
             LightBerryException: if propogating an exception
             LightStringException: if something bad happens
         """
-        for index in range(self.count):
+        for index in range(self.ws281xPixelStrip.numPixels()):
             try:
-                self[index] = PixelColors.OFF.array
+                self[index] = PixelColors.OFF
             except SystemExit:
                 raise
             except KeyboardInterrupt:

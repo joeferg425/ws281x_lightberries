@@ -135,7 +135,7 @@ def PixelArray(
         LightPatternException: if something bad happens
     """
     try:
-        return np.array([PixelColors.OFF.array for i in range(int(arrayLength))])
+        return np.array([PixelColors.OFF for i in range(int(arrayLength))])
     except SystemExit:
         raise
     except KeyboardInterrupt:

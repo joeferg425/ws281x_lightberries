@@ -60,7 +60,7 @@ if sys.platform != "linux":
                 """Fake method."""
                 pass  # pylint: disable = unnecessary-pass
 
-            def numPixels(self):
+            def numPixels(self) -> int:
                 """Fake method.
 
                 Returns:

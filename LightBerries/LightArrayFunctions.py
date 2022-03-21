@@ -85,9 +85,9 @@ class LightArrayFunction:
 
         self.colorSequence = colorSequence
         self.color: NDArray[(3,), np.int32] = colorSequence[0]
-        self.colorBegin: NDArray[(3,), np.int32] = PixelColors.OFF.array
-        self.colorNext: NDArray[(3,), np.int32] = PixelColors.OFF.array
-        self.colorGoal: NDArray[(3,), np.int32] = PixelColors.OFF.array
+        self.colorBegin: NDArray[(3,), np.int32] = PixelColors.OFF
+        self.colorNext: NDArray[(3,), np.int32] = PixelColors.OFF
+        self.colorGoal: NDArray[(3,), np.int32] = PixelColors.OFF
         self.colorScaler: float = 0
         self.colorFade: int = 1
         self.colorCycle: bool = False
@@ -407,16 +407,16 @@ class LightArrayFunction:
                                             (middle - i) % LightArrayFunction.Controller.virtualLEDCount,
                                         )
                                         explosionColors.append(
-                                            Pixel(PixelColors.YELLOW).array * (radius - i) / radius,
+                                            Pixel(PixelColors.YELLOW) * (radius - i) / radius,
                                         )
 
                                         explosionIndices.append(
                                             (middle + i) % LightArrayFunction.Controller.virtualLEDCount,
                                         )
                                         explosionColors.append(
-                                            Pixel(PixelColors.YELLOW).array * (radius - i) / radius,
+                                            Pixel(PixelColors.YELLOW) * (radius - i) / radius,
                                         )
-                                    LightArrayFunction.Controller.virtualLEDArray[
+                                    LightArrayFunction.Controller.virtualLEDBuffer[
                                         explosionIndices
                                     ] = np.array(explosionColors)
         except KeyboardInterrupt:
@@ -447,7 +447,7 @@ class LightArrayFunction:
             LightFunctionException: if something bad happens
         """
         try:
-            LightArrayFunction.Controller.virtualLEDArray[:] *= 0
+            LightArrayFunction.Controller.virtualLEDBuffer[:] *= 0
         except KeyboardInterrupt:
             raise
         except SystemExit:
@@ -476,9 +476,9 @@ class LightArrayFunction:
             LightFunctionException: if something bad happens
         """
         try:
-            LightArrayFunction.Controller.virtualLEDArray[
+            LightArrayFunction.Controller.virtualLEDBuffer[
                 :
-            ] = LightArrayFunction.Controller.virtualLEDArray * (1 - fade.fadeAmount)
+            ] = LightArrayFunction.Controller.virtualLEDBuffer * (1 - fade.fadeAmount)
         except KeyboardInterrupt:
             raise
         except SystemExit:
@@ -541,9 +541,9 @@ class LightArrayFunction:
                 # reset delay counter
                 cycle.delayCounter = 0
                 # remove any current color
-                LightArrayFunction.Controller.virtualLEDArray *= 0
+                LightArrayFunction.Controller.virtualLEDBuffer *= 0
                 # add new color
-                LightArrayFunction.Controller.virtualLEDArray += cycle.colorSequenceNext
+                LightArrayFunction.Controller.virtualLEDBuffer += cycle.colorSequenceNext
             # increment delay counter
             cycle.delayCounter += 1
         except SystemExit:
@@ -613,7 +613,9 @@ class LightArrayFunction:
                 marquee.index + marquee.size,
             )
             # update LEDs with new values
-            LightArrayFunction.Controller.virtualLEDArray[np.sort(marquee.indexRange)] = marquee.colorSequence
+            LightArrayFunction.Controller.virtualLEDBuffer[
+                np.sort(marquee.indexRange)
+            ] = marquee.colorSequence
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -693,7 +695,7 @@ class LightArrayFunction:
             # update index
             cylon.index = cylon.indexNext
             # update LEDs with new values
-            LightArrayFunction.Controller.virtualLEDArray[cylon.indexRange] = cylon.colorSequence[
+            LightArrayFunction.Controller.virtualLEDBuffer[cylon.indexRange] = cylon.colorSequence[
                 : LightArrayFunction.Controller.virtualLEDCount
             ]
         except SystemExit:
@@ -742,7 +744,7 @@ class LightArrayFunction:
                 # the matrixification of the array
                 if temp[0][0] != temp[1][-1]:
                     temp[1] = np.flip(temp[0])
-                    LightArrayFunction.Controller.virtualLEDArray[range(merge.size)] = merge.colorSequence[
+                    LightArrayFunction.Controller.virtualLEDBuffer[range(merge.size)] = merge.colorSequence[
                         range(merge.size)
                     ]
                 temp[0] = np.roll(temp[0], merge.step, 0)
@@ -859,9 +861,9 @@ class LightArrayFunction:
                 accelerate.indexRange = np.arange(accelerate.indexPrevious, accelerate.index + 1)
             # increment delay counter
             accelerate.delayCounter += 1
-            LightArrayFunction.Controller.virtualLEDArray[accelerate.indexRange] = accelerate.color
+            LightArrayFunction.Controller.virtualLEDBuffer[accelerate.indexRange] = accelerate.color
             if splash is True:
-                LightArrayFunction.Controller.virtualLEDArray[
+                LightArrayFunction.Controller.virtualLEDBuffer[
                     splashRange, :
                 ] = LightArrayFunction.Controller.fadeColor(
                     accelerate.color, LightArrayFunction.Controller.backgroundColor, 50
@@ -945,7 +947,7 @@ class LightArrayFunction:
                         # randomize next index
                         change.index = LightArrayFunction.Controller.getRandomIndex()
                         # get color of current LED index
-                        change.color = np.copy(LightArrayFunction.Controller.virtualLEDArray[change.index])
+                        change.color = np.copy(LightArrayFunction.Controller.virtualLEDBuffer[change.index])
                         # get next color
                         for _ in range(random.randint(1, 5)):
                             change.colorNext = change.colorSequenceNext
@@ -966,7 +968,7 @@ class LightArrayFunction:
                 # set the color
                 change.color = change.colorNext
             # assign LED color to LED string
-            LightArrayFunction.Controller.virtualLEDArray[change.index] = change.color
+            LightArrayFunction.Controller.virtualLEDBuffer[change.index] = change.color
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -1029,7 +1031,7 @@ class LightArrayFunction:
                     # assign the next color
                     meteor.color = meteor.colorSequenceNext
                 # assign LEDs to LED string
-                LightArrayFunction.Controller.virtualLEDArray[meteor.indexRange] = meteor.color
+                LightArrayFunction.Controller.virtualLEDBuffer[meteor.indexRange] = meteor.color
             # update delay counter
             meteor.delayCounter += 1
         except SystemExit:
@@ -1109,15 +1111,15 @@ class LightArrayFunction:
                     # set target color
                     sprite.colorGoal = sprite.colorSequenceNext
                     # set current color
-                    sprite.color = PixelColors.OFF.array
+                    sprite.color = PixelColors.OFF
                     # set next color
-                    sprite.colorNext = PixelColors.OFF.array
+                    sprite.colorNext = PixelColors.OFF
             # if we changed the index
             if sprite.indexUpdated is True and isinstance(sprite.indexRange, np.ndarray):
                 # reset flag
                 sprite.indexUpdated = False
                 # assign LEDs to LED string
-                LightArrayFunction.Controller.virtualLEDArray[sprite.indexRange] = [sprite.color] * len(
+                LightArrayFunction.Controller.virtualLEDBuffer[sprite.indexRange] = [sprite.color] * len(
                     sprite.indexRange
                 )
         except SystemExit:
@@ -1177,11 +1179,11 @@ class LightArrayFunction:
                         LightArrayFunction.Controller.virtualLEDCount,
                     )
                     if (indexLowerMax - indexLowerMin) > 0:
-                        LightArrayFunction.Controller.virtualLEDArray[indexLowerMin:indexLowerMax] = [
+                        LightArrayFunction.Controller.virtualLEDBuffer[indexLowerMin:indexLowerMax] = [
                             raindrop.color
                         ] * (indexLowerMax - indexLowerMin)
                     if (indexHigherMax - indexHigherMin) > 0:
-                        LightArrayFunction.Controller.virtualLEDArray[indexHigherMin:indexHigherMax] = [
+                        LightArrayFunction.Controller.virtualLEDBuffer[indexHigherMin:indexHigherMax] = [
                             raindrop.color
                         ] * (indexHigherMax - indexHigherMin)
                     # scaled fading as splash grows
@@ -1371,7 +1373,7 @@ class LightArrayFunction:
             # increment delay
             thing.delayCounter += 1
             # assign colors to indices
-            LightArrayFunction.Controller.virtualLEDArray[thing.indexRange] = thing.color
+            LightArrayFunction.Controller.virtualLEDBuffer[thing.indexRange] = thing.color
         except SystemExit:
             raise
         except KeyboardInterrupt:

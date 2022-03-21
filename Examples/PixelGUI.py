@@ -100,7 +100,7 @@ class LightsProcess:
                         try:
                             index, color = msg[1:]
                             print("setting color")
-                            lightControl.virtualLEDArray[index] = Pixel(
+                            lightControl.virtualLEDBuffer[index] = Pixel(
                                 color, order=LightBerries.LightPixels.EnumLEDOrder.RGB
                             ).array
                             lightControl.copyVirtualLedsToWS281X()

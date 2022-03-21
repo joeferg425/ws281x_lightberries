@@ -125,13 +125,13 @@ class LightArrayController:
             )
             self.virtualLEDIndexBuffer: NDArray[(Any,), np.int32] = np.array(range(len(self.lightString)))
             self.privateOverlayDict: Dict[int, NDArray[(3,), np.int32]] = {}
-            self.privateVirtualLEDCount: int = len(self.virtualLEDArray)
-            self.privateVirtualLEDIndexCount: int = len(self.virtualLEDIndexArray)
+            self.privateVirtualLEDCount: int = len(self.virtualLEDBuffer)
+            self.privateVirtualLEDIndexCount: int = len(self.virtualLEDIndexBuffer)
             self.privateLastModeChange: float = time.time() - 1000
             self.privateNextModeChange: float = time.time()
             self.privateRefreshDelay: float = 0.001
             self.privateSecondsPerMode: float = 120.0
-            self.privateBackgroundColor: NDArray[(3,), np.int32] = PixelColors.OFF.array
+            self.privateBackgroundColor: NDArray[(3,), np.int32] = PixelColors.OFF
             self.privateColorSequence: NDArray[(3, Any), np.int32] = ConvertPixelArrayToNumpyArray([])
             self.privateColorSequenceCount: int = 0
             self.privateColorSequenceIndex: int = 0
@@ -411,13 +411,13 @@ class LightArrayController:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.reset.__name__)
             self.privateLightFunctions = []
             if self.virtualLEDCount > self.realLEDCount:
-                self.setVirtualLEDArray(self.virtualLEDArray[: self.realLEDCount])
+                self.setvirtualLEDBuffer(self.virtualLEDBuffer[: self.realLEDCount])
             elif self.virtualLEDCount < self.realLEDCount:
                 array = LightArrayPatterns.SolidColorArray(
                     arrayLength=self.realLEDCount, color=PixelColors.OFF
                 )
-                array[: self.virtualLEDCount] = self.virtualLEDArray
-                self.setVirtualLEDArray(array)
+                array[: self.virtualLEDCount] = self.virtualLEDBuffer
+                self.setvirtualLEDBuffer(array)
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -427,7 +427,7 @@ class LightArrayController:
         except Exception as ex:
             raise LightControlException from ex
 
-    def setVirtualLEDArray(
+    def setvirtualLEDBuffer(
         self,
         ledArray: Union[List[Pixel], NDArray[(3, Any), np.int32]],
     ) -> None:
@@ -453,23 +453,23 @@ class LightArrayController:
 
             # check assignment length
             if len(_ledArray) >= self.realLEDCount:
-                self.virtualLEDArray = _ledArray
+                self.virtualLEDBuffer = _ledArray
             else:
-                self.virtualLEDArray[: len(_ledArray)] = _ledArray
+                self.virtualLEDBuffer[: len(_ledArray)] = _ledArray
 
             # assign new LED array to virtual LEDs
-            self.privateVirtualLEDCount = len(self.virtualLEDArray)
+            self.privateVirtualLEDCount = len(self.virtualLEDBuffer)
             # set our indices for virtual LEDs
             self.privateVirtualLEDIndexCount = self.virtualLEDCount
             # create array of index values for manipulation if needed
-            self.virtualLEDIndexArray = np.arange(self.virtualLEDCount)
+            self.virtualLEDIndexBuffer = np.arange(self.virtualLEDCount)
             # if the array is smaller than the actual light strand, make our entire strand addressable
             if self.privateVirtualLEDIndexCount < self.realLEDCount:
                 self.privateVirtualLEDIndexCount = self.realLEDCount
-                self.virtualLEDIndexArray = np.arange(self.privateVirtualLEDIndexCount)
-                self.virtualLEDArray = np.concatenate(
+                self.virtualLEDIndexBuffer = np.arange(self.privateVirtualLEDIndexCount)
+                self.virtualLEDBuffer = np.concatenate(
                     (
-                        self.virtualLEDArray,
+                        self.virtualLEDBuffer,
                         np.array(
                             [PixelColors.OFF.tuple for i in range(self.realLEDCount - self.virtualLEDCount)]
                         ),
@@ -502,15 +502,15 @@ class LightArrayController:
                 rgb = irgb[1]
                 if i < self.realLEDCount:
                     value = (int(rgb[0]) << 16) + (int(rgb[1]) << 8) + int(rgb[2])
-                    self.lightString.ws281xPixelStrip.setPixelColor(i, value)
+                    self.lightString.ws281xPixelStrip.setPixelColor(i, Pixel(value)._value)
 
             # fast method of calling the callback method on each index of LED array
             list(
                 map(
                     SetPixel,
                     enumerate(
-                        self.virtualLEDArray[self.virtualLEDIndexArray][
-                            np.where(self.virtualLEDIndexArray < self.realLEDCount)
+                        self.virtualLEDBuffer[self.virtualLEDIndexBuffer][
+                            np.where(self.virtualLEDIndexBuffer < self.realLEDCount)
                         ]
                     ),
                 )
@@ -563,9 +563,9 @@ class LightArrayController:
         """
         try:
             # clear all current values
-            self.virtualLEDArray *= 0
+            self.virtualLEDBuffer *= 0
             # set to background color
-            self.virtualLEDArray[:] += self.backgroundColor
+            self.virtualLEDBuffer[:] += self.backgroundColor
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -803,7 +803,7 @@ class LightArrayController:
             # defaults
             _sequence: NDArray[(Any, 3), np.int32] = DefaultColorSequence()
             _foregroundColor: NDArray[(3,), np.int32] = _sequence[random.randint(0, len(_sequence) - 1)]
-            _backgroundColor = DEFAULT_BACKGROUND_COLOR.array
+            _backgroundColor = DEFAULT_BACKGROUND_COLOR
 
             # use the passed in color
             if foregroundColor is not None:
@@ -843,7 +843,7 @@ class LightArrayController:
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSinglePseudoRandom.__name__)
 
-            _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR.array
+            _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
 
             # set background color
             if backgroundColor is not None:
@@ -879,7 +879,7 @@ class LightArrayController:
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSingleRandom.__name__)
 
-            _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR.array
+            _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
 
             # set the background color to the default values
             if backgroundColor is not None:
@@ -917,7 +917,7 @@ class LightArrayController:
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSequence.__name__)
 
-            _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR.array
+            _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
             _colorSequence: NDArray[(Any, 3), np.int32] = DefaultColorSequence()
 
             # set the color sequence to the default one for this month, or use the passed in argument
@@ -960,7 +960,7 @@ class LightArrayController:
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSequencePseudoRandom.__name__)
 
-            _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR.array
+            _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
             _sequenceLength: int = random.randint(self.realLEDCount // 20, self.realLEDCount // 10)
             # either calculate a sequence length or use the passed value
 
@@ -1005,7 +1005,7 @@ class LightArrayController:
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSequenceRandom.__name__)
 
-            _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR.array
+            _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
             _sequenceLength: int = random.randint(self.realLEDCount // 20, self.realLEDCount // 10)
 
             # set background color
@@ -1053,7 +1053,7 @@ class LightArrayController:
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSequenceRepeating.__name__)
 
-            _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR.array
+            _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
             _colorSequence: NDArray[(Any, 3), np.int32] = DefaultColorSequence()
 
             # use argument or default
@@ -1108,7 +1108,7 @@ class LightArrayController:
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorTransition.__name__)
 
-            _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR.array
+            _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
             _colorSequence: NDArray[(Any, 3), np.int32] = DefaultColorSequence()
             _stepsPerTransition: int = random.randint(3, 7)
             _wrap: bool = self.getRandomBoolean()
@@ -1168,7 +1168,7 @@ class LightArrayController:
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorTransitionRepeating.__name__)
 
-            _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR.array
+            _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
             _colorSequence: NDArray[(3, Any), np.int32] = DefaultColorSequence()
             _stepsPerTransition: int = random.randint(3, 7)
             _wrap: bool = self.getRandomBoolean()
@@ -1227,7 +1227,7 @@ class LightArrayController:
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorRainbow.__name__)
 
-            _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR.array
+            _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
             _rainbowPixelCount: int = random.randint(10, self.realLEDCount // 2)
 
             if backgroundColor is not None:
@@ -1268,7 +1268,7 @@ class LightArrayController:
         try:
             LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorRainbowRepeating.__name__)
 
-            _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR.array
+            _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
             _rainbowPixelCount: int = random.randint(10, self.realLEDCount // 2)
 
             if backgroundColor is not None:
@@ -1353,8 +1353,8 @@ class LightArrayController:
             self.privateLightFunctions.append(cycle)
 
             # clear LEDs, assign first color in sequence to all LEDs
-            self.virtualLEDArray *= 0
-            self.virtualLEDArray += self.colorSequence[0, :]
+            self.virtualLEDBuffer *= 0
+            self.virtualLEDBuffer += self.colorSequence[0, :]
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -1426,9 +1426,9 @@ class LightArrayController:
                     arrayLength=self.colorSequenceCount + 10, color=PixelColors.OFF
                 )
                 array[: self.colorSequenceCount] = self.colorSequence
-                self.setVirtualLEDArray(array)
+                self.setvirtualLEDBuffer(array)
             else:
-                self.setVirtualLEDArray(self.colorSequence)
+                self.setvirtualLEDBuffer(self.colorSequence)
         except KeyboardInterrupt:
             raise
         except SystemExit:
@@ -1494,8 +1494,8 @@ class LightArrayController:
             # adjust virtual LED buffer if necesary so that the cylon can actually move
             if self.virtualLEDCount < cylon.size:
                 array = LightArrayPatterns.SolidColorArray(arrayLength=cylon.size + 3, color=PixelColors.OFF)
-                array[: self.virtualLEDCount] = self.virtualLEDArray
-                self.setVirtualLEDArray(array)
+                array[: self.virtualLEDCount] = self.virtualLEDBuffer
+                self.setvirtualLEDBuffer(array)
             # set start and next indices
             cylon.index = self.virtualLEDCount - cylon.size - 3
             cylon.indexNext = cylon.index
@@ -1555,7 +1555,7 @@ class LightArrayController:
             # calculate modulo length
             _arrayLength = np.ceil(self.realLEDCount / self.colorSequenceCount) * self.colorSequenceCount
             # update LED buffer with any changes we had to make
-            self.setVirtualLEDArray(
+            self.setvirtualLEDBuffer(
                 ReflectArray(
                     arrayLength=_arrayLength,
                     colorSequence=self.colorSequence,
@@ -1752,7 +1752,7 @@ class LightArrayController:
                     # this is used to help calculate fade duration in the function
                     change.stepCountMax = _fadeStepCount
                     # copy the current color of this LED index
-                    change.color = np.copy(self.virtualLEDArray[change.index])
+                    change.color = np.copy(self.virtualLEDBuffer[change.index])
                     # randomly set the color we are fading toward
                     if random.randint(0, 1) == 1:
                         change.colorNext = self.colorSequenceNext
@@ -1960,11 +1960,11 @@ class LightArrayController:
                 # assign the target color
                 sprite.colorGoal = self.colorSequenceNext
                 # initialize sprite to
-                sprite.color = DEFAULT_BACKGROUND_COLOR.array
+                sprite.color = DEFAULT_BACKGROUND_COLOR
                 # copy color sequence
                 sprite.colorSequence = self.colorSequence
                 # set next color
-                sprite.colorNext = PixelColors.OFF.array
+                sprite.colorNext = PixelColors.OFF
                 # set fade step/amount
                 sprite.fadeSteps = _fadeSteps
                 sprite.fadeAmount = _fadeAmount

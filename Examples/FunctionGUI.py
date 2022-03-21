@@ -111,8 +111,8 @@ class LightsProcess:
                             color = msg[1]
                             print("setting color")
                             # turn all LEDs off, then set them to new color
-                            lightControl.virtualLEDArray[:] *= 0
-                            lightControl.virtualLEDArray[:] += Pixel(color).array
+                            lightControl.virtualLEDBuffer[:] *= 0
+                            lightControl.virtualLEDBuffer[:] += Pixel(color).array
                             lightControl.copyVirtualLedsToWS281X()
                             lightControl.refreshLEDs()
                             time.sleep(0.05)
@@ -123,7 +123,7 @@ class LightsProcess:
                             count = msg[1]
                             # turn off all LEDs
                             if count < lightControl.privateLEDCount:
-                                lightControl.virtualLEDArray[:] *= 0
+                                lightControl.virtualLEDBuffer[:] *= 0
                                 lightControl.copyVirtualLedsToWS281X()
                                 lightControl.refreshLEDs()
                                 time.sleep(0.05)
@@ -142,7 +142,7 @@ class LightsProcess:
                                 debug=True,
                             )
                             lightControl.secondsPerMode = duration
-                            lightControl.virtualLEDArray[:] += Pixel(color).array
+                            lightControl.virtualLEDBuffer[:] += Pixel(color).array
                             lightControl.copyVirtualLedsToWS281X()
                             lightControl.refreshLEDs()
                             time.sleep(0.05)
