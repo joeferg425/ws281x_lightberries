@@ -6,10 +6,10 @@ import sys
 import logging
 from LightBerries import LightBerryExceptions  # noqa F401
 from LightBerries import LightPixels  # noqa F401
-from LightBerries import LightPatterns  # noqa F401
+from LightBerries import LightArrayPatterns  # noqa F401
 from LightBerries import LightStrings  # noqa F401
-from LightBerries import LightFunctions  # noqa F401
-from LightBerries import LightControls  # noqa F401
+from LightBerries import LightArrayFunctions  # noqa F401
+from LightBerries import LightArrayControls  # noqa F401
 
 # setup logging
 LOGGER = logging.getLogger("LightBerries")

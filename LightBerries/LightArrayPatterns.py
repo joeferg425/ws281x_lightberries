@@ -5,9 +5,8 @@ import datetime
 from typing import Any, List, Sequence, Union
 from nptyping import NDArray
 import numpy as np
-from LightBerries.LightBerryExceptions import LightPatternException
+from LightBerries.LightBerryExceptions import LightBerryException, LightPatternException
 from LightBerries.LightPixels import Pixel, PixelColors
-from LightBerries.LightStrings import LightString
 
 LOGGER = logging.getLogger("LightBerries")
 
@@ -26,6 +25,7 @@ def DefaultColorSequence() -> NDArray[(3, Any), np.int32]:
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
+        LightBerryException: if propogating an exception
         LightPatternException: if something bad happens
     """
     global DEFAULT_COLOR_SEQUENCE  # pylint: disable = global-statement
@@ -110,9 +110,10 @@ def DefaultColorSequence() -> NDArray[(3, Any), np.int32]:
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __file__, DefaultColorSequence.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
     return ConvertPixelArrayToNumpyArray(DEFAULT_COLOR_SEQUENCE)
 
 
@@ -130,6 +131,7 @@ def PixelArray(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
+        LightBerryException: if propogating an exception
         LightPatternException: if something bad happens
     """
     try:
@@ -138,9 +140,10 @@ def PixelArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __file__, PixelArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 def ConvertPixelArrayToNumpyArray(
@@ -157,6 +160,7 @@ def ConvertPixelArrayToNumpyArray(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
+        LightBerryException: if propogating an exception
         LightPatternException: if something bad happens
     """
     try:
@@ -165,9 +169,10 @@ def ConvertPixelArrayToNumpyArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, ConvertPixelArrayToNumpyArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 def SolidColorArray(
@@ -186,6 +191,7 @@ def SolidColorArray(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
+        LightBerryException: if propogating an exception
         LightPatternException: if something bad happens
     """
     try:
@@ -198,9 +204,10 @@ def SolidColorArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, SolidColorArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 def ColorTransitionArray(
@@ -225,6 +232,7 @@ def ColorTransitionArray(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
+        LightBerryException: if propogating an exception
         LightPatternException: if something bad happens
     """
     try:
@@ -274,9 +282,10 @@ def ColorTransitionArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, ColorTransitionArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 def RainbowArray(
@@ -295,6 +304,7 @@ def RainbowArray(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
+        LightBerryException: if propogating an exception
         LightPatternException: if something bad happens
     """
     try:
@@ -312,9 +322,10 @@ def RainbowArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, RainbowArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 def RepeatingColorSequenceArray(
@@ -333,6 +344,7 @@ def RepeatingColorSequenceArray(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
+        LightBerryException: if propogating an exception
         LightPatternException: if something bad happens
     """
     try:
@@ -358,9 +370,10 @@ def RepeatingColorSequenceArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, RepeatingColorSequenceArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 def RepeatingRainbowArray(
@@ -379,6 +392,7 @@ def RepeatingRainbowArray(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
+        LightBerryException: if propogating an exception
         LightPatternException: if something bad happens
     """
     if segmentLength is None:
@@ -392,9 +406,10 @@ def RepeatingRainbowArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, RepeatingRainbowArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 def ReflectArray(
@@ -415,6 +430,7 @@ def ReflectArray(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
+        LightBerryException: if propogating an exception
         LightPatternException: if something bad happens
     """
     # if user didn't specify otherwise, fold in middle
@@ -460,9 +476,10 @@ def ReflectArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, ReflectArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 def RandomArray(
@@ -479,6 +496,7 @@ def RandomArray(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
+        LightBerryException: if propogating an exception
         LightPatternException: if something bad happens
     """
     try:
@@ -504,9 +522,10 @@ def RandomArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, RandomArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 def PseudoRandomArray(
@@ -525,6 +544,7 @@ def PseudoRandomArray(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
+        LightBerryException: if propogating an exception
         LightPatternException: if something bad happens
     """
     try:
@@ -546,9 +566,10 @@ def PseudoRandomArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, PseudoRandomArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
+        raise LightPatternException from ex
 
 
 def ColorStretchArray(
@@ -587,74 +608,4 @@ def ColorStretchArray(
     except KeyboardInterrupt:
         raise
     except Exception as ex:
-        LOGGER.exception("Error in %s.%s: %s", __name__, ColorStretchArray.__name__, str(ex))
-        raise LightPatternException(str(ex)).with_traceback(ex.__traceback__)
-
-
-if __name__ == "__main__":
-    import time
-
-    lights = LightString(ledCount=100)
-    LIGHT_LENGTH = len(lights)
-    DELAY = 2
-
-    p = PixelArray(LIGHT_LENGTH)
-    lights[: len(p)] = p
-    lights.refresh()
-    time.sleep(DELAY)
-
-    p = PixelArray(LIGHT_LENGTH)
-    lights[: len(p)] = p
-    p = SolidColorArray(LIGHT_LENGTH, PixelColors.WHITE)
-    lights[: len(p)] = p
-    lights.refresh()
-    time.sleep(DELAY)
-
-    p = PixelArray(LIGHT_LENGTH)
-    lights[: len(p)] = p
-    p = ColorTransitionArray(LIGHT_LENGTH)
-    lights[: len(p)] = p
-    lights.refresh()
-    time.sleep(DELAY)
-
-    p = PixelArray(LIGHT_LENGTH)
-    lights[: len(p)] = p
-    p = RainbowArray(LIGHT_LENGTH)
-    lights[: len(p)] = p
-    lights.refresh()
-    time.sleep(DELAY)
-
-    p = PixelArray(LIGHT_LENGTH)
-    lights[: len(p)] = p
-    p = RepeatingColorSequenceArray(LIGHT_LENGTH)
-    lights[: len(p)] = p
-    lights.refresh()
-    time.sleep(DELAY)
-
-    p = PixelArray(LIGHT_LENGTH)
-    lights[: len(p)] = p
-    p = RepeatingRainbowArray(LIGHT_LENGTH)
-    lights[: len(p)] = p
-    lights.refresh()
-    time.sleep(DELAY)
-
-    p = PixelArray(LIGHT_LENGTH)
-    lights[: len(p)] = p
-    p = ReflectArray(LIGHT_LENGTH)
-    lights[: len(p)] = p
-    lights.refresh()
-    time.sleep(DELAY)
-
-    p = PixelArray(LIGHT_LENGTH)
-    lights[: len(p)] = p
-    p = PseudoRandomArray(LIGHT_LENGTH)
-    lights[: len(p)] = p
-    lights.refresh()
-    time.sleep(DELAY)
-
-    p = PixelArray(LIGHT_LENGTH)
-    lights[: len(p)] = p
-    p = ColorStretchArray(LIGHT_LENGTH)
-    lights[: len(p)] = p
-    lights.refresh()
-    time.sleep(DELAY)
+        raise LightPatternException from ex

@@ -1,14 +1,14 @@
 """Defines basic light string data and functions."""
+from __future__ import annotations
 import os
 import sys
 import atexit
-import inspect
-import time
 import logging
-from typing import Any, Optional, Sequence, Union, overload
+from typing import Any, Sequence, overload
 from nptyping import NDArray
 import numpy as np
-from LightBerries.LightBerryExceptions import LightStringException
+from LightBerries.LightArrayPatterns import ConvertPixelArrayToNumpyArray
+from LightBerries.LightBerryExceptions import LightStringException, LightBerryException
 from LightBerries.RpiWS281xPatch import rpi_ws281x
 from LightBerries.LightPixels import Pixel, PixelColors
 
@@ -20,21 +20,37 @@ class LightString(Sequence[np.int_]):
 
     def __init__(
         self,
-        ledCount: Optional[int] = None,
-        pixelStrip: rpi_ws281x.PixelStrip = None,
+        ledCount: int,
+        pwmGPIOpin: int = 18,
+        channelDMA: int = 10,
+        frequencyPWM: int = 800000,
+        invertSignalPWM: bool = False,
+        ledBrightnessFloat: float = 0.75,
+        channelPWM: int = 0,
+        stripTypeLED: Any = None,
+        gamma: Any = None,
         simulate: bool = False,
     ) -> None:
         """Creates a pixel array using the rpipixelStrip library and Pixels.
 
         Args:
             ledCount: the number of LEDs desired in the LightString
-            pixelStrip: the ws281x object that actually controls the LED signaling
+            pwmGPIOpin: the GPIO pin number your lights are hooked up to
+                (18 is a good choice since it does PWM)
+            channelDMA: the DMA channel to use (5 is a good option)
+            frequencyPWM: try 800,000
+            invertSignalPWM: set true to invert the PWM signal
+            ledBrightnessFloat: set to a value between 0.0 (OFF), and 1.0 (ON).
+                    This setting tends to introduce flicker the lower it is
+            channelPWM: defaults to 0, see https://github.com/rpi-ws281x/rpi-ws281x-python
+            stripTypeLED: see https://github.com/rpi-ws281x/rpi-ws281x-python
+            gamma: see https://github.com/rpi-ws281x/rpi-ws281x-python
             simulate: dont use GPIO
 
         Raises:
-            Warning: if something unexpected could happen
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
+            LightBerryException: if propogating an exception
             LightStringException: if something bad happens
         """
         # cant run GPIO stuff without root, tell the user if they forgot
@@ -45,16 +61,8 @@ class LightString(Sequence[np.int_]):
             )
 
         # catch error cases first
-        if ledCount is None and pixelStrip is None and simulate is False:
-            raise LightStringException(
-                "Cannot create LightString object without ledCount or " + "pixelStrip object being specified"
-            )
-        # catch error cases first
-        # if ledCount is not None and pixelStrip is not None:
-        # raise Warning(
-        # "ledCount is overridden when pixelStrip is and ledcount "
-        # + "are both passed to LightString constructor"
-        # )
+        if ledCount is None:
+            raise LightStringException("Cannot create LightString object without ledCount.")
 
         try:
             self.simulate = simulate
@@ -62,55 +70,33 @@ class LightString(Sequence[np.int_]):
             if ledCount is not None:
                 self._ledCount = ledCount
 
-            # used passed pixel strip if it is not none
-            if pixelStrip is not None:
-                self.pixelStrip = pixelStrip
-                self.pixelStrip.begin()
-                self._ledCount = self.pixelStrip.numPixels()
-            LOGGER.debug(
-                "%s.%s Created WS281X object",
-                self.__class__.__name__,
-                inspect.stack()[0][3],
+            # create ws281x pixel strip
+            self.ws281xPixelStrip = rpi_ws281x.PixelStrip(
+                pin=pwmGPIOpin,
+                dma=channelDMA,
+                num=ledCount,
+                freq_hz=frequencyPWM,
+                channel=channelPWM,
+                invert=invertSignalPWM,
+                gamma=gamma,
+                strip_type=stripTypeLED,
+                brightness=int(255 * ledBrightnessFloat),
             )
-        except SystemExit:  # pylint:disable=try-except-raise
-            raise
-        except KeyboardInterrupt:  # pylint:disable=try-except-raise
-            raise
-        except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                inspect.stack()[0][3],
-                ex,
-            )
-            raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
 
-        try:
-            # validate led count
-            if not isinstance(self._ledCount, int):
-                raise LightStringException(
-                    f'Cannot create LightString object with LED count "{self._ledCount}"',
-                )
-            # if led count is good, create our pixel sequence
-            self.rgbArray: NDArray[(3, Any), np.int32] = np.zeros((self._ledCount, 3))
-            self.rgbArray[:] = np.array([Pixel().array for i in range(self._ledCount)])
+            self.ws281xPixelStrip.begin()
+            self._ledCount = self.ws281xPixelStrip.numPixels()
             LOGGER.debug(
-                "%s.%s Created Numpy Light array",
+                "%s Created WS281X object",
                 self.__class__.__name__,
-                inspect.stack()[0][3],
             )
-        except SystemExit:  # pylint:disable=try-except-raise
+        except SystemExit:
             raise
-        except KeyboardInterrupt:  # pylint:disable=try-except-raise
+        except KeyboardInterrupt:
+            raise
+        except LightBerryException:
             raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                inspect.stack()[0][3],
-                ex,
-            )
-            raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightStringException from ex
 
         # try to force cleanup of underlying c objects when user exits
         atexit.register(self.__del__)
@@ -125,22 +111,24 @@ class LightString(Sequence[np.int_]):
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
+            LightBerryException: if propogating an exception
             LightStringException: if something bad happens
         """
         # check if pixel strip has been created
-        if isinstance(self.pixelStrip, rpi_ws281x.PixelStrip):
+        if isinstance(self.ws281xPixelStrip, rpi_ws281x.PixelStrip):
             # turn off leds
             self.off()
             # cleanup c memory usage
             try:
-                self.pixelStrip._cleanup()
+                self.ws281xPixelStrip._cleanup()
             except SystemExit:  # pylint:disable=try-except-raise
                 raise
             except KeyboardInterrupt:  # pylint:disable=try-except-raise
                 raise
+            except LightBerryException:
+                raise
             except Exception as ex:
-                LOGGER.exception("Failed to clean up WS281X object: %s", str(ex))
-                raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
+                raise LightStringException from ex
 
     def __len__(
         self,
@@ -150,8 +138,8 @@ class LightString(Sequence[np.int_]):
         Returns:
             the number of LEDs in the array
         """
-        if self.rgbArray is not None:
-            return len(self.rgbArray)
+        if self.ws281xPixelStrip is not None:
+            return self.ws281xPixelStrip.count
         else:
             return 0
 
@@ -170,8 +158,8 @@ class LightString(Sequence[np.int_]):
         ...  # pylint: disable=pointless-statement
 
     def __getitem__(  # pylint: disable=function-redefined
-        self, key: Union[int, slice]
-    ) -> Union[NDArray[(3,), np.int32], NDArray[(3, Any), np.int32]]:
+        self, key: int | slice
+    ) -> NDArray[(3,), np.int32] | NDArray[(3, Any), np.int32]:
         """Return a LED index or slice from LED array.
 
         Args:
@@ -183,25 +171,29 @@ class LightString(Sequence[np.int_]):
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
+            LightBerryException: if propogating an exception
             LightStringException: if something bad happens
         """
         try:
-            if isinstance(self.rgbArray, np.ndarray):
-                return self.rgbArray[key].array
+            if key is int:
+                return Pixel(self.ws281xPixelStrip.getPixelColor(key)).array
             else:
-                raise LightStringException("Cannot index into uninitialized LightString object")
+                return ConvertPixelArrayToNumpyArray(
+                    [Pixel(self.ws281xPixelStrip.getPixelColor(k)) for k in key]
+                )
         except SystemExit:  # pylint:disable=try-except-raise
             raise
         except KeyboardInterrupt:  # pylint:disable=try-except-raise
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception('Failed to get key "%s" from %s: %s', key, self.rgbArray, ex)
-            raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightStringException from ex
 
     def __setitem__(
         self,
-        key: Union[int, slice],
-        value: Union[NDArray[(3,), np.int32], NDArray[(3, Any), np.int32]],
+        key: int | slice,
+        value: NDArray[(3,), np.int32] | NDArray[(3, Any), np.int32],
     ) -> None:
         """Set LED value(s) in the array.
 
@@ -212,37 +204,23 @@ class LightString(Sequence[np.int_]):
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
+            LightBerryException: if propogating an exception
             LightStringException: if something bad happens
         """
         try:
-            if isinstance(self.rgbArray, np.ndarray):
-                if isinstance(key, slice):
-                    if isinstance(value, np.ndarray):
-                        self.rgbArray.__setitem__(key, value)
-                    elif isinstance(value, Sequence):
-                        self.rgbArray.__setitem__(key, [Pixel(v).array for v in value])
-                    else:
-                        raise LightStringException(
-                            "Cannot assign multiple indices of LightString using a single value"
-                        )
-                else:
-                    if isinstance(value, np.ndarray):
-                        self.rgbArray.__setitem__(key, value)
-                    elif isinstance(value, Pixel):
-                        self.rgbArray.__setitem__(key, Pixel(value).array)
-                    else:
-                        raise LightStringException(
-                            "Cannot assign single index of LightString using multiple values"
-                        )
+            if isinstance(key, slice):
+                for i, k in enumerate(key):
+                    self.ws281xPixelStrip.setPixelColor(key, value[i, :])
             else:
-                raise LightStringException("Cannot index into uninitialized LightString object")
-        except SystemExit:  # pylint:disable=try-except-raise
+                self.ws281xPixelStrip.setPixelColor(key, value)
+        except SystemExit:
             raise
-        except KeyboardInterrupt:  # pylint:disable=try-except-raise
+        except KeyboardInterrupt:
+            raise
+        except LightBerryException:
             raise
         except Exception as ex:
-            LOGGER.exception("Failed to set light %s to value %s: %s", key, value, ex)
-            raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
+            raise LightStringException from ex
 
     def __enter__(
         self,
@@ -273,105 +251,18 @@ class LightString(Sequence[np.int_]):
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
+            LightBerryException: if propogating an exception
             LightStringException: if something bad happens
         """
-        for index in range(len(self.rgbArray)):
+        for index in range(self.count):
             try:
                 self[index] = PixelColors.OFF.array
-            except SystemExit:  # pylint:disable=try-except-raise
+            except SystemExit:
                 raise
-            except KeyboardInterrupt:  # pylint:disable=try-except-raise
+            except KeyboardInterrupt:
+                raise
+            except LightBerryException:
                 raise
             except Exception as ex:
-                LOGGER.exception(
-                    "Failed to set pixel %s in WS281X to value %s: %s",
-                    index,
-                    LightString(0),
-                    ex,
-                )
-                raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
-        self.refresh()
-
-    def refresh(
-        self,
-    ) -> None:
-        """Update the ws281x signal using the numpy array.
-
-        Raises:
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightStringException: if something bad happens
-        """
-        try:
-            # define callback for map method (fast iterator)
-            if self.simulate is False:
-
-                def SetPixel(irgb):
-                    try:
-                        i = irgb[0]
-                        rgb = irgb[1]
-                        value = (int(rgb[0]) << 16) + (int(rgb[1]) << 8) + int(rgb[2])
-                        self.pixelStrip.setPixelColor(i, value)
-                    except SystemExit:  # pylint:disable=try-except-raise
-                        raise
-                    except KeyboardInterrupt:  # pylint:disable=try-except-raise
-                        raise
-                    except Exception as ex:
-                        LOGGER.exception(
-                            "Failed to set pixel %d in WS281X to value %d: %s",
-                            i,
-                            value,
-                            str(ex),
-                        )
-                        raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
-
-            # copy this class's array into the ws281x array
-            if self.simulate is False:
-                list(
-                    map(
-                        SetPixel,
-                        enumerate(self.rgbArray),
-                    )
-                )
-                # send the signal out
-                self.pixelStrip.show()
-        except SystemExit:  # pylint:disable=try-except-raise
-            raise
-        except KeyboardInterrupt:  # pylint:disable=try-except-raise
-            raise
-        except Exception as ex:
-            LOGGER.exception('Function call "show" in WS281X object failed: %s', str(ex))
-            raise LightStringException(str(ex)).with_traceback(ex.__traceback__)
-
-
-if __name__ == "__main__":
-    LOGGER.info("Running LightString")
-    # the number of pixels in the light string
-    PIXEL_COUNT = 100
-    # GPIO pin to use for PWM signal
-    GPIO_PWM_PIN = 18
-    # DMA channel
-    DMA_CHANNEL = 5
-    # frequency to run the PWM signal at
-    PWM_FREQUENCY = 800000
-    GAMMA = None
-    LED_STRIP_TYPE = None
-    INVERT = False
-    PWM_CHANNEL = 0
-    with LightString(
-        pixelStrip=rpi_ws281x.PixelStrip(
-            num=PIXEL_COUNT,
-            pin=GPIO_PWM_PIN,
-            dma=DMA_CHANNEL,
-            freq_hz=PWM_FREQUENCY,
-            channel=PWM_CHANNEL,
-            invert=INVERT,
-            gamma=GAMMA,
-            strip_type=LED_STRIP_TYPE,
-        ),
-    ) as liteStr:
-        liteStr.refresh()
-        p = Pixel((255, 0, 0))
-        liteStr[4] = PixelColors.RED
-        liteStr.refresh()
-        time.sleep(1)
+                raise LightStringException from ex
+        self.setLEDs()

@@ -9,8 +9,8 @@ import pyaudio
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from LightBerries import LightPatterns
-from LightBerries.LightControls import LightController
+from LightBerries import LightArrayPatterns
+from LightBerries.LightArrayControls import LightArrayController
 from LightBerries.LightPixels import Pixel
 
 
@@ -131,7 +131,7 @@ class LightOutput(RollingDataFromQueue):
         """
         super().__init__(inQ, outQ)
         # create light controller object
-        self.lightController = LightController(LightOutput.LED_COUNT, 18, 10, 800000)
+        self.lightController = LightArrayController(LightOutput.LED_COUNT, 18, 10, 800000)
         self.lightController.off()
         self.lightController.refreshLEDs()
 
@@ -145,7 +145,7 @@ class LightOutput(RollingDataFromQueue):
                 # see if we got data
                 if self.getNewData():
                     self.lightController.setVirtualLEDArray(
-                        LightPatterns.ColorTransitionArray(
+                        LightArrayPatterns.ColorTransitionArray(
                             LightOutput.LED_COUNT, False, [Pixel(int(p)) for p in self.plotData]
                         )
                     )

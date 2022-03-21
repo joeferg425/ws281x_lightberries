@@ -3,6 +3,7 @@ from __future__ import annotations
 import enum
 import logging
 import random
+from typing import Any
 from nptyping import NDArray
 import numpy as np
 
@@ -29,7 +30,7 @@ class Pixel:
 
     def __init__(
         self,
-        rgb: int | NDArray[(3), np.float32] | "Pixel" | None = None,
+        rgb: int | NDArray[(3), np.dtype[Any]] | "Pixel" | None = None,
         order: EnumLEDOrder = DEFAULT_PIXEL_ORDER,
     ) -> None:
         """Create a single RGB LED pixel.
@@ -41,6 +42,7 @@ class Pixel:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
+            LightBerryException: if propogating an exception
             LightPixelException: if something bad happens
         """
         try:
@@ -158,10 +160,18 @@ class Pixel:
         return f"<{self.__class__.__name__}> {self.__str__()} ({self._value}/{self._order})"
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Pixel):
+        """Text pixel equality with other objects.
+
+        Args:
+            other: another object
+
+        Returns:
+            true if objects are equal
+        """
+        if not isinstance(other, (int, np.ndarray, tuple, Pixel, None)):
             return False
         # convert the pixel orders to the same order then compare
-        return self.pixel._value == other.pixel._value
+        return self.pixel._value == Pixel(other).pixel._value
 
     @property
     def tuple(
@@ -197,7 +207,7 @@ class Pixel:
     @property
     def array(
         self,
-    ) -> NDArray[(3,), np.int32]:
+    ) -> NDArray[(3,), np.int_]:
         """Return Pixel value as a numpy array.
 
         Returns:
@@ -207,6 +217,11 @@ class Pixel:
 
     @property
     def hexstr(self):
+        """Returns the color value as an RGB hex strings regardless of underlying RGB order.
+
+        Returns:
+            _type_: _description_
+        """
         rgb = self.tuple
         return f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
 
@@ -214,33 +229,39 @@ class Pixel:
 class PixelColors:
     """List of commonly used colors for ease of use."""
 
-    OFF = Pixel((0, 0, 0), order=EnumLEDOrder.RGB).pixel
-    RED2 = Pixel((128, 0, 0), order=EnumLEDOrder.RGB).pixel
-    RED = Pixel((255, 0, 0), order=EnumLEDOrder.RGB).pixel
-    ORANGE2 = Pixel((128, 128, 0), order=EnumLEDOrder.RGB).pixel
-    ORANGE = Pixel((255, 128, 0), order=EnumLEDOrder.RGB).pixel
-    YELLOW = Pixel((255, 210, 80), order=EnumLEDOrder.RGB).pixel
-    LIME = Pixel((128, 255, 0), order=EnumLEDOrder.RGB).pixel
-    GREEN2 = Pixel((0, 128, 0), order=EnumLEDOrder.RGB).pixel
-    GREEN = Pixel((0, 255, 0), order=EnumLEDOrder.RGB).pixel
-    TEAL = Pixel((0, 255, 128), order=EnumLEDOrder.RGB).pixel
-    CYAN2 = Pixel((0, 128, 128), order=EnumLEDOrder.RGB).pixel
-    CYAN = Pixel((0, 255, 255), order=EnumLEDOrder.RGB).pixel
-    SKY = Pixel((0, 128, 255), order=EnumLEDOrder.RGB).pixel
-    BLUE = Pixel((0, 0, 255), order=EnumLEDOrder.RGB).pixel
-    BLUE2 = Pixel((0, 0, 128), order=EnumLEDOrder.RGB).pixel
-    VIOLET = Pixel((128, 0, 255), order=EnumLEDOrder.RGB).pixel
-    PURPLE = Pixel((128, 0, 128), order=EnumLEDOrder.RGB).pixel
-    MIDNIGHT = Pixel((70, 0, 128), order=EnumLEDOrder.RGB).pixel
-    MAGENTA = Pixel((255, 0, 255), order=EnumLEDOrder.RGB).pixel
-    PINK = Pixel((255, 0, 128), order=EnumLEDOrder.RGB).pixel
-    WHITE = Pixel((255, 255, 255), order=EnumLEDOrder.RGB).pixel
-    GRAY = Pixel((128, 118, 108), order=EnumLEDOrder.RGB).pixel
+    OFF = Pixel((0, 0, 0), order=EnumLEDOrder.RGB).pixel.array
+    RED3 = Pixel((64, 0, 0), order=EnumLEDOrder.RGB).pixel.array
+    RED2 = Pixel((128, 0, 0), order=EnumLEDOrder.RGB).pixel.array
+    RED = Pixel((255, 0, 0), order=EnumLEDOrder.RGB).pixel.array
+    ORANGE3 = Pixel((64, 64, 0), order=EnumLEDOrder.RGB).pixel.array
+    ORANGE2 = Pixel((128, 128, 0), order=EnumLEDOrder.RGB).pixel.array
+    ORANGE = Pixel((255, 128, 0), order=EnumLEDOrder.RGB).pixel.array
+    YELLOW = Pixel((255, 210, 80), order=EnumLEDOrder.RGB).pixel.array
+    LIME = Pixel((128, 255, 0), order=EnumLEDOrder.RGB).pixel.array
+    GREEN3 = Pixel((0, 64, 0), order=EnumLEDOrder.RGB).pixel.array
+    GREEN2 = Pixel((0, 128, 0), order=EnumLEDOrder.RGB).pixel.array
+    GREEN = Pixel((0, 255, 0), order=EnumLEDOrder.RGB).pixel.array
+    TEAL = Pixel((0, 255, 128), order=EnumLEDOrder.RGB).pixel.array
+    CYAN3 = Pixel((0, 64, 64), order=EnumLEDOrder.RGB).pixel.array
+    CYAN2 = Pixel((0, 128, 128), order=EnumLEDOrder.RGB).pixel.array
+    CYAN = Pixel((0, 255, 255), order=EnumLEDOrder.RGB).pixel.array
+    SKY = Pixel((0, 128, 255), order=EnumLEDOrder.RGB).pixel.array
+    BLUE = Pixel((0, 0, 255), order=EnumLEDOrder.RGB).pixel.array
+    BLUE2 = Pixel((0, 0, 128), order=EnumLEDOrder.RGB).pixel.array
+    BLUE3 = Pixel((0, 0, 64), order=EnumLEDOrder.RGB).pixel.array
+    VIOLET = Pixel((128, 0, 255), order=EnumLEDOrder.RGB).pixel.array
+    PURPLE = Pixel((128, 0, 128), order=EnumLEDOrder.RGB).pixel.array
+    PURPLE2 = Pixel((64, 0, 64), order=EnumLEDOrder.RGB).pixel.array
+    MIDNIGHT = Pixel((70, 0, 128), order=EnumLEDOrder.RGB).pixel.array
+    MAGENTA = Pixel((255, 0, 255), order=EnumLEDOrder.RGB).pixel.array
+    PINK = Pixel((255, 0, 128), order=EnumLEDOrder.RGB).pixel.array
+    WHITE = Pixel((255, 255, 255), order=EnumLEDOrder.RGB).pixel.array
+    GRAY = Pixel((128, 118, 108), order=EnumLEDOrder.RGB).pixel.array
 
     @classmethod
     def pseudoRandom(
         cls,
-    ) -> NDArray[(3,), np.int32]:
+    ) -> NDArray[(3,), np.int_]:
         """Get a random color from the list of defined colors.
 
         Returns:
@@ -251,12 +272,12 @@ class PixelColors:
         randomColor = clrs[random.randint(0, len(clrs) - 1)]
         while randomColor == "OFF":
             randomColor = clrs[random.randint(0, len(clrs) - 1)]
-        return getattr(PixelColors, randomColor).array
+        return getattr(PixelColors, randomColor)
 
     @classmethod
     def random(
         cls,
-    ) -> NDArray[(3,), np.int32]:
+    ) -> NDArray[(3,), np.int_]:
         """Get a randomly generated pixel value.
 
         Returns:

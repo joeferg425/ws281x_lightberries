@@ -2,9 +2,9 @@
 from __future__ import annotations
 import numpy as np
 import pytest
-from typing import Tuple
+from typing import Callable
 import LightBerries.LightPixels
-from LightBerries.LightPixels import EnumLEDOrder, Pixel
+from LightBerries.LightPixels import EnumLEDOrder, Pixel, PixelColors
 from nptyping import NDArray
 
 
@@ -12,15 +12,19 @@ def test_pixel_creation_default():
     """Test default pixel creation and attributes."""
     LightBerries.LightPixels.DEFAULT_PIXEL_ORDER = EnumLEDOrder.GRB
     p = Pixel()
-    assert p is not None
-    assert len(p.array) == 3
-    assert isinstance(p.hexstr, str)
-    assert p.hexstr == "000000"
-    assert str(p) == "PX #000000"
-    assert isinstance(p.pixel, Pixel)
-    assert p.pixel == Pixel(0)
-    assert isinstance(p.tuple, Tuple)
-    assert p.tuple == (0, 0, 0)
+    assert isinstance(p, Pixel), f"Pixel: {p} is not {type(Pixel)}"
+    exp = 0x000000
+    assert p._value == exp, f"Pixel._value: {p._value} != expected value: {exp}"
+    exp = 3
+    assert len(p.array) == exp, f"Pixel.array: {p.array} != expected value: {exp}"
+    exp = "000000"
+    assert p.hexstr == exp, f"Pixel.hexstr: {p.hexstr} != expected value: {exp}"
+    exp = "PX #000000"
+    assert str(p) == exp, f"str(Pixel): {str(p)} != expected value: {exp}"
+    exp = Pixel(0x000000)
+    assert p.pixel == exp, f"Pixel.pixel: {p.pixel} != expected value: {exp}"
+    exp = (0, 0, 0)
+    assert p.tuple == exp, f"Pixel.tuple: {p.tuple} != expected value: {exp}"
 
 
 @pytest.mark.parametrize(
@@ -35,7 +39,7 @@ def test_pixel_creation_value_args(arg: int | NDArray[(3), np.float32] | "Pixel"
     """
     LightBerries.LightPixels.DEFAULT_PIXEL_ORDER = EnumLEDOrder.GRB
     p = Pixel(arg)
-    assert p is not None, f"Pixel: {p} is None"
+    assert isinstance(p, Pixel), f"Pixel: {p} is not {type(Pixel)}"
     exp = 0x000100
     assert p._value == exp, f"Pixel._value: {p._value} != expected value: {exp}"
     exp = 3
@@ -62,7 +66,7 @@ def test_pixel_creation_pixel_order(arg: int | NDArray[(3), np.float32] | "Pixel
     """
     LightBerries.LightPixels.DEFAULT_PIXEL_ORDER = EnumLEDOrder.RGB
     p = Pixel(arg)
-    assert p is not None, f"Pixel: {p} is None"
+    assert isinstance(p, Pixel), f"Pixel: {p} is not {type(Pixel)}"
     exp = 0x000100
     assert p._value == exp, f"Pixel._value: {p._value} != expected value: {exp}"
     exp = 3
@@ -75,3 +79,20 @@ def test_pixel_creation_pixel_order(arg: int | NDArray[(3), np.float32] | "Pixel
     assert p.pixel == exp, f"Pixel.pixel: {p.pixel} != expected value: {exp}"
     exp = (1, 0, 0)
     assert p.tuple == exp, f"Pixel.tuple: {p.tuple} != expected value: {exp}"
+
+
+def test_pixelcolors():
+    """Test whether the pixel colors helper class is returning valid and consistent colors."""
+    # loop through each class member
+    for var in dir(PixelColors):
+        # skip private members
+        if "__" not in var:
+            # get member by name
+            p = getattr(PixelColors, var)
+            # if member is function, call it
+            if isinstance(p, Callable):
+                p = p()
+            # check type and length of pixel's ndarray
+            assert isinstance(p, np.ndarray), f"Pixel: {p} is not {np.ndarray}"
+            exp = 3
+            assert len(p) == exp, f"Pixel length: {len(p)} is not {exp}"

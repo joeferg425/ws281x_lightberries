@@ -32,7 +32,7 @@ if sys.platform != "linux":
                 """Fake method."""
                 pass  # pylint: disable = unnecessary-pass
 
-            def setPixelColor(self, index, color):
+            def setPixelColor(self, index: int, color: int):
                 """Fake method.
 
                 Args:
@@ -40,6 +40,17 @@ if sys.platform != "linux":
                     color: ignored
                 """
                 pass  # pylint: disable = unnecessary-pass
+
+            def getPixelColor(self, index: int) -> int:
+                """Fake method.
+
+                Args:
+                    index: ignored
+
+                Returns:
+                    ignored
+                """
+                return 0
 
             def show(self):
                 """Fake method."""

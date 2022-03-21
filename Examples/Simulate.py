@@ -6,7 +6,7 @@ import multiprocessing.queues
 import tkinter as tk
 import matplotlib.pyplot as plt
 from numpy import double
-from LightBerries.LightControls import LightController
+from LightBerries.LightArrayControls import LightArrayController
 from LightBerries.LightPixels import Pixel
 
 
@@ -54,7 +54,7 @@ class LightOutput:
                     ledCount = self.lightQ.get_nowait()
                 except multiprocessing.queues.Empty:
                     pass
-            self.lightController = LightController(
+            self.lightController = LightArrayController(
                 ledCount,
                 18,
                 10,
@@ -229,7 +229,7 @@ class App:
         self.ledCountInt.set(100)
 
         self.functionString = tk.StringVar()
-        self.functionChoices = [f for f in dir(LightController) if f[:11] == "useFunction"]
+        self.functionChoices = [f for f in dir(LightArrayController) if f[:11] == "useFunction"]
         self.functionChoices.sort()
         self.functionString.set(self.functionChoices[0])
         self.functionDropdown = tk.OptionMenu(
@@ -243,7 +243,7 @@ class App:
         )
 
         self.patternString = tk.StringVar()
-        self.patternChoices = [f for f in dir(LightController) if f[:8] == "useColor"]
+        self.patternChoices = [f for f in dir(LightArrayController) if f[:8] == "useColor"]
         self.patternChoices.sort()
         self.patternString.set(self.patternChoices[0])
         self.patternDropdown = tk.OptionMenu(

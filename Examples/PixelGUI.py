@@ -9,9 +9,9 @@ import multiprocessing.queues
 from tkinter.colorchooser import askcolor
 import tkinter as tk
 import LightBerries.LightPixels
-from LightBerries.LightControls import LightController
+from LightBerries.LightArrayControls import LightArrayController
 from LightBerries.LightPixels import Pixel
-from LightBerries.LightPatterns import ConvertPixelArrayToNumpyArray, SolidColorArray
+from LightBerries.LightArrayPatterns import ConvertPixelArrayToNumpyArray, SolidColorArray
 
 
 # the number of pixels in the light string
@@ -66,7 +66,7 @@ class LightsProcess:
         """
         try:
             # create LightBerry controller
-            lightControl = LightController(
+            lightControl = LightArrayController(
                 ledCount=PIXEL_COUNT,
                 pwmGPIOpin=GPIO_PWM_PIN,
                 channelDMA=DMA_CHANNEL,
