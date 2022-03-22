@@ -3,7 +3,6 @@ import random
 import logging
 import datetime
 from typing import Any, List, Sequence, Union
-from nptyping import NDArray
 import numpy as np
 from LightBerries.LightBerryExceptions import LightBerryException, LightPatternException
 from LightBerries.LightPixels import Pixel, PixelColors
@@ -16,7 +15,7 @@ DEFAULT_BACKGROUND_COLOR = PixelColors.OFF
 DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE]
 
 
-def DefaultColorSequence() -> NDArray[(3, Any), np.int32]:
+def DefaultColorSequence() -> np.ndarray[(3, Any), np.int32]:
     """Get the default sequence of colors defined for this month.
 
     Returns:
@@ -72,9 +71,17 @@ def DefaultColorSequence() -> NDArray[(3, Any), np.int32]:
                 PixelColors.WHITE,
             ]
         elif month == 6:
-            DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.WHITE, PixelColors.BLUE]
+            DEFAULT_COLOR_SEQUENCE = [
+                PixelColors.RED,
+                PixelColors.WHITE,
+                PixelColors.BLUE,
+            ]
         elif month == 7:
-            DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.WHITE, PixelColors.BLUE]
+            DEFAULT_COLOR_SEQUENCE = [
+                PixelColors.RED,
+                PixelColors.WHITE,
+                PixelColors.BLUE,
+            ]
         elif month == 8:
             DEFAULT_COLOR_SEQUENCE = [
                 PixelColors.ORANGE,
@@ -105,7 +112,11 @@ def DefaultColorSequence() -> NDArray[(3, Any), np.int32]:
                 PixelColors.GRAY,
             ]
         elif month == 12:
-            DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.WHITE, PixelColors.GREEN]
+            DEFAULT_COLOR_SEQUENCE = [
+                PixelColors.RED,
+                PixelColors.WHITE,
+                PixelColors.GREEN,
+            ]
     except SystemExit:
         raise
     except KeyboardInterrupt:
@@ -119,7 +130,7 @@ def DefaultColorSequence() -> NDArray[(3, Any), np.int32]:
 
 def PixelArray(
     arrayLength: int,
-) -> NDArray[(3, Any), np.int32]:
+) -> np.ndarray[(3, Any), np.int32]:
     """Creates array of RGB tuples that are all off.
 
     Args:
@@ -148,7 +159,7 @@ def PixelArray(
 
 def ConvertPixelArrayToNumpyArray(
     colorSequence: Sequence[Pixel],
-) -> NDArray[(3, Any), np.int32]:
+) -> np.ndarray[(3, Any), np.int32]:
     """Convert an array of Pixels into a numpy array of rgb arrays.
 
     Args:
@@ -177,8 +188,8 @@ def ConvertPixelArrayToNumpyArray(
 
 def SolidColorArray(
     arrayLength: int,
-    color: Union[Pixel, NDArray[(3,), np.int32]] = DEFAULT_COLOR_SEQUENCE[0],
-) -> NDArray[(3, Any), np.int32]:
+    color: Union[Pixel, np.ndarray[(3,), np.int32]] = DEFAULT_COLOR_SEQUENCE[0],
+) -> np.ndarray[(3, Any), np.int32]:
     """Creates array of RGB tuples that are all one color.
 
     Args:
@@ -213,8 +224,8 @@ def SolidColorArray(
 def ColorTransitionArray(
     arrayLength: int,
     wrap: bool = True,
-    colorSequence: Union[List[Pixel], NDArray[(3, Any), np.int32]] = None,
-) -> NDArray[(3, Any), np.int32]:
+    colorSequence: Union[List[Pixel], np.ndarray[(3, Any), np.int32]] = None,
+) -> np.ndarray[(3, Any), np.int32]:
     """This is a slightly more versatile version of CreateRainbow.
 
     The user specifies a color sequence and the number of steps (LEDs)
@@ -291,7 +302,7 @@ def ColorTransitionArray(
 def RainbowArray(
     arrayLength: int,
     wrap: bool = False,
-) -> NDArray[(3, Any), np.int32]:
+) -> np.ndarray[(3, Any), np.int32]:
     """Create a color gradient array.
 
     Args:
@@ -330,8 +341,8 @@ def RainbowArray(
 
 def RepeatingColorSequenceArray(
     arrayLength: int,
-    colorSequence: Union[List[Pixel], NDArray[(3, Any), np.int32]] = None,
-) -> NDArray[(3, Any), np.int32]:
+    colorSequence: Union[List[Pixel], np.ndarray[(3, Any), np.int32]] = None,
+) -> np.ndarray[(3, Any), np.int32]:
     """Creates a repeating LightPattern from a given sequence.
 
     Args:
@@ -379,7 +390,7 @@ def RepeatingColorSequenceArray(
 def RepeatingRainbowArray(
     arrayLength: int,
     segmentLength: int = None,
-) -> NDArray[(3, Any), np.int32]:
+) -> np.ndarray[(3, Any), np.int32]:
     """Creates a repeating gradient for you.
 
     Args:
@@ -414,9 +425,9 @@ def RepeatingRainbowArray(
 
 def ReflectArray(
     arrayLength: int,
-    colorSequence: Union[List[Pixel], NDArray[(3, Any), np.int32]] = None,
+    colorSequence: Union[List[Pixel], np.ndarray[(3, Any), np.int32]] = None,
     foldLength=None,
-) -> NDArray[(3, Any), np.int32]:
+) -> np.ndarray[(3, Any), np.int32]:
     """Generates an array where each repetition of the input. Sequence is reversed from the previous one.
 
     Args:
@@ -455,7 +466,10 @@ def ReflectArray(
         for segBegin in range(0, arrayLength, foldLength):
             overflow = 0
             segEnd = 0
-            if segBegin + foldLength <= arrayLength and segBegin + foldLength <= colorSequenceLen:
+            if (
+                segBegin + foldLength <= arrayLength
+                and segBegin + foldLength <= colorSequenceLen
+            ):
                 segEnd = segBegin + foldLength
             elif segBegin + foldLength > arrayLength:
                 segEnd = segBegin + foldLength
@@ -484,7 +498,7 @@ def ReflectArray(
 
 def RandomArray(
     arrayLength: int,
-) -> NDArray[(3, Any), np.int32]:
+) -> np.ndarray[(3, Any), np.int32]:
     """Creates an array of random colors.
 
     Args:
@@ -530,8 +544,8 @@ def RandomArray(
 
 def PseudoRandomArray(
     arrayLength: int,
-    colorSequence: Union[List[Pixel], NDArray[(3, Any), np.int32]] = None,
-) -> NDArray[(3, Any), np.int32]:
+    colorSequence: Union[List[Pixel], np.ndarray[(3, Any), np.int32]] = None,
+) -> np.ndarray[(3, Any), np.int32]:
     """Creates an array of random colors.
 
     Args:
@@ -574,8 +588,8 @@ def PseudoRandomArray(
 
 def ColorStretchArray(
     repeats=5,
-    colorSequence: Union[List[Pixel], NDArray[(3, Any), np.int32]] = None,
-) -> NDArray[(3, Any), np.int32]:
+    colorSequence: Union[List[Pixel], np.ndarray[(3, Any), np.int32]] = None,
+) -> np.ndarray[(3, Any), np.int32]:
     """Takes a sequence of input colors and repeats each element the requested number of times.
 
     Args:

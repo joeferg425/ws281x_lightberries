@@ -1,11 +1,11 @@
 """Defines basic light string data and functions."""
 from __future__ import annotations
+from ctypes import Union
 import os
 import sys
 import atexit
 import logging
 from typing import Any, Sequence, overload
-from nptyping import NDArray
 import numpy as np
 from LightBerries.LightArrayPatterns import ConvertPixelArrayToNumpyArray
 from LightBerries.LightBerryExceptions import LightStringException, LightBerryException
@@ -55,14 +55,18 @@ class LightString(Sequence[np.int_]):
         """
         # cant run GPIO stuff without root, tell the user if they forgot
         # linux check is just for debugging with fake GPIO on windows
-        if sys.platform == "linux" and not os.getuid() == 0:  # pylint: disable = no-member
+        if (
+            sys.platform == "linux" and not os.getuid() == 0
+        ):  # pylint: disable = no-member
             raise LightStringException(
                 "GPIO functionality requires root privilege. Please run command again as root"
             )
 
         # catch error cases first
         if ledCount is None:
-            raise LightStringException("Cannot create LightString object without ledCount.")
+            raise LightStringException(
+                "Cannot create LightString object without ledCount."
+            )
 
         try:
             self.simulate = simulate
@@ -147,19 +151,19 @@ class LightString(Sequence[np.int_]):
     def __getitem__(  # noqa D105
         self,
         idx: int,
-    ) -> NDArray[(3,), np.int32]:
+    ) -> np.ndarray[(3,), np.int32]:
         ...  # pylint: disable=pointless-statement
 
     @overload
     def __getitem__(  # noqa D105 # pylint: disable=function-redefined
         self,
         s: slice,
-    ) -> NDArray[(3, Any), np.int32]:
+    ) -> np.ndarray[(3, Any), np.int32]:
         ...  # pylint: disable=pointless-statement
 
     def __getitem__(  # pylint: disable=function-redefined
         self, key: int | slice
-    ) -> NDArray[(3,), np.int32] | NDArray[(3, Any), np.int32]:
+    ) -> Union[np.ndarray[(3,), np.int32], np.ndarray[(3, Any), np.int32]]:
         """Return a LED index or slice from LED array.
 
         Args:
@@ -193,7 +197,7 @@ class LightString(Sequence[np.int_]):
     def __setitem__(
         self,
         key: int | slice,
-        value: NDArray[(3,), np.int32] | NDArray[(3, Any), np.int32],
+        value: np.ndarray[(3,), np.int32] | np.ndarray[(3, Any), np.int32],
     ) -> None:
         """Set LED value(s) in the array.
 

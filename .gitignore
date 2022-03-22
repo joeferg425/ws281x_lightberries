@@ -111,3 +111,4 @@ LightBerries/Sphinx-docs/
 *.tar.gz
 *.log
 *.sh
+poetry.lock

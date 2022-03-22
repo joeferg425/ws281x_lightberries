@@ -5,7 +5,6 @@ import pytest
 from typing import Callable
 import LightBerries.LightPixels
 from LightBerries.LightPixels import EnumLEDOrder, Pixel, PixelColors
-from nptyping import NDArray
 
 
 def test_pixel_creation_default():
@@ -31,7 +30,7 @@ def test_pixel_creation_default():
     "arg",
     [0x010000, np.array((1, 0, 0), dtype=np.int32), Pixel(0x010000)],
 )
-def test_pixel_creation_value_args(arg: int | NDArray[(3), np.float32] | "Pixel"):
+def test_pixel_creation_value_args(arg: int | np.ndarray[(3), np.float32] | "Pixel"):
     """Test the valid creation methods.
 
     Args:
@@ -58,7 +57,7 @@ def test_pixel_creation_value_args(arg: int | NDArray[(3), np.float32] | "Pixel"
     "arg",
     [0x010000, np.array((1, 0, 0), dtype=np.int32), Pixel(0x010000)],
 )
-def test_pixel_creation_pixel_order(arg: int | NDArray[(3), np.float32] | "Pixel"):
+def test_pixel_creation_pixel_order(arg: int | np.ndarray[(3), np.float32] | "Pixel"):
     """Test the valid creation methods.
 
     Args:

@@ -1,39 +1,20 @@
+[tool.poetry]
+name = "LightBerries"
+version = "1.0.2"
+description = "A wrapper for rpi_ws281x that does all the heavy lifting for you."
+authors = ["joeferg425"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+numpy = "^1.22.3"
+
+[tool.poetry.dev-dependencies]
+black = "^22.1.0"
+flake8 = "^4.0.1"
+matplotlib = "^3.5.1"
+pytest = "^7.1.1"
+
 [build-system]
-requires = [
-    "setuptools >= 40.9.0",
-    "wheel",
-    ]
-build-backend = "setuptools.build_meta"
-
-[tool.black]
-line-length = 110
-
-[tool.mypy]
-plugins = "numpy.typing.mypy_plugin"
-
-[tool.bandit]
-skips = ["B311"]
-
-[tool.pylint.'MASTER']
-#load-plugins = "pylint.extensions.docparams"
-
-[tool.pylint.'FORMAT']
-max-line-length=110
-max-module-lines=2100
-
-[tool.pylint.BASIC]
-module-naming-style="PascalCase"
-class-naming-style="PascalCase"
-function-naming-style="PascalCase"
-argument-naming-style="camelCase"
-method-naming-style="camelCase"
-variable-naming-style="camelCase"
-attr-naming-style="camelCase"
-const-naming-style="UPPER_CASE"
-
-[tool.pylint.'MESSAGES CONTROL']
-disable=["try-except-raise","broad-except","consider-using-enumerate","too-many-lines"]
-
-[tool.pylint.messages_control]
-disable = ["C0330", "C0326"]
-max-line-length = 110
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

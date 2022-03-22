@@ -4,7 +4,6 @@ import enum
 import logging
 import random
 from typing import Any
-from nptyping import NDArray
 import numpy as np
 
 from LightBerries.LightBerryExceptions import LightBerryException, LightPixelException
@@ -30,7 +29,7 @@ class Pixel:
 
     def __init__(
         self,
-        rgb: int | NDArray[(3), np.dtype[Any]] | "Pixel" | None = None,
+        rgb: int | np.ndarray[(3), np.dtype[Any]] | "Pixel" | None = None,
         order: EnumLEDOrder = DEFAULT_PIXEL_ORDER,
     ) -> None:
         """Create a single RGB LED pixel.
@@ -63,7 +62,11 @@ class Pixel:
             # if it is an int and in range
             elif isinstance(rgb, int) and rgb >= 0 and rgb <= 0xFFFFFF:
                 # convert to tuple
-                value = (((rgb & 0xFF0000) >> 16), ((rgb & 0x00FF00) >> 8), ((rgb & 0x0000FF) >> 0))
+                value = (
+                    ((rgb & 0xFF0000) >> 16),
+                    ((rgb & 0x00FF00) >> 8),
+                    ((rgb & 0x0000FF) >> 0),
+                )
                 self._value = (
                     # use order enum
                     (int(value[_order[0]]) << 16)
@@ -98,7 +101,9 @@ class Pixel:
 
             # we've got an error boys!
             else:
-                raise LightPixelException(f"Cannot assign pixel using value: {str(rgb)} ({type(rgb)})")
+                raise LightPixelException(
+                    f"Cannot assign pixel using value: {str(rgb)} ({type(rgb)})"
+                )
 
         except SystemExit:
             raise
@@ -207,7 +212,7 @@ class Pixel:
     @property
     def array(
         self,
-    ) -> NDArray[(3,), np.int_]:
+    ) -> np.ndarray[(3,), np.int_]:
         """Return Pixel value as a numpy array.
 
         Returns:
@@ -261,7 +266,7 @@ class PixelColors:
     @classmethod
     def pseudoRandom(
         cls,
-    ) -> NDArray[(3,), np.int_]:
+    ) -> np.ndarray[(3,), np.int_]:
         """Get a random color from the list of defined colors.
 
         Returns:
@@ -277,7 +282,7 @@ class PixelColors:
     @classmethod
     def random(
         cls,
-    ) -> NDArray[(3,), np.int_]:
+    ) -> np.ndarray[(3,), np.int_]:
         """Get a randomly generated pixel value.
 
         Returns:
