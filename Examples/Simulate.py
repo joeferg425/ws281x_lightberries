@@ -6,8 +6,8 @@ import multiprocessing.queues
 import tkinter as tk
 import matplotlib.pyplot as plt
 from numpy import double
-from LightBerries.LightArrayControls import LightArrayController
-from LightBerries.LightPixels import Pixel
+from lightberries.array_controller import ArrayController
+from lightberries.pixel import Pixel
 
 
 class LightOutput:
@@ -54,7 +54,7 @@ class LightOutput:
                     ledCount = self.lightQ.get_nowait()
                 except multiprocessing.queues.Empty:
                     pass
-            self.lightController = LightArrayController(
+            self.lightController = ArrayController(
                 ledCount,
                 18,
                 10,
@@ -189,9 +189,13 @@ class App:
         self.canvas = tk.Canvas(self.root)
         self.canvas.pack(side=tk.RIGHT, fill="both", expand=True)
 
-        self.scrollbarY = tk.Scrollbar(self.canvas, command=self.canvas.yview, orient=tk.VERTICAL)
+        self.scrollbarY = tk.Scrollbar(
+            self.canvas, command=self.canvas.yview, orient=tk.VERTICAL
+        )
         self.scrollbarY.pack(side=tk.RIGHT, fill="y")
-        self.scrollbarX = tk.Scrollbar(self.canvas, command=self.canvas.xview, orient=tk.HORIZONTAL)
+        self.scrollbarX = tk.Scrollbar(
+            self.canvas, command=self.canvas.xview, orient=tk.HORIZONTAL
+        )
         self.scrollbarX.pack(side=tk.BOTTOM, fill="y")
 
         self.mainFrame = tk.Frame(self.canvas)
@@ -229,7 +233,9 @@ class App:
         self.ledCountInt.set(100)
 
         self.functionString = tk.StringVar()
-        self.functionChoices = [f for f in dir(LightArrayController) if f[:11] == "useFunction"]
+        self.functionChoices = [
+            f for f in dir(ArrayController) if f[:11] == "useFunction"
+        ]
         self.functionChoices.sort()
         self.functionString.set(self.functionChoices[0])
         self.functionDropdown = tk.OptionMenu(
@@ -243,7 +249,7 @@ class App:
         )
 
         self.patternString = tk.StringVar()
-        self.patternChoices = [f for f in dir(LightArrayController) if f[:8] == "useColor"]
+        self.patternChoices = [f for f in dir(ArrayController) if f[:8] == "useColor"]
         self.patternChoices.sort()
         self.patternString.set(self.patternChoices[0])
         self.patternDropdown = tk.OptionMenu(
@@ -320,7 +326,9 @@ class App:
 
         self.root.protocol("WM_DELETE_WINDOW", self.destroy)
 
-        self.root.title("LightBerries LED GUI Simulator (function parameters not included)")
+        self.root.title(
+            "LightBerries LED GUI Simulator (function parameters not included)"
+        )
         self.root.after(1, self.checkQ)
 
         self.root.mainloop()
@@ -359,7 +367,9 @@ class App:
             ledCount = int(self.ledCountInt.get())
             for column in range(ledCount):
                 self.buttonFrame.columnconfigure(column, weight=1)
-                btn = tk.Button(self.buttonFrame, bg="black", fg="white", width=1, height=1)
+                btn = tk.Button(
+                    self.buttonFrame, bg="black", fg="white", width=1, height=1
+                )
                 btn.grid(
                     row=1,
                     column=column,

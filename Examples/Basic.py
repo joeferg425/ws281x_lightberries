@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 """An example of using this module."""
-import LightBerries.LightArrayPatterns
-from LightBerries.LightArrayControls import LightArrayController
-from LightBerries.LightPixels import PixelColors
+import lightberries.array_patterns
+from lightberries.array_controller import ArrayController
+from lightberries.pixel import PixelColors
 
 # the number of pixels in the light string
 PIXEL_COUNT = 100
@@ -23,7 +23,7 @@ PWM_CHANNEL = 0
 
 
 # create the LightBerries Controller object
-lightControl = LightArrayController(
+lightControl = ArrayController(
     ledCount=PIXEL_COUNT,
     pwmGPIOpin=GPIO_PWM_PIN,
     channelDMA=DMA_CHANNEL,
@@ -37,7 +37,7 @@ lightControl = LightArrayController(
 )
 # configure a color pattern using a "useColor" method
 lightControl.useColorSequence(
-    colorSequence=LightBerries.LightArrayPatterns.DefaultColorSequence(),
+    colorSequence=lightberries.array_patterns.DefaultColorSequence(),
     backgroundColor=PixelColors.OFF,
 )
 # configure a function using a "useFunction" method

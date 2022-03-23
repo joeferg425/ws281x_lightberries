@@ -4,6 +4,7 @@ This allows easier interaction from the rest of LightBerries
 """
 import logging
 import sys
+import numpy as np
 
 LOGGER = logging.getLogger("LightBerries")
 
@@ -17,14 +18,15 @@ if sys.platform != "linux":
 
             rpi_ws281x = None
 
-            def __init__(self, *_, **kwargs):
+            def __init__(self, num: int, *_, **kwargs):
+                self.fake = np.zeros((num), dtype=np.int32)
                 """Fake method.
 
                 Args:
                     _: ignored
                     kwargs: ignored
                 """
-                self.count = 0
+                self.count = num
                 if "num" in kwargs:
                     self.count = kwargs["num"]
 
@@ -39,7 +41,7 @@ if sys.platform != "linux":
                     index: ignored
                     color: ignored
                 """
-                pass  # pylint: disable = unnecessary-pass
+                self.fake[index] = color  # pylint: disable = unnecessary-pass
 
             def getPixelColor(self, index: int) -> int:
                 """Fake method.
@@ -50,7 +52,7 @@ if sys.platform != "linux":
                 Returns:
                     ignored
                 """
-                return 0
+                return self.fake[index]
 
             def show(self):
                 """Fake method."""
@@ -85,8 +87,8 @@ if sys.platform != "linux":
     RpiWS281xClass = rpi_ws281x
 
 else:
-    import rpi_ws281x  # pylint: disable = import-error
-    import rpi_ws281x as RpiWS281xClass  # pylint: disable = import-error
+    import rpi_ws281x  # type: ignore windows error
+    import rpi_ws281x as RpiWS281xClass  # type: ignore windows error
 
     def _monkeypatch__setitem__(self, pos, value):  # pylint: disable = invalid-name
         """Set the 24-bit RGB color value at the position or slice.
@@ -113,7 +115,9 @@ else:
                 index += 1
         # Else assume the passed in value is a number to the position.
         else:
-            return RpiWS281xClass.ws2811_led_set(self.channel, pos, int(value))  # pylint: disable=no-member
+            return RpiWS281xClass.ws2811_led_set(
+                self.channel, pos, int(value)
+            )  # pylint: disable=no-member
 
     try:
         rpi_ws281x.rpi_ws281x._LED_Data.__setitem__ = (  # pylint: disable = protected-access

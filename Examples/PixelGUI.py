@@ -8,10 +8,10 @@ import multiprocessing
 import multiprocessing.queues
 from tkinter.colorchooser import askcolor
 import tkinter as tk
-import LightBerries.LightPixels
-from LightBerries.LightArrayControls import LightArrayController
-from LightBerries.LightPixels import Pixel
-from LightBerries.LightArrayPatterns import ConvertPixelArrayToNumpyArray, SolidColorArray
+import lightberries.pixel
+from lightberries.array_controller import ArrayController
+from lightberries.pixel import Pixel
+from lightberries.array_patterns import ConvertPixelArrayToNumpyArray, SolidColorArray
 
 
 # the number of pixels in the light string
@@ -30,7 +30,7 @@ GAMMA = None
 LED_STRIP_TYPE = None
 INVERT = False
 PWM_CHANNEL = 0
-LightBerries.LightPixels.DEFAULT_PIXEL_ORDER = LightBerries.LightPixels.EnumLEDOrder.RGB
+lightberries.pixel.DEFAULT_PIXEL_ORDER = lightberries.pixel.EnumLEDOrder.RGB
 
 
 class LightsProcess:
@@ -49,7 +49,9 @@ class LightsProcess:
         LightsProcess.appObject = app
         self.inQ = multiprocessing.Queue(2)
         self.outQ = multiprocessing.Queue(2)
-        self.process = multiprocessing.Process(target=LightsProcess.mainLoop, args=[self.inQ, self.outQ])
+        self.process = multiprocessing.Process(
+            target=LightsProcess.mainLoop, args=[self.inQ, self.outQ]
+        )
         self.process.start()
 
     def __del__(self) -> None:
@@ -66,7 +68,7 @@ class LightsProcess:
         """
         try:
             # create LightBerry controller
-            lightControl = LightArrayController(
+            lightControl = ArrayController(
                 ledCount=PIXEL_COUNT,
                 pwmGPIOpin=GPIO_PWM_PIN,
                 channelDMA=DMA_CHANNEL,
@@ -80,7 +82,10 @@ class LightsProcess:
             )
             lightControl.setVirtualLEDArray(
                 ConvertPixelArrayToNumpyArray(
-                    SolidColorArray(arrayLength=PIXEL_COUNT, color=LightBerries.LightPixels.PixelColors.OFF)
+                    SolidColorArray(
+                        arrayLength=PIXEL_COUNT,
+                        color=lightberries.pixel.PixelColors.OFF,
+                    )
                 )
             )
             lightControl.copyVirtualLedsToWS281X()
@@ -101,7 +106,7 @@ class LightsProcess:
                             index, color = msg[1:]
                             print("setting color")
                             lightControl.virtualLEDBuffer[index] = Pixel(
-                                color, order=LightBerries.LightPixels.EnumLEDOrder.RGB
+                                color, order=lightberries.pixel.EnumLEDOrder.RGB
                             ).array
                             lightControl.copyVirtualLedsToWS281X()
                             lightControl.refreshLEDs()
@@ -128,9 +133,13 @@ class App:
         self.canvas = tk.Canvas(self.root)
         self.canvas.pack(side=tk.RIGHT, fill="both", expand=True)
 
-        self.scrollbarY = tk.Scrollbar(self.canvas, command=self.canvas.yview, orient=tk.VERTICAL)
+        self.scrollbarY = tk.Scrollbar(
+            self.canvas, command=self.canvas.yview, orient=tk.VERTICAL
+        )
         self.scrollbarY.pack(side=tk.RIGHT, fill="y")
-        self.scrollbarX = tk.Scrollbar(self.canvas, command=self.canvas.xview, orient=tk.HORIZONTAL)
+        self.scrollbarX = tk.Scrollbar(
+            self.canvas, command=self.canvas.xview, orient=tk.HORIZONTAL
+        )
         self.scrollbarX.pack(side=tk.BOTTOM, fill="y")
 
         self.mainFrame = tk.Frame(self.canvas)
@@ -213,7 +222,12 @@ class App:
         self.root.bind("<Return>", lambda event: self.configureLightBerries())
 
         self.leftClickColorBtn = tk.Button(
-            self.mainFrame, bg="black", fg="white", text="Left-Click\nColor", width=5, height=2
+            self.mainFrame,
+            bg="black",
+            fg="white",
+            text="Left-Click\nColor",
+            width=5,
+            height=2,
         )
         self.leftClickColorBtn.grid(
             row=0,
@@ -224,7 +238,12 @@ class App:
         self.leftClickColorBtn.bind("<Button-1>", self.getColor)
 
         self.rightClickColorBtn = tk.Button(
-            self.mainFrame, bg="black", fg="white", text="Right-Click\nColor", width=5, height=2
+            self.mainFrame,
+            bg="black",
+            fg="white",
+            text="Right-Click\nColor",
+            width=5,
+            height=2,
         )
         self.rightClickColorBtn.grid(
             row=0,
@@ -267,7 +286,12 @@ class App:
                 for column in range(int(self.columnString.get())):
                     self.buttonFrame.columnconfigure(column, weight=1)
                     btn = tk.Button(
-                        self.buttonFrame, bg="black", fg="white", text=str(counter), width=5, height=2
+                        self.buttonFrame,
+                        bg="black",
+                        fg="white",
+                        text=str(counter),
+                        width=5,
+                        height=2,
                     )
                     btn.grid(
                         row=row,

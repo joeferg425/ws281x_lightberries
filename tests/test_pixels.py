@@ -3,17 +3,17 @@ from __future__ import annotations
 import numpy as np
 import pytest
 from typing import Callable
-import LightBerries.LightPixels
-from LightBerries.LightPixels import EnumLEDOrder, Pixel, PixelColors
+import lightberries.pixel
+from lightberries.pixel import EnumLEDOrder, Pixel, PixelColors
 
 
 def test_pixel_creation_default():
     """Test default pixel creation and attributes."""
-    LightBerries.LightPixels.DEFAULT_PIXEL_ORDER = EnumLEDOrder.GRB
+    lightberries.pixel.DEFAULT_PIXEL_ORDER = EnumLEDOrder.GRB
     p = Pixel()
     assert isinstance(p, Pixel), f"Pixel: {p} is not {type(Pixel)}"
     exp = 0x000000
-    assert p._value == exp, f"Pixel._value: {p._value} != expected value: {exp}"
+    assert p.int == exp, f"Pixel.int: {p.int} != expected value: {exp}"
     exp = 3
     assert len(p.array) == exp, f"Pixel.array: {p.array} != expected value: {exp}"
     exp = "000000"
@@ -30,17 +30,17 @@ def test_pixel_creation_default():
     "arg",
     [0x010000, np.array((1, 0, 0), dtype=np.int32), Pixel(0x010000)],
 )
-def test_pixel_creation_value_args(arg: int | np.ndarray[(3), np.float32] | "Pixel"):
+def test_pixel_creationint_args(arg: int | np.ndarray[(3), np.float32] | "Pixel"):
     """Test the valid creation methods.
 
     Args:
         arg: initial pixel value
     """
-    LightBerries.LightPixels.DEFAULT_PIXEL_ORDER = EnumLEDOrder.GRB
+    lightberries.pixel.DEFAULT_PIXEL_ORDER = EnumLEDOrder.GRB
     p = Pixel(arg)
     assert isinstance(p, Pixel), f"Pixel: {p} is not {type(Pixel)}"
     exp = 0x000100
-    assert p._value == exp, f"Pixel._value: {p._value} != expected value: {exp}"
+    assert p.int == exp, f"Pixel.int: {p.int} != expected value: {exp}"
     exp = 3
     assert len(p.array) == exp, f"Pixel.array: {p.array} != expected value: {exp}"
     exp = "010000"
@@ -63,11 +63,11 @@ def test_pixel_creation_pixel_order(arg: int | np.ndarray[(3), np.float32] | "Pi
     Args:
         arg: initial pixel value
     """
-    LightBerries.LightPixels.DEFAULT_PIXEL_ORDER = EnumLEDOrder.RGB
+    lightberries.pixel.DEFAULT_PIXEL_ORDER = EnumLEDOrder.RGB
     p = Pixel(arg)
     assert isinstance(p, Pixel), f"Pixel: {p} is not {type(Pixel)}"
     exp = 0x000100
-    assert p._value == exp, f"Pixel._value: {p._value} != expected value: {exp}"
+    assert p.int == exp, f"Pixel.int: {p.int} != expected value: {exp}"
     exp = 3
     assert len(p.array) == exp, f"Pixel.array: {p.array} != expected value: {exp}"
     exp = "010000"

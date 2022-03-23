@@ -9,9 +9,9 @@ import pyaudio
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from LightBerries import LightArrayPatterns
-from LightBerries.LightArrayControls import LightArrayController
-from LightBerries.LightPixels import Pixel
+from lightberries import array_patterns
+from lightberries.array_controller import ArrayController
+from lightberries.pixel import Pixel
 
 
 matplotlib.use("Qt5Agg")
@@ -62,13 +62,19 @@ class RollingDataFromQueue:
             # check the queue - throws an exception if empty
             self.newDataChunk = self.inQ.get_nowait()
             # roll the data frame so we can insert/overwrite oldest data with new
-            self.dataFrame = np.roll(self.dataFrame, RollingDataFromQueue.SAMPLE_COUNT_PER_CHUNK)
+            self.dataFrame = np.roll(
+                self.dataFrame, RollingDataFromQueue.SAMPLE_COUNT_PER_CHUNK
+            )
             # add the new data to the frame
-            self.dataFrame[-RollingDataFromQueue.SAMPLE_COUNT_PER_CHUNK :] = self.newDataChunk
+            self.dataFrame[
+                -RollingDataFromQueue.SAMPLE_COUNT_PER_CHUNK :
+            ] = self.newDataChunk
 
             # do FFT on one of the data sets
             # self.fftData = 10 * np.log10(np.abs(np.fft.fft(DATA_FRAME)*self.window))
-            self.fftData = 10 * np.log10(np.abs(np.fft.fft(self.newDataChunk) * self.window))
+            self.fftData = 10 * np.log10(
+                np.abs(np.fft.fft(self.newDataChunk) * self.window)
+            )
 
             # make FFT adjustments
             lenfftData = len(self.fftData)
@@ -111,7 +117,9 @@ class RollingDataFromQueue:
                 * (RollingDataFromQueue.MOVING_AVERAGE_LENGTH - 1)
                 / RollingDataFromQueue.MOVING_AVERAGE_LENGTH
             )
-            self.plotData += self.fftChunks * 1 / RollingDataFromQueue.MOVING_AVERAGE_LENGTH
+            self.plotData += (
+                self.fftChunks * 1 / RollingDataFromQueue.MOVING_AVERAGE_LENGTH
+            )
             # return true for new data
             return True
         except multiprocessing.queues.Empty:
@@ -131,7 +139,7 @@ class LightOutput(RollingDataFromQueue):
         """
         super().__init__(inQ, outQ)
         # create light controller object
-        self.lightController = LightArrayController(LightOutput.LED_COUNT, 18, 10, 800000)
+        self.lightController = ArrayController(LightOutput.LED_COUNT, 18, 10, 800000)
         self.lightController.off()
         self.lightController.refreshLEDs()
 
@@ -145,8 +153,10 @@ class LightOutput(RollingDataFromQueue):
                 # see if we got data
                 if self.getNewData():
                     self.lightController.setVirtualLEDArray(
-                        LightArrayPatterns.ColorTransitionArray(
-                            LightOutput.LED_COUNT, False, [Pixel(int(p)) for p in self.plotData]
+                        array_patterns.ColorTransitionArray(
+                            LightOutput.LED_COUNT,
+                            False,
+                            [Pixel(int(p)) for p in self.plotData],
                         )
                     )
 
@@ -224,7 +234,10 @@ class PlotOutput(RollingDataFromQueue):
     """Plots audio FFT to matplotlib's pyplot graphic."""
 
     def __init__(
-        self, inQ: multiprocessing.Queue, outQ: multiprocessing.Queue, plotChoice: PlotChoice = None
+        self,
+        inQ: multiprocessing.Queue,
+        outQ: multiprocessing.Queue,
+        plotChoice: PlotChoice = None,
     ) -> None:
         """Plots audio FFT to matplotlib's pyplot graphic.
 
@@ -338,7 +351,9 @@ if __name__ == "__main__":
         if PROCESS_CHOICE == ProcessChoice.LIGHTS:
             process = multiprocessing.Process(target=LightOutput, args=(inq, outq))
         else:
-            process = multiprocessing.Process(target=PlotOutput, args=(inq, outq, PlotChoice.AVERAGED_FFT))
+            process = multiprocessing.Process(
+                target=PlotOutput, args=(inq, outq, PlotChoice.AVERAGED_FFT)
+            )
 
         # start the selected process
         process.start()
@@ -349,7 +364,10 @@ if __name__ == "__main__":
         # for i in range(PY_AUDIO.get_device_count()):
         # print(PY_AUDIO.get_device_info_by_index(i))
         DEVICE_INDEX = 0
-        print("Using following Audio device:\n", PY_AUDIO.get_device_info_by_index(DEVICE_INDEX))
+        print(
+            "Using following Audio device:\n",
+            PY_AUDIO.get_device_info_by_index(DEVICE_INDEX),
+        )
         # 16-bit resolution
         AUDIO_FORMAT = pyaudio.paInt16
         # 1 channel

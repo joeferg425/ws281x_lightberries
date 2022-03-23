@@ -6,7 +6,7 @@ import random
 from typing import Any
 import numpy as np
 
-from LightBerries.LightBerryExceptions import LightBerryException, LightPixelException
+from lightberries.exceptions import LightBerryException, LightPixelException
 
 LOGGER = logging.getLogger("LightBerries")
 
@@ -60,7 +60,8 @@ class Pixel:
                 self._value = 0
 
             # if it is an int and in range
-            elif isinstance(rgb, int) and rgb >= 0 and rgb <= 0xFFFFFF:
+            elif isinstance(rgb, (int, np.int_)) and rgb >= 0 and rgb <= 0xFFFFFF:
+                rgb = int(rgb)
                 # convert to tuple
                 value = (
                     ((rgb & 0xFF0000) >> 16),
@@ -229,6 +230,10 @@ class Pixel:
         """
         rgb = self.tuple
         return f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
+
+    @property
+    def int(self) -> int:
+        return self._value
 
 
 class PixelColors:

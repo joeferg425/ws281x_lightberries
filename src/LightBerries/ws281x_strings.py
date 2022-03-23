@@ -7,15 +7,15 @@ import atexit
 import logging
 from typing import Any, Sequence, overload
 import numpy as np
-from LightBerries.LightArrayPatterns import ConvertPixelArrayToNumpyArray
-from LightBerries.LightBerryExceptions import LightStringException, LightBerryException
-from LightBerries.RpiWS281xPatch import rpi_ws281x
-from LightBerries.LightPixels import Pixel, PixelColors
+from lightberries.array_patterns import ConvertPixelArrayToNumpyArray
+from lightberries.exceptions import LightStringException, LightBerryException
+from lightberries.rpi_ws281x_patch import rpi_ws281x
+from lightberries.pixel import Pixel, PixelColors
 
 LOGGER = logging.getLogger("LightBerries")
 
 
-class LightString(Sequence[np.int_]):
+class WS281xString(Sequence[np.int_]):
     """Defines basic LED array data and functions."""
 
     def __init__(
@@ -179,7 +179,7 @@ class LightString(Sequence[np.int_]):
             LightStringException: if something bad happens
         """
         try:
-            if key is int:
+            if isinstance(key, int):
                 return Pixel(self.ws281xPixelStrip.getPixelColor(key)).array
             else:
                 return ConvertPixelArrayToNumpyArray(
@@ -216,7 +216,8 @@ class LightString(Sequence[np.int_]):
                 for i, k in enumerate(key):
                     self.ws281xPixelStrip.setPixelColor(key, value[i, :])
             else:
-                self.ws281xPixelStrip.setPixelColor(key, value)
+                self.ws281xPixelStrip.setPixelColor(key, Pixel(value).int)
+
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -228,7 +229,7 @@ class LightString(Sequence[np.int_]):
 
     def __enter__(
         self,
-    ) -> "LightString":
+    ) -> "WS281xString":
         """Get an instance of this object object.
 
         Returns:

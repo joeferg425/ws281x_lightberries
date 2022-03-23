@@ -11,18 +11,21 @@ from typing import (
     Any,
 )
 import numpy as np
-from LightBerries import LightArrayPatterns
-from LightBerries.LightBerryExceptions import LightBerryException, LightControlException
-from LightBerries.LightPixels import Pixel, PixelColors
-from LightBerries.LightStrings import LightString
-from LightBerries.LightArrayFunctions import (
-    LightArrayFunction,
+from lightberries import array_patterns
+from lightberries.exceptions import (
+    LightBerryException,
+    LightControlException,
+)
+from lightberries.pixel import Pixel, PixelColors
+from lightberries.ws281x_strings import WS281xString
+from lightberries.array_function import (
+    ArrayFunction,
     LEDFadeType,
     RaindropStates,
     SpriteState,
     ThingMoves,
 )
-from LightBerries.LightArrayPatterns import (
+from lightberries.array_patterns import (
     SolidColorArray,
     ConvertPixelArrayToNumpyArray,
     RepeatingColorSequenceArray,
@@ -39,7 +42,7 @@ LOGGER = logging.getLogger("LightBerries")
 DEFAULT_REFRESH_DELAY = 50
 
 
-class LightArrayController:
+class ArrayController:
     """This library wraps the rpi_ws281x library and provides some lighting functions.
 
     See https://github.com/rpi-ws281x/rpi-ws281x-python for questions about rpi_ws281x library.
@@ -111,7 +114,7 @@ class LightArrayController:
                 LOGGER.setLevel(5)
             self.simulate = simulate
             # wrap pixel strip in my own interface object
-            self.lightString: Optional[LightString] = LightString(
+            self.lightString: Optional[WS281xString] = WS281xString(
                 ledCount=ledCount,
                 simulate=self.simulate,
             )
@@ -139,10 +142,10 @@ class LightArrayController:
             self.privateColorSequenceCount: int = 0
             self.privateColorSequenceIndex: int = 0
             self.privateLoopForever: bool = False
-            self.privateLightFunctions: List[LightArrayFunction] = []
+            self.privateLightFunctions: List[ArrayFunction] = []
 
             # give LightFunction class a pointer to this class
-            LightArrayFunction.Controller = self
+            ArrayFunction.Controller = self
 
             self.refreshCallback: Callable = refreshCallback
             # initialize stuff
@@ -362,7 +365,7 @@ class LightArrayController:
             return temp
 
     @property
-    def functionList(self) -> List[LightArrayFunction]:
+    def functionList(self) -> List[ArrayFunction]:
         """The list of function objects that will be used to modify the light pattern.
 
         Returns:
@@ -418,7 +421,7 @@ class LightArrayController:
             if self.virtualLEDCount > self.realLEDCount:
                 self.setvirtualLEDBuffer(self.virtualLEDBuffer[: self.realLEDCount])
             elif self.virtualLEDCount < self.realLEDCount:
-                array = LightArrayPatterns.SolidColorArray(
+                array = array_patterns.SolidColorArray(
                     arrayLength=self.realLEDCount, color=PixelColors.OFF
                 )
                 array[: self.virtualLEDCount] = self.virtualLEDBuffer
@@ -512,9 +515,7 @@ class LightArrayController:
                 rgb = irgb[1]
                 if i < self.realLEDCount:
                     value = (int(rgb[0]) << 16) + (int(rgb[1]) << 8) + int(rgb[2])
-                    self.lightString.ws281xPixelStrip.setPixelColor(
-                        i, Pixel(value)._value
-                    )
+                    self.lightString.ws281xPixelStrip.setPixelColor(i, Pixel(value).int)
 
             # fast method of calling the callback method on each index of LED array
             list(
@@ -1382,9 +1383,7 @@ class LightArrayController:
             )
 
             # create an object to put in the light data list so we dont just abort the run
-            nothing = LightArrayFunction(
-                LightArrayFunction.functionNone, self.colorSequence
-            )
+            nothing = ArrayFunction(ArrayFunction.functionNone, self.colorSequence)
 
             self.privateLightFunctions.append(nothing)
         except SystemExit:
@@ -1423,8 +1422,8 @@ class LightArrayController:
                 _delayCount = int(delayCount)
 
             # create the tracking object
-            cycle: LightArrayFunction = LightArrayFunction(
-                LightArrayFunction.functionSolidColorCycle, self.colorSequence
+            cycle: ArrayFunction = ArrayFunction(
+                ArrayFunction.functionSolidColorCycle, self.colorSequence
             )
             # set refresh counter
             cycle.delayCounter = _delayCount
@@ -1483,15 +1482,15 @@ class LightArrayController:
                 _initialDirection: int = 1 if (initialDirection >= 1) else -1
 
             # turn off all LEDs every time so we can turn on new ones
-            off: LightArrayFunction = LightArrayFunction(
-                LightArrayFunction.functionOff, self.colorSequence
+            off: ArrayFunction = ArrayFunction(
+                ArrayFunction.functionOff, self.colorSequence
             )
             # add this function to list
             self.privateLightFunctions.append(off)
 
             # create tracking object
-            marquee: LightArrayFunction = LightArrayFunction(
-                LightArrayFunction.functionMarquee, self.colorSequence
+            marquee: ArrayFunction = ArrayFunction(
+                ArrayFunction.functionMarquee, self.colorSequence
             )
             # store the size of the color sequence being shifted back and forth
             marquee.size = self.colorSequenceCount
@@ -1507,7 +1506,7 @@ class LightArrayController:
             # this function just shifts the existing virtual LED buffer,
             # so make sure the virtual LED buffer is initialized here
             if self.colorSequenceCount >= self.virtualLEDCount - 10:
-                array = LightArrayPatterns.SolidColorArray(
+                array = array_patterns.SolidColorArray(
                     arrayLength=self.colorSequenceCount + 10, color=PixelColors.OFF
                 )
                 array[: self.colorSequenceCount] = self.colorSequence
@@ -1564,8 +1563,8 @@ class LightArrayController:
                 _delayCount = int(delayCount)
 
             # fade the whole LED strand
-            fade: LightArrayFunction = LightArrayFunction(
-                LightArrayFunction.functionFadeOff, self.colorSequence
+            fade: ArrayFunction = ArrayFunction(
+                ArrayFunction.functionFadeOff, self.colorSequence
             )
             # by this amount
             fade.fadeAmount = _fadeAmount
@@ -1573,14 +1572,14 @@ class LightArrayController:
             self.privateLightFunctions.append(fade)
 
             # use cylon function
-            cylon: LightArrayFunction = LightArrayFunction(
-                LightArrayFunction.functionCylon, self.colorSequence
+            cylon: ArrayFunction = ArrayFunction(
+                ArrayFunction.functionCylon, self.colorSequence
             )
             # shift eye by this much for each update
             cylon.size = self.colorSequenceCount
             # adjust virtual LED buffer if necesary so that the cylon can actually move
             if self.virtualLEDCount < cylon.size:
-                array = LightArrayPatterns.SolidColorArray(
+                array = array_patterns.SolidColorArray(
                     arrayLength=cylon.size + 3, color=PixelColors.OFF
                 )
                 array[: self.virtualLEDCount] = self.virtualLEDBuffer
@@ -1662,8 +1661,8 @@ class LightArrayController:
             )
 
             # create tracking object
-            merge: LightArrayFunction = LightArrayFunction(
-                LightArrayFunction.functionMerge, self.colorSequence
+            merge: ArrayFunction = ArrayFunction(
+                ArrayFunction.functionMerge, self.colorSequence
             )
             # set merge size
             merge.size = self.colorSequenceCount
@@ -1735,15 +1734,15 @@ class LightArrayController:
                 _cycleColors = bool(cycleColors)
 
             # we want comet trails, so fade the buffer each time through
-            fade: LightArrayFunction = LightArrayFunction(
-                LightArrayFunction.functionFadeOff, self.colorSequence
+            fade: ArrayFunction = ArrayFunction(
+                ArrayFunction.functionFadeOff, self.colorSequence
             )
             fade.fadeAmount = _fadeAmount
             self.privateLightFunctions.append(fade)
 
             # create tracking object
-            accelerate: LightArrayFunction = LightArrayFunction(
-                LightArrayFunction.functionAccelerate, self.colorSequence
+            accelerate: ArrayFunction = ArrayFunction(
+                ArrayFunction.functionAccelerate, self.colorSequence
             )
             # this determines the maximum that the LED can jump in a single step as it speeds up
             accelerate.stepCountMax = _stepCountMax
@@ -1827,14 +1826,14 @@ class LightArrayController:
 
             # make comet trails
             if _fadeType == LEDFadeType.FADE_OFF:
-                fade: LightArrayFunction = LightArrayFunction(
-                    LightArrayFunction.functionFadeOff, self.colorSequence
+                fade: ArrayFunction = ArrayFunction(
+                    ArrayFunction.functionFadeOff, self.colorSequence
                 )
                 fade.fadeAmount = _fadeAmount
                 self.privateLightFunctions.append(fade)
             elif _fadeType == LEDFadeType.INSTANT_OFF:
-                off: LightArrayFunction = LightArrayFunction(
-                    LightArrayFunction.functionOff, self.colorSequence
+                off: ArrayFunction = ArrayFunction(
+                    ArrayFunction.functionOff, self.colorSequence
                 )
                 self.privateLightFunctions.append(off)
             else:
@@ -1844,8 +1843,8 @@ class LightArrayController:
             # create a bunch of tracking objects
             for index in self.getRandomIndices(int(_changeCount)):
                 if index < self.virtualLEDCount:
-                    change: LightArrayFunction = LightArrayFunction(
-                        LightArrayFunction.functionRandomChange, self.colorSequence
+                    change: ArrayFunction = ArrayFunction(
+                        ArrayFunction.functionRandomChange, self.colorSequence
                     )
                     # set the index from our random number
                     change.index = int(index)
@@ -1960,14 +1959,14 @@ class LightArrayController:
 
             # make comet trails
             if _fadeType == LEDFadeType.FADE_OFF:
-                fade: LightArrayFunction = LightArrayFunction(
-                    LightArrayFunction.functionFadeOff, self.colorSequence
+                fade: ArrayFunction = ArrayFunction(
+                    ArrayFunction.functionFadeOff, self.colorSequence
                 )
                 fade.fadeAmount = _fadeAmount
                 self.privateLightFunctions.append(fade)
             elif _fadeType == LEDFadeType.INSTANT_OFF:
-                off: LightArrayFunction = LightArrayFunction(
-                    LightArrayFunction.functionOff, self.colorSequence
+                off: ArrayFunction = ArrayFunction(
+                    ArrayFunction.functionOff, self.colorSequence
                 )
                 self.privateLightFunctions.append(off)
             else:
@@ -1975,8 +1974,8 @@ class LightArrayController:
                 pass
 
             for _ in range(_meteorCount):
-                meteor: LightArrayFunction = LightArrayFunction(
-                    LightArrayFunction.functionMeteors, self.colorSequence
+                meteor: ArrayFunction = ArrayFunction(
+                    ArrayFunction.functionMeteors, self.colorSequence
                 )
                 # assign meteor color
                 meteor.color = self.colorSequenceNext
@@ -2011,8 +2010,8 @@ class LightArrayController:
 
             # this object calculates collisions between other objects based on index and previous/next index
             if _collide is True:
-                collision = LightArrayFunction(
-                    LightArrayFunction.functionCollisionDetection, self.colorSequence
+                collision = ArrayFunction(
+                    ArrayFunction.functionCollisionDetection, self.colorSequence
                 )
                 collision.explode = _explode
                 self.privateLightFunctions.append(collision)
@@ -2062,8 +2061,8 @@ class LightArrayController:
                 _fadeAmount = 0.1
 
             for _ in range(max(min(self.colorSequenceCount, 10), 2)):
-                sprite: LightArrayFunction = LightArrayFunction(
-                    LightArrayFunction.functionSprites, self.colorSequence
+                sprite: ArrayFunction = ArrayFunction(
+                    ArrayFunction.functionSprites, self.colorSequence
                 )
                 # randomize index
                 sprite.index = random.randint(0, self.virtualLEDCount - 1)
@@ -2088,9 +2087,7 @@ class LightArrayController:
             self.privateLightFunctions[0].state = SpriteState.FADING_ON.value
 
             # add LED fading for comet trails
-            fade = LightArrayFunction(
-                LightArrayFunction.functionFadeOff, self.colorSequence
-            )
+            fade = ArrayFunction(ArrayFunction.functionFadeOff, self.colorSequence)
             fade.fadeAmount = _fadeAmount
             self.privateLightFunctions.append(fade)
         except SystemExit:
@@ -2165,8 +2162,8 @@ class LightArrayController:
                 _maxRaindrops = int(maxRaindrops)
 
             for _ in range(_maxRaindrops):
-                raindrop: LightArrayFunction = LightArrayFunction(
-                    LightArrayFunction.functionRaindrops, self.colorSequence
+                raindrop: ArrayFunction = ArrayFunction(
+                    ArrayFunction.functionRaindrops, self.colorSequence
                 )
                 # randomize start index
                 raindrop.index = random.randint(0, self.virtualLEDCount - 1)
@@ -2189,8 +2186,8 @@ class LightArrayController:
             self.privateLightFunctions[0].state = RaindropStates.SPLASH.value
 
             # add fading
-            fade: LightArrayFunction = LightArrayFunction(
-                LightArrayFunction.functionFadeOff, self.colorSequence
+            fade: ArrayFunction = ArrayFunction(
+                ArrayFunction.functionFadeOff, self.colorSequence
             )
             fade.fadeAmount = _fadeAmount
             self.privateLightFunctions.append(fade)
@@ -2260,8 +2257,8 @@ class LightArrayController:
                 _stepSizeMax = int(stepSizeMax)
 
             for _ in range(random.randint(2, 5)):
-                thing: LightArrayFunction = LightArrayFunction(
-                    LightArrayFunction.functionAlive, self.colorSequence
+                thing: ArrayFunction = ArrayFunction(
+                    ArrayFunction.functionAlive, self.colorSequence
                 )
                 # randomize start index
                 thing.index = self.getRandomIndex()
@@ -2291,9 +2288,7 @@ class LightArrayController:
                 self.privateLightFunctions.append(thing)
             self.privateLightFunctions[0].active = True
             # add a fade
-            fade = LightArrayFunction(
-                LightArrayFunction.functionFadeOff, self.colorSequence
-            )
+            fade = ArrayFunction(ArrayFunction.functionFadeOff, self.colorSequence)
             fade.fadeAmount = _fadeAmount
             self.privateLightFunctions.append(fade)
         except SystemExit:
@@ -2336,8 +2331,8 @@ class LightArrayController:
             if colorSequence is not None:
                 _colorSequence = colorSequence
 
-            twinkle: LightArrayFunction = LightArrayFunction(
-                LightArrayFunction.overlayTwinkle, _colorSequence
+            twinkle: ArrayFunction = ArrayFunction(
+                ArrayFunction.overlayTwinkle, _colorSequence
             )
             twinkle.random = _twinkleChance
             self.privateLightFunctions.append(twinkle)
@@ -2375,8 +2370,8 @@ class LightArrayController:
             if blinkChance is not None:
                 _blinkChance = float(blinkChance)
 
-            blink: LightArrayFunction = LightArrayFunction(
-                LightArrayFunction.overlayBlink, self.colorSequence
+            blink: ArrayFunction = ArrayFunction(
+                ArrayFunction.overlayBlink, self.colorSequence
             )
             blink.random = _blinkChance
             blink.colorSequence = self.colorSequence

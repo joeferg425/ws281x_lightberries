@@ -4,8 +4,11 @@ import logging
 import datetime
 from typing import Any, List, Sequence, Union
 import numpy as np
-from LightBerries.LightBerryExceptions import LightBerryException, LightPatternException
-from LightBerries.LightPixels import Pixel, PixelColors
+from lightberries.exceptions import (
+    LightBerryException,
+    LightPatternException,
+)
+from lightberries.pixel import Pixel, PixelColors
 
 LOGGER = logging.getLogger("LightBerries")
 
