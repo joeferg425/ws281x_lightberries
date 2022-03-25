@@ -268,6 +268,10 @@ class WS281xString(Sequence[np.int_]):
         """
         self.__del__()
 
+    def refresh(self):
+        if self.ws281xPixelStrip:
+            self.ws281xPixelStrip.show()
+
     def off(
         self,
     ) -> None:
@@ -290,4 +294,4 @@ class WS281xString(Sequence[np.int_]):
                 raise
             except Exception as ex:
                 raise LightStringException from ex
-        self.setLEDs()
+        self.refresh()

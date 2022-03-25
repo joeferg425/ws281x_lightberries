@@ -115,19 +115,19 @@ class ArrayController:
                 LOGGER.setLevel(5)
             self.simulate = simulate
             # wrap pixel strip in my own interface object
-            self.lightString: Optional[WS281xString] = WS281xString(
+            self.ws281xString: Optional[WS281xString] = WS281xString(
                 ledCount=ledCount,
                 simulate=self.simulate,
             )
 
             # initialize instance variables
-            self.privateLEDCount: int = len(self.lightString)
+            self.privateLEDCount: int = len(self.ws281xString)
             self.virtualLEDBuffer: np.ndarray[(3, Any), np.int32] = SolidColorArray(
                 arrayLength=self.privateLEDCount,
                 color=PixelColors.OFF,
             )
             self.virtualLEDIndexBuffer: np.ndarray[(Any,), np.int32] = np.array(
-                range(len(self.lightString))
+                range(len(self.ws281xString))
             )
             self.privateOverlayDict: Dict[int, np.ndarray[(3,), np.int32]] = {}
             self.privateVirtualLEDCount: int = len(self.virtualLEDBuffer)
@@ -172,12 +172,12 @@ class ArrayController:
             LightControlException: if something bad happens
         """
         try:
-            if hasattr(self, "_LEDArray") and self.lightString is not None:
+            if hasattr(self, "_LEDArray") and self.ws281xString is not None:
                 self.off()
                 self.copyVirtualLedsToWS281X()
                 self.refreshLEDs()
-                self.lightString.__del__()
-                self.lightString = None
+                self.ws281xString.__del__()
+                self.ws281xString = None
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -515,8 +515,8 @@ class ArrayController:
                 i = irgb[0]
                 rgb = irgb[1]
                 if i < self.realLEDCount:
-                    value = (int(rgb[0]) << 16) + (int(rgb[1]) << 8) + int(rgb[2])
-                    self.lightString.ws281xPixelStrip.setPixelColor(i, Pixel(value).int)
+                    # value = (int(rgb[0]) << 16) + (int(rgb[1]) << 8) + int(rgb[2])
+                    self.ws281xString[i] = rgb
 
             # fast method of calling the callback method on each index of LED array
             list(
@@ -553,8 +553,7 @@ class ArrayController:
             # call light string's refresh method to send the communications out to the addressable LEDs
             if isinstance(self.refreshCallback, Callable):
                 self.refreshCallback()
-            if self.lightString is not None:
-                self.lightString.setLEDs()
+            self.ws281xString.refresh()
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -630,7 +629,7 @@ class ArrayController:
             # This ensures that overlays are temporary and get overwritten
             # next refresh.
             for index, ledValue in self.privateOverlayDict.items():
-                self.lightString[index] = ledValue
+                self.ws281xString[index] = ledValue
             self.privateOverlayDict = {}
         except SystemExit:
             raise

@@ -11,7 +11,10 @@
 		"autoDocstring.guessTypes": false,
 		"python.formatting.provider": "black",
 		"python.testing.pytestPath": "./tests",
-		"python.testing.promptToConfigure": true
+		"python.testing.promptToConfigure": true,
+		"cSpell.words": [
+			"lightberries"
+		]
 	},
 	"launch": {
 		"configurations": [
@@ -67,9 +70,9 @@
 				"name": "Python: main",
 				"type": "python",
 				"request": "launch",
-				"program": "${workspaceFolder}/LightBerries/__main__.py",
+				"program": "${workspaceFolder}/src/lightberries/__main__.py",
 				"console": "integratedTerminal",
-				// "sudo": true
+				"sudo": true
 			}
 		],
 		"compounds": []
