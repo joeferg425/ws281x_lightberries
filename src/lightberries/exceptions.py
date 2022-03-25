@@ -1,5 +1,7 @@
 """Defines custom exception classes to catch from this modeule."""
 
+from __future__ import annotations
+
 
 class LightBerryException(Exception):
     """Custom exception for the LightBerries module."""

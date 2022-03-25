@@ -1,4 +1,5 @@
 """This file defines functions that modify the LED patterns in interesting ways."""
+from __future__ import annotations
 from typing import Callable, Any, ClassVar, Optional
 import logging
 import random

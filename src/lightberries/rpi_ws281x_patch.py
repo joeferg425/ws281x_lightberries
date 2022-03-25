@@ -2,6 +2,7 @@
 
 This allows easier interaction from the rest of LightBerries
 """
+from __future__ import annotations
 import logging
 import sys
 import numpy as np

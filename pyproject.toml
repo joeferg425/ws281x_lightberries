@@ -1,20 +1,23 @@
 [tool.poetry]
-name = "LightBerries"
+name = "lightberries"
 version = "1.0.2"
 description = "A wrapper for rpi_ws281x that does all the heavy lifting for you."
 authors = ["joeferg425"]
 license = "MIT"
+packages = [
+    { include = "lightberries", from = "src" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.7"
 numpy = "^1.16"
-rpi-ws281x = {version = "^4.3.3", optional = true}
+rpi-ws281x = {version = "^4.3", optional = true}
 
 [tool.poetry.dev-dependencies]
-black = "^22.1.0"
-flake8 = "^4.0.1"
-matplotlib = "^3.5.1"
-pytest = "^7.1.1"
+black = "^22.1"
+flake8 = "^4.0"
+matplotlib = "^3.5"
+pytest = "^7.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

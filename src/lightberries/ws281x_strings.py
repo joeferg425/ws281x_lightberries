@@ -10,7 +10,7 @@ import numpy as np
 from lightberries.array_patterns import ConvertPixelArrayToNumpyArray
 from lightberries.exceptions import LightStringException, LightBerryException
 from lightberries.rpi_ws281x_patch import rpi_ws281x
-from lightberries.pixel import Pixel, PixelColors
+from lightberries.pixel import EnumLEDOrder, Pixel, PixelColors
 
 LOGGER = logging.getLogger("LightBerries")
 
@@ -53,57 +53,59 @@ class WS281xString(Sequence[np.int_]):
             LightBerryException: if propogating an exception
             LightStringException: if something bad happens
         """
-        # cant run GPIO stuff without root, tell the user if they forgot
-        # linux check is just for debugging with fake GPIO on windows
-        if (
-            sys.platform == "linux" and not os.getuid() == 0
-        ):  # pylint: disable = no-member
-            raise LightStringException(
-                "GPIO functionality requires root privilege. Please run command again as root"
-            )
-
+        self.ws281xPixelStrip = None
+        self.simulated_ws281xPixelStrip = None
+        self.simulate = simulate
         # catch error cases first
         if ledCount is None:
             raise LightStringException(
                 "Cannot create LightString object without ledCount."
             )
+        # use passed led count if it is valid
+        if ledCount is not None:
+            self._ledCount = ledCount
+        if self.simulate:
+            self.simulated_ws281xPixelStrip = np.zeros((ledCount), dtype=np.int32)
+        else:
+            # cant run GPIO stuff without root, tell the user if they forgot
+            # linux check is just for debugging with fake GPIO on windows
+            if (
+                sys.platform == "linux" and not os.getuid() == 0
+            ):  # pylint: disable = no-member
+                raise LightStringException(
+                    "GPIO functionality requires root privilege. Please run command again as root"
+                )
 
-        try:
-            self.simulate = simulate
-            # use passed led count if it is valid
-            if ledCount is not None:
-                self._ledCount = ledCount
+            try:
+                # create ws281x pixel strip
+                self.ws281xPixelStrip = rpi_ws281x.PixelStrip(
+                    pin=pwmGPIOpin,
+                    dma=channelDMA,
+                    num=ledCount,
+                    freq_hz=frequencyPWM,
+                    channel=channelPWM,
+                    invert=invertSignalPWM,
+                    gamma=gamma,
+                    strip_type=stripTypeLED,
+                    brightness=int(255 * ledBrightnessFloat),
+                )
+                # try to force cleanup of underlying c objects when user exits
+                atexit.register(self.__del__)
 
-            # create ws281x pixel strip
-            self.ws281xPixelStrip = rpi_ws281x.PixelStrip(
-                pin=pwmGPIOpin,
-                dma=channelDMA,
-                num=ledCount,
-                freq_hz=frequencyPWM,
-                channel=channelPWM,
-                invert=invertSignalPWM,
-                gamma=gamma,
-                strip_type=stripTypeLED,
-                brightness=int(255 * ledBrightnessFloat),
-            )
-
-            self.ws281xPixelStrip.begin()
-            self._ledCount = self.ws281xPixelStrip.numPixels()
-            LOGGER.debug(
-                "%s Created WS281X object",
-                self.__class__.__name__,
-            )
-        except SystemExit:
-            raise
-        except KeyboardInterrupt:
-            raise
-        except LightBerryException:
-            raise
-        except Exception as ex:
-            raise LightStringException from ex
-
-        # try to force cleanup of underlying c objects when user exits
-        atexit.register(self.__del__)
+                self.ws281xPixelStrip.begin()
+                self._ledCount = self.ws281xPixelStrip.numPixels()
+                LOGGER.debug(
+                    "%s Created WS281X object",
+                    self.__class__.__name__,
+                )
+            except SystemExit:
+                raise
+            except KeyboardInterrupt:
+                raise
+            except LightBerryException:
+                raise
+            except Exception as ex:
+                raise LightStringException from ex
 
     def __del__(
         self,
@@ -142,8 +144,10 @@ class WS281xString(Sequence[np.int_]):
         Returns:
             the number of LEDs in the array
         """
-        if self.ws281xPixelStrip is not None:
+        if self.ws281xPixelStrip:
             return self.ws281xPixelStrip.numPixels()
+        elif self.simulated_ws281xPixelStrip is not None:
+            return len(self.simulated_ws281xPixelStrip)
         else:
             return 0
 
@@ -180,11 +184,19 @@ class WS281xString(Sequence[np.int_]):
         """
         try:
             if isinstance(key, int):
-                return Pixel(self.ws281xPixelStrip.getPixelColor(key)).array
+                if self.ws281xPixelStrip:
+                    return Pixel(self.ws281xPixelStrip.getPixelColor(key)).array
+                elif self.simulated_ws281xPixelStrip is not None:
+                    return Pixel(self.simulated_ws281xPixelStrip[key]).array
             else:
-                return ConvertPixelArrayToNumpyArray(
-                    [Pixel(self.ws281xPixelStrip.getPixelColor(k)) for k in key]
-                )
+                if self.ws281xPixelStrip:
+                    return ConvertPixelArrayToNumpyArray(
+                        [Pixel(self.ws281xPixelStrip.getPixelColor(k)) for k in key]
+                    )
+                elif self.simulated_ws281xPixelStrip is not None:
+                    return ConvertPixelArrayToNumpyArray(
+                        [Pixel(self.simulated_ws281xPixelStrip[k]) for k in key]
+                    )
         except SystemExit:  # pylint:disable=try-except-raise
             raise
         except KeyboardInterrupt:  # pylint:disable=try-except-raise
@@ -214,9 +226,17 @@ class WS281xString(Sequence[np.int_]):
         try:
             if isinstance(key, slice):
                 for i, k in enumerate(key):
-                    self.ws281xPixelStrip.setPixelColor(key, value[i, :])
+                    p = Pixel(value[i, :], EnumLEDOrder.RGB)
+                    if self.ws281xPixelStrip:
+                        self.ws281xPixelStrip.setPixelColor(key, p.int)
+                    else:
+                        self.simulated_ws281xPixelStrip[key] = p.int
             else:
-                self.ws281xPixelStrip.setPixelColor(key, Pixel(value).int)
+                p = Pixel(value, EnumLEDOrder.RGB)
+                if self.ws281xPixelStrip:
+                    self.ws281xPixelStrip.setPixelColor(key, p.int)
+                else:
+                    self.simulated_ws281xPixelStrip[key] = p.int
 
         except SystemExit:
             raise
@@ -259,7 +279,7 @@ class WS281xString(Sequence[np.int_]):
             LightBerryException: if propogating an exception
             LightStringException: if something bad happens
         """
-        for index in range(self.ws281xPixelStrip.numPixels()):
+        for index in range(len(self)):
             try:
                 self[index] = PixelColors.OFF
             except SystemExit:

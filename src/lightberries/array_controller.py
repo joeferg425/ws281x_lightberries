@@ -1,4 +1,5 @@
 """Class defines methods for interacting with Light Strings, Patterns, and Functions."""
+from __future__ import annotations
 import time
 import random
 import logging

@@ -1,4 +1,5 @@
 """Defines a bunch of color patterns and color sequence methods."""
+from __future__ import annotations
 import random
 import logging
 import datetime
