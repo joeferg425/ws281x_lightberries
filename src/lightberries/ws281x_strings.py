@@ -232,11 +232,11 @@ class WS281xString(Sequence[np.int_]):
         try:
             if isinstance(key, slice):
                 for i, j in enumerate(range(self._ledCount)[key]):
-                    p = Pixel(value[j, :], EnumLEDOrder.RGB)
+                    p = Pixel(value[i, :], EnumLEDOrder.RGB)
                     if self.ws281xPixelStrip:
-                        self.ws281xPixelStrip.setPixelColor(i, p.int)
+                        self.ws281xPixelStrip.setPixelColor(j, p.int)
                     else:
-                        self.simulated_ws281xPixelStrip[i] = p.int
+                        self.simulated_ws281xPixelStrip[j] = p.int
             else:
                 p = Pixel(value, EnumLEDOrder.RGB)
                 if self.ws281xPixelStrip:

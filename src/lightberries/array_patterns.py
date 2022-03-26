@@ -16,10 +16,19 @@ LOGGER = logging.getLogger("LightBerries")
 # set some constants
 DEFAULT_TWINKLE_COLOR = PixelColors.GRAY
 DEFAULT_BACKGROUND_COLOR = PixelColors.OFF
-DEFAULT_COLOR_SEQUENCE = [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE]
+DEFAULT_COLOR_SEQUENCE = np.array(
+    [
+        PixelColors.RED,
+        PixelColors.GREEN,
+        PixelColors.BLUE,
+    ],
+    dtype=np.int32,
+)
 
 
-def DefaultColorSequence() -> np.ndarray[(3, Any), np.int32]:
+def DefaultColorSequenceByMonth(
+    date: datetime.datetime = datetime.datetime.now(),
+) -> np.ndarray[(3, Any), np.int32]:
     """Get the default sequence of colors defined for this month.
 
     Returns:
@@ -33,7 +42,6 @@ def DefaultColorSequence() -> np.ndarray[(3, Any), np.int32]:
     """
     global DEFAULT_COLOR_SEQUENCE  # pylint: disable = global-statement
     try:
-        date = datetime.datetime.now()
         month = date.month
         if month == 1:
             DEFAULT_COLOR_SEQUENCE = [
@@ -69,7 +77,6 @@ def DefaultColorSequence() -> np.ndarray[(3, Any), np.int32]:
         elif month == 5:
             DEFAULT_COLOR_SEQUENCE = [
                 PixelColors.PINK,
-                PixelColors.CYAN,
                 PixelColors.YELLOW,
                 PixelColors.GREEN,
                 PixelColors.WHITE,
@@ -79,6 +86,7 @@ def DefaultColorSequence() -> np.ndarray[(3, Any), np.int32]:
                 PixelColors.RED,
                 PixelColors.WHITE,
                 PixelColors.BLUE,
+                PixelColors.GREEN,
             ]
         elif month == 7:
             DEFAULT_COLOR_SEQUENCE = [
@@ -132,7 +140,7 @@ def DefaultColorSequence() -> np.ndarray[(3, Any), np.int32]:
     return ConvertPixelArrayToNumpyArray(DEFAULT_COLOR_SEQUENCE)
 
 
-def PixelArray(
+def PixelArrayOff(
     arrayLength: int,
 ) -> np.ndarray[(3, Any), np.int32]:
     """Creates array of RGB tuples that are all off.
@@ -150,7 +158,10 @@ def PixelArray(
         LightPatternException: if something bad happens
     """
     try:
-        return np.array([PixelColors.OFF for i in range(int(arrayLength))])
+        if arrayLength > 0:
+            return np.array([PixelColors.OFF for i in range(int(arrayLength))])
+        else:
+            return np.zeros((0, 3))
     except SystemExit:
         raise
     except KeyboardInterrupt:
@@ -179,7 +190,10 @@ def ConvertPixelArrayToNumpyArray(
         LightPatternException: if something bad happens
     """
     try:
-        return np.array([Pixel(p).tuple for p in colorSequence])
+        if len(colorSequence) > 0:
+            return np.array([Pixel(p).tuple for p in colorSequence])
+        else:
+            return np.zeros((0, 3))
     except SystemExit:
         raise
     except KeyboardInterrupt:
@@ -192,7 +206,7 @@ def ConvertPixelArrayToNumpyArray(
 
 def SolidColorArray(
     arrayLength: int,
-    color: Union[Pixel, np.ndarray[(3,), np.int32]] = DEFAULT_COLOR_SEQUENCE[0],
+    color: np.ndarray[(3,), np.int32] = DEFAULT_COLOR_SEQUENCE[0],
 ) -> np.ndarray[(3, Any), np.int32]:
     """Creates array of RGB tuples that are all one color.
 
@@ -210,11 +224,10 @@ def SolidColorArray(
         LightPatternException: if something bad happens
     """
     try:
-        if isinstance(color, np.ndarray):
-            _color = Pixel(color)
+        if arrayLength > 0:
+            return np.array([color for i in range(int(arrayLength))])
         else:
-            _color = color
-        return np.array([_color.array for i in range(int(arrayLength))])
+            return np.zeros((0, 3))
     except SystemExit:
         raise
     except KeyboardInterrupt:
@@ -227,8 +240,8 @@ def SolidColorArray(
 
 def ColorTransitionArray(
     arrayLength: int,
+    colorSequence: np.ndarray[(3, Any), np.int32] = None,
     wrap: bool = True,
-    colorSequence: Union[List[Pixel], np.ndarray[(3, Any), np.int32]] = None,
 ) -> np.ndarray[(3, Any), np.int32]:
     """This is a slightly more versatile version of CreateRainbow.
 
@@ -251,19 +264,19 @@ def ColorTransitionArray(
         LightPatternException: if something bad happens
     """
     try:
-        if isinstance(colorSequence, list):
-            inputSequence = ConvertPixelArrayToNumpyArray(colorSequence)
-        elif isinstance(colorSequence, np.ndarray):
-            inputSequence = np.array(colorSequence)
-        else:
+        if colorSequence is None:
             inputSequence = DEFAULT_COLOR_SEQUENCE
+        else:
+            inputSequence = colorSequence
         # get length of sequence
-        sequenceLength = len(inputSequence)
-        # derive=False
-        count: int = 0
+        if len(inputSequence.shape):
+            sequenceLength = inputSequence.shape[0]
+        if sequenceLength == 0:
+            return np.zeros((0, 3))
+        count = 0
         stepCount = None
-        prevStepCount: int = 0
-        wrapOffset: int = 0
+        prevStepCount = 0
+        wrapOffset = 0
         if wrap is True:
             wrapOffset = 0
         else:
@@ -274,7 +287,7 @@ def ColorTransitionArray(
             stepCount = arrayLength // (sequenceLength - wrapOffset)
             prevStepCount = stepCount
         # create temporary array
-        arry = PixelArray(arrayLength)
+        arry = PixelArrayOff(arrayLength)
         # step through color sequence
         for colorIndex in range(sequenceLength - wrapOffset):
             if colorIndex == sequenceLength - 1:
@@ -325,12 +338,14 @@ def RainbowArray(
     try:
         return ColorTransitionArray(
             arrayLength=arrayLength,
-            colorSequence=[
-                PixelColors.RED,
-                PixelColors.GREEN,
-                PixelColors.BLUE,
-                PixelColors.VIOLET,
-            ],
+            colorSequence=np.array(
+                [
+                    PixelColors.RED,
+                    PixelColors.GREEN,
+                    PixelColors.BLUE,
+                    PixelColors.VIOLET,
+                ]
+            ),
             wrap=wrap,
         )
     except SystemExit:
@@ -345,7 +360,7 @@ def RainbowArray(
 
 def RepeatingColorSequenceArray(
     arrayLength: int,
-    colorSequence: Union[List[Pixel], np.ndarray[(3, Any), np.int32]] = None,
+    colorSequence: np.ndarray[(3, Any), np.int32] = None,
 ) -> np.ndarray[(3, Any), np.int32]:
     """Creates a repeating LightPattern from a given sequence.
 
@@ -364,14 +379,15 @@ def RepeatingColorSequenceArray(
     """
     try:
         arrayLength = int(arrayLength)
-        if isinstance(colorSequence, list):
-            inputSequence = ConvertPixelArrayToNumpyArray(colorSequence)
-        elif isinstance(colorSequence, np.ndarray):
-            inputSequence = np.array(colorSequence)
-        else:
+        if colorSequence is None:
             inputSequence = DEFAULT_COLOR_SEQUENCE
-        sequenceLength = len(inputSequence)
-        arry = PixelArray(arrayLength=arrayLength)
+        else:
+            inputSequence = colorSequence
+        if len(inputSequence):
+            sequenceLength = len(inputSequence)
+        else:
+            return np.zeros((0, 3))
+        arry = PixelArrayOff(arrayLength=arrayLength)
         arry[0:sequenceLength] = inputSequence
         for i in range(0, arrayLength, sequenceLength):
             if i + sequenceLength <= arrayLength:
@@ -461,12 +477,12 @@ def ReflectArray(
         if foldLength is None:
             foldLength = arrayLength // 2
         if foldLength > colorSequenceLen:
-            temp = PixelArray(foldLength)
+            temp = PixelArrayOff(foldLength)
             temp[foldLength - colorSequenceLen :] = inputSequence
             inputSequence = temp
             colorSequenceLen = len(inputSequence)
         flip = False
-        arry = PixelArray(arrayLength)
+        arry = PixelArrayOff(arrayLength)
         for segBegin in range(0, arrayLength, foldLength):
             overflow = 0
             segEnd = 0
@@ -518,7 +534,7 @@ def RandomArray(
         LightPatternException: if something bad happens
     """
     try:
-        arry = PixelArray(arrayLength)
+        arry = PixelArrayOff(arrayLength)
         for i in range(arrayLength):
             # prevent 255, 255, 255
             exclusion = random.randint(0, 2)
@@ -567,7 +583,7 @@ def PseudoRandomArray(
     """
     try:
         inputSequence = None
-        arry = PixelArray(arrayLength)
+        arry = PixelArrayOff(arrayLength)
         if isinstance(colorSequence, list):
             inputSequence = ConvertPixelArrayToNumpyArray(colorSequence)
         elif isinstance(colorSequence, np.ndarray):
@@ -617,7 +633,7 @@ def ColorStretchArray(
             inputSequence = DEFAULT_COLOR_SEQUENCE
         colorSequenceLength = len(inputSequence)
         # repeats = arrayLength // colorSequenceLength
-        arry = PixelArray(colorSequenceLength * repeats)
+        arry = PixelArrayOff(colorSequenceLength * repeats)
         for i in range(colorSequenceLength):
             arry[i * repeats : (i + 1) * repeats] = inputSequence[i]
         return arry

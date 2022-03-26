@@ -37,7 +37,7 @@ lightControl = ArrayController(
 )
 # configure a color pattern using a "useColor" method
 lightControl.useColorSequence(
-    colorSequence=lightberries.array_patterns.DefaultColorSequence(),
+    colorSequence=lightberries.array_patterns.DefaultColorSequenceByMonth(),
     backgroundColor=PixelColors.OFF,
 )
 # configure a function using a "useFunction" method

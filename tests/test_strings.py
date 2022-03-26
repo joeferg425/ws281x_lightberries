@@ -65,7 +65,7 @@ def test_multiple_assignment():
 
     # nones
     random_colors = ConvertPixelArrayToNumpyArray(
-        [PixelColors.random() for i in range(assign_count)]
+        [PixelColors.random() for i in range(led_count)]
     )
     ws281x[:] = random_colors
     assigned_colors = ws281x[:]

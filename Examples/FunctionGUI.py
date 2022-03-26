@@ -5,7 +5,7 @@ from tkinter.colorchooser import askcolor
 import tkinter as tk
 from lightberries.array_controller import ArrayController
 from lightberries.pixel import Pixel
-from lightberries.array_patterns import ConvertPixelArrayToNumpyArray, PixelArray
+from lightberries.array_patterns import ConvertPixelArrayToNumpyArray, PixelArrayOff
 
 # the number of pixels in the light string
 PIXEL_COUNT = 100
@@ -70,7 +70,7 @@ class LightsProcess:
             )
             # create virtual LED array
             lightControl.setVirtualLEDArray(
-                ConvertPixelArrayToNumpyArray(PixelArray(PIXEL_COUNT))
+                ConvertPixelArrayToNumpyArray(PixelArrayOff(PIXEL_COUNT))
             )
             lightControl.copyVirtualLedsToWS281X()
             lightControl.refreshLEDs()

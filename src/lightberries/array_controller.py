@@ -34,7 +34,7 @@ from lightberries.array_patterns import (
     RainbowArray,
     RepeatingRainbowArray,
     ReflectArray,
-    DefaultColorSequence,
+    DefaultColorSequenceByMonth,
     DEFAULT_BACKGROUND_COLOR,
 )
 
@@ -835,7 +835,7 @@ class ArrayController:
             )
 
             # defaults
-            _sequence: np.ndarray[(Any, 3), np.int32] = DefaultColorSequence()
+            _sequence: np.ndarray[(Any, 3), np.int32] = DefaultColorSequenceByMonth()
             _foregroundColor: np.ndarray[(3,), np.int32] = _sequence[
                 random.randint(0, len(_sequence) - 1)
             ]
@@ -964,7 +964,9 @@ class ArrayController:
             )
 
             _backgroundColor: np.ndarray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
-            _colorSequence: np.ndarray[(Any, 3), np.int32] = DefaultColorSequence()
+            _colorSequence: np.ndarray[
+                (Any, 3), np.int32
+            ] = DefaultColorSequenceByMonth()
 
             # set the color sequence to the default one for this month, or use the passed in argument
             if colorSequence is not None:
@@ -1116,7 +1118,9 @@ class ArrayController:
             )
 
             _backgroundColor: np.ndarray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
-            _colorSequence: np.ndarray[(Any, 3), np.int32] = DefaultColorSequence()
+            _colorSequence: np.ndarray[
+                (Any, 3), np.int32
+            ] = DefaultColorSequenceByMonth()
 
             # use argument or default
             if colorSequence is not None:
@@ -1175,7 +1179,9 @@ class ArrayController:
             )
 
             _backgroundColor: np.ndarray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
-            _colorSequence: np.ndarray[(Any, 3), np.int32] = DefaultColorSequence()
+            _colorSequence: np.ndarray[
+                (Any, 3), np.int32
+            ] = DefaultColorSequenceByMonth()
             _stepsPerTransition: int = random.randint(3, 7)
             _wrap: bool = self.getRandomBoolean()
 
@@ -1196,8 +1202,8 @@ class ArrayController:
             self.backgroundColor = _backgroundColor
             self.colorSequence = ColorTransitionArray(
                 arrayLength=len(_colorSequence) * int(_stepsPerTransition),
-                wrap=_wrap,
                 colorSequence=_colorSequence,
+                wrap=_wrap,
             )
         except SystemExit:
             raise
@@ -1239,7 +1245,9 @@ class ArrayController:
             )
 
             _backgroundColor: np.ndarray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
-            _colorSequence: np.ndarray[(3, Any), np.int32] = DefaultColorSequence()
+            _colorSequence: np.ndarray[
+                (3, Any), np.int32
+            ] = DefaultColorSequenceByMonth()
             _stepsPerTransition: int = random.randint(3, 7)
             _wrap: bool = self.getRandomBoolean()
 
@@ -1257,8 +1265,8 @@ class ArrayController:
 
             _tempColorSequence: np.ndarray[(3, Any), np.int32] = ColorTransitionArray(
                 arrayLength=(len(_colorSequence) * _stepsPerTransition),
-                wrap=_wrap,
                 colorSequence=_colorSequence,
+                wrap=_wrap,
             )
 
             _arrayLength: int = np.ceil(

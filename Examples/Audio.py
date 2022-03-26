@@ -155,8 +155,8 @@ class LightOutput(RollingDataFromQueue):
                     self.lightController.setVirtualLEDArray(
                         array_patterns.ColorTransitionArray(
                             LightOutput.LED_COUNT,
-                            False,
                             [Pixel(int(p)) for p in self.plotData],
+                            False,
                         )
                     )
 
