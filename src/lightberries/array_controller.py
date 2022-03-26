@@ -100,12 +100,12 @@ class ArrayController:
             debug: set true for some debugging messages
             verbose: set true for even more information
             refreshCallback: callback method is called whenever new LED values are sent to LED string
-            simulate: only call refreshCallback, dont use GPIO
+            simulate: only call refreshCallback, don't use GPIO
 
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -188,7 +188,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -433,7 +433,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -468,7 +468,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -540,15 +540,15 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
             # callback function to do work
 
-            def SetPixel(irgb):
-                i = irgb[0]
-                rgb = irgb[1]
+            def SetPixel(i_rgb):
+                i = i_rgb[0]
+                rgb = i_rgb[1]
                 if i < self.realLEDCount:
                     # value = (int(rgb[0]) << 16) + (int(rgb[1]) << 8) + int(rgb[2])
                     self.ws281xString[i] = rgb
@@ -581,7 +581,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -606,7 +606,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -631,7 +631,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -655,7 +655,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -686,7 +686,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -715,7 +715,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -764,7 +764,7 @@ class ArrayController:
         Returns:
             new RGB value
         """
-        # copy it to make sure we dont change the original by reference
+        # copy it to make sure we don't change the original by reference
         _color: np.ndarray[(3,), np.int32] = np.copy(color)
         # loop through RGB values
         for rgbIndex in range(len(_color)):
@@ -785,7 +785,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -861,7 +861,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -908,7 +908,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -950,7 +950,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -990,7 +990,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -1037,7 +1037,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -1088,7 +1088,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -1142,7 +1142,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -1205,7 +1205,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -1258,7 +1258,7 @@ class ArrayController:
     ) -> None:
         """Makes a smooth transition from one color to the next over the length specified.
 
-        Repeats the sequence as neccesary
+        Repeats the sequence as necessary
 
         Args:
             colorSequence: list of colors to in the pattern being shifted across the LED string
@@ -1269,7 +1269,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -1336,7 +1336,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -1379,7 +1379,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -1425,7 +1425,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -1433,7 +1433,7 @@ class ArrayController:
                 "%s.%s:", self.__class__.__name__, self.useFunctionNone.__name__
             )
 
-            # create an object to put in the light data list so we dont just abort the run
+            # create an object to put in the light data list so we don't just abort the run
             nothing = ArrayFunction(ArrayFunction.functionNone, self.colorSequence)
 
             self.privateLightFunctions.append(nothing)
@@ -1458,7 +1458,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -1511,7 +1511,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -1588,7 +1588,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -1628,7 +1628,7 @@ class ArrayController:
             )
             # shift eye by this much for each update
             cylon.size = self.colorSequenceCount
-            # adjust virtual LED buffer if necesary so that the cylon can actually move
+            # adjust virtual LED buffer if necessary so that the cylon can actually move
             if self.virtualLEDCount < cylon.size:
                 array = array_patterns.SolidColorArray(
                     arrayLength=cylon.size + 3, color=PixelColors.OFF
@@ -1666,7 +1666,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -1685,11 +1685,11 @@ class ArrayController:
 
             # make sure doing a merge function would be visible
             if self.colorSequenceCount >= self.realLEDCount:
-                # if seqeuence is too long, cut it in half
+                # if sequence is too long, cut it in half
                 self.colorSequence = self.colorSequence[
                     : int(self.colorSequenceCount // 2)
                 ]
-                # dont remember offhand why this is here
+                # don't remember offhand why this is here
                 if self.colorSequenceCount % 2 == 1:
                     if self.colorSequenceCount == 1:
                         self.colorSequence = np.concatenate(
@@ -1750,7 +1750,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -1836,7 +1836,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -1914,7 +1914,7 @@ class ArrayController:
                         change.colorNext = change.color
                     # set the refresh delay
                     change.delayCountMax = _delayCountMax
-                    # we want all the delays random, so dont start them all at zero
+                    # we want all the delays random, so don't start them all at zero
                     change.delayCounter = random.randint(0, change.delayCountMax)
                     # set true to fade, false to "instant on/off"
                     change.fadeType = _fadeType
@@ -1955,7 +1955,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -2087,7 +2087,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -2170,7 +2170,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -2269,7 +2269,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -2365,7 +2365,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:
@@ -2408,7 +2408,7 @@ class ArrayController:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
         try:

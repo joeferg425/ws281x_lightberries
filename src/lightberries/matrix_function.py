@@ -12,7 +12,7 @@ LOGGER = logging.getLogger("lightberries")
 
 
 class LightMatrixFunction(ArrayFunction):
-    """This class defines everything neccesary to modify LED patterns in interesting ways."""
+    """This class defines everything necessary to modify LED patterns in interesting ways."""
 
     Controller: ClassVar["lightberries.LightMatrixControls.LightMatrixController"]
 
@@ -127,19 +127,19 @@ class LightMatrixFunction(ArrayFunction):
             LightFunctionException: if something bad happens
         """
         try:
-            mmin = 1
-            mmax = 1
+            _min = 1
+            _max = 1
             if eye.delayCounter >= eye.delayCountMax:
                 eye.rowIndex += random.randint(-5, 5)
                 eye.columnIndex += random.randint(-5, 5)
-                if eye.rowIndex < mmin:
-                    eye.rowIndex = mmin
-                elif eye.rowIndex >= eye.Controller.realLEDRowCount - mmax:
-                    eye.rowIndex = eye.Controller.realLEDRowCount - mmax - 1
-                if eye.columnIndex < mmin:
-                    eye.columnIndex = mmin
-                elif eye.columnIndex >= eye.Controller.realLEDColumnCount - mmax:
-                    eye.columnIndex = eye.Controller.realLEDColumnCount - mmax - 1
+                if eye.rowIndex < _min:
+                    eye.rowIndex = _min
+                elif eye.rowIndex >= eye.Controller.realLEDRowCount - _max:
+                    eye.rowIndex = eye.Controller.realLEDRowCount - _max - 1
+                if eye.columnIndex < _min:
+                    eye.columnIndex = _min
+                elif eye.columnIndex >= eye.Controller.realLEDColumnCount - _max:
+                    eye.columnIndex = eye.Controller.realLEDColumnCount - _max - 1
                 eye.Controller.virtualLEDBuffer *= 0
                 eye.Controller.virtualLEDBuffer[
                     eye.rowIndex, eye.columnIndex, :
@@ -172,34 +172,34 @@ class LightMatrixFunction(ArrayFunction):
             LightFunctionException: if something bad happens
         """
         try:
-            mmin = 1
-            mmax = 1
+            _min = 1
+            _max = 1
             if bounce.delayCounter >= bounce.delayCountMax:
                 bounce.rowIndex += bounce.rowDirection * bounce.rowStep
                 bounce.columnIndex += bounce.columnDirection * bounce.columnStep
-                if bounce.rowIndex < mmin:
-                    bounce.rowIndex = mmin
+                if bounce.rowIndex < _min:
+                    bounce.rowIndex = _min
                     bounce.rowDirection *= -1
                     bounce.rowStep = random.randint(1, 2)
                     bounce.delayCountMax = random.randint(1, 5)
                     if bounce.colorCycle and random.randint(0, 10) >= 7:
                         bounce.color = bounce.colorSequenceNext
-                elif bounce.rowIndex >= bounce.Controller.realLEDRowCount - mmax:
-                    bounce.rowIndex = bounce.Controller.realLEDRowCount - mmax - 1
+                elif bounce.rowIndex >= bounce.Controller.realLEDRowCount - _max:
+                    bounce.rowIndex = bounce.Controller.realLEDRowCount - _max - 1
                     bounce.rowDirection *= -1
                     bounce.rowStep = random.randint(1, 2)
                     bounce.delayCountMax = random.randint(1, 5)
                     if bounce.colorCycle and random.randint(0, 10) >= 7:
                         bounce.color = bounce.colorSequenceNext
-                if bounce.columnIndex < mmin:
-                    bounce.columnIndex = mmin
+                if bounce.columnIndex < _min:
+                    bounce.columnIndex = _min
                     bounce.columnDirection *= -1
                     bounce.columnStep = random.randint(1, 2)
                     bounce.delayCountMax = random.randint(1, 5)
                     if bounce.colorCycle and random.randint(0, 10) >= 7:
                         bounce.color = bounce.colorSequenceNext
-                elif bounce.columnIndex >= bounce.Controller.realLEDColumnCount - mmax:
-                    bounce.columnIndex = bounce.Controller.realLEDColumnCount - mmax - 1
+                elif bounce.columnIndex >= bounce.Controller.realLEDColumnCount - _max:
+                    bounce.columnIndex = bounce.Controller.realLEDColumnCount - _max - 1
                     bounce.columnDirection *= -1
                     bounce.columnStep = random.randint(1, 2)
                     bounce.delayCountMax = random.randint(1, 5)

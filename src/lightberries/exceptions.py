@@ -1,4 +1,4 @@
-"""Defines custom exception classes to catch from this modeule."""
+"""Defines custom exception classes to catch from this module."""
 
 from __future__ import annotations
 

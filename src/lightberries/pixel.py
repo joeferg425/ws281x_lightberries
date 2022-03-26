@@ -41,7 +41,7 @@ class Pixel:
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightPixelException: if something bad happens
         """
         try:
@@ -203,7 +203,7 @@ class Pixel:
     def pixel(
         self,
     ) -> "Pixel":
-        """Return Pixel value with defaul RGB order.
+        """Return Pixel value with default RGB order.
 
         Returns:
             this pixel with default RGB order
@@ -277,11 +277,11 @@ class PixelColors:
         Returns:
             a single random color from the list of defined colors
         """
-        clrs = list(dir(PixelColors))
-        clrs = [p for p in clrs if "__" not in p and "random" not in p.lower()]
-        randomColor = clrs[random.randint(0, len(clrs) - 1)]
+        colors = list(dir(PixelColors))
+        colors = [p for p in colors if "__" not in p and "random" not in p.lower()]
+        randomColor = colors[random.randint(0, len(colors) - 1)]
         while randomColor == "OFF":
-            randomColor = clrs[random.randint(0, len(clrs) - 1)]
+            randomColor = colors[random.randint(0, len(colors) - 1)]
         return getattr(PixelColors, randomColor)
 
     @classmethod

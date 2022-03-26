@@ -31,7 +31,7 @@ class WS281xString(Sequence[np.int_]):
         gamma: Any = None,
         simulate: bool = False,
     ) -> None:
-        """Creates a pixel array using the rpipixelStrip library and Pixels.
+        """Creates a pixel array using the rpi_ws281x library.
 
         Args:
             ledCount: the number of LEDs desired in the LightString
@@ -45,12 +45,12 @@ class WS281xString(Sequence[np.int_]):
             channelPWM: defaults to 0, see https://github.com/rpi-ws281x/rpi-ws281x-python
             stripTypeLED: see https://github.com/rpi-ws281x/rpi-ws281x-python
             gamma: see https://github.com/rpi-ws281x/rpi-ws281x-python
-            simulate: dont use GPIO
+            simulate: don't use GPIO
 
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightStringException: if something bad happens
         """
         self.ws281xPixelStrip = None
@@ -110,19 +110,19 @@ class WS281xString(Sequence[np.int_]):
     def __del__(
         self,
     ) -> None:
-        """Properly disposes of the rpipixelStrip object.
+        """Properly disposes of the rpi_ws281x object.
 
         Prevents memory leaks (hopefully) that were happening in the rpi.PixelStrip module.
 
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightStringException: if something bad happens
         """
         # check if pixel strip has been created
         if isinstance(self.ws281xPixelStrip, rpi_ws281x.PixelStrip):
-            # turn off leds
+            # turn off LEDs
             self.off()
             # cleanup c memory usage
             try:
@@ -179,7 +179,7 @@ class WS281xString(Sequence[np.int_]):
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightStringException: if something bad happens
         """
         try:
@@ -226,7 +226,7 @@ class WS281xString(Sequence[np.int_]):
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightStringException: if something bad happens
         """
         try:
@@ -286,7 +286,7 @@ class WS281xString(Sequence[np.int_]):
         Raises:
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
-            LightBerryException: if propogating an exception
+            LightBerryException: if propagating an exception
             LightStringException: if something bad happens
         """
         for index in range(len(self)):

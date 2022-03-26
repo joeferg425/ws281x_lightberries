@@ -37,7 +37,7 @@ def DefaultColorSequenceByMonth(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
-        LightBerryException: if propogating an exception
+        LightBerryException: if propagating an exception
         LightPatternException: if something bad happens
     """
     global DEFAULT_COLOR_SEQUENCE  # pylint: disable = global-statement
@@ -154,7 +154,7 @@ def PixelArrayOff(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
-        LightBerryException: if propogating an exception
+        LightBerryException: if propagating an exception
         LightPatternException: if something bad happens
     """
     try:
@@ -186,7 +186,7 @@ def ConvertPixelArrayToNumpyArray(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
-        LightBerryException: if propogating an exception
+        LightBerryException: if propagating an exception
         LightPatternException: if something bad happens
     """
     try:
@@ -220,7 +220,7 @@ def SolidColorArray(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
-        LightBerryException: if propogating an exception
+        LightBerryException: if propagating an exception
         LightPatternException: if something bad happens
     """
     try:
@@ -260,7 +260,7 @@ def ColorTransitionArray(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
-        LightBerryException: if propogating an exception
+        LightBerryException: if propagating an exception
         LightPatternException: if something bad happens
     """
     try:
@@ -287,7 +287,7 @@ def ColorTransitionArray(
             stepCount = arrayLength // (sequenceLength - wrapOffset)
             prevStepCount = stepCount
         # create temporary array
-        arry = PixelArrayOff(arrayLength)
+        temp_array = PixelArrayOff(arrayLength)
         # step through color sequence
         for colorIndex in range(sequenceLength - wrapOffset):
             if colorIndex == sequenceLength - 1:
@@ -301,11 +301,11 @@ def ColorTransitionArray(
             for rgbIndex in range(len(thisColor)):
                 i = colorIndex * prevStepCount
                 # linspace creates the array of values from arg1, to arg2, in exactly arg3 steps
-                arry[i : (i + stepCount), rgbIndex] = np.linspace(
+                temp_array[i : (i + stepCount), rgbIndex] = np.linspace(
                     thisColor[rgbIndex], nextColor[rgbIndex], stepCount
                 )
             count += stepCount
-        return arry.astype(int)
+        return temp_array.astype(int)
     except SystemExit:
         raise
     except KeyboardInterrupt:
@@ -332,7 +332,7 @@ def RainbowArray(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
-        LightBerryException: if propogating an exception
+        LightBerryException: if propagating an exception
         LightPatternException: if something bad happens
     """
     try:
@@ -374,7 +374,7 @@ def RepeatingColorSequenceArray(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
-        LightBerryException: if propogating an exception
+        LightBerryException: if propagating an exception
         LightPatternException: if something bad happens
     """
     try:
@@ -387,16 +387,16 @@ def RepeatingColorSequenceArray(
             sequenceLength = len(inputSequence)
         else:
             return np.zeros((0, 3))
-        arry = PixelArrayOff(arrayLength=arrayLength)
-        arry[0:sequenceLength] = inputSequence
+        temp_array = PixelArrayOff(arrayLength=arrayLength)
+        temp_array[0:sequenceLength] = inputSequence
         for i in range(0, arrayLength, sequenceLength):
             if i + sequenceLength <= arrayLength:
-                arry[i : i + sequenceLength] = arry[0:sequenceLength]
+                temp_array[i : i + sequenceLength] = temp_array[0:sequenceLength]
             else:
                 extra = (i + sequenceLength) % arrayLength
                 end = (i + sequenceLength) - extra
-                arry[i:end] = arry[0 : (sequenceLength - extra)]
-        return arry
+                temp_array[i:end] = temp_array[0 : (sequenceLength - extra)]
+        return temp_array
     except SystemExit:
         raise
     except KeyboardInterrupt:
@@ -423,7 +423,7 @@ def RepeatingRainbowArray(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
-        LightBerryException: if propogating an exception
+        LightBerryException: if propagating an exception
         LightPatternException: if something bad happens
     """
     if segmentLength is None:
@@ -461,7 +461,7 @@ def ReflectArray(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
-        LightBerryException: if propogating an exception
+        LightBerryException: if propagating an exception
         LightPatternException: if something bad happens
     """
     # if user didn't specify otherwise, fold in middle
@@ -482,7 +482,7 @@ def ReflectArray(
             inputSequence = temp
             colorSequenceLen = len(inputSequence)
         flip = False
-        arry = PixelArrayOff(arrayLength)
+        temp_array = PixelArrayOff(arrayLength)
         for segBegin in range(0, arrayLength, foldLength):
             overflow = 0
             segEnd = 0
@@ -501,11 +501,13 @@ def ReflectArray(
                 segEnd = (segBegin + colorSequenceLen) - overflow
 
             if flip:
-                arry[segBegin:segEnd] = inputSequence[foldLength - overflow - 1 :: -1]
+                temp_array[segBegin:segEnd] = inputSequence[
+                    foldLength - overflow - 1 :: -1
+                ]
             else:
-                arry[segBegin:segEnd] = inputSequence[0 : foldLength - overflow]
+                temp_array[segBegin:segEnd] = inputSequence[0 : foldLength - overflow]
             flip = not flip
-        return arry
+        return temp_array
     except SystemExit:
         raise
     except KeyboardInterrupt:
@@ -530,11 +532,11 @@ def RandomArray(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
-        LightBerryException: if propogating an exception
+        LightBerryException: if propagating an exception
         LightPatternException: if something bad happens
     """
     try:
-        arry = PixelArrayOff(arrayLength)
+        temp_array = PixelArrayOff(arrayLength)
         for i in range(arrayLength):
             # prevent 255, 255, 255
             exclusion = random.randint(0, 2)
@@ -550,8 +552,8 @@ def RandomArray(
                 blueLED = random.randint(0, 255)
             else:
                 blueLED = 0
-            arry[i] = [redLED, greenLED, blueLED]
-        return arry
+            temp_array[i] = [redLED, greenLED, blueLED]
+        return temp_array
     except SystemExit:
         raise
     except KeyboardInterrupt:
@@ -578,12 +580,12 @@ def PseudoRandomArray(
     Raises:
         SystemExit: if exiting
         KeyboardInterrupt: if user quits
-        LightBerryException: if propogating an exception
+        LightBerryException: if propagating an exception
         LightPatternException: if something bad happens
     """
     try:
         inputSequence = None
-        arry = PixelArrayOff(arrayLength)
+        temp_array = PixelArrayOff(arrayLength)
         if isinstance(colorSequence, list):
             inputSequence = ConvertPixelArrayToNumpyArray(colorSequence)
         elif isinstance(colorSequence, np.ndarray):
@@ -592,10 +594,10 @@ def PseudoRandomArray(
             inputSequence = DEFAULT_COLOR_SEQUENCE
         for i in range(arrayLength):
             if inputSequence is None:
-                arry[i] = PixelColors.pseudoRandom()
+                temp_array[i] = PixelColors.pseudoRandom()
             else:
-                arry[i] = inputSequence[random.randint(0, len(inputSequence) - 1)]
-        return arry
+                temp_array[i] = inputSequence[random.randint(0, len(inputSequence) - 1)]
+        return temp_array
     except SystemExit:
         raise
     except KeyboardInterrupt:
@@ -633,10 +635,10 @@ def ColorStretchArray(
             inputSequence = DEFAULT_COLOR_SEQUENCE
         colorSequenceLength = len(inputSequence)
         # repeats = arrayLength // colorSequenceLength
-        arry = PixelArrayOff(colorSequenceLength * repeats)
+        temp_array = PixelArrayOff(colorSequenceLength * repeats)
         for i in range(colorSequenceLength):
-            arry[i * repeats : (i + 1) * repeats] = inputSequence[i]
-        return arry
+            temp_array[i * repeats : (i + 1) * repeats] = inputSequence[i]
+        return temp_array
     except SystemExit:
         raise
     except KeyboardInterrupt:

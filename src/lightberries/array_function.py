@@ -64,7 +64,7 @@ class ThingColors(IntEnum):
 
 
 class ArrayFunction:
-    """This class defines everything neccesary to modify LED patterns in interesting ways."""
+    """This class defines everything necessary to modify LED patterns in interesting ways."""
 
     Controller: ClassVar["lightberries.pixel_array_controls.LightController"]
 
@@ -792,7 +792,7 @@ class ArrayFunction:
         try:
             accelerate.indexPrevious = accelerate.index
             splash = False
-            # check delay counter, updaate index when it hits max
+            # check delay counter, update index when it hits max
             if accelerate.delayCounter >= accelerate.delayCountMax:
                 # reset delay counter
                 accelerate.delayCounter = 0
@@ -842,7 +842,7 @@ class ArrayFunction:
                     ),
                     dtype=np.int32,
                 )
-                # make sure that the splash doesnt go off the edge of the virtual led array
+                # make sure that the splash doesn't go off the edge of the virtual led array
                 modulo = np.where(
                     splashRange >= (ArrayFunction.Controller.realLEDCount - 1)
                 )
@@ -1017,7 +1017,7 @@ class ArrayFunction:
                 meteor.indexPrevious = meteor.index
                 # assign new index
                 meteor.index = meteor.indexNext
-                # caclulate range of indices being updated
+                # calculate range of indices being updated
                 meteor.indexRange = np.array(
                     list(
                         range(
@@ -1208,7 +1208,7 @@ class ArrayFunction:
                     raindrop.stepCounter += raindrop.step
                 # splash is done growing
                 else:
-                    # raindomize next splash start index
+                    # randomize next splash start index
                     raindrop.index = random.randint(
                         0, ArrayFunction.Controller.virtualLEDCount - 1
                     )
@@ -1300,7 +1300,7 @@ class ArrayFunction:
                             elif thing.size > 2:
                                 if random.randint(0, 99) > 90:
                                     thing.size -= 1
-                        # make sure we arent overgrown
+                        # make sure we aren't overgrown
                         if thing.size > thing.sizeMax:
                             thing.size = thing.sizeMax
                         # make sure we still exist
@@ -1320,7 +1320,7 @@ class ArrayFunction:
                             elif thing.size < thing.sizeMax:
                                 if random.randint(0, 99) > 90:
                                     thing.size += 1
-                        # make sure we arent overgrown
+                        # make sure we aren't overgrown
                         if thing.size >= thing.sizeMax:
                             thing.size = thing.sizeMax
                         # also make sure we still exist
@@ -1328,7 +1328,7 @@ class ArrayFunction:
                             thing.size = 1
                     # if we are cycling through colors
                     if thing.state & ThingColors.CYCLE.value:
-                        # artifically limit duration
+                        # artificially limit duration
                         if thing.stepCountMax >= shortPeriod:
                             thing.stepCountMax = shortPeriod
                         # randomly cycle through assign colors

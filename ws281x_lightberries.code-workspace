@@ -13,8 +13,22 @@
 		"python.testing.pytestPath": "./tests",
 		"python.testing.promptToConfigure": true,
 		"cSpell.words": [
+			"arange",
+			"astype",
+			"cosx",
+			"Cylon",
+			"DONT",
+			"dstack",
+			"dtype",
+			"getuid",
+			"GPIO",
 			"lightberries",
-			"GPIO"
+			"matrixification",
+			"ndarray",
+			"pytest",
+			"ROYGBIV",
+			"sinx",
+			"zoomy"
 		]
 	},
 	"launch": {

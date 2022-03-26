@@ -6,13 +6,13 @@ o = 0
 l = 1  # noqa : dont care
 
 
-def _init_letter(arry):
+def _init_letter(temp_array):
     from lightberries.matrix_patterns import DEFAULT_MATRIX_ORDER, MatrixOrder
 
     if DEFAULT_MATRIX_ORDER == MatrixOrder.TraverseColumnThenRow:
-        arry = arry.T
+        temp_array = temp_array.T
 
-    return np.dstack([arry, arry, arry])
+    return np.dstack([temp_array, temp_array, temp_array])
 
 
 class letters:
@@ -922,37 +922,37 @@ class letters:
 
 def letters_to_matrices(text: str) -> list[numpy.typing.NDArray]:
     retval = []
-    for letr in text.upper():
-        if letr in dir(letters):
-            retval.append(getattr(letters, letr))
-        elif letr == " ":
+    for letter in text.upper():
+        if letter in dir(letters):
+            retval.append(getattr(letters, letter))
+        elif letter == " ":
             retval.append(getattr(letters, "SPACE"))
-        elif letr == "'":
+        elif letter == "'":
             retval.append(getattr(letters, "APOSTROPHE"))
-        elif letr == ",":
+        elif letter == ",":
             retval.append(getattr(letters, "COMMA"))
-        elif letr == "!":
+        elif letter == "!":
             retval.append(getattr(letters, "EXCLAMATION"))
-        elif letr == "0":
+        elif letter == "0":
             retval.append(getattr(letters, "ZERO"))
-        elif letr == "1":
+        elif letter == "1":
             retval.append(getattr(letters, "ONE"))
-        elif letr == "2":
+        elif letter == "2":
             retval.append(getattr(letters, "TWO"))
-        elif letr == "3":
+        elif letter == "3":
             retval.append(getattr(letters, "THREE"))
-        elif letr == "4":
+        elif letter == "4":
             retval.append(getattr(letters, "FOUR"))
-        elif letr == "5":
+        elif letter == "5":
             retval.append(getattr(letters, "FIVE"))
-        elif letr == "6":
+        elif letter == "6":
             retval.append(getattr(letters, "SIX"))
-        elif letr == "7":
+        elif letter == "7":
             retval.append(getattr(letters, "SEVEN"))
-        elif letr == "8":
+        elif letter == "8":
             retval.append(getattr(letters, "EIGHT"))
-        elif letr == "9":
+        elif letter == "9":
             retval.append(getattr(letters, "NINE"))
-        elif letr == "=":
+        elif letter == "=":
             retval.append(getattr(letters, "EQUALS"))
     return retval

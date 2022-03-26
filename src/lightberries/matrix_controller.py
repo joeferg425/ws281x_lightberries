@@ -211,9 +211,9 @@ class LightMatrixController(ArrayController):
         try:
             # callback function to do work
 
-            def SetPixel(irgb):
-                i = irgb[0]
-                rgb = irgb[1]
+            def SetPixel(i_rgb):
+                i = i_rgb[0]
+                rgb = i_rgb[1]
                 if i < self.realLEDCount:
                     self.ws28xxLightString[i] = rgb
 
