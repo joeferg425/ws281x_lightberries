@@ -3,10 +3,15 @@ from lightberries.array_patterns import (
     DefaultColorSequenceByMonth,
     PixelArrayOff,
     ConvertPixelArrayToNumpyArray,
+    PseudoRandomArray,
+    RandomArray,
     RepeatingColorSequenceArray,
+    RepeatingRainbowArray,
     SolidColorArray,
     ColorTransitionArray,
     RainbowArray,
+    ReflectArray,
+    ColorStretchArray,
 )
 import datetime
 
@@ -98,3 +103,70 @@ def test_repeating_color_sequence_array():
         assert len(ary.shape) == 2
         assert ary.shape[0] == i
         assert ary.shape[1] == 3
+
+
+def test_repeating_rainbow_array():
+    for i in range(0, 101, 20):
+        ary = RepeatingRainbowArray(i)
+        assert ary is not None
+        assert len(ary.shape) == 2
+        assert ary.shape[0] == i
+        assert ary.shape[1] == 3
+        for j in range(1, 5):
+            ary = RepeatingRainbowArray(i, j)
+            assert ary is not None
+            assert len(ary.shape) == 2
+            assert ary.shape[0] == i
+            assert ary.shape[1] == 3
+
+
+def test_reflect_array():
+    for i in range(0, 101, 20):
+        for j in range(1, 5):
+            for k in range(1, 5):
+                colors = np.array([PixelColors.random() for _ in range(int(i * j))])
+                ary = ReflectArray(i, colors, k)
+                assert ary is not None
+                assert len(ary.shape) == 2
+                assert ary.shape[0] == i
+                assert ary.shape[1] == 3
+                assert ary is not None
+                assert len(ary.shape) == 2
+                assert ary.shape[0] == i
+                assert ary.shape[1] == 3
+
+
+def test_random_array():
+    for i in range(0, 101, 20):
+        ary = RandomArray(i)
+        assert ary is not None
+        assert len(ary.shape) == 2
+        assert ary.shape[0] == i
+        assert ary.shape[1] == 3
+
+
+def test_pseudorandom_array():
+    for i in range(0, 101, 20):
+        ary = PseudoRandomArray(i)
+        assert ary is not None
+        assert len(ary.shape) == 2
+        assert ary.shape[0] == i
+        assert ary.shape[1] == 3
+        for j in range(0, i + 1):
+            colors = np.array([PixelColors.random() for _ in range(int(j))])
+            ary = PseudoRandomArray(i, colors)
+            assert ary is not None
+            assert len(ary.shape) == 2
+            assert ary.shape[0] == i
+            assert ary.shape[1] == 3
+
+
+def test_colorstretch_array():
+    for i in range(0, 101, 20):
+        for j in range(1, i + 1):
+            colors = np.array([PixelColors.random() for _ in range(int(i / j))])
+            ary = ColorStretchArray(i, colors)
+            assert ary is not None
+            assert len(ary.shape) == 2
+            assert ary.shape[0] == i
+            assert ary.shape[1] == 3

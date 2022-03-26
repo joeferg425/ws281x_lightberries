@@ -4,9 +4,9 @@ from typing import Any, Callable
 import numpy as np
 from lightberries.array_controller import ArrayController
 import logging
-from lightberries.array_function import ArrayFunction
+from lightberries.array_functions import ArrayFunction
 from lightberries.exceptions import LightBerryException, LightControlException
-from lightberries.matrix_function import LightMatrixFunction
+from lightberries.matrix_functions import LightMatrixFunction
 from lightberries.matrix_patterns import (
     SolidColorMatrix,
     MatrixOrder,

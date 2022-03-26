@@ -2,7 +2,7 @@ import random
 from typing import Any, Callable, ClassVar
 import numpy as np
 import logging
-from lightberries.array_function import ArrayFunction
+from lightberries.array_functions import ArrayFunction
 import lightberries.matrix_controller
 
 from lightberries.exceptions import LightBerryException, LightFunctionException

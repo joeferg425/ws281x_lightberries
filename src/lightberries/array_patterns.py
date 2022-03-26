@@ -264,6 +264,7 @@ def ColorTransitionArray(
         LightPatternException: if something bad happens
     """
     try:
+        arrayLength = int(arrayLength)
         if colorSequence is None:
             inputSequence = DEFAULT_COLOR_SEQUENCE
         else:
@@ -271,7 +272,7 @@ def ColorTransitionArray(
         # get length of sequence
         if len(inputSequence.shape):
             sequenceLength = inputSequence.shape[0]
-        if sequenceLength == 0:
+        if sequenceLength == 0 or arrayLength == 0:
             return np.zeros((0, 3))
         count = 0
         stepCount = None
@@ -388,14 +389,15 @@ def RepeatingColorSequenceArray(
         else:
             return np.zeros((0, 3))
         temp_array = PixelArrayOff(arrayLength=arrayLength)
-        temp_array[0:sequenceLength] = inputSequence
-        for i in range(0, arrayLength, sequenceLength):
-            if i + sequenceLength <= arrayLength:
-                temp_array[i : i + sequenceLength] = temp_array[0:sequenceLength]
-            else:
-                extra = (i + sequenceLength) % arrayLength
-                end = (i + sequenceLength) - extra
-                temp_array[i:end] = temp_array[0 : (sequenceLength - extra)]
+        if arrayLength > sequenceLength:
+            temp_array[0:sequenceLength] = inputSequence
+            for i in range(0, arrayLength, sequenceLength):
+                if i + sequenceLength <= arrayLength:
+                    temp_array[i : i + sequenceLength] = temp_array[0:sequenceLength]
+                else:
+                    extra = (i + sequenceLength) % arrayLength
+                    end = (i + sequenceLength) - extra
+                    temp_array[i:end] = temp_array[0 : (sequenceLength - extra)]
         return temp_array
     except SystemExit:
         raise
@@ -445,7 +447,7 @@ def RepeatingRainbowArray(
 
 def ReflectArray(
     arrayLength: int,
-    colorSequence: Union[List[Pixel], np.ndarray[(3, Any), np.int32]] = None,
+    colorSequence: np.ndarray[(3, Any), np.int32] = None,
     foldLength=None,
 ) -> np.ndarray[(3, Any), np.int32]:
     """Generates an array where each repetition of the input. Sequence is reversed from the previous one.
@@ -467,15 +469,15 @@ def ReflectArray(
     # if user didn't specify otherwise, fold in middle
     try:
         arrayLength = int(arrayLength)
-        if isinstance(colorSequence, list):
-            inputSequence = ConvertPixelArrayToNumpyArray(colorSequence)
-        elif isinstance(colorSequence, np.ndarray):
-            inputSequence = np.array(colorSequence)
+        if isinstance(colorSequence, np.ndarray):
+            inputSequence = colorSequence
         else:
             inputSequence = DEFAULT_COLOR_SEQUENCE
-        colorSequenceLen = len(inputSequence)
+        colorSequenceLen = inputSequence.shape[0]
         if foldLength is None:
             foldLength = arrayLength // 2
+        if colorSequenceLen == 0 or arrayLength == 0:
+            return np.zeros((0, 3))
         if foldLength > colorSequenceLen:
             temp = PixelArrayOff(foldLength)
             temp[foldLength - colorSequenceLen :] = inputSequence
@@ -592,11 +594,15 @@ def PseudoRandomArray(
             inputSequence = np.array(colorSequence)
         else:
             inputSequence = DEFAULT_COLOR_SEQUENCE
+        inputSequenceLen = inputSequence.shape[0]
+        if inputSequenceLen == 0:
+            inputSequence = DEFAULT_COLOR_SEQUENCE
+            inputSequenceLen = inputSequence.shape[0]
         for i in range(arrayLength):
             if inputSequence is None:
                 temp_array[i] = PixelColors.pseudoRandom()
             else:
-                temp_array[i] = inputSequence[random.randint(0, len(inputSequence) - 1)]
+                temp_array[i] = inputSequence[random.randint(0, inputSequenceLen - 1)]
         return temp_array
     except SystemExit:
         raise
@@ -609,13 +615,12 @@ def PseudoRandomArray(
 
 
 def ColorStretchArray(
-    repeats=5,
+    arrayLength: int,
     colorSequence: Union[List[Pixel], np.ndarray[(3, Any), np.int32]] = None,
 ) -> np.ndarray[(3, Any), np.int32]:
     """Takes a sequence of input colors and repeats each element the requested number of times.
 
     Args:
-        repeats: the number of times to repeat each element oc colorSequence
         colorSequence: a list of pixels defining the desired colors in the output array
 
     Returns:
@@ -633,12 +638,14 @@ def ColorStretchArray(
             inputSequence = np.array(colorSequence)
         else:
             inputSequence = DEFAULT_COLOR_SEQUENCE
-        colorSequenceLength = len(inputSequence)
-        # repeats = arrayLength // colorSequenceLength
+        colorSequenceLength = inputSequence.shape[0]
+        repeats = int(arrayLength / colorSequenceLength)
+        if arrayLength % colorSequenceLength > 0:
+            repeats += 1
         temp_array = PixelArrayOff(colorSequenceLength * repeats)
         for i in range(colorSequenceLength):
             temp_array[i * repeats : (i + 1) * repeats] = inputSequence[i]
-        return temp_array
+        return temp_array[:arrayLength]
     except SystemExit:
         raise
     except KeyboardInterrupt:

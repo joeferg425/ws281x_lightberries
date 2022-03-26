@@ -20,7 +20,7 @@ from lightberries.exceptions import (
 )
 from lightberries.pixel import Pixel, PixelColors
 from lightberries.ws281x_strings import WS281xString
-from lightberries.array_function import (
+from lightberries.array_functions import (
     ArrayFunction,
     LEDFadeType,
     RaindropStates,
