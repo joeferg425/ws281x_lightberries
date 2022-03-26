@@ -80,7 +80,7 @@ class LightsProcess:
                 ledBrightnessFloat=BRIGHTNESS,
                 debug=True,
             )
-            lightControl.setVirtualLEDArray(
+            lightControl.setVirtualLEDBuffer(
                 ConvertPixelArrayToNumpyArray(
                     SolidColorArray(
                         arrayLength=PIXEL_COUNT,

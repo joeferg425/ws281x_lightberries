@@ -8,7 +8,7 @@ class LightBerryException(Exception):
 
 
 class LightFunctionException(LightBerryException):
-    """Exception for LightFunction to raise."""
+    """Exception for LightFunctions to raise."""
 
 
 class LightStringException(LightBerryException):
@@ -16,11 +16,11 @@ class LightStringException(LightBerryException):
 
 
 class LightControlException(LightBerryException):
-    """Exception for LightControl to raise."""
+    """Exception for LightControls to raise."""
 
 
 class LightPatternException(LightBerryException):
-    """Exception for LightPattern to raise."""
+    """Exception for LightPatterns to raise."""
 
 
 class LightPixelException(LightBerryException):

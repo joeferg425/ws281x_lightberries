@@ -6,7 +6,7 @@ import random
 from enum import IntEnum
 import numpy as np
 import lightberries  # noqa : used in typing
-from lightberries.exceptions import LightFunctionException
+from lightberries.exceptions import LightFunctionException, LightBerryException
 from lightberries.pixel import Pixel, PixelColors
 from lightberries.array_patterns import ConvertPixelArrayToNumpyArray
 
@@ -76,7 +76,7 @@ class ArrayFunction:
         """Initialize the Light Function tracking object.
 
         Args:
-            funcPointer: a function pointer that updates LEDs in the LightController object.
+            funcPointer: a function pointer that updates LEDs in the LightArrayController object.
             colorSequence: a sequence of RGB values.
         """
         self.privateColorSequence: np.ndarray[
@@ -277,18 +277,14 @@ class ArrayFunction:
                         else:
                             self.color[rgbIndex] = self.colorNext[rgbIndex]
             self.delayCounter += 1
-            # self._VirtualLEDArray[self.index] = np.copy(self.color)
+            # self._virtualLEDBuffer[self.index] = np.copy(self.color)
         except SystemExit:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.doFade.__name__,
-                ex,
-            )
             raise LightFunctionException from ex
 
     def doMove(
@@ -453,13 +449,9 @@ class ArrayFunction:
             raise
         except SystemExit:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                collision.__class__.__name__,
-                collision.functionCollisionDetection.__name__,
-                ex,
-            )
             raise LightFunctionException from ex
 
     @staticmethod
@@ -482,13 +474,9 @@ class ArrayFunction:
             raise
         except SystemExit:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                off.__class__.__name__,
-                off.functionOff.__name__,
-                ex,
-            )
             raise LightFunctionException from ex
 
     @staticmethod
@@ -513,13 +501,9 @@ class ArrayFunction:
             raise
         except SystemExit:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                fade.__class__.__name__,
-                fade.functionFadeOff.__name__,
-                ex,
-            )
             raise LightFunctionException from ex
 
     @staticmethod
@@ -542,13 +526,9 @@ class ArrayFunction:
             raise
         except SystemExit:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                nothing.__class__.__name__,
-                nothing.functionNone.__name__,
-                ex,
-            )
             raise LightFunctionException from ex
 
     @staticmethod
@@ -580,13 +560,9 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                cycle.__class__.__name__,
-                cycle.functionSolidColorCycle.__name__,
-                ex,
-            )
             raise LightFunctionException from ex
 
     @staticmethod
@@ -650,13 +626,9 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                marquee.__class__.__name__,
-                marquee.functionMarquee.__name__,
-                ex,
-            )
             raise LightFunctionException from ex
 
     @staticmethod
@@ -738,13 +710,9 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                cylon.__class__.__name__,
-                cylon.functionCylon.__name__,
-                ex,
-            )
             raise LightFunctionException from ex
 
     @staticmethod
@@ -802,13 +770,9 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                merge.__class__.__name__,
-                merge.functionMerge.__name__,
-                ex,
-            )
             raise LightFunctionException from ex
 
     @staticmethod
@@ -921,13 +885,9 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                accelerate.__class__.__name__,
-                accelerate.functionAccelerate.__name__,
-                ex,
-            )
             raise LightFunctionException from ex
 
     @staticmethod
@@ -1023,13 +983,9 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                change.__class__.__name__,
-                change.functionRandomChange.__name__,
-                ex,
-            )
             raise LightFunctionException from ex
 
     @staticmethod
@@ -1094,13 +1050,9 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                meteor.__class__.__name__,
-                meteor.functionMeteors.__name__,
-                ex,
-            )
             raise LightFunctionException from ex
 
     @staticmethod
@@ -1191,13 +1143,9 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:
             raise
+        except LightBerryException:
+            raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                sprite.__class__.__name__,
-                sprite.functionSprites.__name__,
-                ex,
-            )
             raise LightFunctionException from ex
 
     @staticmethod
@@ -1278,12 +1226,6 @@ class ArrayFunction:
         except KeyboardInterrupt:
             raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                ArrayFunction.__class__.__name__,
-                ArrayFunction.functionRaindrops.__name__,
-                ex,
-            )
             raise LightFunctionException from ex
 
     @staticmethod
@@ -1459,12 +1401,6 @@ class ArrayFunction:
         except KeyboardInterrupt:
             raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                thing.__class__.__name__,
-                thing.functionAlive.__name__,
-                ex,
-            )
             raise LightFunctionException from ex
 
     @staticmethod
@@ -1492,12 +1428,6 @@ class ArrayFunction:
         except KeyboardInterrupt:
             raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                twinkle.__class__.__name__,
-                twinkle.overlayTwinkle.__name__,
-                ex,
-            )
             raise LightFunctionException from ex
 
     @staticmethod
@@ -1524,10 +1454,4 @@ class ArrayFunction:
         except KeyboardInterrupt:
             raise
         except Exception as ex:
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                blink.__class__.__name__,
-                blink.overlayBlink.__name__,
-                ex,
-            )
             raise LightFunctionException from ex

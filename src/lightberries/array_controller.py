@@ -1,5 +1,6 @@
 """Class defines methods for interacting with Light Strings, Patterns, and Functions."""
 from __future__ import annotations
+import sys
 import time
 import random
 import logging
@@ -49,9 +50,9 @@ class ArrayController:
     See https://github.com/rpi-ws281x/rpi-ws281x-python for questions about rpi_ws281x library.
 
     Quick Start:
-        1: Create a LightController object specifying ledCount:int, pwmGPIOpin:int,
+        1: Create a LightArrayController object specifying ledCount:int, pwmGPIOpin:int,
             channelDMA:int, frequencyPWM:int
-                lights = LightController(10, 18, 10, 800000)
+                lights = LightArrayController(10, 18, 10, 800000)
 
         2: Choose a color pattern
                 lights.useColorRainbow()
@@ -82,7 +83,7 @@ class ArrayController:
         refreshCallback: Callable = None,
         simulate: bool = False,
     ) -> None:
-        """Create a LightController object for running patterns across a rpi_ws281x LED string.
+        """Create a LightArrayController object for running patterns across a rpi_ws281x LED string.
 
         Args:
             ledCount: the number of Pixels in your string of LEDs
@@ -110,6 +111,16 @@ class ArrayController:
         try:
             # configure logging
             if debug is True or verbose is True:
+                if not LOGGER.handlers:
+                    streamHandler = logging.StreamHandler()
+                    LOGGER.addHandler(streamHandler)
+                LOGGER.setLevel(logging.INFO)
+                if sys.platform != "linux":
+                    fh = logging.FileHandler(__name__ + ".log")
+                else:
+                    fh = logging.FileHandler("/home/pi/" + __name__ + ".log")
+                fh.setLevel(logging.DEBUG)
+                LOGGER.addHandler(fh)
                 LOGGER.setLevel(logging.DEBUG)
             if verbose is True:
                 LOGGER.setLevel(5)
@@ -156,6 +167,7 @@ class ArrayController:
             # give LightFunction class a pointer to this class
             ArrayFunction.Controller = self
 
+            self.running: bool = False
             self.refreshCallback: Callable = refreshCallback
             # initialize stuff
             self.reset()
@@ -180,7 +192,7 @@ class ArrayController:
             LightControlException: if something bad happens
         """
         try:
-            if hasattr(self, "_LEDArray") and self.ws281xString is not None:
+            if hasattr(self, "_ledBuffer") and self.ws281xString is not None:
                 self.off()
                 self.copyVirtualLedsToWS281X()
                 self.refreshLEDs()
@@ -446,12 +458,12 @@ class ArrayController:
 
     def setvirtualLEDBuffer(
         self,
-        ledArray: Union[List[Pixel], np.ndarray[(3, Any), np.int32]],
+        ledBuffer: Union[List[Pixel], np.ndarray[(3, Any), np.int32]],
     ) -> None:
         """Assign a sequence of pixel data to the LED.
 
         Args:
-            ledArray: array of RGB values
+            ledBuffer: array of RGB values
 
         Raises:
             SystemExit: if exiting
@@ -461,29 +473,43 @@ class ArrayController:
         """
         try:
             # make sure the passed LED array is the correct type
-            if isinstance(ledArray, list):
-                _ledArray = ConvertPixelArrayToNumpyArray(ledArray)
-            elif isinstance(ledArray, np.ndarray):
-                _ledArray = ledArray
+            if isinstance(ledBuffer, list):
+                _ledBuffer = ConvertPixelArrayToNumpyArray(ledBuffer)
+            elif isinstance(ledBuffer, np.ndarray):
+                _ledBuffer = ledBuffer
             else:
-                _ledArray = SolidColorArray(
+                _ledBuffer = SolidColorArray(
                     arrayLength=self.realLEDCount, color=self.backgroundColor
                 )
 
+                # check assignment length
+                # if len(_ledBuffer) >= self.realLEDCount:
+                _ledBuffer = SolidColorArray(
+                    arrayLength=self.realLEDCount, color=self.backgroundColor
+                )
+            _ledBufferLen = int(_ledBuffer.size / 3)
+
             # check assignment length
-            if len(_ledArray) >= self.realLEDCount:
-                self.virtualLEDBuffer = _ledArray
+            if (
+                _ledBufferLen >= self.realLEDCount
+                or len(_ledBuffer.shape) > 2
+                or len(self.virtualLEDBuffer.shape) > 2
+            ):
+                self.virtualLEDBuffer = _ledBuffer
             else:
-                self.virtualLEDBuffer[: len(_ledArray)] = _ledArray
+                self.virtualLEDBuffer[:_ledBufferLen] = _ledBuffer
 
             # assign new LED array to virtual LEDs
-            self.privateVirtualLEDCount = len(self.virtualLEDBuffer)
+            self.privateVirtualLEDCount = _ledBufferLen
             # set our indices for virtual LEDs
             self.privateVirtualLEDIndexCount = self.virtualLEDCount
             # create array of index values for manipulation if needed
             self.virtualLEDIndexBuffer = np.arange(self.virtualLEDCount)
             # if the array is smaller than the actual light strand, make our entire strand addressable
-            if self.privateVirtualLEDIndexCount < self.realLEDCount:
+            if (
+                self.privateVirtualLEDIndexCount < self.realLEDCount
+                and len(self.virtualLEDBuffer.shape) < 3
+            ):
                 self.privateVirtualLEDIndexCount = self.realLEDCount
                 self.virtualLEDIndexBuffer = np.arange(self.privateVirtualLEDIndexCount)
                 self.virtualLEDBuffer = np.concatenate(
@@ -519,6 +545,7 @@ class ArrayController:
         """
         try:
             # callback function to do work
+
             def SetPixel(irgb):
                 i = irgb[0]
                 rgb = irgb[1]
@@ -775,7 +802,10 @@ class ArrayController:
                     self.secondsPerMode
                 )
             # loop
-            while time.time() < self.privateNextModeChange or self.privateLoopForever:
+            self.running = True
+            while (
+                time.time() < self.privateNextModeChange and self.running is True
+            ) or self.privateLoopForever:
                 try:
                     # run the selected functions using LightFunction object callbacks
                     self._runFunctions()
@@ -792,7 +822,6 @@ class ArrayController:
                 except LightBerryException:
                     raise
                 except Exception as ex:
-                    LOGGER.exception("_Run Loop Error: %s", (str(ex),))
                     raise LightControlException from ex
             self.privateLastModeChange = time.time()
             if self.secondsPerMode is None:
@@ -810,6 +839,12 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
+            LOGGER.exception(
+                "%s.%s Exception: %s",
+                self.__class__.__name__,
+                self.run.__name__,
+                ex,
+            )
             raise LightControlException from ex
 
     def useColorSingle(

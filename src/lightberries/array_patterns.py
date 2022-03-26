@@ -641,5 +641,7 @@ def ColorStretchArray(
         raise
     except KeyboardInterrupt:
         raise
+    except LightBerryException:
+        raise
     except Exception as ex:
         raise LightPatternException from ex
