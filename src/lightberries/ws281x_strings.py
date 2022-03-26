@@ -191,11 +191,17 @@ class WS281xString(Sequence[np.int_]):
             else:
                 if self.ws281xPixelStrip:
                     return ConvertPixelArrayToNumpyArray(
-                        [Pixel(self.ws281xPixelStrip.getPixelColor(k)) for k in key]
+                        [
+                            Pixel(self.ws281xPixelStrip.getPixelColor(k))
+                            for k in range(self._ledCount)[key]
+                        ]
                     )
                 elif self.simulated_ws281xPixelStrip is not None:
                     return ConvertPixelArrayToNumpyArray(
-                        [Pixel(self.simulated_ws281xPixelStrip[k]) for k in key]
+                        [
+                            Pixel(self.simulated_ws281xPixelStrip[k])
+                            for k in range(self._ledCount)[key]
+                        ]
                     )
         except SystemExit:  # pylint:disable=try-except-raise
             raise
@@ -225,12 +231,12 @@ class WS281xString(Sequence[np.int_]):
         """
         try:
             if isinstance(key, slice):
-                for i, k in enumerate(key):
-                    p = Pixel(value[i, :], EnumLEDOrder.RGB)
+                for i, j in enumerate(range(self._ledCount)[key]):
+                    p = Pixel(value[j, :], EnumLEDOrder.RGB)
                     if self.ws281xPixelStrip:
-                        self.ws281xPixelStrip.setPixelColor(key, p.int)
+                        self.ws281xPixelStrip.setPixelColor(i, p.int)
                     else:
-                        self.simulated_ws281xPixelStrip[key] = p.int
+                        self.simulated_ws281xPixelStrip[i] = p.int
             else:
                 p = Pixel(value, EnumLEDOrder.RGB)
                 if self.ws281xPixelStrip:

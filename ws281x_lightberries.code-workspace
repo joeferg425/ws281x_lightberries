@@ -13,7 +13,8 @@
 		"python.testing.pytestPath": "./tests",
 		"python.testing.promptToConfigure": true,
 		"cSpell.words": [
-			"lightberries"
+			"lightberries",
+			"GPIO"
 		]
 	},
 	"launch": {

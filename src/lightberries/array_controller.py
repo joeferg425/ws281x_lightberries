@@ -117,6 +117,14 @@ class ArrayController:
             # wrap pixel strip in my own interface object
             self.ws281xString: Optional[WS281xString] = WS281xString(
                 ledCount=ledCount,
+                pwmGPIOpin=pwmGPIOpin,
+                channelDMA=channelDMA,
+                frequencyPWM=frequencyPWM,
+                invertSignalPWM=invertSignalPWM,
+                ledBrightnessFloat=ledBrightnessFloat,
+                channelPWM=channelPWM,
+                stripTypeLED=stripTypeLED,
+                gamma=gamma,
                 simulate=self.simulate,
             )
 
