@@ -82,8 +82,6 @@ def test_color_transition_array():
         assert len(ary2.shape) == 2
         assert ary2.shape[0] == i
         assert ary2.shape[1] == 3
-        # if len(ary1):
-        # assert not np.array_equal(ary1, ary2)
 
 
 def test_rainbow_array():

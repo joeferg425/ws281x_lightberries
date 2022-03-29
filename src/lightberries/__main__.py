@@ -59,6 +59,14 @@ if __name__ == "__main__":  # pylint: disable=invalid-name
         ],
         help="the name of the color pattern to demo using randomized parameters",
     )
+    parser.add_argument(
+        "-b",
+        "--brightness",
+        metavar="[0-1]",
+        type=float,
+        default=BRIGHTNESS,
+        help="the name of the color pattern to demo using randomized parameters",
+    )
     args = parser.parse_args()
 
     if args.LED_count is not None:
@@ -72,6 +80,9 @@ if __name__ == "__main__":  # pylint: disable=invalid-name
 
     if args.color is not None:
         COLORS = ["useColor" + args.color]
+
+    if args.brightness >= 0 and args.brightness <= 1:
+        BRIGHTNESS = float(args.brightness)
 
     # create the light-function object
     lightControl = ArrayController(
