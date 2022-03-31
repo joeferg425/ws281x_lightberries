@@ -8,7 +8,10 @@ import numpy as np
 import lightberries  # noqa : used in typing
 from lightberries.exceptions import LightFunctionException, LightBerryException
 from lightberries.pixel import Pixel, PixelColors
-from lightberries.array_patterns import ConvertPixelArrayToNumpyArray
+from lightberries.array_patterns import (
+    ConvertPixelArrayToNumpyArray,
+    DefaultColorSequenceByMonth,
+)
 
 # pylint: disable=no-member
 
@@ -86,7 +89,9 @@ class ArrayFunction:
         self.privateColorSequenceIndex: int = 0
 
         self.colorSequence = colorSequence
-        self.color: np.ndarray[(3,), np.int32] = colorSequence[0]
+        if self.colorSequence is None or len(self.colorSequence) == 0:
+            self.colorSequence = DefaultColorSequenceByMonth()
+        self.color: np.ndarray[(3,), np.int32] = self.colorSequence[0]
         self.colorBegin: np.ndarray[(3,), np.int32] = PixelColors.OFF
         self.colorNext: np.ndarray[(3,), np.int32] = PixelColors.OFF
         self.colorGoal: np.ndarray[(3,), np.int32] = PixelColors.OFF

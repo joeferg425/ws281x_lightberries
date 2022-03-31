@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 from typing import Any
 import numpy as np
@@ -17,9 +18,7 @@ class MatrixOrder(IntEnum):
 DEFAULT_MATRIX_ORDER = MatrixOrder.TraverseColumnThenRow
 
 
-def SingleLED(
-    rowCount: int, columnCount: int
-) -> np.np.ndarray[(Any, Any, 3), np.int32]:
+def SingleLED(rowCount: int, columnCount: int) -> np.ndarray[(Any, Any, 3), np.int32]:
     matrix = np.zeros((rowCount, columnCount, 3))
     matrix[0, 0, :] = 255
     return matrix
@@ -54,7 +53,7 @@ def Spectrum2(rowCount: int, columnCount: int) -> np.ndarray[(Any, Any, 3), np.i
 def SolidColorMatrix(
     rowCount: int,
     columnCount: int,
-    color: np.ndarray[(3,), np.int32] = DEFAULT_COLOR_SEQUENCE[0].array,
+    color: np.ndarray[(3,), np.int32] = DEFAULT_COLOR_SEQUENCE[0],
 ) -> np.ndarray[(3, Any), np.int32]:
     """Creates matrix of RGB tuples that are all one color.
 
@@ -72,7 +71,7 @@ def SolidColorMatrix(
         LightPatternException: if something bad happens
     """
     try:
-        if isinstance(color, np.np.ndarray):
+        if isinstance(color, np.ndarray):
             _color = Pixel(color)
         else:
             _color = color
@@ -101,7 +100,7 @@ def TextMatrix(
 
     letters = letters_to_matrices(text + "     ")
     total_length = 0
-    matrix = np.np.ndarray
+    matrix = np.ndarray
     if DEFAULT_MATRIX_ORDER == MatrixOrder.TraverseColumnThenRow:
         total_length = sum([matrix.shape[0] for matrix in letters])
         matrix = np.zeros((total_length, letters[0].shape[1], 3))

@@ -23,11 +23,15 @@
 			"getuid",
 			"GPIO",
 			"lightberries",
+			"matplotlib",
 			"matrixification",
 			"ndarray",
+			"numpy",
+			"pyplot",
 			"pytest",
 			"ROYGBIV",
 			"sinx",
+			"yview",
 			"zoomy"
 		],
 		"editor.gotoLocation.multipleDeclarations": "goto",
@@ -40,52 +44,52 @@
 	"launch": {
 		"configurations": [
 			{
-				"name": "Python: function GUI",
+				"name": "example: audio",
 				"type": "python",
 				"request": "launch",
-				"program": "${workspaceFolder}/Examples/FunctionGUI.py",
+				"program": "${workspaceFolder}/examples/audio.py",
 				"console": "integratedTerminal",
-				// "sudo": true
+				"sudo": true
 			},
 			{
-				"name": "Python: simulate",
+				"name": "example: array",
 				"type": "python",
 				"request": "launch",
-				"program": "${workspaceFolder}/Examples/Simulate.py",
+				"program": "${workspaceFolder}/examples/basic_array.py",
 				"console": "integratedTerminal",
-				// "sudo": true
+				"sudo": true
 			},
 			{
-				"name": "Python: pixel GUI",
+				"name": "example: matrix",
 				"type": "python",
 				"request": "launch",
-				"program": "${workspaceFolder}/Examples/PixelGUI.py",
+				"program": "${workspaceFolder}/examples/basic_matrix.py",
 				"console": "integratedTerminal",
-				// "sudo": true
+				"sudo": true
 			},
 			{
-				"name": "Python: audio",
+				"name": "example: GUI functions",
 				"type": "python",
 				"request": "launch",
-				"program": "${workspaceFolder}/Examples/Audio.py",
+				"program": "${workspaceFolder}/examples/gui_functions.py",
 				"console": "integratedTerminal",
-				// "sudo": true
+				"sudo": true
 			},
 			{
-				"name": "Python: test",
+				"name": "example: GUI pixels",
 				"type": "python",
 				"request": "launch",
-				"program": "${workspaceFolder}/test.py",
+				"program": "${workspaceFolder}/examples/gui_pixels.py",
 				"console": "integratedTerminal",
-				// "sudo": true
+				"sudo": true
 			},
 			{
-				"name": "Python: test2",
+				"name": "example: simulate",
 				"type": "python",
 				"request": "launch",
-				"program": "${workspaceFolder}/test2.py",
+				"program": "${workspaceFolder}/examples/simulate.py",
 				"console": "integratedTerminal",
-				// "sudo": true
+				"sudo": true
 			},
 			{
 				"name": "Python: main",
@@ -93,7 +97,11 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/src/lightberries/__main__.py",
 				"console": "integratedTerminal",
-				"sudo": true
+				"sudo": true,
+				"args": [
+					"-b",
+					"0.1"
+				]
 			}
 		],
 		"compounds": []

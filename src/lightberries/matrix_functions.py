@@ -1,3 +1,4 @@
+from __future__ import annotations
 import random
 from typing import Any, Callable, ClassVar
 import numpy as np
@@ -141,9 +142,7 @@ class LightMatrixFunction(ArrayFunction):
                 elif eye.columnIndex >= eye.Controller.realLEDColumnCount - _max:
                     eye.columnIndex = eye.Controller.realLEDColumnCount - _max - 1
                 eye.Controller.virtualLEDBuffer *= 0
-                eye.Controller.virtualLEDBuffer[
-                    eye.rowIndex, eye.columnIndex, :
-                ] = PixelColors.RED.array
+                eye.Controller.virtualLEDBuffer[eye.rowIndex, eye.columnIndex, :] = PixelColors.RED
                 eye.delayCountMax = random.randint(10, 850)
                 eye.delayCounter = 0
             eye.delayCounter += 1
@@ -206,9 +205,7 @@ class LightMatrixFunction(ArrayFunction):
                     if bounce.colorCycle and random.randint(0, 10) >= 7:
                         bounce.color = bounce.colorSequenceNext
                 bounce.delayCounter = 0
-            bounce.Controller.virtualLEDBuffer[
-                bounce.rowIndex, bounce.columnIndex, :
-            ] = bounce.color
+            bounce.Controller.virtualLEDBuffer[bounce.rowIndex, bounce.columnIndex, :] = bounce.color
             bounce.delayCounter += 1
         except SystemExit:
             raise
@@ -238,12 +235,8 @@ class LightMatrixFunction(ArrayFunction):
                     firework.size += firework.step
                 else:
                     firework.size = 1
-                    firework.rowIndex = random.randint(
-                        0, firework.Controller.realLEDRowCount - 1
-                    )
-                    firework.columnIndex = random.randint(
-                        0, firework.Controller.realLEDColumnCount - 1
-                    )
+                    firework.rowIndex = random.randint(0, firework.Controller.realLEDRowCount - 1)
+                    firework.columnIndex = random.randint(0, firework.Controller.realLEDColumnCount - 1)
                     firework.delayCountMax = random.randint(1, 5)
                     if firework.colorCycle and random.randint(0, 10) >= 7:
                         firework.color = firework.colorSequenceNext
@@ -251,18 +244,16 @@ class LightMatrixFunction(ArrayFunction):
 
             # _x = np.sin(np.linspace(0, np.pi, 1 + (4 * zoomy.size)) * (zoomy.size))
             x = (
-                np.round(
-                    np.sin(np.linspace(0, 2 * np.pi, 1 + (4 * firework.size)))
-                    * (firework.size)
-                ).astype(dtype=np.int32)
+                np.round(np.sin(np.linspace(0, 2 * np.pi, 1 + (4 * firework.size))) * (firework.size)).astype(
+                    dtype=np.int32
+                )
                 + firework.rowIndex
             )
             i1 = np.where((x >= firework.Controller.realLEDRowCount) | (x < 0))[0]
             y = (
-                np.round(
-                    np.cos(np.linspace(0, 2 * np.pi, 1 + (4 * firework.size)))
-                    * (firework.size)
-                ).astype(dtype=np.int32)
+                np.round(np.cos(np.linspace(0, 2 * np.pi, 1 + (4 * firework.size))) * (firework.size)).astype(
+                    dtype=np.int32
+                )
                 + firework.columnIndex
             )
             i2 = np.where((y >= firework.Controller.realLEDColumnCount) | (y < 0))[0]
@@ -321,7 +312,7 @@ class LightMatrixFunction(ArrayFunction):
                 y = np.delete(y, i)
             xy = (tuple(x), tuple(y))
 
-            radar.Controller.virtualLEDBuffer[xy] = PixelColors.GREEN3.array * 0.5
+            radar.Controller.virtualLEDBuffer[xy] = PixelColors.GREEN3 * 0.5
 
             if random.random() < radar.activeChance:
                 duration = 20
@@ -350,7 +341,7 @@ class LightMatrixFunction(ArrayFunction):
 
             gone_enemies = []
             for enemy in radar.enemy:
-                radar.Controller.virtualLEDBuffer[enemy[1]] = PixelColors.RED.array
+                radar.Controller.virtualLEDBuffer[enemy[1]] = PixelColors.RED
                 enemy[0] -= 1
                 if enemy[0] <= 0:
                     gone_enemies.append(enemy)

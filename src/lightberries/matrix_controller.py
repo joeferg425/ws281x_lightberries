@@ -1,3 +1,4 @@
+from __future__ import annotations
 import random
 from typing import Any, Callable
 
@@ -14,6 +15,7 @@ from lightberries.matrix_patterns import (
     Spectrum2,
     TextMatrix,
 )
+from lightberries.array_patterns import DefaultColorSequenceByMonth
 from lightberries.pixel import PixelColors
 
 LOGGER = logging.getLogger("lightberries")
@@ -65,11 +67,11 @@ class LightMatrixController(ArrayController):
         self.virtualLEDRowCount = ledRowCount
         self.virtualLEDColumnCount = ledColumnCount
         self.virtualLEDIndexBuffer: np.ndarray[(Any,), np.int32]
-        self.setVirtualLEDBuffer(
+        self.setvirtualLEDBuffer(
             SolidColorMatrix(
                 self.realLEDRowCount,
                 self.realLEDColumnCount,
-                color=PixelColors.OFF.array,
+                color=PixelColors.OFF,
             )
         )
 
@@ -90,11 +92,9 @@ class LightMatrixController(ArrayController):
             LightControlException: if something bad happens
         """
         try:
-            LOGGER.debug(
-                "\n%s.%s:", self.__class__.__name__, self.useColorMatrix.__name__
-            )
+            LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorMatrix.__name__)
 
-            # _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR.array
+            # _backgroundColor: NDArray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
             # _colorSequence: NDArray[(Any, 3), np.int32] = DefaultColorSequence()
 
             # set the color sequence to the default one for this month, or use the passed in argument
@@ -109,9 +109,7 @@ class LightMatrixController(ArrayController):
             # set the color sequence
 
             if matrix is None:
-                matrix = Spectrum2(
-                    rowCount=self.realLEDRowCount, columnCount=self.realLEDColumnCount
-                )
+                matrix = Spectrum2(rowCount=self.realLEDRowCount, columnCount=self.realLEDColumnCount)
 
             self.virtualLEDRowCount = matrix.shape[0]
             self.virtualLEDColumnCount = matrix.shape[1]
@@ -126,18 +124,14 @@ class LightMatrixController(ArrayController):
         except Exception as ex:
             raise LightControlException from ex
 
-    def setVirtualLEDBuffer(
-        self, ledMatrix: np.ndarray[(3, Any, Any), np.int32]
-    ) -> None:
+    def setvirtualLEDBuffer(self, ledMatrix: np.ndarray[(3, Any, Any), np.int32]) -> None:
         self.virtualLEDRowCount = ledMatrix.shape[0]
         self.virtualLEDColumnCount = ledMatrix.shape[1]
         if len(self.virtualLEDBuffer.shape) == 3:
-            ledArray = np.reshape(
-                ledMatrix, (self.virtualLEDRowCount * self.virtualLEDColumnCount, 3)
-            )
+            ledArray = np.reshape(ledMatrix, (self.virtualLEDRowCount * self.virtualLEDColumnCount, 3))
         else:
             ledArray = ledMatrix.copy()
-        super().setVirtualLEDBuffer(ledArray)
+        super().setvirtualLEDBuffer(ledArray)
         self.virtualLEDBuffer = ledMatrix
         self.privateVirtualLEDCount = int(ledMatrix.size / 3)
         self.virtualLEDIndexBuffer = np.arange(self.virtualLEDCount)
@@ -147,18 +141,14 @@ class LightMatrixController(ArrayController):
                 (self.virtualLEDRowCount, self.virtualLEDColumnCount),
             )
             for i in range(1, self.virtualLEDRowCount, 2):
-                self.virtualLEDIndexBuffer[i, :] = np.flip(
-                    self.virtualLEDIndexBuffer[i, :]
-                )
+                self.virtualLEDIndexBuffer[i, :] = np.flip(self.virtualLEDIndexBuffer[i, :])
         elif DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseRowThenColumn:
             self.virtualLEDIndexBuffer = np.reshape(
                 self.virtualLEDIndexBuffer,
                 (self.virtualLEDRowCount, self.virtualLEDColumnCount),
             )
             for i in range(1, self.virtualLEDColumnCount, 2):
-                self.virtualLEDIndexBuffer[i, :] = np.flip(
-                    self.virtualLEDIndexBuffer[i, :]
-                )
+                self.virtualLEDIndexBuffer[i, :] = np.flip(self.virtualLEDIndexBuffer[i, :])
 
     def reset(
         self,
@@ -174,21 +164,15 @@ class LightMatrixController(ArrayController):
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.reset.__name__)
             self.privateLightFunctions = []
             if self.virtualLEDCount > self.realLEDCount:
-                self.setVirtualLEDBuffer(
-                    self.virtualLEDBuffer[
-                        : self.realLEDRowCount, : self.realLEDColumnCount
-                    ]
-                )
+                self.setvirtualLEDBuffer(self.virtualLEDBuffer[: self.realLEDRowCount, : self.realLEDColumnCount])
             elif self.virtualLEDCount < self.realLEDCount:
                 array = SolidColorMatrix(
                     rowCount=self.realLEDRowCount,
                     columnCount=self.realLEDColumnCount,
-                    color=PixelColors.OFF.array,
+                    color=PixelColors.OFF,
                 )
-                array[
-                    : self.virtualLEDRowCount, : self.virtualLEDColumnCount
-                ] = self.virtualLEDBuffer
-                self.setVirtualLEDBuffer(array)
+                array[: self.virtualLEDRowCount, : self.virtualLEDColumnCount] = self.virtualLEDBuffer
+                self.setvirtualLEDBuffer(array)
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -223,15 +207,9 @@ class LightMatrixController(ArrayController):
                     map(
                         SetPixel,
                         enumerate(
-                            self.virtualLEDBuffer.reshape(
-                                (
-                                    self.virtualLEDRowCount
-                                    * self.virtualLEDColumnCount,
-                                    3,
-                                )
-                            )[self.virtualLEDIndexBuffer][
-                                np.where(self.virtualLEDIndexBuffer < self.realLEDCount)
-                            ]
+                            self.virtualLEDBuffer.reshape((self.virtualLEDRowCount * self.virtualLEDColumnCount, 3,))[
+                                self.virtualLEDIndexBuffer
+                            ][np.where(self.virtualLEDIndexBuffer < self.realLEDCount)]
                         ),
                     )
                 )
@@ -269,17 +247,11 @@ class LightMatrixController(ArrayController):
             KeyboardInterrupt: if user quits
             LightControlException: if something bad happens
         """
+        LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionMatrixColorFlux.__name__)
         try:
-            LOGGER.debug(
-                "%s.%s:",
-                self.__class__.__name__,
-                self.useFunctionMatrixColorFlux.__name__,
-            )
-
             _delayCount: int = random.randint(0, 5)
             if delayCount is not None:
                 _delayCount = int(delayCount)
-
             # create the tracking object
             flux: LightMatrixFunction = LightMatrixFunction(
                 LightMatrixFunction.functionMatrixColorFlux, self.colorSequence
@@ -290,7 +262,6 @@ class LightMatrixController(ArrayController):
             flux.delayCountMax = _delayCount
             # add this function to our function list
             self.privateLightFunctions.append(flux)
-
             # clear LEDs, assign first color in sequence to all LEDs
             # self.virtualLEDBuffer *= 0
             # self.virtualLEDBuffer += self.colorSequence[0, :]
@@ -317,17 +288,11 @@ class LightMatrixController(ArrayController):
             KeyboardInterrupt: if user quits
             LightControlException: if something bad happens
         """
+        LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionMatrixMarquee.__name__)
         try:
-            LOGGER.debug(
-                "%s.%s:",
-                self.__class__.__name__,
-                self.useFunctionMatrixMarquee.__name__,
-            )
-
             _delayCount: int = random.randint(0, 5)
             if delayCount is not None:
                 _delayCount = int(delayCount)
-
             # create the tracking object
             marquee: LightMatrixFunction = LightMatrixFunction(
                 LightMatrixFunction.functionMatrixMarquee, self.colorSequence
@@ -338,7 +303,6 @@ class LightMatrixController(ArrayController):
             marquee.delayCountMax = _delayCount
             # add this function to our function list
             self.privateLightFunctions.append(marquee)
-
             self.virtualLEDBuffer[0, 0, :] += self.colorSequence[0, :]
         except SystemExit:
             raise
@@ -364,23 +328,16 @@ class LightMatrixController(ArrayController):
             KeyboardInterrupt: if user quits
             LightControlException: if something bad happens
         """
+        LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionMatrixMarquee.__name__)
         try:
-            LOGGER.debug(
-                "%s.%s:",
-                self.__class__.__name__,
-                self.useFunctionMatrixMarquee.__name__,
-            )
-
             _delayCount: int = random.randint(0, 5)
             if delayCount is not None:
                 _delayCount = int(delayCount)
-
             options = ["hello world", "hi guys", "lol             "]
             if text is None:
                 _text = options[random.randint(0, len(options) - 1)]
             else:
                 _text = str(text)
-
             # create the tracking object
             marquee: LightMatrixFunction = LightMatrixFunction(
                 LightMatrixFunction.functionMatrixMarquee, self.colorSequence
@@ -391,8 +348,7 @@ class LightMatrixController(ArrayController):
             marquee.delayCountMax = _delayCount
             # add this function to our function list
             self.privateLightFunctions.append(marquee)
-
-            self.setVirtualLEDBuffer(TextMatrix(_text, self.colorSequence[0]))
+            self.setvirtualLEDBuffer(TextMatrix(_text, self.colorSequence[0]))
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -416,19 +372,13 @@ class LightMatrixController(ArrayController):
             KeyboardInterrupt: if user quits
             LightControlException: if something bad happens
         """
+        LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionMatrixEye.__name__)
         try:
-            LOGGER.debug(
-                "%s.%s:", self.__class__.__name__, self.useFunctionMatrixEye.__name__
-            )
-
             _delayCount: int = random.randint(0, 5)
             if delayCount is not None:
                 _delayCount = int(delayCount)
-
             # create the tracking object
-            eye: LightMatrixFunction = LightMatrixFunction(
-                LightMatrixFunction.functionMatrixEye, self.colorSequence
-            )
+            eye: LightMatrixFunction = LightMatrixFunction(LightMatrixFunction.functionMatrixEye, self.colorSequence)
             eye.rowIndex = int(self.realLEDRowCount / 2)
             eye.columnIndex = int(self.realLEDColumnCount / 2)
             # set refresh counter
@@ -466,17 +416,13 @@ class LightMatrixController(ArrayController):
             KeyboardInterrupt: if user quits
             LightControlException: if something bad happens
         """
+        LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionMatrixBounce.__name__)
         try:
-            LOGGER.debug(
-                "%s.%s:", self.__class__.__name__, self.useFunctionMatrixBounce.__name__
-            )
-
             _fadeAmount: float = random.randint(50, 100) / 255.0
             _delayCount: int = random.randint(1, 6)
             _ballCount: int = random.randint(1, 6)
             if fadeAmount is not None:
                 _fadeAmount = int(fadeAmount)
-
             # make sure fade is valid
             if _fadeAmount > 0 and _fadeAmount < 1:
                 # do nothing
@@ -485,28 +431,20 @@ class LightMatrixController(ArrayController):
                 _fadeAmount /= 255
             if _fadeAmount < 0 or _fadeAmount > 1:
                 _fadeAmount = 0.1
-
             if delayCount is not None:
                 _delayCount = int(delayCount)
-
             if ballCount is not None:
                 _ballCount = int(ballCount)
-
             if _fadeAmount == 0.0:
-                off: ArrayFunction = ArrayFunction(
-                    LightMatrixFunction.functionOff, self.colorSequence
-                )
+                off: ArrayFunction = ArrayFunction(LightMatrixFunction.functionOff, self.colorSequence)
                 self.privateLightFunctions.append(off)
             else:
                 # fade the whole LED strand
-                fade: ArrayFunction = ArrayFunction(
-                    ArrayFunction.functionFadeOff, self.colorSequence
-                )
+                fade: ArrayFunction = ArrayFunction(ArrayFunction.functionFadeOff, self.colorSequence)
                 # by this amount
                 fade.fadeAmount = _fadeAmount
                 # add function to list
                 self.privateLightFunctions.append(fade)
-
             # create the tracking object
             for _ in range(_ballCount):
                 bounce: LightMatrixFunction = LightMatrixFunction(
@@ -555,13 +493,8 @@ class LightMatrixController(ArrayController):
             KeyboardInterrupt: if user quits
             LightControlException: if something bad happens
         """
+        LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionMatrixFireworks.__name__)
         try:
-            LOGGER.debug(
-                "%s.%s:",
-                self.__class__.__name__,
-                self.useFunctionMatrixFireworks.__name__,
-            )
-
             _fadeAmount: float = random.randint(10, 50) / 100.0
             # _fadeAmount: float = 0.0
             _delayCount: int = random.randint(1, 6)
@@ -570,7 +503,6 @@ class LightMatrixController(ArrayController):
             # _zoomyCount: int = 1
             if fadeAmount is not None:
                 _fadeAmount = int(fadeAmount)
-
             # make sure fade is valid
             if fadeAmount >= 0.0 or fadeAmount <= 1.0:
                 # do nothing
@@ -579,28 +511,20 @@ class LightMatrixController(ArrayController):
                 _fadeAmount = float(fadeAmount) / 255
             if _fadeAmount < 0 or _fadeAmount > 1:
                 _fadeAmount = 0.1
-
             if delayCount is not None:
                 _delayCount = int(delayCount)
-
             if fireworkCount is not None:
                 _zoomyCount = int(fireworkCount)
-
             if _fadeAmount == 1.0:
-                off: ArrayFunction = ArrayFunction(
-                    LightMatrixFunction.functionOff, self.colorSequence
-                )
+                off: ArrayFunction = ArrayFunction(LightMatrixFunction.functionOff, self.colorSequence)
                 self.privateLightFunctions.append(off)
             else:
                 # fade the whole LED strand
-                fade: ArrayFunction = ArrayFunction(
-                    ArrayFunction.functionFadeOff, self.colorSequence
-                )
+                fade: ArrayFunction = ArrayFunction(ArrayFunction.functionFadeOff, self.colorSequence)
                 # by this amount
                 fade.fadeAmount = _fadeAmount
                 # add function to list
                 self.privateLightFunctions.append(fade)
-
             # create the tracking object
             for _ in range(_zoomyCount):
                 firework: LightMatrixFunction = LightMatrixFunction(
@@ -645,16 +569,12 @@ class LightMatrixController(ArrayController):
             KeyboardInterrupt: if user quits
             LightControlException: if something bad happens
         """
+        LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionMatrixRadar.__name__)
         try:
-            LOGGER.debug(
-                "%s.%s:", self.__class__.__name__, self.useFunctionMatrixRadar.__name__
-            )
-
             _fadeAmount: float = random.randint(1, 5) / 100.0
             _delayCount: int = random.randint(1, 3)
             if fadeAmount is not None:
                 _fadeAmount = float(fadeAmount)
-
             # make sure fade is valid
             if _fadeAmount > 0.0 or _fadeAmount < 1.0:
                 # do nothing
@@ -663,26 +583,21 @@ class LightMatrixController(ArrayController):
                 _fadeAmount = float(fadeAmount) / 255
             if _fadeAmount <= 0 or _fadeAmount >= 1:
                 _fadeAmount = 0.1
-
             if delayCount is not None:
                 _delayCount = int(delayCount)
-
+            if self.colorSequence is None or len(self.colorSequence) == 0:
+                self.colorSequence = DefaultColorSequenceByMonth()
             # fade the whole LED strand
-            fade: ArrayFunction = ArrayFunction(
-                ArrayFunction.functionFadeOff, self.colorSequence
-            )
+            fade: ArrayFunction = ArrayFunction(ArrayFunction.functionFadeOff, self.colorSequence)
             # by this amount
             fade.fadeAmount = _fadeAmount
             # add function to list
             self.privateLightFunctions.append(fade)
-
             # create the tracking object
             radar: LightMatrixFunction = LightMatrixFunction(
                 LightMatrixFunction.functionsMatrixRadar, self.colorSequence
             )
-            max_radius = max(
-                int(self.realLEDRowCount / 2), int(self.realLEDColumnCount / 2)
-            )
+            max_radius = max(int(self.realLEDRowCount / 2), int(self.realLEDColumnCount / 2))
             radar.rowIndex = random.randint(0, self.realLEDRowCount - 1)
             radar.columnIndex = random.randint(0, self.realLEDColumnCount - 1)
             radar.delayCounter = 0
