@@ -163,6 +163,9 @@ class ArrayFunction:
         """
         return f"<{self.__class__.__name__}> {str(self)}"
 
+    def run(self):
+        self.runFunction(self)
+
     @property
     def colorSequence(
         self,

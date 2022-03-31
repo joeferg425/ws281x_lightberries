@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 import logging
 import datetime
-from typing import Any, List, Sequence, Union
+from typing import Any, List, Tuple, Union
 import numpy as np
 from lightberries.exceptions import (
     LightBerryException,
@@ -16,13 +16,46 @@ LOGGER = logging.getLogger("LightBerries")
 # set some constants
 DEFAULT_TWINKLE_COLOR = PixelColors.GRAY
 DEFAULT_BACKGROUND_COLOR = PixelColors.OFF
-DEFAULT_COLOR_SEQUENCE = np.array(
+
+
+def ConvertPixelArrayToNumpyArray(
+    colorSequence: Tuple[Pixel],
+) -> np.ndarray[(3, Any), np.int32]:
+    """Convert an array of Pixels into a numpy array of rgb arrays.
+
+    Args:
+        colorSequence: a list of Pixel objects
+
+    Returns:
+        a numpy array of int arrays representing a string of rgb values
+
+    Raises:
+        SystemExit: if exiting
+        KeyboardInterrupt: if user quits
+        LightBerryException: if propagating an exception
+        LightPatternException: if something bad happens
+    """
+    try:
+        if len(colorSequence) > 0:
+            return np.array([Pixel(p).array for p in colorSequence])
+        else:
+            return np.zeros((0, 3))
+    except SystemExit:
+        raise
+    except KeyboardInterrupt:
+        raise
+    except LightBerryException:
+        raise
+    except Exception as ex:
+        raise LightPatternException from ex
+
+
+DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
     [
         PixelColors.RED,
         PixelColors.GREEN,
         PixelColors.BLUE,
-    ],
-    dtype=np.int32,
+    ]
 )
 
 
@@ -44,91 +77,115 @@ def DefaultColorSequenceByMonth(
     try:
         month = date.month
         if month == 1:
-            DEFAULT_COLOR_SEQUENCE = [
-                PixelColors.CYAN2,
-                PixelColors.WHITE,
-                PixelColors.CYAN,
-                PixelColors.BLUE2,
-                PixelColors.BLUE,
-            ]
+            DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                [
+                    PixelColors.CYAN2,
+                    PixelColors.WHITE,
+                    PixelColors.CYAN,
+                    PixelColors.BLUE2,
+                    PixelColors.BLUE,
+                ]
+            )
         elif month == 2:
-            DEFAULT_COLOR_SEQUENCE = [
-                PixelColors.PINK,
-                PixelColors.WHITE,
-                PixelColors.RED,
-                PixelColors.WHITE,
-            ]
+            DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                [
+                    PixelColors.PINK,
+                    PixelColors.WHITE,
+                    PixelColors.RED,
+                    PixelColors.WHITE,
+                ]
+            )
         elif month == 3:
-            DEFAULT_COLOR_SEQUENCE = [
-                PixelColors.GREEN,
-                PixelColors.WHITE,
-                PixelColors.ORANGE,
-                PixelColors.WHITE,
-                PixelColors.YELLOW,
-            ]
+            DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                [
+                    PixelColors.GREEN,
+                    PixelColors.WHITE,
+                    PixelColors.ORANGE,
+                    PixelColors.WHITE,
+                    PixelColors.YELLOW,
+                ]
+            )
         elif month == 4:
-            DEFAULT_COLOR_SEQUENCE = [
-                PixelColors.PINK,
-                PixelColors.CYAN,
-                PixelColors.YELLOW,
-                PixelColors.GREEN,
-                PixelColors.WHITE,
-            ]
+            DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                [
+                    PixelColors.PINK,
+                    PixelColors.CYAN,
+                    PixelColors.YELLOW,
+                    PixelColors.GREEN,
+                    PixelColors.WHITE,
+                ]
+            )
         elif month == 5:
-            DEFAULT_COLOR_SEQUENCE = [
-                PixelColors.PINK,
-                PixelColors.YELLOW,
-                PixelColors.GREEN,
-                PixelColors.WHITE,
-            ]
+            DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                [
+                    PixelColors.PINK,
+                    PixelColors.YELLOW,
+                    PixelColors.GREEN,
+                    PixelColors.WHITE,
+                ]
+            )
         elif month == 6:
-            DEFAULT_COLOR_SEQUENCE = [
-                PixelColors.RED,
-                PixelColors.WHITE,
-                PixelColors.BLUE,
-                PixelColors.GREEN,
-            ]
+            DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                [
+                    PixelColors.RED,
+                    PixelColors.WHITE,
+                    PixelColors.BLUE,
+                    PixelColors.GREEN,
+                ]
+            )
         elif month == 7:
-            DEFAULT_COLOR_SEQUENCE = [
-                PixelColors.RED,
-                PixelColors.WHITE,
-                PixelColors.BLUE,
-            ]
+            DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                [
+                    PixelColors.RED,
+                    PixelColors.WHITE,
+                    PixelColors.BLUE,
+                ]
+            )
         elif month == 8:
-            DEFAULT_COLOR_SEQUENCE = [
-                PixelColors.ORANGE,
-                PixelColors.WHITE,
-                PixelColors.YELLOW,
-                PixelColors.ORANGE2,
-            ]
+            DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                [
+                    PixelColors.ORANGE,
+                    PixelColors.WHITE,
+                    PixelColors.YELLOW,
+                    PixelColors.ORANGE2,
+                ]
+            )
         elif month == 9:
-            DEFAULT_COLOR_SEQUENCE = [
-                PixelColors.ORANGE,
-                PixelColors.WHITE,
-                PixelColors.YELLOW,
-                PixelColors.ORANGE2,
-                PixelColors.RED,
-                PixelColors.RED2,
-            ]
+            DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                [
+                    PixelColors.ORANGE,
+                    PixelColors.WHITE,
+                    PixelColors.YELLOW,
+                    PixelColors.ORANGE2,
+                    PixelColors.RED,
+                    PixelColors.RED2,
+                ]
+            )
         elif month == 10:
-            DEFAULT_COLOR_SEQUENCE = [
-                PixelColors.MIDNIGHT,
-                PixelColors.RED,
-                PixelColors.ORANGE,
-                PixelColors.OFF,
-            ]
+            DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                [
+                    PixelColors.MIDNIGHT,
+                    PixelColors.RED,
+                    PixelColors.ORANGE,
+                    PixelColors.OFF,
+                ]
+            )
         elif month == 11:
-            DEFAULT_COLOR_SEQUENCE = [
-                PixelColors.RED,
-                PixelColors.MIDNIGHT,
-                PixelColors.GRAY,
-            ]
+            DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                [
+                    PixelColors.RED,
+                    PixelColors.MIDNIGHT,
+                    PixelColors.GRAY,
+                ]
+            )
         elif month == 12:
-            DEFAULT_COLOR_SEQUENCE = [
-                PixelColors.RED,
-                PixelColors.WHITE,
-                PixelColors.GREEN,
-            ]
+            DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                [
+                    PixelColors.RED,
+                    PixelColors.WHITE,
+                    PixelColors.GREEN,
+                ]
+            )
     except SystemExit:
         raise
     except KeyboardInterrupt:
@@ -137,7 +194,7 @@ def DefaultColorSequenceByMonth(
         raise
     except Exception as ex:
         raise LightPatternException from ex
-    return ConvertPixelArrayToNumpyArray(DEFAULT_COLOR_SEQUENCE)
+    return DEFAULT_COLOR_SEQUENCE
 
 
 def PixelArrayOff(
@@ -160,38 +217,6 @@ def PixelArrayOff(
     try:
         if arrayLength > 0:
             return np.array([PixelColors.OFF for i in range(int(arrayLength))])
-        else:
-            return np.zeros((0, 3))
-    except SystemExit:
-        raise
-    except KeyboardInterrupt:
-        raise
-    except LightBerryException:
-        raise
-    except Exception as ex:
-        raise LightPatternException from ex
-
-
-def ConvertPixelArrayToNumpyArray(
-    colorSequence: Sequence[Pixel],
-) -> np.ndarray[(3, Any), np.int32]:
-    """Convert an array of Pixels into a numpy array of rgb arrays.
-
-    Args:
-        colorSequence: a list of Pixel objects
-
-    Returns:
-        a numpy array of int arrays representing a string of rgb values
-
-    Raises:
-        SystemExit: if exiting
-        KeyboardInterrupt: if user quits
-        LightBerryException: if propagating an exception
-        LightPatternException: if something bad happens
-    """
-    try:
-        if len(colorSequence) > 0:
-            return np.array([Pixel(p).tuple for p in colorSequence])
         else:
             return np.zeros((0, 3))
     except SystemExit:
@@ -568,7 +593,7 @@ def RandomArray(
 
 def PseudoRandomArray(
     arrayLength: int,
-    colorSequence: Union[List[Pixel], np.ndarray[(3, Any), np.int32]] = None,
+    colorSequence: np.ndarray[(3, Any), np.int32] = None,
 ) -> np.ndarray[(3, Any), np.int32]:
     """Creates an array of random colors.
 
@@ -588,12 +613,11 @@ def PseudoRandomArray(
     try:
         inputSequence = None
         temp_array = PixelArrayOff(arrayLength)
-        if isinstance(colorSequence, list):
-            inputSequence = ConvertPixelArrayToNumpyArray(colorSequence)
-        elif isinstance(colorSequence, np.ndarray):
-            inputSequence = np.array(colorSequence)
-        else:
+        if not isinstance(colorSequence, np.ndarray):
             inputSequence = DEFAULT_COLOR_SEQUENCE
+        else:
+            inputSequence = colorSequence
+        # comment
         inputSequenceLen = inputSequence.shape[0]
         if inputSequenceLen == 0:
             inputSequence = DEFAULT_COLOR_SEQUENCE

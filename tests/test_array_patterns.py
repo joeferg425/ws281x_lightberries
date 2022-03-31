@@ -150,8 +150,11 @@ def test_pseudorandom_array():
         assert len(ary.shape) == 2
         assert ary.shape[0] == i
         assert ary.shape[1] == 3
-        for j in range(0, i + 1):
-            colors = np.array([PixelColors.random() for _ in range(int(j))])
+        for j in range(0, int(i / 10)):
+            if j == 0:
+                colors = np.zeros((0, 3))
+            else:
+                colors = np.array([PixelColors.random() for _ in range(int(j))])
             ary = PseudoRandomArray(i, colors)
             assert ary is not None
             assert len(ary.shape) == 2

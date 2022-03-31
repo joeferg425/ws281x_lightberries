@@ -121,6 +121,33 @@
 					"kind": "build",
 					"isDefault": true
 				}
+			},
+			{
+				"label": "coverage",
+				"type": "shell",
+				"command": "${command:python.interpreterPath}",
+				"args": [
+					"-m",
+					"coverage",
+					"run",
+					"-m",
+					"pytest"
+				],
+				"problemMatcher": []
+			},
+			{
+				"label": "coverage run, report",
+				"type": "shell",
+				"command": "${command:python.interpreterPath}",
+				"args": [
+					"-m",
+					"coverage",
+					"html"
+				],
+				"problemMatcher": [],
+				"dependsOn": [
+					"coverage"
+				]
 			}
 		]
 	}
