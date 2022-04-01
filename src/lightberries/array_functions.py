@@ -130,7 +130,7 @@ class ArrayFunction:
 
         self.explode: bool = False
         self.fadeType: LEDFadeType = LEDFadeType.FADE_OFF
-        self.bounce: bool = False
+        self.collision: bool = False
         self.collideWith: Optional[ArrayFunction] = None
         self.collideIntersect: int = 0
         self.indexRange: Optional[np.ndarray[(3, Any), np.int32]] = []
@@ -421,7 +421,7 @@ class ArrayFunction:
                                 meteor.indexPrevious = meteor.collideIntersect
                                 othermeteor.indexPrevious = othermeteor.collideIntersect
                                 meteor.bounce = False
-                                othermeteor.bounce = False
+                                othermeteor.collision = False
                                 meteor.collideWith = None
                                 othermeteor.collideWith = None
                                 if collision.explode:

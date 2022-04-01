@@ -15,7 +15,7 @@ LOGGER = logging.getLogger("lightberries")
 class LightMatrixFunction(ArrayFunction):
     """This class defines everything necessary to modify LED patterns in interesting ways."""
 
-    Controller: ClassVar["lightberries.LightMatrixControls.LightMatrixController"]
+    Controller: ClassVar["lightberries.matrix_controller.MatrixController"]
 
     def __init__(
         self,
@@ -355,6 +355,134 @@ class LightMatrixFunction(ArrayFunction):
                 if radar.stepCounter >= radar.stepCountMax:
                     radar.stepCounter = 0
                 radar.delayCounter = 0
+        except SystemExit:
+            raise
+        except KeyboardInterrupt:
+            raise
+        except LightBerryException:
+            raise
+        except Exception as ex:
+            raise LightFunctionException from ex
+
+    @staticmethod
+    def functionsMatrixSnake(
+        snake: "LightMatrixFunction",
+    ) -> None:
+        """
+        Args:
+            snake: the object used for tracking status
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightFunctionException: if something bad happens
+        """
+        try:
+            if snake.delayCounter >= snake.delayCountMax:
+                if snake.stepCounter < snake.stepCountMax:
+                    snake.stepCounter += 1
+                snake.rowIndex = np.roll(snake.rowIndex, 1)
+                snake.rowIndex[0] = snake.rowIndex[1] + snake.rowDirection
+                snake.columnIndex = np.roll(snake.columnIndex, 1)
+                snake.columnIndex[0] = snake.columnIndex[1] + snake.columnDirection
+
+                attempts = 0
+                ready = False
+                while not ready and attempts < 3:
+                    d = {}
+                    collision = False
+                    if snake.collision:
+                        for ii in zip(snake.rowIndex[: snake.stepCounter], snake.columnIndex[: snake.stepCounter]):
+                            if ii in d:
+                                collision = True
+                                break
+                            else:
+                                d[ii] = ii
+
+                    if snake.rowIndex[0] > snake.Controller.realLEDRowCount - 1:
+                        if attempts == 0:
+                            snake.rowIndex[0] -= 1
+                            snake.rowDirection -= 1
+                            snake.columnDirection = [-1, 1][random.randint(0, 1)]
+                            snake.columnIndex[0] = snake.columnIndex[1] + snake.columnDirection
+                        else:
+                            snake.rowDirection *= -1
+                            snake.rowIndex[0] = snake.rowIndex[1] + snake.rowDirection
+                    elif snake.rowIndex[0] < 0:
+                        if attempts == 0:
+                            snake.rowIndex[0] += 1
+                            snake.rowDirection += 1
+                            snake.columnDirection = [-1, 1][random.randint(0, 1)]
+                            snake.columnIndex[0] = snake.columnIndex[1] + snake.columnDirection
+                        else:
+                            snake.rowDirection *= -1
+                            snake.rowIndex[0] = snake.rowIndex[1] + snake.rowDirection
+                    elif snake.columnIndex[0] > snake.Controller.realLEDColumnCount - 1:
+                        if attempts == 0:
+                            snake.columnIndex[0] -= 1
+                            snake.columnDirection -= 1
+                            snake.rowDirection = [-1, 1][random.randint(0, 1)]
+                            snake.rowIndex[0] = snake.rowIndex[1] + snake.rowDirection
+                        else:
+                            snake.columnDirection *= -1
+                            snake.columnIndex[0] = snake.columnIndex[1] + snake.columnDirection
+                    elif snake.columnIndex[0] < 0:
+                        if attempts == 0:
+                            snake.columnIndex[0] += 1
+                            snake.columnDirection += 1
+                            snake.rowDirection = [-1, 1][random.randint(0, 1)]
+                            snake.rowIndex[0] = snake.rowIndex[1] + snake.rowDirection
+                        else:
+                            snake.columnDirection *= -1
+                            snake.columnIndex[0] = snake.columnIndex[1] + snake.columnDirection
+                    elif collision:
+                        if snake.rowDirection != 0:
+                            snake.rowDirection *= -1
+                            snake.rowIndex[0] = snake.rowIndex[1] + snake.rowDirection
+                        elif snake.columnDirection != 0:
+                            snake.columnDirection *= -1
+                            snake.columnIndex[0] = snake.columnIndex[1] + snake.columnDirection
+                    else:
+                        ready = True
+                    attempts += 1
+
+                d = {}
+                collision = False
+                if snake.collision:
+                    for ii in zip(snake.rowIndex[: snake.stepCounter], snake.columnIndex[: snake.stepCounter]):
+                        if ii in d:
+                            collision = True
+                            break
+                        else:
+                            d[ii] = ii
+
+                if collision or not ready:
+                    snake.size = random.randint(int(snake.sizeMax / 2), snake.sizeMax)
+                    snake.stepCountMax = snake.size
+                    snake.rowIndex = np.ones((snake.size), dtype=np.int32) * random.randint(
+                        0, snake.Controller.realLEDRowCount - 1
+                    )
+                    snake.columnIndex = np.ones((snake.size), dtype=np.int32) * random.randint(
+                        0, snake.Controller.realLEDColumnCount - 1
+                    )
+                    snake.stepCounter = 1
+                    snake.delayCounter = 0
+                    snake.color = snake.colorSequenceNext
+
+            for i in range(snake.stepCounter):
+                snake.Controller.virtualLEDBuffer[snake.rowIndex[i], snake.columnIndex[i]] = snake.color
+
+            if random.random() > 0.9:
+                if snake.rowDirection != 0:
+                    snake.rowDirection = 0
+                    snake.columnDirection = [-1, 1][random.randint(0, 1)]
+                else:
+                    snake.rowDirection = [-1, 1][random.randint(0, 1)]
+                    snake.columnDirection = 0
+
+            snake.delayCounter += 1
+            if snake.delayCounter > snake.delayCountMax:
+                snake.delayCounter = 0
         except SystemExit:
             raise
         except KeyboardInterrupt:

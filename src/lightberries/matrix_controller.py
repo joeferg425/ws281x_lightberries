@@ -21,7 +21,7 @@ from lightberries.pixel import PixelColors
 LOGGER = logging.getLogger("lightberries")
 
 
-class LightMatrixController(ArrayController):
+class MatrixController(ArrayController):
     def __init__(
         self,
         ledRowCount: int,
@@ -199,7 +199,7 @@ class LightMatrixController(ArrayController):
                 i = i_rgb[0]
                 rgb = i_rgb[1]
                 if i < self.realLEDCount:
-                    self.ws28xxLightString[i] = rgb
+                    self.ws281xString[i] = rgb
 
             # fast method of calling the callback method on each index of LED array
             if len(self.virtualLEDBuffer.shape) > 2:
@@ -554,7 +554,7 @@ class LightMatrixController(ArrayController):
     def useFunctionMatrixRadar(
         self,
         delayCount: int = None,
-        fadeAmount=None,
+        fadeAmount: float = None,
     ) -> None:
         """
 
@@ -617,6 +617,73 @@ class LightMatrixController(ArrayController):
             radar.activeChance = 0.01
             radar.enemy = []
             self.privateLightFunctions.append(radar)
+        except SystemExit:
+            raise
+        except KeyboardInterrupt:
+            raise
+        except LightBerryException:
+            raise
+        except Exception as ex:
+            raise LightControlException from ex
+
+    def useFunctionMatrixSnake(
+        self,
+        delayCount: int = None,
+        snakeLength: int = None,
+        snakeCount: int = None,
+        collision:bool=True,
+    ) -> None:
+        """
+
+        Args:
+            delayCount: number of led updates between color updates
+            snakeLength: length of snake
+            colorChange: change colors
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightControlException: if something bad happens
+        """
+        LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionMatrixSnake.__name__)
+        try:
+            _delayCount: int = random.randint(1, 3)
+            _snakeLength: int = random.randint(3, 30)
+            _snakeCount: int = random.randint(1, 4)
+            if delayCount is not None:
+                _delayCount = int(delayCount)
+            if snakeLength is not None:
+                _snakeLength = int(snakeLength)
+            if snakeCount is not None:
+                _snakeCount = int(snakeCount)
+            if self.colorSequence is None or len(self.colorSequence) == 0:
+                self.colorSequence = DefaultColorSequenceByMonth()
+            # turn off the whole LED strand each time
+            off: ArrayFunction = ArrayFunction(ArrayFunction.functionOff, self.colorSequence)
+            # add function to list
+            self.privateLightFunctions.append(off)
+            # create the tracking objects
+            for _ in range(_snakeCount):
+                snake = LightMatrixFunction(LightMatrixFunction.functionsMatrixSnake, self.colorSequence)
+                snake.sizeMax = _snakeLength
+                snake.size = random.randint(int(snake.sizeMax / 2), snake.sizeMax)
+                snake.rowIndex = np.ones((snake.size), dtype=np.int32) * random.randint(0, self.realLEDRowCount - 1)
+                snake.columnIndex = np.ones((snake.size), dtype=np.int32) * random.randint(
+                    0, self.realLEDColumnCount - 1
+                )
+                snake.stepCountMax = snake.size
+                snake.delayCounter = 0
+                snake.rowDirection = [-1, 0, 1][random.randint(0, 2)]
+                if snake.rowDirection == 0:
+                    snake.columnDirection = [-1, 1][random.randint(0, 1)]
+                else:
+                    snake.columnDirection = 0
+                # set refresh limit (after which this function will execute)
+                snake.delayCountMax = _delayCount
+                # add this function to our function list
+                snake.color = self.colorSequenceNext
+                snake.collision = collision
+                self.privateLightFunctions.append(snake)
         except SystemExit:
             raise
         except KeyboardInterrupt:

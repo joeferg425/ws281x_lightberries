@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 """An example of using this module."""
 import lightberries.matrix_patterns  # noqa: ignore
-from lightberries.matrix_controller import LightMatrixController
+from lightberries.matrix_controller import MatrixController
 from lightberries.pixel import PixelColors  # noqa: ignore
 
 # the number of pixels in the light string
@@ -26,7 +26,7 @@ PWM_CHANNEL = 0
 
 
 # create the lightberries Controller object
-lightControl = LightMatrixController(
+lightControl = MatrixController(
     ledRowCount=PIXEL_ROW_COUNT,
     ledColumnCount=PIXEL_COLUMN_COUNT,
     pwmGPIOpin=GPIO_PWM_PIN,
@@ -57,7 +57,7 @@ lightControl = LightMatrixController(
 # lightControl.useFunctionMatrixColorFlux()
 # lightControl.useColorSequencePseudoRandom()
 # lightControl.useFunctionMatrixFireworks(fireworkCount=5, fadeAmount=0.2)
-lightControl.useFunctionMatrixRadar()
+lightControl.useFunctionMatrixSnake(collision=False)
 # lightControl.useFunctionMatrixBounce(colorChange=True)
 # run the configuration until killed
 try:
