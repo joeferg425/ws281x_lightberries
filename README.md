@@ -45,7 +45,7 @@ sudo python3 -m LightBerries
 
 ```python
 # import the library
-from LightBerries import LightController
+from LightBerries import LightArrayController
 # the number of pixels in the light string
 PIXEL_COUNT = 100
 # GPIO pin to use for PWM signal
@@ -62,7 +62,7 @@ LED_STRIP_TYPE = None
 INVERT = False
 PWM_CHANNEL = 0
 # create the light-function object
-lightController = LightController(ledCount=PIXEL_COUNT, pwmGPIOpin=GPIO_PWM_PIN, channelDMA=DMA_CHANNEL, frequencyPWM=PWM_FREQUENCY, channelPWM=PWM_CHANNEL, invertSignalPWM=INVERT, gamma=GAMMA, stripTypeLED=LED_STRIP_TYPE, ledBrightnessFloat=BRIGHTNESS, debug=True)
+LightArrayController = LightArrayController(ledCount=PIXEL_COUNT, pwmGPIOpin=GPIO_PWM_PIN, channelDMA=DMA_CHANNEL, frequencyPWM=PWM_FREQUENCY, channelPWM=PWM_CHANNEL, invertSignalPWM=INVERT, gamma=GAMMA, stripTypeLED=LED_STRIP_TYPE, ledBrightnessFloat=BRIGHTNESS, debug=True)
 # choose a function
 lightController.demo(secondsPerMode=5)
 ```
@@ -86,7 +86,7 @@ LED_STRIP_TYPE = None
 INVERT = False
 PWM_CHANNEL = 0
 # create the light-function object
-lightController = LightController(ledCount=PIXEL_COUNT, pwmGPIOpin=GPIO_PWM_PIN, channelDMA=DMA_CHANNEL, frequencyPWM=PWM_FREQUENCY, channelPWM=PWM_CHANNEL, invertSignalPWM=INVERT, gamma=GAMMA, stripTypeLED=LED_STRIP_TYPE, ledBrightnessFloat=BRIGHTNESS, debug=True)
+lightController = LightArrayController(ledCount=PIXEL_COUNT, pwmGPIOpin=GPIO_PWM_PIN, channelDMA=DMA_CHANNEL, frequencyPWM=PWM_FREQUENCY, channelPWM=PWM_CHANNEL, invertSignalPWM=INVERT, gamma=GAMMA, stripTypeLED=LED_STRIP_TYPE, ledBrightnessFloat=BRIGHTNESS, debug=True)
 # choose a function
 lightController.useColorRainbow()
 lightController.functionMarquee()
@@ -97,7 +97,7 @@ lightController.run()
 
 ```python
 # import the library
-from LightBerries import LightController
+from LightBerries import LightArrayController
 # the number of pixels in the light string
 PIXEL_COUNT = 100
 # GPIO pin to use for PWM signal
@@ -114,7 +114,7 @@ LED_STRIP_TYPE = None
 INVERT = False
 PWM_CHANNEL = 0
 # create the light-function object
-lightController = LightController(ledCount=PIXEL_COUNT, pwmGPIOpin=GPIO_PWM_PIN, channelDMA=DMA_CHANNEL, frequencyPWM=PWM_FREQUENCY, channelPWM=PWM_CHANNEL, invertSignalPWM=INVERT, gamma=GAMMA, stripTypeLED=LED_STRIP_TYPE, ledBrightnessFloat=BRIGHTNESS, debug=True)
+lightController = LightArrayController(ledCount=PIXEL_COUNT, pwmGPIOpin=GPIO_PWM_PIN, channelDMA=DMA_CHANNEL, frequencyPWM=PWM_FREQUENCY, channelPWM=PWM_CHANNEL, invertSignalPWM=INVERT, gamma=GAMMA, stripTypeLED=LED_STRIP_TYPE, ledBrightnessFloat=BRIGHTNESS, debug=True)
 # choose a function
 lightController.useColorRandom()
 lightController.functionRaindrops()

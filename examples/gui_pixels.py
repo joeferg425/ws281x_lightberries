@@ -8,10 +8,10 @@ import multiprocessing
 import multiprocessing.queues
 from tkinter.colorchooser import askcolor
 import tkinter as tk
-import LightBerries.LightPixels
-from LightBerries.LightControls import LightController
-from LightBerries.LightPixels import Pixel
-from LightBerries.LightPatterns import ConvertPixelArrayToNumpyArray, SolidColorArray
+import lightberries.pixel
+from lightberries.array_controller import ArrayController
+from lightberries.pixel import Pixel
+from lightberries.array_patterns import ArrayPattern
 
 
 # the number of pixels in the light string
@@ -30,7 +30,7 @@ GAMMA = None
 LED_STRIP_TYPE = None
 INVERT = False
 PWM_CHANNEL = 0
-LightBerries.LightPixels.DEFAULT_PIXEL_ORDER = LightBerries.LightPixels.EnumLEDOrder.RGB
+lightberries.pixel, Pixel.DEFAULT_PIXEL_ORDER = lightberries.pixel.LEDOrder.RGB
 
 
 class LightsProcess:
@@ -66,7 +66,7 @@ class LightsProcess:
         """
         try:
             # create LightBerry controller
-            lightControl = LightController(
+            lightControl = ArrayController(
                 ledCount=PIXEL_COUNT,
                 pwmGPIOpin=GPIO_PWM_PIN,
                 channelDMA=DMA_CHANNEL,
@@ -78,9 +78,10 @@ class LightsProcess:
                 ledBrightnessFloat=BRIGHTNESS,
                 debug=True,
             )
-            lightControl.setVirtualLEDArray(
-                ConvertPixelArrayToNumpyArray(
-                    SolidColorArray(arrayLength=PIXEL_COUNT, color=LightBerries.LightPixels.PixelColors.OFF)
+            lightControl.setVirtualLEDBuffer(
+                ArrayPattern.SolidColorArray(
+                    arrayLength=PIXEL_COUNT,
+                    color=lightberries.pixel.PixelColors.OFF,
                 )
             )
             lightControl.copyVirtualLedsToWS281X()
@@ -100,8 +101,8 @@ class LightsProcess:
                         try:
                             index, color = msg[1:]
                             print("setting color")
-                            lightControl.virtualLEDArray[index] = Pixel(
-                                color, order=LightBerries.LightPixels.EnumLEDOrder.RGB
+                            lightControl.virtualLEDBuffer[index] = Pixel(
+                                color, order=lightberries.pixel.LEDOrder.RGB
                             ).array
                             lightControl.copyVirtualLedsToWS281X()
                             lightControl.refreshLEDs()
@@ -213,7 +214,12 @@ class App:
         self.root.bind("<Return>", lambda event: self.configureLightBerries())
 
         self.leftClickColorBtn = tk.Button(
-            self.mainFrame, bg="black", fg="white", text="Left-Click\nColor", width=5, height=2
+            self.mainFrame,
+            bg="black",
+            fg="white",
+            text="Left-Click\nColor",
+            width=5,
+            height=2,
         )
         self.leftClickColorBtn.grid(
             row=0,
@@ -224,7 +230,12 @@ class App:
         self.leftClickColorBtn.bind("<Button-1>", self.getColor)
 
         self.rightClickColorBtn = tk.Button(
-            self.mainFrame, bg="black", fg="white", text="Right-Click\nColor", width=5, height=2
+            self.mainFrame,
+            bg="black",
+            fg="white",
+            text="Right-Click\nColor",
+            width=5,
+            height=2,
         )
         self.rightClickColorBtn.grid(
             row=0,
@@ -267,7 +278,12 @@ class App:
                 for column in range(int(self.columnString.get())):
                     self.buttonFrame.columnconfigure(column, weight=1)
                     btn = tk.Button(
-                        self.buttonFrame, bg="black", fg="white", text=str(counter), width=5, height=2
+                        self.buttonFrame,
+                        bg="black",
+                        fg="white",
+                        text=str(counter),
+                        width=5,
+                        height=2,
                     )
                     btn.grid(
                         row=row,

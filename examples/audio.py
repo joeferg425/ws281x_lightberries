@@ -9,9 +9,9 @@ import pyaudio
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from LightBerries import LightPatterns
-from LightBerries.LightControls import LightController
-from LightBerries.LightPixels import Pixel
+from lightberries.array_patterns import ArrayPattern
+from lightberries.array_controller import ArrayController
+from lightberries.pixel import Pixel
 
 
 matplotlib.use("Qt5Agg")
@@ -79,10 +79,7 @@ class RollingDataFromQueue:
             # chunk the data up for display in fewer segments
             chunkLength = lenfftData // LightOutput.EQUALIZER_SECTION_COUNT
             self.fftChunks = np.array(
-                [
-                    np.sum(self.fftData[i : i + chunkLength]) / chunkLength
-                    for i in range(0, lenfftData, chunkLength)
-                ]
+                [np.sum(self.fftData[i : i + chunkLength]) / chunkLength for i in range(0, lenfftData, chunkLength)]
             )
             # mask any artifacts at the ends
             self.fftChunks[-1] = np.mean(self.fftChunks)
@@ -131,7 +128,7 @@ class LightOutput(RollingDataFromQueue):
         """
         super().__init__(inQ, outQ)
         # create light controller object
-        self.lightController = LightController(LightOutput.LED_COUNT, 18, 10, 800000)
+        self.lightController = ArrayController(LightOutput.LED_COUNT, 18, 10, 800000)
         self.lightController.off()
         self.lightController.refreshLEDs()
 
@@ -145,8 +142,10 @@ class LightOutput(RollingDataFromQueue):
                 # see if we got data
                 if self.getNewData():
                     self.lightController.setVirtualLEDArray(
-                        LightPatterns.ColorTransitionArray(
-                            LightOutput.LED_COUNT, False, [Pixel(int(p)) for p in self.plotData]
+                        ArrayPattern.ColorTransitionArray(
+                            LightOutput.LED_COUNT,
+                            [Pixel(int(p)) for p in self.plotData],
+                            False,
                         )
                     )
 
@@ -224,7 +223,10 @@ class PlotOutput(RollingDataFromQueue):
     """Plots audio FFT to matplotlib's pyplot graphic."""
 
     def __init__(
-        self, inQ: multiprocessing.Queue, outQ: multiprocessing.Queue, plotChoice: PlotChoice = None
+        self,
+        inQ: multiprocessing.Queue,
+        outQ: multiprocessing.Queue,
+        plotChoice: PlotChoice = None,
     ) -> None:
         """Plots audio FFT to matplotlib's pyplot graphic.
 
@@ -349,7 +351,10 @@ if __name__ == "__main__":
         # for i in range(PY_AUDIO.get_device_count()):
         # print(PY_AUDIO.get_device_info_by_index(i))
         DEVICE_INDEX = 0
-        print("Using following Audio device:\n", PY_AUDIO.get_device_info_by_index(DEVICE_INDEX))
+        print(
+            "Using following Audio device:\n",
+            PY_AUDIO.get_device_info_by_index(DEVICE_INDEX),
+        )
         # 16-bit resolution
         AUDIO_FORMAT = pyaudio.paInt16
         # 1 channel

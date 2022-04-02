@@ -3,9 +3,9 @@ import time
 import multiprocessing
 from tkinter.colorchooser import askcolor
 import tkinter as tk
-from LightBerries.LightControls import LightController
-from LightBerries.LightPixels import Pixel
-from LightBerries.LightPatterns import ConvertPixelArrayToNumpyArray, PixelArray
+from lightberries.array_controller import ArrayController
+from lightberries.pixel import Pixel
+from lightberries.array_patterns import ArrayPattern
 
 # the number of pixels in the light string
 PIXEL_COUNT = 100
@@ -37,9 +37,7 @@ class LightsProcess:
         self.app = app
         self.inQ = multiprocessing.Queue(2)
         self.outQ = multiprocessing.Queue(2)
-        self.process = multiprocessing.Process(
-            target=LightsProcess.mainLoop, args=[self, self.inQ, self.outQ]
-        )
+        self.process = multiprocessing.Process(target=LightsProcess.mainLoop, args=[self, self.inQ, self.outQ])
         self.process.start()
 
     def __del__(self) -> None:
@@ -56,7 +54,7 @@ class LightsProcess:
         """
         try:
             # set up LightBerries controller
-            lightControl = LightController(
+            lightControl = ArrayController(
                 ledCount=PIXEL_COUNT,
                 pwmGPIOpin=GPIO_PWM_PIN,
                 channelDMA=DMA_CHANNEL,
@@ -69,7 +67,7 @@ class LightsProcess:
                 debug=True,
             )
             # create virtual LED array
-            lightControl.setVirtualLEDArray(ConvertPixelArrayToNumpyArray(PixelArray(PIXEL_COUNT)))
+            lightControl.setVirtualLEDArray(ArrayPattern.PixelArrayOff(PIXEL_COUNT))
             lightControl.copyVirtualLedsToWS281X()
             lightControl.refreshLEDs()
             time.sleep(0.05)
@@ -111,8 +109,8 @@ class LightsProcess:
                             color = msg[1]
                             print("setting color")
                             # turn all LEDs off, then set them to new color
-                            lightControl.virtualLEDArray[:] *= 0
-                            lightControl.virtualLEDArray[:] += Pixel(color).array
+                            lightControl.virtualLEDBuffer[:] *= 0
+                            lightControl.virtualLEDBuffer[:] += Pixel(color).array
                             lightControl.copyVirtualLedsToWS281X()
                             lightControl.refreshLEDs()
                             time.sleep(0.05)
@@ -123,13 +121,13 @@ class LightsProcess:
                             count = msg[1]
                             # turn off all LEDs
                             if count < lightControl.privateLEDCount:
-                                lightControl.virtualLEDArray[:] *= 0
+                                lightControl.virtualLEDBuffer[:] *= 0
                                 lightControl.copyVirtualLedsToWS281X()
                                 lightControl.refreshLEDs()
                                 time.sleep(0.05)
                             # create new LightBerry controller with new pixel count in
                             # underlying ws281x object
-                            lightControl = LightController(
+                            lightControl = ArrayController(
                                 ledCount=count,
                                 pwmGPIOpin=GPIO_PWM_PIN,
                                 channelDMA=DMA_CHANNEL,
@@ -142,7 +140,7 @@ class LightsProcess:
                                 debug=True,
                             )
                             lightControl.secondsPerMode = duration
-                            lightControl.virtualLEDArray[:] += Pixel(color).array
+                            lightControl.virtualLEDBuffer[:] += Pixel(color).array
                             lightControl.copyVirtualLedsToWS281X()
                             lightControl.refreshLEDs()
                             time.sleep(0.05)
@@ -183,9 +181,7 @@ class App:
         self.ledCountInt = tk.IntVar()
         self.ledCountlabel = tk.Label(text="LED Count")
         self.ledCountlabel.grid(row=0, column=0)
-        self.ledCountslider = tk.Scale(
-            self.root, from_=0, to=500, variable=self.ledCountInt, orient="horizontal"
-        )
+        self.ledCountslider = tk.Scale(self.root, from_=0, to=500, variable=self.ledCountInt, orient="horizontal")
         self.ledCountslider.grid(row=0, column=1)
         self.ledCountPressed = False
 
@@ -197,9 +193,7 @@ class App:
         self.colorString = tk.StringVar()
         self.colorlabel = tk.Label(text="Color")
         self.colorlabel.grid(row=1, column=0)
-        self.colorslider = tk.Scale(
-            self.root, from_=0, to=0xFFFFFF, variable=self.colorInt, orient="horizontal"
-        )
+        self.colorslider = tk.Scale(self.root, from_=0, to=0xFFFFFF, variable=self.colorInt, orient="horizontal")
         self.colorslider.grid(row=1, column=1)
         self.colortext = tk.Entry(self.root, textvariable=self.colorString)
         self.colortext.grid(row=1, column=2)
@@ -207,13 +201,13 @@ class App:
         self.colorbutton.grid(row=1, column=3)
 
         self.functionString = tk.StringVar()
-        self.functionChoices = [f for f in dir(LightController) if f[:11] == "useFunction"]
+        self.functionChoices = [f for f in dir(ArrayController) if f[:11] == "useFunction"]
         self.functionChoices.sort()
         self.functionString.set(self.functionChoices[0])
         self.functionDropdown = tk.OptionMenu(self.root, self.functionString, *self.functionChoices)
         self.functionDropdown.grid(row=2, column=1)
         self.patternString = tk.StringVar()
-        self.patternChoices = [f for f in dir(LightController) if f[:8] == "useColor"]
+        self.patternChoices = [f for f in dir(ArrayController) if f[:8] == "useColor"]
         self.patternChoices.sort()
         self.patternString.set(self.patternChoices[0])
         self.patternDropdown = tk.OptionMenu(self.root, self.patternString, *self.patternChoices)
@@ -235,21 +229,29 @@ class App:
         self.lights = LightsProcess(self)
 
         # connect callbacks to GUI widgets/controls
-        self.colorInt.trace("w", lambda name, index, mode, var=self.colorInt: self.updateColor(var.get()))
+        self.colorInt.trace(
+            "w",
+            lambda name, index, mode, var=self.colorInt: self.updateColor(var.get()),
+        )
         self.colorString.trace(
-            "w", lambda name, index, mode, var=self.colorString: self.updateColorHex(var.get())
+            "w",
+            lambda name, index, mode, var=self.colorString: self.updateColorHex(var.get()),
         )
         self.ledCountInt.trace(
-            "w", lambda name, index, mode, var=self.ledCountInt: self.updateLEDCount(var.get())
+            "w",
+            lambda name, index, mode, var=self.ledCountInt: self.updateLEDCount(var.get()),
         )
         self.functionString.trace(
-            "w", lambda name, index, mode, var=self.functionString: self.updateFunction(var.get())
+            "w",
+            lambda name, index, mode, var=self.functionString: self.updateFunction(var.get()),
         )
         self.patternString.trace(
-            "w", lambda name, index, mode, var=self.patternString: self.updatePattern(var.get())
+            "w",
+            lambda name, index, mode, var=self.patternString: self.updatePattern(var.get()),
         )
         self.durationInt.trace(
-            "w", lambda name, index, mode, var=self.durationInt: self.updateDuration(var.get())
+            "w",
+            lambda name, index, mode, var=self.durationInt: self.updateDuration(var.get()),
         )
         try:
             self.lights.inQ.put_nowait(("count", PIXEL_COUNT))
