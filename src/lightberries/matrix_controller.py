@@ -15,7 +15,7 @@ from lightberries.matrix_patterns import (
     Spectrum2,
     TextMatrix,
 )
-from lightberries.array_patterns import DefaultColorSequenceByMonth
+from lightberries.array_patterns import ArrayPattern
 from lightberries.pixel import PixelColors
 
 LOGGER = logging.getLogger("lightberries")
@@ -586,7 +586,7 @@ class MatrixController(ArrayController):
             if delayCount is not None:
                 _delayCount = int(delayCount)
             if self.colorSequence is None or len(self.colorSequence) == 0:
-                self.colorSequence = DefaultColorSequenceByMonth()
+                self.colorSequence = ArrayPattern.DefaultColorSequenceByMonth()
             # fade the whole LED strand
             fade: ArrayFunction = ArrayFunction(ArrayFunction.functionFadeOff, self.colorSequence)
             # by this amount
@@ -657,7 +657,7 @@ class MatrixController(ArrayController):
             if snakeCount is not None:
                 _snakeCount = int(snakeCount)
             if self.colorSequence is None or len(self.colorSequence) == 0:
-                self.colorSequence = DefaultColorSequenceByMonth()
+                self.colorSequence = ArrayPattern.DefaultColorSequenceByMonth()
             # turn off the whole LED strand each time
             off: ArrayFunction = ArrayFunction(ArrayFunction.functionOff, self.colorSequence)
             # add function to list

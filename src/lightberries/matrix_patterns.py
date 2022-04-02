@@ -4,7 +4,7 @@ from typing import Any
 import numpy as np
 from lightberries.exceptions import LightBerryException, PatternException
 from lightberries.pixel import Pixel
-from lightberries.array_patterns import DEFAULT_COLOR_SEQUENCE
+from lightberries.array_patterns import ArrayPattern
 from enum import IntEnum
 
 LOGGER = logging.getLogger("lightberries")
@@ -51,7 +51,7 @@ def Spectrum2(rowCount: int, columnCount: int) -> np.ndarray[(Any, Any, 3), np.i
 def SolidColorMatrix(
     rowCount: int,
     columnCount: int,
-    color: np.ndarray[(3,), np.int32] = DEFAULT_COLOR_SEQUENCE[0],
+    color: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_COLOR_SEQUENCE[0],
 ) -> np.ndarray[(3, Any), np.int32]:
     """Creates matrix of RGB tuples that are all one color.
 

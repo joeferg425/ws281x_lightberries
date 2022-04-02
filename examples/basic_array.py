@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 """An example of using this module."""
-import lightberries.array_patterns
+from lightberries.array_patterns import ArrayPattern
 from lightberries.array_controller import ArrayController
 from lightberries.pixel import PixelColors
 
 # the number of pixels in the light string
-PIXEL_COUNT = 100
+PIXEL_COUNT = 256
 # GPIO pin to use for PWM signal
 GPIO_PWM_PIN = 18
 # DMA channel
@@ -37,7 +37,7 @@ lightControl = ArrayController(
 )
 # configure a color pattern using a "useColor" method
 lightControl.useColorSequence(
-    colorSequence=lightberries.array_patterns.DefaultColorSequenceByMonth(),
+    colorSequence=ArrayPattern.DEFAULT_COLOR_SEQUENCE,
     backgroundColor=PixelColors.OFF,
 )
 # configure a function using a "useFunction" method

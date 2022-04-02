@@ -58,7 +58,9 @@ class ArrayPattern:
         ]
     )
 
+    @classmethod
     def DefaultColorSequenceByMonth(
+        cls,
         date: datetime.datetime = datetime.datetime.now(),
     ) -> np.ndarray[(3, Any), np.int32]:
         """Get the default sequence of colors defined for this month.
@@ -72,11 +74,10 @@ class ArrayPattern:
             LightBerryException: if propagating an exception
             LightPatternException: if something bad happens
         """
-        global DEFAULT_COLOR_SEQUENCE  # pylint: disable = global-statement
         try:
             month = date.month
             if month == 1:
-                DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                cls.DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
                     [
                         PixelColors.CYAN2,
                         PixelColors.WHITE,
@@ -86,7 +87,7 @@ class ArrayPattern:
                     ]
                 )
             elif month == 2:
-                DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                cls.DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
                     [
                         PixelColors.PINK,
                         PixelColors.WHITE,
@@ -95,7 +96,7 @@ class ArrayPattern:
                     ]
                 )
             elif month == 3:
-                DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                cls.DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
                     [
                         PixelColors.GREEN,
                         PixelColors.WHITE,
@@ -105,7 +106,7 @@ class ArrayPattern:
                     ]
                 )
             elif month == 4:
-                DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                cls.DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
                     [
                         PixelColors.PINK,
                         PixelColors.CYAN,
@@ -115,7 +116,7 @@ class ArrayPattern:
                     ]
                 )
             elif month == 5:
-                DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                cls.DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
                     [
                         PixelColors.PINK,
                         PixelColors.YELLOW,
@@ -124,7 +125,7 @@ class ArrayPattern:
                     ]
                 )
             elif month == 6:
-                DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                cls.DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
                     [
                         PixelColors.RED,
                         PixelColors.WHITE,
@@ -133,7 +134,7 @@ class ArrayPattern:
                     ]
                 )
             elif month == 7:
-                DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                cls.DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
                     [
                         PixelColors.RED,
                         PixelColors.WHITE,
@@ -141,7 +142,7 @@ class ArrayPattern:
                     ]
                 )
             elif month == 8:
-                DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                cls.DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
                     [
                         PixelColors.ORANGE,
                         PixelColors.WHITE,
@@ -150,7 +151,7 @@ class ArrayPattern:
                     ]
                 )
             elif month == 9:
-                DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                cls.DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
                     [
                         PixelColors.ORANGE,
                         PixelColors.WHITE,
@@ -161,7 +162,7 @@ class ArrayPattern:
                     ]
                 )
             elif month == 10:
-                DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                cls.DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
                     [
                         PixelColors.MIDNIGHT,
                         PixelColors.RED,
@@ -170,7 +171,7 @@ class ArrayPattern:
                     ]
                 )
             elif month == 11:
-                DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                cls.DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
                     [
                         PixelColors.RED,
                         PixelColors.MIDNIGHT,
@@ -178,7 +179,7 @@ class ArrayPattern:
                     ]
                 )
             elif month == 12:
-                DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
+                cls.DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
                     [
                         PixelColors.RED,
                         PixelColors.WHITE,
@@ -193,7 +194,7 @@ class ArrayPattern:
             raise
         except Exception as ex:  # pragma: no cover
             raise PatternException from ex
-        return DEFAULT_COLOR_SEQUENCE
+        return ArrayPattern.DEFAULT_COLOR_SEQUENCE
 
     def PixelArrayOff(
         arrayLength: int,
@@ -226,9 +227,11 @@ class ArrayPattern:
         except Exception as ex:  # pragma: no cover
             raise PatternException from ex
 
+    @classmethod
     def SolidColorArray(
+        cls,
         arrayLength: int,
-        color: np.ndarray[(3,), np.int32] = DEFAULT_COLOR_SEQUENCE[0],
+        color: np.ndarray[(3,), np.int32] = None,
     ) -> np.ndarray[(3, Any), np.int32]:
         """Creates array of RGB tuples that are all one color.
 
@@ -246,6 +249,8 @@ class ArrayPattern:
             LightPatternException: if something bad happens
         """
         try:
+            if color is None:
+                color = cls.DEFAULT_COLOR_SEQUENCE[0]
             if arrayLength > 0:
                 return np.array([color for i in range(int(arrayLength))])
             else:
@@ -287,7 +292,7 @@ class ArrayPattern:
         try:
             arrayLength = int(arrayLength)
             if not isinstance(colorSequence, np.ndarray):
-                inputSequence = DEFAULT_COLOR_SEQUENCE
+                inputSequence = ArrayPattern.DEFAULT_COLOR_SEQUENCE
             else:
                 inputSequence = colorSequence.copy()
             # get length of sequence
@@ -400,7 +405,7 @@ class ArrayPattern:
         try:
             arrayLength = int(arrayLength)
             if not isinstance(colorSequence, np.ndarray):
-                inputSequence = DEFAULT_COLOR_SEQUENCE
+                inputSequence = ArrayPattern.DEFAULT_COLOR_SEQUENCE
             else:
                 inputSequence = colorSequence.copy()
             if len(inputSequence):
@@ -487,7 +492,7 @@ class ArrayPattern:
         try:
             arrayLength = int(arrayLength)
             if not isinstance(colorSequence, np.ndarray):
-                inputSequence = DEFAULT_COLOR_SEQUENCE
+                inputSequence = ArrayPattern.DEFAULT_COLOR_SEQUENCE
             else:
                 inputSequence = colorSequence.copy()
             colorSequenceLen = inputSequence.shape[0]
@@ -599,13 +604,13 @@ class ArrayPattern:
             inputSequence = None
             temp_array = ArrayPattern.PixelArrayOff(arrayLength)
             if not isinstance(colorSequence, np.ndarray):
-                inputSequence = DEFAULT_COLOR_SEQUENCE
+                inputSequence = ArrayPattern.DEFAULT_COLOR_SEQUENCE
             else:
                 inputSequence = colorSequence.copy()
             # comment
             inputSequenceLen = inputSequence.shape[0]
             if inputSequenceLen == 0:
-                inputSequence = DEFAULT_COLOR_SEQUENCE
+                inputSequence = ArrayPattern.DEFAULT_COLOR_SEQUENCE
                 inputSequenceLen = inputSequence.shape[0]
             for i in range(arrayLength):
                 temp_array[i] = inputSequence[random.randint(0, inputSequenceLen - 1)]
@@ -638,7 +643,7 @@ class ArrayPattern:
         """
         try:
             if not isinstance(colorSequence, np.ndarray):
-                inputSequence = DEFAULT_COLOR_SEQUENCE
+                inputSequence = ArrayPattern.DEFAULT_COLOR_SEQUENCE
             else:
                 inputSequence = colorSequence.copy()
             colorSequenceLength = inputSequence.shape[0]
@@ -657,3 +662,6 @@ class ArrayPattern:
             raise
         except Exception as ex:  # pragma: no cover
             raise PatternException from ex
+
+
+ArrayPattern.DefaultColorSequenceByMonth()
