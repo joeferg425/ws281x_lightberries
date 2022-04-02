@@ -6,7 +6,7 @@ import logging
 from lightberries.array_functions import ArrayFunction
 import lightberries.matrix_controller
 
-from lightberries.exceptions import LightBerryException, LightFunctionException
+from lightberries.exceptions import LightBerryException, FunctionException
 from lightberries.pixel import PixelColors
 
 LOGGER = logging.getLogger("lightberries")
@@ -78,7 +78,7 @@ class LightMatrixFunction(ArrayFunction):
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def functionMatrixMarquee(
@@ -111,7 +111,7 @@ class LightMatrixFunction(ArrayFunction):
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def functionMatrixEye(
@@ -154,7 +154,7 @@ class LightMatrixFunction(ArrayFunction):
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def functionMatrixBounce(
@@ -214,7 +214,7 @@ class LightMatrixFunction(ArrayFunction):
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def functionsMatrixFireworks(
@@ -278,7 +278,7 @@ class LightMatrixFunction(ArrayFunction):
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def functionsMatrixRadar(
@@ -362,7 +362,7 @@ class LightMatrixFunction(ArrayFunction):
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def functionsMatrixSnake(
@@ -490,4 +490,4 @@ class LightMatrixFunction(ArrayFunction):
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex

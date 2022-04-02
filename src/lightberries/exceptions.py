@@ -7,21 +7,21 @@ class LightBerryException(Exception):
     """Custom exception for the LightBerries module."""
 
 
-class LightFunctionException(LightBerryException):
+class FunctionException(LightBerryException):
     """Exception for LightFunctions to raise."""
 
 
-class LightStringException(LightBerryException):
+class WS281xStringException(LightBerryException):
     """Exception for LightString to raise."""
 
 
-class LightControlException(LightBerryException):
+class ControllerException(LightBerryException):
     """Exception for LightControls to raise."""
 
 
-class LightPatternException(LightBerryException):
+class PatternException(LightBerryException):
     """Exception for LightPatterns to raise."""
 
 
-class LightPixelException(LightBerryException):
+class PixelException(LightBerryException):
     """Exception for LightPixel to raise."""

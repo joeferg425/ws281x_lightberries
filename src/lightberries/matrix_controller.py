@@ -6,7 +6,7 @@ import numpy as np
 from lightberries.array_controller import ArrayController
 import logging
 from lightberries.array_functions import ArrayFunction
-from lightberries.exceptions import LightBerryException, LightControlException
+from lightberries.exceptions import LightBerryException, ControllerException
 from lightberries.matrix_functions import LightMatrixFunction
 from lightberries.matrix_patterns import (
     SolidColorMatrix,
@@ -122,7 +122,7 @@ class MatrixController(ArrayController):
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def setvirtualLEDBuffer(self, ledMatrix: np.ndarray[(3, Any, Any), np.int32]) -> None:
         self.virtualLEDRowCount = ledMatrix.shape[0]
@@ -180,7 +180,7 @@ class MatrixController(ArrayController):
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def copyVirtualLedsToWS281X(
         self,
@@ -231,7 +231,7 @@ class MatrixController(ArrayController):
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useFunctionMatrixColorFlux(
         self,
@@ -272,7 +272,7 @@ class MatrixController(ArrayController):
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useFunctionMatrixMarquee(
         self,
@@ -311,7 +311,7 @@ class MatrixController(ArrayController):
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useFunctionMatrixMarqueeText(
         self,
@@ -356,7 +356,7 @@ class MatrixController(ArrayController):
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useFunctionMatrixEye(
         self,
@@ -394,7 +394,7 @@ class MatrixController(ArrayController):
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useFunctionMatrixBounce(
         self,
@@ -471,7 +471,7 @@ class MatrixController(ArrayController):
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useFunctionMatrixFireworks(
         self,
@@ -549,7 +549,7 @@ class MatrixController(ArrayController):
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useFunctionMatrixRadar(
         self,
@@ -624,14 +624,14 @@ class MatrixController(ArrayController):
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useFunctionMatrixSnake(
         self,
         delayCount: int = None,
         snakeLength: int = None,
         snakeCount: int = None,
-        collision:bool=True,
+        collision: bool = True,
     ) -> None:
         """
 
@@ -691,4 +691,4 @@ class MatrixController(ArrayController):
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex

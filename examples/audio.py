@@ -9,7 +9,7 @@ import pyaudio
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from lightberries import array_patterns
+from lightberries.array_patterns import ArrayPattern
 from lightberries.array_controller import ArrayController
 from lightberries.pixel import Pixel
 
@@ -62,19 +62,13 @@ class RollingDataFromQueue:
             # check the queue - throws an exception if empty
             self.newDataChunk = self.inQ.get_nowait()
             # roll the data frame so we can insert/overwrite oldest data with new
-            self.dataFrame = np.roll(
-                self.dataFrame, RollingDataFromQueue.SAMPLE_COUNT_PER_CHUNK
-            )
+            self.dataFrame = np.roll(self.dataFrame, RollingDataFromQueue.SAMPLE_COUNT_PER_CHUNK)
             # add the new data to the frame
-            self.dataFrame[
-                -RollingDataFromQueue.SAMPLE_COUNT_PER_CHUNK :
-            ] = self.newDataChunk
+            self.dataFrame[-RollingDataFromQueue.SAMPLE_COUNT_PER_CHUNK :] = self.newDataChunk
 
             # do FFT on one of the data sets
             # self.fftData = 10 * np.log10(np.abs(np.fft.fft(DATA_FRAME)*self.window))
-            self.fftData = 10 * np.log10(
-                np.abs(np.fft.fft(self.newDataChunk) * self.window)
-            )
+            self.fftData = 10 * np.log10(np.abs(np.fft.fft(self.newDataChunk) * self.window))
 
             # make FFT adjustments
             lenfftData = len(self.fftData)
@@ -85,10 +79,7 @@ class RollingDataFromQueue:
             # chunk the data up for display in fewer segments
             chunkLength = lenfftData // LightOutput.EQUALIZER_SECTION_COUNT
             self.fftChunks = np.array(
-                [
-                    np.sum(self.fftData[i : i + chunkLength]) / chunkLength
-                    for i in range(0, lenfftData, chunkLength)
-                ]
+                [np.sum(self.fftData[i : i + chunkLength]) / chunkLength for i in range(0, lenfftData, chunkLength)]
             )
             # mask any artifacts at the ends
             self.fftChunks[-1] = np.mean(self.fftChunks)
@@ -117,9 +108,7 @@ class RollingDataFromQueue:
                 * (RollingDataFromQueue.MOVING_AVERAGE_LENGTH - 1)
                 / RollingDataFromQueue.MOVING_AVERAGE_LENGTH
             )
-            self.plotData += (
-                self.fftChunks * 1 / RollingDataFromQueue.MOVING_AVERAGE_LENGTH
-            )
+            self.plotData += self.fftChunks * 1 / RollingDataFromQueue.MOVING_AVERAGE_LENGTH
             # return true for new data
             return True
         except multiprocessing.queues.Empty:
@@ -153,7 +142,7 @@ class LightOutput(RollingDataFromQueue):
                 # see if we got data
                 if self.getNewData():
                     self.lightController.setVirtualLEDArray(
-                        array_patterns.ColorTransitionArray(
+                        ArrayPattern.ColorTransitionArray(
                             LightOutput.LED_COUNT,
                             [Pixel(int(p)) for p in self.plotData],
                             False,
@@ -351,9 +340,7 @@ if __name__ == "__main__":
         if PROCESS_CHOICE == ProcessChoice.LIGHTS:
             process = multiprocessing.Process(target=LightOutput, args=(inq, outq))
         else:
-            process = multiprocessing.Process(
-                target=PlotOutput, args=(inq, outq, PlotChoice.AVERAGED_FFT)
-            )
+            process = multiprocessing.Process(target=PlotOutput, args=(inq, outq, PlotChoice.AVERAGED_FFT))
 
         # start the selected process
         process.start()

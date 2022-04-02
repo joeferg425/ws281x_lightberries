@@ -6,12 +6,9 @@ import random
 from enum import IntEnum
 import numpy as np
 import lightberries  # noqa : used in typing
-from lightberries.exceptions import LightFunctionException, LightBerryException
+from lightberries.exceptions import FunctionException, LightBerryException
 from lightberries.pixel import Pixel, PixelColors
-from lightberries.array_patterns import (
-    ConvertPixelArrayToNumpyArray,
-    DefaultColorSequenceByMonth,
-)
+from lightberries.array_patterns import ArrayPattern, ConvertPixelArrayToNumpyArray
 
 # pylint: disable=no-member
 
@@ -82,15 +79,13 @@ class ArrayFunction:
             funcPointer: a function pointer that updates LEDs in the LightArrayController object.
             colorSequence: a sequence of RGB values.
         """
-        self.privateColorSequence: np.ndarray[
-            (3, Any), np.int32
-        ] = ConvertPixelArrayToNumpyArray([])
+        self.privateColorSequence: np.ndarray[(3, Any), np.int32] = ConvertPixelArrayToNumpyArray([])
         self.privateColorSequenceCount: int = 0
         self.privateColorSequenceIndex: int = 0
 
         self.colorSequence = colorSequence
         if self.colorSequence is None or len(self.colorSequence) == 0:
-            self.colorSequence = DefaultColorSequenceByMonth()
+            self.colorSequence = ArrayPattern.DefaultColorSequenceByMonth()
         self.color: np.ndarray[(3,), np.int32] = self.colorSequence[0]
         self.colorBegin: np.ndarray[(3,), np.int32] = PixelColors.OFF
         self.colorNext: np.ndarray[(3,), np.int32] = PixelColors.OFF
@@ -187,9 +182,7 @@ class ArrayFunction:
         Args:
             colorSequence: desired color sequence
         """
-        self.privateColorSequence = np.copy(
-            ConvertPixelArrayToNumpyArray(colorSequence)
-        )
+        self.privateColorSequence = ConvertPixelArrayToNumpyArray(colorSequence)
         self.colorSequenceCount = len(self.privateColorSequence)
         self.colorSequenceIndex = 0
 
@@ -272,15 +265,9 @@ class ArrayFunction:
                 self.delayCounter = 0
                 for rgbIndex in range(len(self.color)):
                     if self.color[rgbIndex] != self.colorNext[rgbIndex]:
-                        if (
-                            self.color[rgbIndex] - self.colorFade
-                            > self.colorNext[rgbIndex]
-                        ):
+                        if self.color[rgbIndex] - self.colorFade > self.colorNext[rgbIndex]:
                             self.color[rgbIndex] -= self.colorFade
-                        elif (
-                            self.color[rgbIndex] + self.colorFade
-                            < self.colorNext[rgbIndex]
-                        ):
+                        elif self.color[rgbIndex] + self.colorFade < self.colorNext[rgbIndex]:
                             self.color[rgbIndex] += self.colorFade
                         else:
                             self.color[rgbIndex] = self.colorNext[rgbIndex]
@@ -293,7 +280,7 @@ class ArrayFunction:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     def doMove(
         self,
@@ -301,9 +288,7 @@ class ArrayFunction:
         """Update the object index."""
         self.indexPrevious = self.index
         newIndexNoModulo = self.index + (self.step * self.direction)
-        self.index = (self.index + (self.step * self.direction)) % (
-            ArrayFunction.Controller.virtualLEDCount - 1
-        )
+        self.index = (self.index + (self.step * self.direction)) % (ArrayFunction.Controller.virtualLEDCount - 1)
         self.indexRange = np.array(
             list(
                 range(
@@ -313,9 +298,7 @@ class ArrayFunction:
                 )
             )
         )
-        modulo = np.where(
-            self.indexRange >= (ArrayFunction.Controller.virtualLEDCount - 1)
-        )
+        modulo = np.where(self.indexRange >= (ArrayFunction.Controller.virtualLEDCount - 1))
         self.indexRange[modulo] -= ArrayFunction.Controller.virtualLEDCount
         modulo = np.where(self.indexRange < 0)
         self.indexRange[modulo] += ArrayFunction.Controller.virtualLEDCount
@@ -370,30 +353,21 @@ class ArrayFunction:
                         if index1 + 1 < len(lightFunctions):
                             for meteor2 in lightFunctions[index1 + 1 :]:
                                 if "function" in meteor2.runFunction.__name__:
-                                    if isinstance(
-                                        meteor1.indexRange, np.ndarray
-                                    ) and isinstance(meteor2.indexRange, np.ndarray):
+                                    if isinstance(meteor1.indexRange, np.ndarray) and isinstance(
+                                        meteor2.indexRange, np.ndarray
+                                    ):
                                         # this detects the intersection of two self._LightDataObjects'
                                         # movements across LEDs
-                                        intersection = np.intersect1d(
-                                            meteor1.indexRange, meteor2.indexRange
-                                        )
-                                        if (
-                                            len(intersection) > 0
-                                            and random.randint(0, 4) != 0
-                                        ):
+                                        intersection = np.intersect1d(meteor1.indexRange, meteor2.indexRange)
+                                        if len(intersection) > 0 and random.randint(0, 4) != 0:
                                             meteor1.bounce = True
                                             meteor1.collideWith = meteor2
                                             meteor1.stepLast = meteor1.step
-                                            meteor1.collideIntersect = int(
-                                                intersection[0]
-                                            )
+                                            meteor1.collideIntersect = int(intersection[0])
                                             meteor2.bounce = True
                                             meteor2.collideWith = meteor1
                                             meteor2.stepLast = meteor2.step
-                                            meteor2.collideIntersect = int(
-                                                intersection[0]
-                                            )
+                                            meteor2.collideIntersect = int(intersection[0])
                                             foundBounce = True
             explosionIndices = []
             explosionColors = []
@@ -412,8 +386,7 @@ class ArrayFunction:
                                     othermeteor.step = meteor.step
                                     meteor.step = temp
                                 meteor.index = (
-                                    meteor.collideIntersect
-                                    + (meteor.step * meteor.direction)
+                                    meteor.collideIntersect + (meteor.step * meteor.direction)
                                 ) % ArrayFunction.Controller.virtualLEDCount
                                 othermeteor.index = (
                                     meteor.index + othermeteor.direction
@@ -426,33 +399,25 @@ class ArrayFunction:
                                 othermeteor.collideWith = None
                                 if collision.explode:
                                     if isinstance(meteor.indexRange, np.ndarray):
-                                        middle = meteor.indexRange[
-                                            len(meteor.indexRange) // 2
-                                        ]
+                                        middle = meteor.indexRange[len(meteor.indexRange) // 2]
                                     radius = ArrayFunction.Controller.realLEDCount // 20
                                     for i in range(radius):
                                         explosionIndices.append(
-                                            (middle - i)
-                                            % ArrayFunction.Controller.virtualLEDCount,
+                                            (middle - i) % ArrayFunction.Controller.virtualLEDCount,
                                         )
                                         explosionColors.append(
-                                            Pixel(PixelColors.YELLOW)
-                                            * (radius - i)
-                                            / radius,
+                                            Pixel(PixelColors.YELLOW) * (radius - i) / radius,
                                         )
 
                                         explosionIndices.append(
-                                            (middle + i)
-                                            % ArrayFunction.Controller.virtualLEDCount,
+                                            (middle + i) % ArrayFunction.Controller.virtualLEDCount,
                                         )
                                         explosionColors.append(
-                                            Pixel(PixelColors.YELLOW)
-                                            * (radius - i)
-                                            / radius,
+                                            Pixel(PixelColors.YELLOW) * (radius - i) / radius,
                                         )
-                                    ArrayFunction.Controller.virtualLEDBuffer[
-                                        explosionIndices
-                                    ] = np.array(explosionColors)
+                                    ArrayFunction.Controller.virtualLEDBuffer[explosionIndices] = np.array(
+                                        explosionColors
+                                    )
         except KeyboardInterrupt:
             raise
         except SystemExit:
@@ -460,7 +425,7 @@ class ArrayFunction:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def functionOff(
@@ -485,7 +450,7 @@ class ArrayFunction:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def functionFadeOff(
@@ -502,9 +467,9 @@ class ArrayFunction:
             LightFunctionException: if something bad happens
         """
         try:
-            ArrayFunction.Controller.virtualLEDBuffer[
-                :
-            ] = ArrayFunction.Controller.virtualLEDBuffer * (1 - fade.fadeAmount)
+            ArrayFunction.Controller.virtualLEDBuffer[:] = ArrayFunction.Controller.virtualLEDBuffer * (
+                1 - fade.fadeAmount
+            )
         except KeyboardInterrupt:
             raise
         except SystemExit:
@@ -512,7 +477,7 @@ class ArrayFunction:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def functionNone(
@@ -537,7 +502,7 @@ class ArrayFunction:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def functionSolidColorCycle(
@@ -571,7 +536,7 @@ class ArrayFunction:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def functionMarquee(
@@ -627,9 +592,7 @@ class ArrayFunction:
                 marquee.index + marquee.size,
             )
             # update LEDs with new values
-            ArrayFunction.Controller.virtualLEDBuffer[
-                np.sort(marquee.indexRange)
-            ] = marquee.colorSequence
+            ArrayFunction.Controller.virtualLEDBuffer[np.sort(marquee.indexRange)] = marquee.colorSequence
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -637,7 +600,7 @@ class ArrayFunction:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def functionCylon(
@@ -666,17 +629,13 @@ class ArrayFunction:
                     cylon.indexNext = cylon.index + (cylon.direction * cylon.step)
                     cylon.indexMin = cylon.indexNext
                     cylon.indexMax = cylon.indexNext + (cylon.size * cylon.direction)
-                    cylon.indexRange = np.arange(
-                        cylon.indexMin, cylon.indexMax, cylon.direction
-                    )
+                    cylon.indexRange = np.arange(cylon.indexMin, cylon.indexMax, cylon.direction)
                 else:
                     # calculate index array going from max to min
                     cylon.indexNext = cylon.index + (cylon.direction * cylon.step)
                     cylon.indexMin = cylon.indexNext + (cylon.size * cylon.direction)
                     cylon.indexMax = cylon.indexNext
-                    cylon.indexRange = np.arange(
-                        cylon.indexMax, cylon.indexMin, cylon.direction
-                    )
+                    cylon.indexRange = np.arange(cylon.indexMax, cylon.indexMin, cylon.direction)
                 # check if color sequence would go off of far end of light string
                 if cylon.indexMax > ArrayFunction.Controller.virtualLEDCount:
                     # if the last LED is headed off the end
@@ -686,13 +645,10 @@ class ArrayFunction:
                         # fix next index
                         cylon.indexNext = ArrayFunction.Controller.virtualLEDCount - 2
                     # find where LEDs go off the end
-                    over = np.where(
-                        cylon.indexRange >= (ArrayFunction.Controller.virtualLEDCount)
-                    )[0]
+                    over = np.where(cylon.indexRange >= (ArrayFunction.Controller.virtualLEDCount))[0]
                     # reverse their direction
                     cylon.indexRange[over] = (
-                        np.arange(-1, (len(over) + 1) * -1, -1)
-                        + ArrayFunction.Controller.virtualLEDCount
+                        np.arange(-1, (len(over) + 1) * -1, -1) + ArrayFunction.Controller.virtualLEDCount
                     )
                 # if LEDs go off the other end
                 elif cylon.indexMin < -1:
@@ -711,9 +667,9 @@ class ArrayFunction:
             # update index
             cylon.index = cylon.indexNext
             # update LEDs with new values
-            ArrayFunction.Controller.virtualLEDBuffer[
-                cylon.indexRange
-            ] = cylon.colorSequence[: ArrayFunction.Controller.virtualLEDCount]
+            ArrayFunction.Controller.virtualLEDBuffer[cylon.indexRange] = cylon.colorSequence[
+                : ArrayFunction.Controller.virtualLEDCount
+            ]
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -721,7 +677,7 @@ class ArrayFunction:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def functionMerge(
@@ -743,9 +699,7 @@ class ArrayFunction:
                 # reset delay counter
                 merge.delayCounter = 0
                 # figure out how many segments there are
-                segmentCount = int(
-                    ArrayFunction.Controller.virtualLEDCount // merge.size
-                )
+                segmentCount = int(ArrayFunction.Controller.virtualLEDCount // merge.size)
                 # this takes the 1-dimensional array
                 # [0,1,2,3,4,5]
                 # and creates a 2-dimensional matrix like
@@ -759,9 +713,9 @@ class ArrayFunction:
                 # the matrixification of the array
                 if temp[0][0] != temp[1][-1]:
                     temp[1] = np.flip(temp[0])
-                    ArrayFunction.Controller.virtualLEDBuffer[
+                    ArrayFunction.Controller.virtualLEDBuffer[range(merge.size)] = merge.colorSequence[
                         range(merge.size)
-                    ] = merge.colorSequence[range(merge.size)]
+                    ]
                 temp[0] = np.roll(temp[0], merge.step, 0)
                 temp[1] = np.roll(temp[1], -merge.step, 0)
                 for i in range(ArrayFunction.Controller.virtualLEDCount // merge.size):
@@ -781,7 +735,7 @@ class ArrayFunction:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def functionAccelerate(
@@ -843,17 +797,14 @@ class ArrayFunction:
                     list(
                         range(
                             accelerate.indexPrevious,
-                            accelerate.index
-                            + (accelerate.step * accelerate.direction * 4),
+                            accelerate.index + (accelerate.step * accelerate.direction * 4),
                             accelerate.direction,
                         )
                     ),
                     dtype=np.int32,
                 )
                 # make sure that the splash doesn't go off the edge of the virtual led array
-                modulo = np.where(
-                    splashRange >= (ArrayFunction.Controller.realLEDCount - 1)
-                )
+                modulo = np.where(splashRange >= (ArrayFunction.Controller.realLEDCount - 1))
                 splashRange[modulo] -= ArrayFunction.Controller.realLEDCount
                 modulo = np.where(splashRange < 0)
                 splashRange[modulo] += ArrayFunction.Controller.realLEDCount
@@ -874,18 +825,12 @@ class ArrayFunction:
                 # randomize starting index
                 accelerate.index = ArrayFunction.Controller.getRandomIndex()
                 accelerate.indexPrevious = accelerate.index
-                accelerate.indexRange = np.arange(
-                    accelerate.indexPrevious, accelerate.index + 1
-                )
+                accelerate.indexRange = np.arange(accelerate.indexPrevious, accelerate.index + 1)
             # increment delay counter
             accelerate.delayCounter += 1
-            ArrayFunction.Controller.virtualLEDBuffer[
-                accelerate.indexRange
-            ] = accelerate.color
+            ArrayFunction.Controller.virtualLEDBuffer[accelerate.indexRange] = accelerate.color
             if splash is True:
-                ArrayFunction.Controller.virtualLEDBuffer[
-                    splashRange, :
-                ] = ArrayFunction.Controller.fadeColor(
+                ArrayFunction.Controller.virtualLEDBuffer[splashRange, :] = ArrayFunction.Controller.fadeColor(
                     accelerate.color, ArrayFunction.Controller.backgroundColor, 50
                 )
 
@@ -896,7 +841,7 @@ class ArrayFunction:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def functionRandomChange(
@@ -963,9 +908,7 @@ class ArrayFunction:
                         # randomize next index
                         change.index = ArrayFunction.Controller.getRandomIndex()
                         # get color of current LED index
-                        change.color = np.copy(
-                            ArrayFunction.Controller.virtualLEDBuffer[change.index]
-                        )
+                        change.color = np.copy(ArrayFunction.Controller.virtualLEDBuffer[change.index])
                         # get next color
                         for _ in range(random.randint(1, 5)):
                             change.colorNext = change.colorSequenceNext
@@ -978,9 +921,7 @@ class ArrayFunction:
             # if fading LEDs
             if change.fadeType == LEDFadeType.FADE_OFF:
                 # fade the color
-                change.color = ArrayFunction.Controller.fadeColor(
-                    change.color, change.colorNext, change.colorFade
-                )
+                change.color = ArrayFunction.Controller.fadeColor(change.color, change.colorNext, change.colorFade)
             # if instant on/off
             else:
                 # set the color
@@ -994,7 +935,7 @@ class ArrayFunction:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def functionMeteors(
@@ -1018,9 +959,7 @@ class ArrayFunction:
                 # calculate index + step
                 meteor.indexMax = meteor.index + (meteor.step * meteor.direction)
                 # modulo next index to make sure it is a valid index in our string
-                meteor.indexNext = (
-                    meteor.indexMax % ArrayFunction.Controller.virtualLEDCount
-                )
+                meteor.indexNext = meteor.indexMax % ArrayFunction.Controller.virtualLEDCount
                 # save previous index
                 meteor.indexPrevious = meteor.index
                 # assign new index
@@ -1037,21 +976,15 @@ class ArrayFunction:
                 )
                 # make sure indices are valid ones
                 meteor.indexRange[
-                    np.where(
-                        meteor.indexRange >= ArrayFunction.Controller.virtualLEDCount
-                    )
+                    np.where(meteor.indexRange >= ArrayFunction.Controller.virtualLEDCount)
                 ] -= ArrayFunction.Controller.virtualLEDCount
-                meteor.indexRange[
-                    np.where(meteor.indexRange < 0)
-                ] += ArrayFunction.Controller.virtualLEDCount
+                meteor.indexRange[np.where(meteor.indexRange < 0)] += ArrayFunction.Controller.virtualLEDCount
                 # if we are cycling through colors
                 if meteor.colorCycle:
                     # assign the next color
                     meteor.color = meteor.colorSequenceNext
                 # assign LEDs to LED string
-                ArrayFunction.Controller.virtualLEDBuffer[
-                    meteor.indexRange
-                ] = meteor.color
+                ArrayFunction.Controller.virtualLEDBuffer[meteor.indexRange] = meteor.color
             # update delay counter
             meteor.delayCounter += 1
         except SystemExit:
@@ -1061,7 +994,7 @@ class ArrayFunction:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def functionSprites(
@@ -1081,10 +1014,7 @@ class ArrayFunction:
             # if not off
             if sprite.state != SpriteState.OFF.value:
                 # semi-randomly die
-                if (
-                    random.randint(6, ArrayFunction.Controller.virtualLEDCount // 2)
-                    < sprite.stepCounter
-                ):
+                if random.randint(6, ArrayFunction.Controller.virtualLEDCount // 2) < sprite.stepCounter:
                     sprite.state = SpriteState.FADING_OFF.value
                 # randomize step sizes
                 sprite.step = random.randint(1, 3)
@@ -1099,18 +1029,14 @@ class ArrayFunction:
                 # if we are fading off
                 if sprite.state == SpriteState.FADING_OFF.value:
                     # fade the color
-                    sprite.color = ArrayFunction.Controller.fadeColor(
-                        sprite.color, sprite.colorNext, 25
-                    )
+                    sprite.color = ArrayFunction.Controller.fadeColor(sprite.color, sprite.colorNext, 25)
                     # if we are done fading, then change state
                     if np.array_equal(sprite.color, sprite.colorNext):
                         sprite.state = SpriteState.OFF.value
                 # if we are fading on
                 if sprite.state == SpriteState.FADING_ON.value:
                     # fade the color
-                    sprite.color = ArrayFunction.Controller.fadeColor(
-                        sprite.color, sprite.colorGoal, 25
-                    )
+                    sprite.color = ArrayFunction.Controller.fadeColor(sprite.color, sprite.colorGoal, 25)
                     # if we are done fading
                     if np.array_equal(sprite.color, sprite.colorGoal):
                         # change state
@@ -1138,15 +1064,11 @@ class ArrayFunction:
                     # set next color
                     sprite.colorNext = PixelColors.OFF
             # if we changed the index
-            if sprite.indexUpdated is True and isinstance(
-                sprite.indexRange, np.ndarray
-            ):
+            if sprite.indexUpdated is True and isinstance(sprite.indexRange, np.ndarray):
                 # reset flag
                 sprite.indexUpdated = False
                 # assign LEDs to LED string
-                ArrayFunction.Controller.virtualLEDBuffer[sprite.indexRange] = [
-                    sprite.color
-                ] * len(sprite.indexRange)
+                ArrayFunction.Controller.virtualLEDBuffer[sprite.indexRange] = [sprite.color] * len(sprite.indexRange)
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -1154,7 +1076,7 @@ class ArrayFunction:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def functionRaindrops(
@@ -1181,17 +1103,13 @@ class ArrayFunction:
                     raindrop.stepCountMax = random.randint(2, raindrop.sizeMax)
                     # set fade amount
                     raindrop.fadeAmount = ((255 / raindrop.stepCountMax) / 255) * 2
-                    raindrop.colorScaler = (
-                        raindrop.stepCountMax - raindrop.stepCounter
-                    ) / raindrop.stepCountMax
+                    raindrop.colorScaler = (raindrop.stepCountMax - raindrop.stepCounter) / raindrop.stepCountMax
             # if raindrop is splashing
             if raindrop.state == RaindropStates.SPLASH.value:
                 # if splash is still growing
                 if raindrop.stepCounter < raindrop.stepCountMax:
                     # lower valued side of "splash"
-                    indexLowerMin = max(
-                        raindrop.index - raindrop.stepCounter - raindrop.step, 0
-                    )
+                    indexLowerMin = max(raindrop.index - raindrop.stepCounter - raindrop.step, 0)
                     indexLowerMax = max(raindrop.index - raindrop.stepCounter, 0)
                     # higher valued side of "splash"
                     indexHigherMin = min(
@@ -1203,13 +1121,13 @@ class ArrayFunction:
                         ArrayFunction.Controller.virtualLEDCount,
                     )
                     if (indexLowerMax - indexLowerMin) > 0:
-                        ArrayFunction.Controller.virtualLEDBuffer[
-                            indexLowerMin:indexLowerMax
-                        ] = [raindrop.color] * (indexLowerMax - indexLowerMin)
+                        ArrayFunction.Controller.virtualLEDBuffer[indexLowerMin:indexLowerMax] = [raindrop.color] * (
+                            indexLowerMax - indexLowerMin
+                        )
                     if (indexHigherMax - indexHigherMin) > 0:
-                        ArrayFunction.Controller.virtualLEDBuffer[
-                            indexHigherMin:indexHigherMax
-                        ] = [raindrop.color] * (indexHigherMax - indexHigherMin)
+                        ArrayFunction.Controller.virtualLEDBuffer[indexHigherMin:indexHigherMax] = [raindrop.color] * (
+                            indexHigherMax - indexHigherMin
+                        )
                     # scaled fading as splash grows
                     raindrop.color[:] = raindrop.color * raindrop.colorScaler
                     # increment splash growth counter
@@ -1217,9 +1135,7 @@ class ArrayFunction:
                 # splash is done growing
                 else:
                     # randomize next splash start index
-                    raindrop.index = random.randint(
-                        0, ArrayFunction.Controller.virtualLEDCount - 1
-                    )
+                    raindrop.index = random.randint(0, ArrayFunction.Controller.virtualLEDCount - 1)
                     # reset growth counter
                     raindrop.stepCounter = 0
                     # semi-randomize next color
@@ -1234,7 +1150,7 @@ class ArrayFunction:
         except KeyboardInterrupt:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def functionAlive(
@@ -1345,9 +1261,7 @@ class ArrayFunction:
                                 thing.color = thing.colorSequenceNext
                     # calculate range of affected indices
                     index1 = thing.indexPrevious - (thing.size * thing.direction)
-                    index2 = thing.indexPrevious + (
-                        (thing.step + thing.size) * thing.direction
-                    )
+                    index2 = thing.indexPrevious + ((thing.step + thing.size) * thing.direction)
                     indexLower = min(index1, index2)
                     indexHigher = max(index1, index2)
                     # calculate affected range
@@ -1359,15 +1273,9 @@ class ArrayFunction:
                     # states are mutually exclusive bits, can just add one of each
                     for _ in range(random.randint(1, 3)):
                         thing.state = (
-                            list(ThingMoves)[
-                                random.randint(0, len(ThingMoves) - 1)
-                            ].value
-                            + list(ThingSizes)[
-                                random.randint(0, len(ThingSizes) - 1)
-                            ].value
-                            + list(ThingColors)[
-                                random.randint(0, len(ThingColors) - 1)
-                            ].value
+                            list(ThingMoves)[random.randint(0, len(ThingMoves) - 1)].value
+                            + list(ThingSizes)[random.randint(0, len(ThingSizes) - 1)].value
+                            + list(ThingColors)[random.randint(0, len(ThingColors) - 1)].value
                         )
                     # reset step counter
                     thing.stepCounter = 0
@@ -1393,9 +1301,7 @@ class ArrayFunction:
                         thing.delayCountMax = random.randint(1, 7)
                     # calculate affected range
                     index1 = thing.indexPrevious - (thing.size * thing.direction)
-                    index2 = thing.indexPrevious + (
-                        (thing.step + thing.size) * thing.direction
-                    )
+                    index2 = thing.indexPrevious + ((thing.step + thing.size) * thing.direction)
                     indexLower = min(index1, index2)
                     indexHigher = max(index1, index2)
                     # rng = np.array(range(_x1, _x2 + 1))
@@ -1409,7 +1315,7 @@ class ArrayFunction:
         except KeyboardInterrupt:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def overlayTwinkle(
@@ -1428,15 +1334,13 @@ class ArrayFunction:
         try:
             for index in range(ArrayFunction.Controller.realLEDCount):
                 if random.random() > twinkle.random:
-                    ArrayFunction.Controller.overlayDictionary[
-                        index
-                    ] = twinkle.colorSequenceNext
+                    ArrayFunction.Controller.overlayDictionary[index] = twinkle.colorSequenceNext
         except SystemExit:
             raise
         except KeyboardInterrupt:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex
 
     @staticmethod
     def overlayBlink(
@@ -1462,4 +1366,4 @@ class ArrayFunction:
         except KeyboardInterrupt:
             raise
         except Exception as ex:
-            raise LightFunctionException from ex
+            raise FunctionException from ex

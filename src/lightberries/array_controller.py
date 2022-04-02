@@ -13,10 +13,10 @@ from typing import (
     Any,
 )
 import numpy as np
-from lightberries import array_patterns
+from lightberries.array_patterns import ArrayPattern, ConvertPixelArrayToNumpyArray
 from lightberries.exceptions import (
     LightBerryException,
-    LightControlException,
+    ControllerException,
 )
 from lightberries.pixel import Pixel, PixelColors
 from lightberries.ws281x_strings import WS281xString
@@ -26,17 +26,6 @@ from lightberries.array_functions import (
     RaindropStates,
     SpriteState,
     ThingMoves,
-)
-from lightberries.array_patterns import (
-    SolidColorArray,
-    ConvertPixelArrayToNumpyArray,
-    RepeatingColorSequenceArray,
-    ColorTransitionArray,
-    RainbowArray,
-    RepeatingRainbowArray,
-    ReflectArray,
-    DefaultColorSequenceByMonth,
-    DEFAULT_BACKGROUND_COLOR,
 )
 
 
@@ -141,7 +130,7 @@ class ArrayController:
 
             # initialize instance variables
             self.privateLEDCount: int = len(self.ws281xString)
-            self.virtualLEDBuffer: np.ndarray[(3, Any), np.int32] = SolidColorArray(
+            self.virtualLEDBuffer: np.ndarray[(3, Any), np.int32] = ArrayPattern.SolidColorArray(
                 arrayLength=self.privateLEDCount,
                 color=PixelColors.OFF,
             )
@@ -174,7 +163,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def __del__(
         self,
@@ -201,7 +190,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     @property
     def virtualLEDCount(self) -> int:
@@ -436,7 +425,7 @@ class ArrayController:
             if self.virtualLEDCount > self.realLEDCount:
                 self.setvirtualLEDBuffer(self.virtualLEDBuffer[: self.realLEDCount])
             elif self.virtualLEDCount < self.realLEDCount:
-                array = array_patterns.SolidColorArray(arrayLength=self.realLEDCount, color=PixelColors.OFF)
+                array = ArrayPattern.SolidColorArray(arrayLength=self.realLEDCount, color=PixelColors.OFF)
                 array[: self.virtualLEDCount] = self.virtualLEDBuffer
                 self.setvirtualLEDBuffer(array)
         except SystemExit:
@@ -446,7 +435,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def setvirtualLEDBuffer(
         self,
@@ -470,11 +459,11 @@ class ArrayController:
             elif isinstance(ledBuffer, np.ndarray):
                 _ledBuffer = ledBuffer
             else:
-                _ledBuffer = SolidColorArray(arrayLength=self.realLEDCount, color=self.backgroundColor)
+                _ledBuffer = ArrayPattern.SolidColorArray(arrayLength=self.realLEDCount, color=self.backgroundColor)
 
                 # check assignment length
                 # if len(_ledBuffer) >= self.realLEDCount:
-                _ledBuffer = SolidColorArray(arrayLength=self.realLEDCount, color=self.backgroundColor)
+                _ledBuffer = ArrayPattern.SolidColorArray(arrayLength=self.realLEDCount, color=self.backgroundColor)
             _ledBufferLen = int(_ledBuffer.size / 3)
 
             # check assignment length
@@ -506,7 +495,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def copyVirtualLedsToWS281X(
         self,
@@ -547,7 +536,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def refreshLEDs(
         self,
@@ -572,7 +561,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def off(
         self,
@@ -597,7 +586,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def _runFunctions(
         self,
@@ -621,7 +610,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def _copyOverlays(
         self,
@@ -649,7 +638,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def getRandomIndex(
         self,
@@ -674,7 +663,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def getRandomIndices(
         self,
@@ -706,7 +695,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def getRandomDirection(self) -> int:
         """Get a random one or negative one to determine direction for light functions.
@@ -792,7 +781,7 @@ class ArrayController:
                 except LightBerryException:
                     raise
                 except Exception as ex:
-                    raise LightControlException from ex
+                    raise ControllerException from ex
             self.privateLastModeChange = time.time()
             if self.secondsPerMode is None:
                 self.privateNextModeChange = self.privateLastModeChange + (random.random(30, 120))
@@ -811,7 +800,7 @@ class ArrayController:
                 self.run.__name__,
                 ex,
             )
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useColorSingle(
         self,
@@ -834,9 +823,9 @@ class ArrayController:
         try:
 
             # defaults
-            _sequence: np.ndarray[(Any, 3), np.int32] = DefaultColorSequenceByMonth()
+            _sequence: np.ndarray[(Any, 3), np.int32] = ArrayPattern.DefaultColorSequenceByMonth()
             _foregroundColor: np.ndarray[(3,), np.int32] = _sequence[random.randint(0, len(_sequence) - 1)]
-            _backgroundColor = DEFAULT_BACKGROUND_COLOR
+            _backgroundColor = ArrayPattern.DEFAULT_BACKGROUND_COLOR
 
             # use the passed in color
             if foregroundColor is not None:
@@ -856,7 +845,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useColorSinglePseudoRandom(
         self,
@@ -875,7 +864,7 @@ class ArrayController:
         """
         LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSinglePseudoRandom.__name__)
         try:
-            _backgroundColor: np.ndarray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
+            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR
             # set background color
             if backgroundColor is not None:
                 _backgroundColor = Pixel(backgroundColor).array
@@ -890,7 +879,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useColorSingleRandom(
         self,
@@ -909,7 +898,7 @@ class ArrayController:
         """
         LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSingleRandom.__name__)
         try:
-            _backgroundColor: np.ndarray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
+            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR
             # set the background color to the default values
             if backgroundColor is not None:
                 _backgroundColor = Pixel(backgroundColor).array
@@ -924,7 +913,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useColorSequence(
         self,
@@ -945,8 +934,8 @@ class ArrayController:
         """
         LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSequence.__name__)
         try:
-            _backgroundColor: np.ndarray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
-            _colorSequence: np.ndarray[(Any, 3), np.int32] = DefaultColorSequenceByMonth()
+            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR
+            _colorSequence: np.ndarray[(Any, 3), np.int32] = ArrayPattern.DefaultColorSequenceByMonth()
             # set the color sequence to the default one for this month, or use the passed in argument
             if colorSequence is not None:
                 _colorSequence = [Pixel(p) for p in colorSequence]
@@ -963,7 +952,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useColorSequencePseudoRandom(
         self,
@@ -984,7 +973,7 @@ class ArrayController:
         """
         LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSequencePseudoRandom.__name__)
         try:
-            _backgroundColor: np.ndarray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
+            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR
             _sequenceLength: int = random.randint(self.realLEDCount // 20, self.realLEDCount // 10)
             # either calculate a sequence length or use the passed value
             if sequenceLength is not None:
@@ -1004,7 +993,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useColorSequenceRandom(
         self,
@@ -1025,7 +1014,7 @@ class ArrayController:
         """
         LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSequenceRandom.__name__)
         try:
-            _backgroundColor: np.ndarray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
+            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR
             _sequenceLength: int = random.randint(self.realLEDCount // 20, self.realLEDCount // 10)
             # set background color
             if backgroundColor is not None:
@@ -1043,7 +1032,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useColorSequenceRepeating(
         self,
@@ -1067,8 +1056,8 @@ class ArrayController:
         """
         LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSequenceRepeating.__name__)
         try:
-            _backgroundColor: np.ndarray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
-            _colorSequence: np.ndarray[(Any, 3), np.int32] = DefaultColorSequenceByMonth()
+            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR
+            _colorSequence: np.ndarray[(Any, 3), np.int32] = ArrayPattern.DefaultColorSequenceByMonth()
             # use argument or default
             if colorSequence is not None:
                 _colorSequence = [Pixel(p) for p in colorSequence]
@@ -1079,7 +1068,9 @@ class ArrayController:
             _arrayLength: int = np.ceil(self.realLEDCount / len(_colorSequence)) * len(_colorSequence)
             self.backgroundColor = _backgroundColor
             # create color sequence
-            self.colorSequence = RepeatingColorSequenceArray(arrayLength=_arrayLength, colorSequence=_colorSequence)
+            self.colorSequence = ArrayPattern.RepeatingColorSequenceArray(
+                arrayLength=_arrayLength, colorSequence=_colorSequence
+            )
         except KeyboardInterrupt:
             raise
         except SystemExit:
@@ -1087,7 +1078,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useColorTransition(
         self,
@@ -1115,8 +1106,8 @@ class ArrayController:
         """
         LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorTransition.__name__)
         try:
-            _backgroundColor: np.ndarray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
-            _colorSequence: np.ndarray[(Any, 3), np.int32] = DefaultColorSequenceByMonth()
+            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR
+            _colorSequence: np.ndarray[(Any, 3), np.int32] = ArrayPattern.DefaultColorSequenceByMonth()
             _stepsPerTransition: int = random.randint(3, 7)
             _wrap: bool = self.getRandomBoolean()
             # set color sequence
@@ -1130,7 +1121,7 @@ class ArrayController:
             if wrap is not None:
                 _wrap = bool(wrap)
             self.backgroundColor = _backgroundColor
-            self.colorSequence = ColorTransitionArray(
+            self.colorSequence = ArrayPattern.ColorTransitionArray(
                 arrayLength=len(_colorSequence) * int(_stepsPerTransition),
                 colorSequence=_colorSequence,
                 wrap=_wrap,
@@ -1142,7 +1133,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useColorTransitionRepeating(
         self,
@@ -1169,8 +1160,8 @@ class ArrayController:
         """
         LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorTransitionRepeating.__name__)
         try:
-            _backgroundColor: np.ndarray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
-            _colorSequence: np.ndarray[(3, Any), np.int32] = DefaultColorSequenceByMonth()
+            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR
+            _colorSequence: np.ndarray[(3, Any), np.int32] = ArrayPattern.DefaultColorSequenceByMonth()
             _stepsPerTransition: int = random.randint(3, 7)
             _wrap: bool = self.getRandomBoolean()
             if colorSequence is not None:
@@ -1181,14 +1172,16 @@ class ArrayController:
                 _wrap = bool(wrap)
             if backgroundColor is not None:
                 _backgroundColor = Pixel(backgroundColor).array
-            _tempColorSequence: np.ndarray[(3, Any), np.int32] = ColorTransitionArray(
+            _tempColorSequence: np.ndarray[(3, Any), np.int32] = ArrayPattern.ColorTransitionArray(
                 arrayLength=(len(_colorSequence) * _stepsPerTransition),
                 colorSequence=_colorSequence,
                 wrap=_wrap,
             )
             _arrayLength: int = np.ceil(self.realLEDCount / len(_tempColorSequence)) * len(_tempColorSequence)
             self.backgroundColor = _backgroundColor
-            self.colorSequence = RepeatingColorSequenceArray(arrayLength=_arrayLength, colorSequence=_tempColorSequence)
+            self.colorSequence = ArrayPattern.RepeatingColorSequenceArray(
+                arrayLength=_arrayLength, colorSequence=_tempColorSequence
+            )
         except KeyboardInterrupt:
             raise
         except SystemExit:
@@ -1196,7 +1189,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useColorRainbow(
         self,
@@ -1218,14 +1211,14 @@ class ArrayController:
         """
         LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorRainbow.__name__)
         try:
-            _backgroundColor: np.ndarray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
+            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR
             _rainbowPixelCount: int = random.randint(10, self.realLEDCount // 2)
             if backgroundColor is not None:
                 _backgroundColor = Pixel(backgroundColor).array
             if rainbowPixelCount is not None:
                 _rainbowPixelCount = int(rainbowPixelCount)
             self.backgroundColor = _backgroundColor
-            self.colorSequence = np.array(RainbowArray(arrayLength=_rainbowPixelCount))
+            self.colorSequence = np.array(ArrayPattern.RainbowArray(arrayLength=_rainbowPixelCount))
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -1233,7 +1226,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useColorRainbowRepeating(
         self,
@@ -1255,7 +1248,7 @@ class ArrayController:
         """
         LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorRainbowRepeating.__name__)
         try:
-            _backgroundColor: np.ndarray[(3,), np.int32] = DEFAULT_BACKGROUND_COLOR
+            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR
             _rainbowPixelCount: int = random.randint(10, self.realLEDCount // 2)
             if backgroundColor is not None:
                 _backgroundColor = Pixel(backgroundColor).array
@@ -1264,7 +1257,7 @@ class ArrayController:
             _arrayLength: int = np.ceil(self.realLEDCount / _rainbowPixelCount) * _rainbowPixelCount
             self.backgroundColor = _backgroundColor
             self.colorSequence = np.copy(
-                RepeatingRainbowArray(arrayLength=_arrayLength, segmentLength=_rainbowPixelCount)
+                ArrayPattern.RepeatingRainbowArray(arrayLength=_arrayLength, segmentLength=_rainbowPixelCount)
             )
         except SystemExit:
             raise
@@ -1273,7 +1266,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useFunctionNone(
         self,
@@ -1298,7 +1291,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useFunctionSolidColorCycle(
         self,
@@ -1338,7 +1331,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useFunctionMarquee(
         self,
@@ -1389,7 +1382,7 @@ class ArrayController:
             # this function just shifts the existing virtual LED buffer,
             # so make sure the virtual LED buffer is initialized here
             if self.colorSequenceCount >= self.virtualLEDCount - 10:
-                array = array_patterns.SolidColorArray(arrayLength=self.colorSequenceCount + 10, color=PixelColors.OFF)
+                array = ArrayPattern.SolidColorArray(arrayLength=self.colorSequenceCount + 10, color=PixelColors.OFF)
                 array[: self.colorSequenceCount] = self.colorSequence
                 self.setvirtualLEDBuffer(array)
             else:
@@ -1401,7 +1394,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useFunctionCylon(
         self,
@@ -1449,7 +1442,7 @@ class ArrayController:
             cylon.size = self.colorSequenceCount
             # adjust virtual LED buffer if necessary so that the cylon can actually move
             if self.virtualLEDCount < cylon.size:
-                array = array_patterns.SolidColorArray(arrayLength=cylon.size + 3, color=PixelColors.OFF)
+                array = ArrayPattern.SolidColorArray(arrayLength=cylon.size + 3, color=PixelColors.OFF)
                 array[: self.virtualLEDCount] = self.virtualLEDBuffer
                 self.setvirtualLEDBuffer(array)
             # set start and next indices
@@ -1467,7 +1460,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useFunctionMerge(
         self,
@@ -1508,7 +1501,7 @@ class ArrayController:
             _arrayLength = np.ceil(self.realLEDCount / self.colorSequenceCount) * self.colorSequenceCount
             # update LED buffer with any changes we had to make
             self.setvirtualLEDBuffer(
-                ReflectArray(
+                ArrayPattern.ReflectArray(
                     arrayLength=_arrayLength,
                     colorSequence=self.colorSequence,
                     foldLength=self.colorSequenceCount,
@@ -1531,7 +1524,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useFunctionAccelerate(
         self,
@@ -1603,7 +1596,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useFunctionRandomChange(
         self,
@@ -1695,7 +1688,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useFunctionMeteors(
         self,
@@ -1810,7 +1803,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useFunctionSprites(
         self,
@@ -1852,7 +1845,7 @@ class ArrayController:
                 # assign the target color
                 sprite.colorGoal = self.colorSequenceNext
                 # initialize sprite to
-                sprite.color = DEFAULT_BACKGROUND_COLOR
+                sprite.color = ArrayPattern.DEFAULT_BACKGROUND_COLOR
                 # copy color sequence
                 sprite.colorSequence = self.colorSequence
                 # set next color
@@ -1875,7 +1868,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useFunctionRaindrops(
         self,
@@ -1960,7 +1953,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useFunctionAlive(
         self,
@@ -2045,7 +2038,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useOverlayTwinkle(
         self,
@@ -2082,7 +2075,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def useOverlayBlink(
         self,
@@ -2115,7 +2108,7 @@ class ArrayController:
         except LightBerryException:
             raise
         except Exception as ex:
-            raise LightControlException from ex
+            raise ControllerException from ex
 
     def demo(
         self,
@@ -2184,9 +2177,9 @@ class ArrayController:
                             colors.remove(color)
 
             if len(functions) == 0:
-                raise LightControlException("No functions selected in demo")
+                raise ControllerException("No functions selected in demo")
             elif len(colors) == 0:
-                raise LightControlException("No colors selected in demo")
+                raise ControllerException("No colors selected in demo")
             else:
                 while True:
                     try:
@@ -2233,4 +2226,4 @@ class ArrayController:
                 self.demo.__name__,
                 ex,
             )
-            raise LightControlException from ex
+            raise ControllerException from ex

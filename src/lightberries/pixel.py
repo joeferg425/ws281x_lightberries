@@ -6,12 +6,12 @@ import random
 from typing import Any
 import numpy as np
 
-from lightberries.exceptions import LightBerryException, LightPixelException
+from lightberries.exceptions import LightBerryException, PixelException
 
 LOGGER = logging.getLogger("LightBerries")
 
 
-class EnumLEDOrder(enum.Enum):
+class LEDOrder(enum.Enum):
     """This enum is for LED order in the physical pixels.
 
     If your colors are all wrong, try a different enum.
@@ -21,16 +21,15 @@ class EnumLEDOrder(enum.Enum):
     GRB: list[int] = [1, 0, 2]
 
 
-DEFAULT_PIXEL_ORDER: list[int] = EnumLEDOrder.GRB.value
-
-
 class Pixel:
     """This class defines a single LED pixel."""
+
+    DEFAULT_PIXEL_ORDER: LEDOrder = LEDOrder.GRB
 
     def __init__(
         self,
         rgb: int | np.ndarray[(3), np.dtype[Any]] | "Pixel" | None = None,
-        order: EnumLEDOrder = DEFAULT_PIXEL_ORDER,
+        order: LEDOrder | None = None,
     ) -> None:
         """Create a single RGB LED pixel.
 
@@ -48,12 +47,12 @@ class Pixel:
             # initialize to zero
             self._value: int = 0
 
-            if isinstance(order, EnumLEDOrder):
-                _order = order.value
+            if order is None:
+                self._order = Pixel.DEFAULT_PIXEL_ORDER
+            elif isinstance(order, LEDOrder):
+                self._order = order
             else:
-                _order = order
-
-            self._order = _order
+                raise PixelException(f"Unknown RGB order: {order}")
 
             # none gets a zero
             if rgb is None:
@@ -70,10 +69,14 @@ class Pixel:
                 )
                 self._value = (
                     # use order enum
-                    (int(value[_order[0]]) << 16)
-                    + (int(value[_order[1]]) << 8)
-                    + (int(value[_order[2]]))
+                    (int(value[self._order.value[0]]) << 16)
+                    + (int(value[self._order.value[1]]) << 8)
+                    + (int(value[self._order.value[2]]))
                 )
+
+            # this is an instance of this class, just use the value
+            elif isinstance(rgb, Pixel):
+                self._value = rgb._value
 
             # if it is a tuple, list, or numpy array
             elif (
@@ -83,37 +86,31 @@ class Pixel:
                 # and has length three
             ) and len(rgb) == 3:
                 if rgb[0] > 255 or rgb[1] > 255 or rgb[2] > 255:
-                    raise LightPixelException(f"Invalid Pixel values: {rgb}")
+                    raise PixelException(f"Invalid Pixel values: {rgb}")
                 # create a 3-byte int from the three bytes
                 self._value = (
                     # this is where the rgb order comes into play
-                    (int(rgb[_order[0]]) << 16)
-                    + (int(rgb[_order[1]]) << 8)
-                    + (int(rgb[_order[2]]))
+                    (int(rgb[self._order.value[0]]) << 16)
+                    + (int(rgb[self._order.value[1]]) << 8)
+                    + (int(rgb[self._order.value[2]]))
                 )
 
             # i think this is old and unused
             # elif isinstance(rgb, PixelColors):
             # self._value = rgb.value._value
 
-            # this is an instance of this class, just use the value
-            elif isinstance(rgb, Pixel):
-                self._value = rgb._value
-
             # we've got an error boys!
             else:
-                raise LightPixelException(
-                    f"Cannot assign pixel using value: {str(rgb)} ({type(rgb)})"
-                )
+                raise PixelException(f"Cannot assign pixel using value: {str(rgb)} ({type(rgb)})")
 
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
-            raise LightPixelException from ex
+        except Exception as ex:  # pragma: no cover
+            raise PixelException from ex
 
     def __len__(
         self,
@@ -148,12 +145,7 @@ class Pixel:
             (self._value & 0xFF00) >> 8,
             self._value & 0xFF,
         )
-        return (
-            "PX #"
-            + f"{rgbValue[self._order[0]]:02X}"
-            + f"{rgbValue[self._order[1]]:02X}"
-            + f"{rgbValue[self._order[2]]:02X}"
-        )
+        return "PX #" + f"{rgbValue[0]:02X}" + f"{rgbValue[1]:02X}" + f"{rgbValue[2]:02X}"
 
     def __repr__(
         self,
@@ -163,7 +155,7 @@ class Pixel:
         Returns:
             a string representation of the Pixel instance
         """
-        return f"<{self.__class__.__name__}> {self.__str__()} ({self._value}/{self._order})"
+        return f"<{self.__class__.__name__}> {self.__str__()} ({self._value}/{self._order.name})"
 
     def __eq__(self, other: object) -> bool:
         """Text pixel equality with other objects.
@@ -174,10 +166,10 @@ class Pixel:
         Returns:
             true if objects are equal
         """
-        if not isinstance(other, (int, np.ndarray, tuple, Pixel, None)):
+        if other is None or not isinstance(other, (int, np.ndarray, tuple, Pixel)):
             return False
         # convert the pixel orders to the same order then compare
-        return self.pixel._value == Pixel(other).pixel._value
+        return self.pixel._value == Pixel(other, LEDOrder.RGB).pixel._value
 
     @property
     def tuple(
@@ -194,9 +186,9 @@ class Pixel:
             self._value & 0xFF,
         )
         return (
-            rgbTuple[self._order[0]],
-            rgbTuple[self._order[1]],
-            rgbTuple[self._order[2]],
+            rgbTuple[0],
+            rgbTuple[1],
+            rgbTuple[2],
         )
 
     @property
@@ -208,7 +200,7 @@ class Pixel:
         Returns:
             this pixel with default RGB order
         """
-        return Pixel(self.tuple, DEFAULT_PIXEL_ORDER)
+        return Pixel(self.tuple, self.DEFAULT_PIXEL_ORDER)
 
     @property
     def array(
@@ -239,34 +231,34 @@ class Pixel:
 class PixelColors:
     """List of commonly used colors for ease of use."""
 
-    OFF = Pixel((0, 0, 0), order=EnumLEDOrder.RGB).pixel.array
-    RED3 = Pixel((64, 0, 0), order=EnumLEDOrder.RGB).pixel.array
-    RED2 = Pixel((128, 0, 0), order=EnumLEDOrder.RGB).pixel.array
-    RED = Pixel((255, 0, 0), order=EnumLEDOrder.RGB).pixel.array
-    ORANGE3 = Pixel((64, 64, 0), order=EnumLEDOrder.RGB).pixel.array
-    ORANGE2 = Pixel((128, 128, 0), order=EnumLEDOrder.RGB).pixel.array
-    ORANGE = Pixel((255, 128, 0), order=EnumLEDOrder.RGB).pixel.array
-    YELLOW = Pixel((255, 210, 80), order=EnumLEDOrder.RGB).pixel.array
-    LIME = Pixel((128, 255, 0), order=EnumLEDOrder.RGB).pixel.array
-    GREEN3 = Pixel((0, 64, 0), order=EnumLEDOrder.RGB).pixel.array
-    GREEN2 = Pixel((0, 128, 0), order=EnumLEDOrder.RGB).pixel.array
-    GREEN = Pixel((0, 255, 0), order=EnumLEDOrder.RGB).pixel.array
-    TEAL = Pixel((0, 255, 128), order=EnumLEDOrder.RGB).pixel.array
-    CYAN3 = Pixel((0, 64, 64), order=EnumLEDOrder.RGB).pixel.array
-    CYAN2 = Pixel((0, 128, 128), order=EnumLEDOrder.RGB).pixel.array
-    CYAN = Pixel((0, 255, 255), order=EnumLEDOrder.RGB).pixel.array
-    SKY = Pixel((0, 128, 255), order=EnumLEDOrder.RGB).pixel.array
-    BLUE = Pixel((0, 0, 255), order=EnumLEDOrder.RGB).pixel.array
-    BLUE2 = Pixel((0, 0, 128), order=EnumLEDOrder.RGB).pixel.array
-    BLUE3 = Pixel((0, 0, 64), order=EnumLEDOrder.RGB).pixel.array
-    VIOLET = Pixel((128, 0, 255), order=EnumLEDOrder.RGB).pixel.array
-    PURPLE = Pixel((128, 0, 128), order=EnumLEDOrder.RGB).pixel.array
-    PURPLE2 = Pixel((64, 0, 64), order=EnumLEDOrder.RGB).pixel.array
-    MIDNIGHT = Pixel((70, 0, 128), order=EnumLEDOrder.RGB).pixel.array
-    MAGENTA = Pixel((255, 0, 255), order=EnumLEDOrder.RGB).pixel.array
-    PINK = Pixel((255, 0, 128), order=EnumLEDOrder.RGB).pixel.array
-    WHITE = Pixel((255, 255, 255), order=EnumLEDOrder.RGB).pixel.array
-    GRAY = Pixel((128, 118, 108), order=EnumLEDOrder.RGB).pixel.array
+    OFF = Pixel((0, 0, 0), order=LEDOrder.RGB).pixel.array
+    RED3 = Pixel((64, 0, 0), order=LEDOrder.RGB).pixel.array
+    RED2 = Pixel((128, 0, 0), order=LEDOrder.RGB).pixel.array
+    RED = Pixel((255, 0, 0), order=LEDOrder.RGB).pixel.array
+    ORANGE3 = Pixel((64, 64, 0), order=LEDOrder.RGB).pixel.array
+    ORANGE2 = Pixel((128, 128, 0), order=LEDOrder.RGB).pixel.array
+    ORANGE = Pixel((255, 128, 0), order=LEDOrder.RGB).pixel.array
+    YELLOW = Pixel((255, 210, 80), order=LEDOrder.RGB).pixel.array
+    LIME = Pixel((128, 255, 0), order=LEDOrder.RGB).pixel.array
+    GREEN3 = Pixel((0, 64, 0), order=LEDOrder.RGB).pixel.array
+    GREEN2 = Pixel((0, 128, 0), order=LEDOrder.RGB).pixel.array
+    GREEN = Pixel((0, 255, 0), order=LEDOrder.RGB).pixel.array
+    TEAL = Pixel((0, 255, 128), order=LEDOrder.RGB).pixel.array
+    CYAN3 = Pixel((0, 64, 64), order=LEDOrder.RGB).pixel.array
+    CYAN2 = Pixel((0, 128, 128), order=LEDOrder.RGB).pixel.array
+    CYAN = Pixel((0, 255, 255), order=LEDOrder.RGB).pixel.array
+    SKY = Pixel((0, 128, 255), order=LEDOrder.RGB).pixel.array
+    BLUE = Pixel((0, 0, 255), order=LEDOrder.RGB).pixel.array
+    BLUE2 = Pixel((0, 0, 128), order=LEDOrder.RGB).pixel.array
+    BLUE3 = Pixel((0, 0, 64), order=LEDOrder.RGB).pixel.array
+    VIOLET = Pixel((128, 0, 255), order=LEDOrder.RGB).pixel.array
+    PURPLE = Pixel((128, 0, 128), order=LEDOrder.RGB).pixel.array
+    PURPLE2 = Pixel((64, 0, 64), order=LEDOrder.RGB).pixel.array
+    MIDNIGHT = Pixel((70, 0, 128), order=LEDOrder.RGB).pixel.array
+    MAGENTA = Pixel((255, 0, 255), order=LEDOrder.RGB).pixel.array
+    PINK = Pixel((255, 0, 128), order=LEDOrder.RGB).pixel.array
+    WHITE = Pixel((255, 255, 255), order=LEDOrder.RGB).pixel.array
+    GRAY = Pixel((128, 118, 108), order=LEDOrder.RGB).pixel.array
 
     @classmethod
     def pseudoRandom(
@@ -278,10 +270,8 @@ class PixelColors:
             a single random color from the list of defined colors
         """
         colors = list(dir(PixelColors))
-        colors = [p for p in colors if "__" not in p and "random" not in p.lower()]
+        colors = [p for p in colors if "__" not in p and "random" not in p.lower() and "off" not in p.lower()]
         randomColor = colors[random.randint(0, len(colors) - 1)]
-        while randomColor == "OFF":
-            randomColor = colors[random.randint(0, len(colors) - 1)]
         return getattr(PixelColors, randomColor)
 
     @classmethod

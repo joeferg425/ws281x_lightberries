@@ -2,7 +2,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 import numpy as np
-from lightberries.exceptions import LightBerryException, LightPatternException
+from lightberries.exceptions import LightBerryException, PatternException
 from lightberries.pixel import Pixel
 from lightberries.array_patterns import DEFAULT_COLOR_SEQUENCE
 from enum import IntEnum
@@ -31,9 +31,7 @@ def Spectrum(rowCount: int, columnCount: int) -> np.ndarray[(Any, Any, 3), np.in
     matrix[:, :, 0] += column_scalers
     matrix[:, :, 0] = np.transpose(matrix.transpose((1, 0, 2))[:, :, 0] + row_scalers)
     matrix[:, :, 1] += np.flip(column_scalers)
-    matrix[:, :, 1] = np.transpose(
-        matrix.transpose((1, 0, 2))[:, :, 1] + np.flip(row_scalers)
-    )
+    matrix[:, :, 1] = np.transpose(matrix.transpose((1, 0, 2))[:, :, 1] + np.flip(row_scalers))
     matrix[:, :, 2] += np.flip(column_scalers)
     matrix[:, :, 2] = np.transpose(matrix.transpose((1, 0, 2))[:, :, 2] + row_scalers)
     return matrix  # .reshape((3,rowCount * columnCount))
@@ -90,12 +88,10 @@ def SolidColorMatrix(
     except LightBerryException:
         raise
     except Exception as ex:
-        raise LightPatternException from ex
+        raise PatternException from ex
 
 
-def TextMatrix(
-    text: str, color: np.ndarray[(Any, 3), np.int32]
-) -> np.ndarray[(Any, Any, 3), np.int32]:
+def TextMatrix(text: str, color: np.ndarray[(Any, 3), np.int32]) -> np.ndarray[(Any, Any, 3), np.int32]:
     from lightberries.matrix_letters import letters_to_matrices
 
     letters = letters_to_matrices(text + "     ")

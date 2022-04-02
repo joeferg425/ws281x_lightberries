@@ -8,9 +8,9 @@ import logging
 from typing import Any, Sequence, overload
 import numpy as np
 from lightberries.array_patterns import ConvertPixelArrayToNumpyArray
-from lightberries.exceptions import LightStringException, LightBerryException
+from lightberries.exceptions import WS281xStringException, LightBerryException
 from lightberries.rpi_ws281x_patch import rpi_ws281x
-from lightberries.pixel import EnumLEDOrder, Pixel, PixelColors
+from lightberries.pixel import Pixel, PixelColors
 
 LOGGER = logging.getLogger("LightBerries")
 
@@ -57,22 +57,17 @@ class WS281xString(Sequence[np.int_]):
         self.simulated_ws281xPixelStrip = None
         self.simulate = simulate
         # catch error cases first
-        if ledCount is None:
-            raise LightStringException(
-                "Cannot create LightString object without ledCount."
-            )
+        if ledCount is None or not isinstance(ledCount, int):
+            raise WS281xStringException(f"Cannot create LightString with ledCount: {ledCount}.")
         # use passed led count if it is valid
-        if ledCount is not None:
-            self._ledCount = ledCount
+        self._ledCount = ledCount
         if self.simulate:
-            self.simulated_ws281xPixelStrip = np.zeros((ledCount), dtype=np.int32)
+            self.simulated_ws281xPixelStrip = np.zeros((self._ledCount), dtype=np.int32)
         else:
             # cant run GPIO stuff without root, tell the user if they forgot
             # linux check is just for debugging with fake GPIO on windows
-            if (
-                sys.platform == "linux" and not os.getuid() == 0
-            ):  # pylint: disable = no-member
-                raise LightStringException(
+            if sys.platform == "linux" and not os.getuid() == 0:  # pylint: disable = no-member  # pragma: no cover
+                raise WS281xStringException(
                     "GPIO functionality requires root privilege. Please run command again as root"
                 )
 
@@ -98,14 +93,14 @@ class WS281xString(Sequence[np.int_]):
                     "%s Created WS281X object",
                     self.__class__.__name__,
                 )
-            except SystemExit:
+            except SystemExit:  # pragma: no cover
                 raise
-            except KeyboardInterrupt:
+            except KeyboardInterrupt:  # pragma: no cover
                 raise
-            except LightBerryException:
+            except LightBerryException:  # pragma: no cover
                 raise
-            except Exception as ex:
-                raise LightStringException from ex
+            except Exception as ex:  # pragma: no cover
+                raise WS281xStringException from ex
 
     def __del__(
         self,
@@ -127,14 +122,14 @@ class WS281xString(Sequence[np.int_]):
             # cleanup c memory usage
             try:
                 self.ws281xPixelStrip._cleanup()
-            except SystemExit:  # pylint:disable=try-except-raise
+            except SystemExit:  # pylint:disable=try-except-raise  # pragma: no cover
                 raise
-            except KeyboardInterrupt:  # pylint:disable=try-except-raise
+            except KeyboardInterrupt:  # pylint:disable=try-except-raise  # pragma: no cover
                 raise
-            except LightBerryException:
+            except LightBerryException:  # pragma: no cover
                 raise
-            except Exception as ex:
-                raise LightStringException from ex
+            except Exception as ex:  # pragma: no cover
+                raise WS281xStringException from ex
 
     def __len__(
         self,
@@ -146,24 +141,22 @@ class WS281xString(Sequence[np.int_]):
         """
         if self.ws281xPixelStrip:
             return self.ws281xPixelStrip.numPixels()
-        elif self.simulated_ws281xPixelStrip is not None:
-            return len(self.simulated_ws281xPixelStrip)
         else:
-            return 0
+            return len(self.simulated_ws281xPixelStrip)
 
     @overload
     def __getitem__(  # noqa D105
         self,
         idx: int,
     ) -> np.ndarray[(3,), np.int32]:
-        ...  # pylint: disable=pointless-statement
+        ...  # pylint: disable=pointless-statement  # pragma: no cover
 
     @overload
     def __getitem__(  # noqa D105 # pylint: disable=function-redefined
         self,
         s: slice,
     ) -> np.ndarray[(3, Any), np.int32]:
-        ...  # pylint: disable=pointless-statement
+        ...  # pylint: disable=pointless-statement  # pragma: no cover
 
     def __getitem__(  # pylint: disable=function-redefined
         self, key: int | slice
@@ -191,26 +184,20 @@ class WS281xString(Sequence[np.int_]):
             else:
                 if self.ws281xPixelStrip:
                     return ConvertPixelArrayToNumpyArray(
-                        [
-                            Pixel(self.ws281xPixelStrip.getPixelColor(k))
-                            for k in range(self._ledCount)[key]
-                        ]
+                        [Pixel(self.ws281xPixelStrip.getPixelColor(k)) for k in range(self._ledCount)[key]]
                     )
                 elif self.simulated_ws281xPixelStrip is not None:
                     return ConvertPixelArrayToNumpyArray(
-                        [
-                            Pixel(self.simulated_ws281xPixelStrip[k])
-                            for k in range(self._ledCount)[key]
-                        ]
+                        [Pixel(self.simulated_ws281xPixelStrip[k]) for k in range(self._ledCount)[key]]
                     )
-        except SystemExit:  # pylint:disable=try-except-raise
+        except SystemExit:  # pylint:disable=try-except-raise  # pragma: no cover
             raise
-        except KeyboardInterrupt:  # pylint:disable=try-except-raise
+        except KeyboardInterrupt:  # pylint:disable=try-except-raise  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
-            raise LightStringException from ex
+        except Exception as ex:  # pragma: no cover
+            raise WS281xStringException from ex
 
     def __setitem__(
         self,
@@ -232,26 +219,26 @@ class WS281xString(Sequence[np.int_]):
         try:
             if isinstance(key, slice):
                 for i, j in enumerate(range(self._ledCount)[key]):
-                    p = Pixel(value[i, :], EnumLEDOrder.RGB)
+                    p = Pixel(value[i, :])
                     if self.ws281xPixelStrip:
                         self.ws281xPixelStrip.setPixelColor(j, p.int)
                     else:
                         self.simulated_ws281xPixelStrip[j] = p.int
             else:
-                p = Pixel(value, EnumLEDOrder.RGB)
+                p = Pixel(value)
                 if self.ws281xPixelStrip:
                     self.ws281xPixelStrip.setPixelColor(key, p.int)
                 else:
                     self.simulated_ws281xPixelStrip[key] = p.int
 
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
-            raise LightStringException from ex
+        except Exception as ex:  # pragma: no cover
+            raise WS281xStringException from ex
 
     def __enter__(
         self,
@@ -292,12 +279,12 @@ class WS281xString(Sequence[np.int_]):
         for index in range(len(self)):
             try:
                 self[index] = PixelColors.OFF
-            except SystemExit:
+            except SystemExit:  # pragma: no cover
                 raise
-            except KeyboardInterrupt:
+            except KeyboardInterrupt:  # pragma: no cover
                 raise
-            except LightBerryException:
+            except LightBerryException:  # pragma: no cover
                 raise
-            except Exception as ex:
-                raise LightStringException from ex
+            except Exception as ex:  # pragma: no cover
+                raise WS281xStringException from ex
         self.refresh()

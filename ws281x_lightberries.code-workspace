@@ -147,7 +147,7 @@
 				"problemMatcher": [],
 				"dependsOn": [
 					"coverage"
-				]
+				],
 			}
 		]
 	}
