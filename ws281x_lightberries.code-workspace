@@ -92,6 +92,40 @@
 				"sudo": true
 			},
 			{
+				"name": "example: image",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/examples/image.py",
+				"console": "integratedTerminal",
+				"sudo": true
+			},
+			{
+				"name": "example: xbox",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/examples/xbox.py",
+				"console": "integratedTerminal",
+				"sudo": true,
+				"justMyCode": false
+			},
+			{
+				"name": "example: game",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/examples/game.py",
+				"console": "integratedTerminal",
+				"sudo": true,
+				"justMyCode": false
+			},
+			{
+				"name": "example: multi matrix",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/examples/multi_matrix.py",
+				"console": "integratedTerminal",
+				"sudo": true
+			},
+			{
 				"name": "Python: main",
 				"type": "python",
 				"request": "launch",

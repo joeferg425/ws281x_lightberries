@@ -2140,12 +2140,20 @@ class ArrayController:
 
             if functionNames is None:
                 functionNames = []
+            elif not isinstance(functionNames, list):
+                functionNames = [functionNames]
             if colorNames is None:
                 colorNames = []
+            elif not isinstance(colorNames, list):
+                colorNames = [colorNames]
             if skipFunctions is None:
                 skipFunctions = []
+            elif not isinstance(skipFunctions, list):
+                skipFunctions = [skipFunctions]
             if skipColors is None:
                 skipColors = []
+            elif not isinstance(skipColors, list):
+                skipColors = [skipColors]
 
             functions = self.getFunctionMethodsList()
             colors = self.getColorMethodsList()
