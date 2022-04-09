@@ -7,8 +7,6 @@ from lightberries.pixel import PixelColors  # noqa: ignore
 # the number of pixels in the light string
 PIXEL_ROW_COUNT = 16
 PIXEL_COLUMN_COUNT = 16
-# PIXEL_ROW_COUNT = 3
-# PIXEL_COLUMN_COUNT = 5
 # GPIO pin to use for PWM signal
 GPIO_PWM_PIN = 18
 # DMA channel

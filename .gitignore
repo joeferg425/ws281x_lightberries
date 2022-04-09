@@ -112,3 +112,4 @@ LightBerries/Sphinx-docs/
 *.log
 *.sh
 poetry.lock
+*.bmp
