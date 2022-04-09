@@ -213,6 +213,17 @@ class Pixel:
         """
         return np.array(self.tuple)
 
+    # @property
+    # def rgb_array(
+    #     self,
+    # ) -> np.ndarray[(3,), np.int_]:
+    #     """Return Pixel value as a numpy array.
+
+    #     Returns:
+    #         RGB value as a numpy array
+    #     """
+    #     return Pixel(self.array).array
+
     @property
     def hexstr(self):
         """Returns the color value as an RGB hex strings regardless of underlying RGB order.
@@ -231,39 +242,42 @@ class Pixel:
 class PixelColors:
     """List of commonly used colors for ease of use."""
 
-    OFF = Pixel((0, 0, 0), order=LEDOrder.RGB).array
-    RED3 = Pixel((64, 0, 0), order=LEDOrder.RGB).array
-    RED2 = Pixel((128, 0, 0), order=LEDOrder.RGB).array
-    RED = Pixel((255, 0, 0), order=LEDOrder.RGB).array
-    ORANGE3 = Pixel((64, 64, 0), order=LEDOrder.RGB).array
-    ORANGE2 = Pixel((128, 128, 0), order=LEDOrder.RGB).array
-    ORANGE = Pixel((255, 128, 0), order=LEDOrder.RGB).array
-    YELLOW = Pixel((255, 210, 80), order=LEDOrder.RGB).array
-    LIME = Pixel((128, 255, 0), order=LEDOrder.RGB).array
-    GREEN3 = Pixel((0, 64, 0), order=LEDOrder.RGB).array
-    GREEN2 = Pixel((0, 128, 0), order=LEDOrder.RGB).array
-    GREEN = Pixel((0, 255, 0), order=LEDOrder.RGB).array
-    TEAL = Pixel((0, 255, 128), order=LEDOrder.RGB).array
-    CYAN3 = Pixel((0, 64, 64), order=LEDOrder.RGB).array
-    CYAN2 = Pixel((0, 128, 128), order=LEDOrder.RGB).array
-    CYAN = Pixel((0, 255, 255), order=LEDOrder.RGB).array
-    SKY = Pixel((0, 128, 255), order=LEDOrder.RGB).array
-    BLUE = Pixel((0, 0, 255), order=LEDOrder.RGB).array
-    BLUE2 = Pixel((0, 0, 128), order=LEDOrder.RGB).array
-    BLUE3 = Pixel((0, 0, 64), order=LEDOrder.RGB).array
-    VIOLET = Pixel((128, 0, 255), order=LEDOrder.RGB).array
-    PURPLE = Pixel((128, 0, 128), order=LEDOrder.RGB).array
-    PURPLE2 = Pixel((64, 0, 64), order=LEDOrder.RGB).array
-    MIDNIGHT = Pixel((70, 0, 128), order=LEDOrder.RGB).array
-    MAGENTA = Pixel((255, 0, 255), order=LEDOrder.RGB).array
-    PINK = Pixel((255, 0, 128), order=LEDOrder.RGB).array
-    WHITE = Pixel((255, 255, 255), order=LEDOrder.RGB).array
-    GRAY = Pixel((128, 118, 108), order=LEDOrder.RGB).array
+    OFF = Pixel((0, 0, 0), order=LEDOrder.RGB)
+    RED4 = Pixel((31, 0, 0), order=LEDOrder.RGB)
+    RED3 = Pixel((63, 0, 0), order=LEDOrder.RGB)
+    RED2 = Pixel((127, 0, 0), order=LEDOrder.RGB)
+    RED = Pixel((255, 0, 0), order=LEDOrder.RGB)
+    ORANGE3 = Pixel((63, 63, 0), order=LEDOrder.RGB)
+    ORANGE2 = Pixel((127, 127, 0), order=LEDOrder.RGB)
+    ORANGE = Pixel((255, 127, 0), order=LEDOrder.RGB)
+    YELLOW = Pixel((255, 210, 80), order=LEDOrder.RGB)
+    LIME = Pixel((127, 255, 0), order=LEDOrder.RGB)
+    GREEN4 = Pixel((0, 31, 0), order=LEDOrder.RGB)
+    GREEN3 = Pixel((0, 63, 0), order=LEDOrder.RGB)
+    GREEN2 = Pixel((0, 127, 0), order=LEDOrder.RGB)
+    GREEN = Pixel((0, 255, 0), order=LEDOrder.RGB)
+    TEAL = Pixel((0, 255, 127), order=LEDOrder.RGB)
+    CYAN3 = Pixel((0, 63, 63), order=LEDOrder.RGB)
+    CYAN2 = Pixel((0, 127, 127), order=LEDOrder.RGB)
+    CYAN = Pixel((0, 255, 255), order=LEDOrder.RGB)
+    SKY = Pixel((0, 127, 255), order=LEDOrder.RGB)
+    BLUE = Pixel((0, 0, 255), order=LEDOrder.RGB)
+    BLUE2 = Pixel((0, 0, 127), order=LEDOrder.RGB)
+    BLUE3 = Pixel((0, 0, 63), order=LEDOrder.RGB)
+    BLUE4 = Pixel((0, 0, 31), order=LEDOrder.RGB)
+    VIOLET = Pixel((127, 0, 255), order=LEDOrder.RGB)
+    PURPLE = Pixel((127, 0, 127), order=LEDOrder.RGB)
+    PURPLE2 = Pixel((63, 0, 63), order=LEDOrder.RGB)
+    MIDNIGHT = Pixel((70, 0, 127), order=LEDOrder.RGB)
+    MAGENTA = Pixel((255, 0, 255), order=LEDOrder.RGB)
+    PINK = Pixel((255, 0, 127), order=LEDOrder.RGB)
+    WHITE = Pixel((255, 255, 255), order=LEDOrder.RGB)
+    GRAY = Pixel((127, 118, 108), order=LEDOrder.RGB)
 
     @classmethod
     def pseudoRandom(
         cls,
-    ) -> np.ndarray[(3,), np.int_]:
+    ) -> Pixel:
         """Get a random color from the list of defined colors.
 
         Returns:
@@ -277,7 +291,7 @@ class PixelColors:
     @classmethod
     def random(
         cls,
-    ) -> np.ndarray[(3,), np.int_]:
+    ) -> Pixel:
         """Get a randomly generated pixel value.
 
         Returns:
@@ -297,4 +311,4 @@ class PixelColors:
             blueLED = random.randint(0, 255)
         else:
             blueLED = 0
-        return Pixel([redLED, greenLED, blueLED]).array
+        return Pixel([redLED, greenLED, blueLED])

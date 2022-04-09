@@ -132,7 +132,7 @@ class ArrayController:
             self.privateLEDCount: int = len(self.ws281xString)
             self.virtualLEDBuffer: np.ndarray[(3, Any), np.int32] = ArrayPattern.SolidColorArray(
                 arrayLength=self.privateLEDCount,
-                color=PixelColors.OFF,
+                color=PixelColors.OFF.array,
             )
             self.virtualLEDIndexBuffer: np.ndarray[(Any,), np.int32] = np.array(range(len(self.ws281xString)))
             self.privateOverlayDict: Dict[int, np.ndarray[(3,), np.int32]] = {}
@@ -1442,7 +1442,7 @@ class ArrayController:
             cylon.size = self.colorSequenceCount
             # adjust virtual LED buffer if necessary so that the cylon can actually move
             if self.virtualLEDCount < cylon.size:
-                array = ArrayPattern.SolidColorArray(arrayLength=cylon.size + 3, color=PixelColors.OFF)
+                array = ArrayPattern.SolidColorArray(arrayLength=cylon.size + 3, color=PixelColors.OFF.array)
                 array[: self.virtualLEDCount] = self.virtualLEDBuffer
                 self.setvirtualLEDBuffer(array)
             # set start and next indices

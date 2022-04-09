@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 from typing import Callable
+from numpy.testing import assert_array_equal
 
 # import lightberries.pixel
 from lightberries.pixel import LEDOrder, Pixel, PixelColors
@@ -26,6 +27,8 @@ def test_pixel_creation_default():
     assert p.pixel == exp, f"Pixel.pixel: {p.pixel} != expected value: {exp}"
     exp = (0, 0, 0)
     assert p.tuple == exp, f"Pixel.tuple: {p.tuple} != expected value: {exp}"
+    exp = np.array([0, 0, 0])
+    assert_array_equal(p.array, exp, err_msg=f"Pixel.tuple: {p.array} != expected value: {exp}")
 
 
 def test_pixel_creation_None():
@@ -45,6 +48,8 @@ def test_pixel_creation_None():
     assert p.pixel == exp, f"Pixel.pixel: {p.pixel} != expected value: {exp}"
     exp = (0, 0, 0)
     assert p.tuple == exp, f"Pixel.tuple: {p.tuple} != expected value: {exp}"
+    exp = np.array([0, 0, 0])
+    assert_array_equal(p.array, exp, err_msg=f"Pixel.tuple: {p.array} != expected value: {exp}")
 
 
 def test_pixel_creation_invalid_rgb_value():
@@ -63,6 +68,8 @@ def test_pixel_int_value():
     """Test default pixel creation and attributes."""
     p = Pixel(0x100, order=LEDOrder.RGB)
     assert p.int == 0x100
+    exp = np.array([0, 1, 0])
+    assert_array_equal(p.array, exp, err_msg=f"Pixel.tuple: {p.array} != expected value: {exp}")
 
 
 def test_pixel_int_cast_value():
@@ -122,6 +129,8 @@ def test_pixel_creationint_args(arg: int | np.ndarray[(3), np.float32] | "Pixel"
     assert p.pixel == exp, f"Pixel.pixel: {p.pixel} != expected value: {exp}"
     exp = (1, 0, 0)
     assert p.tuple == exp, f"Pixel.tuple: {p.tuple} != expected value: {exp}"
+    exp = np.array([1, 0, 0])
+    assert_array_equal(p.array, exp, err_msg=f"Pixel.tuple: {p.array} != expected value: {exp}")
 
 
 @pytest.mark.parametrize(
@@ -149,6 +158,10 @@ def test_pixel_creation_pixel_order(arg: int | np.ndarray[(3), np.float32] | "Pi
     assert p.pixel == exp, f"Pixel.pixel: {p.pixel} != expected value: {exp}"
     exp = (0, 1, 0)
     assert p.tuple == exp, f"Pixel.tuple: {p.tuple} != expected value: {exp}"
+    exp = np.array([0, 1, 0])
+    assert_array_equal(p.array, exp, err_msg=f"Pixel.tuple: {p.array} != expected value: {exp}")
+    # exp = np.array([0, 1, 0])
+    # assert_array_equal(p.rgb_array, exp, err_msg=f"Pixel.tuple: {p.array} != expected value: {exp}")
 
 
 def test_pixel_creation_pixel_order_invalid():
@@ -173,6 +186,4 @@ def test_pixelcolors():
             if isinstance(p, Callable):
                 p = p()
             # check type and length of pixel's ndarray
-            assert isinstance(p, np.ndarray), f"Pixel: {p} is not {np.ndarray}"
-            exp = 3
-            assert len(p) == exp, f"Pixel length: {len(p)} is not {exp}"
+            assert isinstance(p, Pixel), f"Pixel: {p} is not {Pixel}"

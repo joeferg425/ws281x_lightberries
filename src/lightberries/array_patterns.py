@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 import logging
 import datetime
-from typing import Any, Tuple
+from typing import Any, Sequence
 import numpy as np
 from lightberries.exceptions import (
     LightBerryException,
@@ -15,7 +15,7 @@ LOGGER = logging.getLogger("LightBerries")
 
 
 def ConvertPixelArrayToNumpyArray(
-    colorSequence: Tuple[Pixel],
+    colorSequence: Sequence[Pixel],
 ) -> np.ndarray[(3, Any), np.int32]:
     """Convert an array of Pixels into a numpy array of rgb arrays.
 
@@ -33,7 +33,7 @@ def ConvertPixelArrayToNumpyArray(
     """
     try:
         if len(colorSequence) > 0:
-            return np.array([Pixel(p).array for p in colorSequence])
+            return np.array([p.array for p in colorSequence])
         else:
             return np.zeros((0, 3))
     except SystemExit:  # pragma: no cover
@@ -215,7 +215,7 @@ class ArrayPattern:
         """
         try:
             if arrayLength > 0:
-                return np.array([PixelColors.OFF for i in range(int(arrayLength))])
+                return np.array([PixelColors.OFF.array for i in range(int(arrayLength))])
             else:
                 return np.zeros((0, 3))
         except SystemExit:  # pragma: no cover
@@ -366,10 +366,10 @@ class ArrayPattern:
                 arrayLength=arrayLength,
                 colorSequence=np.array(
                     [
-                        PixelColors.RED,
-                        PixelColors.GREEN,
-                        PixelColors.BLUE,
-                        PixelColors.VIOLET,
+                        PixelColors.RED.array,
+                        PixelColors.GREEN.array,
+                        PixelColors.BLUE.array,
+                        PixelColors.VIOLET.array,
                     ]
                 ),
                 wrap=wrap,

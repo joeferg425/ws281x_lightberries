@@ -51,7 +51,7 @@ def test_single_assignment():
     led_count = 10
     ws281x = WS281xString(ledCount=led_count, simulate=True)
     for i in range(len(ws281x)):
-        random_color = PixelColors.random()
+        random_color = PixelColors.random().array
         ws281x[i] = random_color
         assigned_color = ws281x[i]
         assert_array_equal(assigned_color, random_color)

@@ -89,9 +89,9 @@ class ArrayFunction:
         else:
             self.colorSequence = colorSequence
         self.color: np.ndarray[(3,), np.int32] = self.colorSequence[0]
-        self.colorBegin: np.ndarray[(3,), np.int32] = PixelColors.OFF
-        self.colorNext: np.ndarray[(3,), np.int32] = PixelColors.OFF
-        self.colorGoal: np.ndarray[(3,), np.int32] = PixelColors.OFF
+        self.colorBegin: np.ndarray[(3,), np.int32] = PixelColors.OFF.array
+        self.colorNext: np.ndarray[(3,), np.int32] = PixelColors.OFF.array
+        self.colorGoal: np.ndarray[(3,), np.int32] = PixelColors.OFF.array
         self.colorScaler: float = 0
         self.colorFade: int = 1
         self.colorCycle: bool = False
@@ -125,11 +125,15 @@ class ArrayFunction:
         self.state: int = 0
         self.stateMax: int = 0
 
+        self.collision: bool = False
+        self.collisionEnabled: bool = False
+        self.collisionIntersection: np.ndarray[(Any,), np.int32] = []
+        self.collisionWith: Optional[ArrayFunction] = None
+        self.collisionRandomizer: bool = False
+
         self.explode: bool = False
         self.fadeType: LEDFadeType = LEDFadeType.FADE_OFF
-        self.collision: bool = False
-        self.collideWith: Optional[ArrayFunction] = None
-        self.collideIntersect: int = 0
+        self.privateCollision: bool = False
         self.indexRange: Optional[np.ndarray[(3, Any), np.int32]] = []
         self.dying: bool = False
         self.waking: bool = False
@@ -186,7 +190,7 @@ class ArrayFunction:
         Args:
             colorSequence: desired color sequence
         """
-        self.privateColorSequence = ConvertPixelArrayToNumpyArray(colorSequence)
+        self.privateColorSequence = colorSequence
         self.colorSequenceCount = len(self.privateColorSequence)
         self.colorSequenceIndex = 0
 
@@ -338,78 +342,102 @@ class ArrayFunction:
             LightFunctionException: if something bad happens
         """
         try:
-            foundBounce = False
+            foundcollision = False
             lightFunctions = ArrayFunction.Controller.functionList
             if len(lightFunctions) > 1:
-                for index1, meteor1 in enumerate(lightFunctions):
-                    if "function" in meteor1.runFunction.__name__:
+                for object1 in lightFunctions:
+                    object1.collision = False
+                    object1.collisionWith = None
+                for index1, object1 in enumerate(lightFunctions):
+                    object1.collision = False
+                    if object1.collisionEnabled:
                         if index1 + 1 < len(lightFunctions):
-                            for meteor2 in lightFunctions[index1 + 1 :]:
-                                if "function" in meteor2.runFunction.__name__:
-                                    if isinstance(meteor1.indexRange, np.ndarray) and isinstance(
-                                        meteor2.indexRange, np.ndarray
+                            for object2 in lightFunctions[index1 + 1 :]:
+                                if object2.collisionEnabled:
+                                    if isinstance(object1.indexRange, np.ndarray) and isinstance(
+                                        object2.indexRange, np.ndarray
                                     ):
                                         # this detects the intersection of two self._LightDataObjects'
                                         # movements across LEDs
-                                        intersection = np.intersect1d(meteor1.indexRange, meteor2.indexRange)
-                                        if len(intersection) > 0 and random.randint(0, 4) != 0:
-                                            meteor1.bounce = True
-                                            meteor1.collideWith = meteor2
-                                            meteor1.stepLast = meteor1.step
-                                            meteor1.collideIntersect = int(intersection[0])
-                                            meteor2.bounce = True
-                                            meteor2.collideWith = meteor1
-                                            meteor2.stepLast = meteor2.step
-                                            meteor2.collideIntersect = int(intersection[0])
-                                            foundBounce = True
+                                        intersection = np.intersect1d(object1.indexRange, object2.indexRange)
+                                        if len(intersection) > 0 and (
+                                            object1.collisionRandomizer is False or random.randint(0, 4) != 0
+                                        ):
+                                            object1.collision = True
+                                            object1.privateCollision = True
+                                            object1.collisionWith = object2
+                                            object1.stepLast = object1.step
+                                            object1.collisionIntersection = intersection
+                                            object2.privateCollision = True
+                                            object2.collision = True
+                                            object2.collisionWith = object1
+                                            object2.stepLast = object2.step
+                                            object2.collisionIntersection = intersection.copy()
+                                            foundcollision = True
             explosionIndices = []
             explosionColors = []
-            if foundBounce is True:
-                for func in lightFunctions:
-                    if "function" in func.runFunction.__name__:
-                        if func.bounce is True:
-                            if isinstance(func.collideWith, ArrayFunction):
-                                othermeteor = func.collideWith
+            if foundcollision is True:
+                for object1 in lightFunctions:
+                    if object1.collisionEnabled:
+                        if object1.privateCollision is True:
+                            if isinstance(object1.collisionWith, ArrayFunction):
+                                object2 = object1.collisionWith
                                 # previous = int(meteor.step)
-                                if (func.direction * othermeteor.direction) < 0:
-                                    func.direction *= -1
-                                    othermeteor.direction *= -1
+                                if (object1.direction * object2.direction) < 0:
+                                    object1.direction *= -1
+                                    object2.direction *= -1
+                                    object1.index = int(
+                                        int(object1.collisionIntersection[0] + object1.direction)
+                                        % ArrayFunction.Controller.virtualLEDCount
+                                    )
+                                    object2.index = int(
+                                        int(object2.collisionIntersection[0] + object2.direction)
+                                        % ArrayFunction.Controller.virtualLEDCount
+                                    )
                                 else:
-                                    temp = othermeteor.step
-                                    othermeteor.step = func.step
-                                    func.step = temp
-                                func.index = (
-                                    func.collideIntersect + (func.step * func.direction)
-                                ) % ArrayFunction.Controller.virtualLEDCount
-                                othermeteor.index = (
-                                    func.index + othermeteor.direction
-                                ) % ArrayFunction.Controller.virtualLEDCount
-                                func.indexPrevious = func.collideIntersect
-                                othermeteor.indexPrevious = othermeteor.collideIntersect
-                                func.bounce = False
-                                othermeteor.collision = False
-                                func.collideWith = None
-                                othermeteor.collideWith = None
+                                    temp = object2.step
+                                    object2.step = object1.step
+                                    object1.step = temp
+                                    object1_delta = object1.step - object2.step
+                                    object2_delta = object2.step - object1.step
+                                    if object1.step > object2.step:
+                                        object2_delta += object2.direction
+                                    else:
+                                        object1_delta += object1.direction
+                                    object1.index = (
+                                        int(object1.index + object1_delta) % ArrayFunction.Controller.virtualLEDCount
+                                    )
+                                    object2.index = (
+                                        int(object2.index + object2_delta) % ArrayFunction.Controller.virtualLEDCount
+                                    )
+                                object1.indexPrevious = object1.collisionIntersection
+                                object2.indexPrevious = object2.collisionIntersection
+                                object1.privateCollision = False
+                                object2.privateCollision = False
                                 if collision.explode:
-                                    if isinstance(func.indexRange, np.ndarray):
-                                        middle = func.indexRange[len(func.indexRange) // 2]
+                                    if isinstance(object1.collisionIntersection, np.ndarray):
+                                        middle = object1.collisionIntersection[len(object1.collisionIntersection) // 2]
                                     radius = ArrayFunction.Controller.realLEDCount // 20
-                                    for i in range(radius):
+                                    if radius == 0:
+                                        radius = 1
+                                    explosionIndices.append(middle)
+                                    explosionColors.append(PixelColors.YELLOW.array)
+                                    for i in range(1, radius + 1):
                                         explosionIndices.append(
                                             (middle - i) % ArrayFunction.Controller.virtualLEDCount,
                                         )
                                         explosionColors.append(
-                                            Pixel(PixelColors.YELLOW) * (radius - i) / radius,
+                                            PixelColors.YELLOW.array * ((radius - i) / radius),
                                         )
 
                                         explosionIndices.append(
                                             (middle + i) % ArrayFunction.Controller.virtualLEDCount,
                                         )
                                         explosionColors.append(
-                                            Pixel(PixelColors.YELLOW) * (radius - i) / radius,
+                                            PixelColors.YELLOW.array * ((radius - i) / radius),
                                         )
                                     ArrayFunction.Controller.virtualLEDBuffer[explosionIndices] = np.array(
-                                        explosionColors
+                                        (explosionColors)
                                     )
         except KeyboardInterrupt:  # pragma: no cover
             raise
@@ -487,7 +515,7 @@ class ArrayFunction:
             LightFunctionException: if something bad happens
         """
         try:
-            pass
+            pass  # pragma: no cover
         except KeyboardInterrupt:  # pragma: no cover
             raise
         except SystemExit:  # pragma: no cover
