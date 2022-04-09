@@ -249,14 +249,14 @@ class LightMatrixFunction(ArrayFunction):
                 )
                 + firework.rowIndex
             )
-            i1 = np.where((x >= firework.Controller.realLEDRowCount) | (x < 0))[0]
+            i1 = np.where((x >= firework.Controller.realLEDColumnCount) | (x < 0))[0]
             y = (
                 np.round(np.cos(np.linspace(0, 2 * np.pi, 1 + (4 * firework.size))) * (firework.size)).astype(
                     dtype=np.int32
                 )
                 + firework.columnIndex
             )
-            i2 = np.where((y >= firework.Controller.realLEDColumnCount) | (y < 0))[0]
+            i2 = np.where((y >= firework.Controller.realLEDRowCount) | (y < 0))[0]
             if len(i1) > 0 and len(i2) > 0:
                 i = np.concatenate((i1, i2))
             elif len(i1) > 0:

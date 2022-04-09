@@ -1,6 +1,6 @@
 from __future__ import annotations
 import random
-from typing import Any, Callable
+from typing import Any, Callable, Tuple
 
 import numpy as np
 from lightberries.array_controller import ArrayController
@@ -38,6 +38,8 @@ class MatrixController(ArrayController):
         verbose: bool = False,
         refreshCallback: Callable = None,
         simulate: bool = False,
+        matrixCount: int = None,
+        matrixShape: Tuple[int, int] | None = None,
     ) -> None:
         if not ledRowCount:
             ledRowCount = 4
@@ -67,12 +69,14 @@ class MatrixController(ArrayController):
         self.virtualLEDRowCount = ledRowCount
         self.virtualLEDColumnCount = ledColumnCount
         self.virtualLEDIndexBuffer: np.ndarray[(Any,), np.int32]
+        self.matrixCount = matrixCount
+        self.matrixShape = matrixShape
         self.setvirtualLEDBuffer(
             SolidColorMatrix(
                 self.realLEDRowCount,
                 self.realLEDColumnCount,
                 color=PixelColors.OFF,
-            )
+            ),
         )
 
         # give LightFunction class a pointer to this class
@@ -131,24 +135,65 @@ class MatrixController(ArrayController):
             ledArray = np.reshape(ledMatrix, (self.virtualLEDRowCount * self.virtualLEDColumnCount, 3))
         else:
             ledArray = ledMatrix.copy()
-        super().setvirtualLEDBuffer(ledArray)
         self.virtualLEDBuffer = ledMatrix
         self.privateVirtualLEDCount = int(ledMatrix.size / 3)
-        self.virtualLEDIndexBuffer = np.arange(self.virtualLEDCount)
-        if DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseColumnThenRow:
-            self.virtualLEDIndexBuffer = np.reshape(
-                self.virtualLEDIndexBuffer,
-                (self.virtualLEDRowCount, self.virtualLEDColumnCount),
-            )
-            for i in range(1, self.virtualLEDRowCount, 2):
-                self.virtualLEDIndexBuffer[i, :] = np.flip(self.virtualLEDIndexBuffer[i, :])
-        elif DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseRowThenColumn:
-            self.virtualLEDIndexBuffer = np.reshape(
-                self.virtualLEDIndexBuffer,
-                (self.virtualLEDRowCount, self.virtualLEDColumnCount),
-            )
-            for i in range(1, self.virtualLEDColumnCount, 2):
-                self.virtualLEDIndexBuffer[i, :] = np.flip(self.virtualLEDIndexBuffer[i, :])
+        if self.matrixCount is None:
+            self.setvirtualLEDBuffer(ledArray)
+            self.virtualLEDBuffer = ledMatrix
+            self.privateVirtualLEDCount = int(ledMatrix.size / 3)
+            self.virtualLEDIndexBuffer = np.arange(self.virtualLEDCount)
+            if DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseColumnThenRow:
+                self.virtualLEDIndexBuffer = np.reshape(
+                    self.virtualLEDIndexBuffer,
+                    (self.virtualLEDRowCount, self.virtualLEDColumnCount),
+                )
+                for i in range(1, self.virtualLEDRowCount, 2):
+                    self.virtualLEDIndexBuffer[i, :] = np.flip(self.virtualLEDIndexBuffer[i, :])
+            elif DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseRowThenColumn:
+                self.virtualLEDIndexBuffer = np.reshape(
+                    self.virtualLEDIndexBuffer,
+                    (self.virtualLEDRowCount, self.virtualLEDColumnCount),
+                )
+                for i in range(1, self.virtualLEDColumnCount, 2):
+                    self.virtualLEDIndexBuffer[i, :] = np.flip(self.virtualLEDIndexBuffer[i, :])
+        else:
+            matrix_led_count = self.matrixShape[0] * self.matrixShape[1]
+            led_count = ledMatrix.shape[0] * ledMatrix.shape[1]
+            if led_count % self.realLEDCount:
+                led_count -= led_count % matrix_led_count
+                led_count += self.realLEDCount
+            self.virtualLEDIndexBuffer = np.zeros((self.realLEDRowCount, self.realLEDColumnCount), dtype=np.int32)
+            for matrix_index in range(int(led_count / matrix_led_count)):
+                temp = np.arange(matrix_led_count, dtype=np.int32)
+                if DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseColumnThenRow:
+                    temp = np.reshape(
+                        temp,
+                        (self.matrixShape[0], self.matrixShape[1]),
+                        order="F",
+                    )
+                    for i in range(1, self.matrixShape[0], 2):
+                        temp[:, i] = np.flip(temp[:, i])
+                elif DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseRowThenColumn:
+                    temp = np.reshape(
+                        temp,
+                        (self.matrixShape[0], self.matrixShape[1]),
+                    )
+                    for i in range(1, self.matrixShape[1], 2):
+                        temp[i, :] = np.flip(temp[i, :])
+                temp += matrix_led_count * matrix_index
+                self.virtualLEDIndexBuffer[
+                    :, matrix_index * self.matrixShape[0] : (matrix_index + 1) * self.matrixShape[0]
+                ] = temp
+            if DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseColumnThenRow:
+                self.virtualLEDIndexBuffer = np.reshape(
+                    self.virtualLEDIndexBuffer,
+                    (self.matrixShape[0] * self.matrixCount * self.matrixShape[1]),
+                    order="F",
+                )
+            elif DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseRowThenColumn:
+                self.virtualLEDIndexBuffer = np.reshape(
+                    self.virtualLEDIndexBuffer, (self.matrixShape[0] * self.matrixCount * self.matrixShape[1])
+                )
 
     def reset(
         self,
@@ -495,7 +540,8 @@ class MatrixController(ArrayController):
         """
         LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionMatrixFireworks.__name__)
         try:
-            _fadeAmount: float = random.randint(10, 50) / 100.0
+            if fadeAmount is None:
+                fadeAmount: float = random.randint(10, 50) / 100.0
             # _fadeAmount: float = 0.0
             _delayCount: int = random.randint(1, 6)
             # _delayCount: int = 1
@@ -534,7 +580,7 @@ class MatrixController(ArrayController):
                 firework.columnIndex = random.randint(0, self.realLEDColumnCount - 1)
                 firework.size = 1
                 firework.step = 1
-                firework.sizeMax = max(self.realLEDRowCount, self.realLEDColumnCount)
+                firework.sizeMax = min(self.realLEDRowCount, self.realLEDColumnCount)
                 firework.delayCounter = 0
                 # set refresh limit (after which this function will execute)
                 firework.delayCountMax = _delayCount
