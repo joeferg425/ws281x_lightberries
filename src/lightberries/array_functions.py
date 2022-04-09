@@ -1,13 +1,13 @@
 """This file defines functions that modify the LED patterns in interesting ways."""
 from __future__ import annotations
-from typing import Callable, Any, ClassVar, Optional
+from typing import Callable, Any, Optional
 import logging
 import random
 from enum import IntEnum
 import numpy as np
-import lightberries  # noqa : used in typing
+import lightberries.array_controller  # noqa : used in typing
 from lightberries.exceptions import FunctionException, LightBerryException
-from lightberries.pixel import Pixel, PixelColors
+from lightberries.pixel import Pixel, PixelColors, LEDOrder
 from lightberries.array_patterns import ArrayPattern, ConvertPixelArrayToNumpyArray
 
 # pylint: disable=no-member
@@ -66,12 +66,11 @@ class ThingColors(IntEnum):
 class ArrayFunction:
     """This class defines everything necessary to modify LED patterns in interesting ways."""
 
-    Controller: ClassVar["lightberries.pixel_array_controls.LightController"]
-
     def __init__(
         self,
+        arrayController: lightberries.array_controller.ArrayController,
         funcPointer: Callable,
-        colorSequence: np.ndarray[(3, Any), np.int32],
+        colorSequence: np.ndarray[(3, Any), np.int32] = None,
     ) -> None:
         """Initialize the Light Function tracking object.
 
@@ -79,13 +78,16 @@ class ArrayFunction:
             funcPointer: a function pointer that updates LEDs in the LightArrayController object.
             colorSequence: a sequence of RGB values.
         """
+        self.controller = arrayController
+
         self.privateColorSequence: np.ndarray[(3, Any), np.int32] = ConvertPixelArrayToNumpyArray([])
         self.privateColorSequenceCount: int = 0
         self.privateColorSequenceIndex: int = 0
 
-        self.colorSequence = colorSequence
-        if self.colorSequence is None or len(self.colorSequence) == 0:
+        if colorSequence is None or len(colorSequence) == 0:
             self.colorSequence = ArrayPattern.DefaultColorSequenceByMonth()
+        else:
+            self.colorSequence = colorSequence
         self.color: np.ndarray[(3,), np.int32] = self.colorSequence[0]
         self.colorBegin: np.ndarray[(3,), np.int32] = PixelColors.OFF
         self.colorNext: np.ndarray[(3,), np.int32] = PixelColors.OFF
@@ -97,18 +99,18 @@ class ArrayFunction:
         self.funcName: str = funcPointer.__name__
         self.runFunction: Callable = funcPointer
 
-        self.index: int = 0
-        self.indexNext: int = self.index
-        self.indexPrevious: int = self.index
-        self.indexMin: int = self.index
-        self.indexMax: int = self.index
-        self.indexUpdated: bool = False
-
         self.step: int = 1
         self.stepLast: int = 0
         self.stepCounter: int = 0
         self.stepCountMax: int = 0
         self.stepSizeMax: int = 1
+
+        self.index: int = 0
+        self.indexNext: int = self.index
+        self.indexPrevious: int = (self.index - 1) % self.controller.realLEDCount
+        self.indexMin: int = self.index
+        self.indexMax: int = self.index
+        self.indexUpdated: bool = False
 
         self.size: int = 1
         self.sizeMin: int = 1
@@ -138,6 +140,8 @@ class ArrayFunction:
         self.random: float = 0.5
         self.flipLength: int = 0
 
+        self.first: bool = True
+
     def __str__(
         self,
     ) -> str:
@@ -146,7 +150,7 @@ class ArrayFunction:
         Returns:
             String representation of this object
         """
-        return f'[{self.index}]: "{self.funcName}" {Pixel(self.color)}'
+        return f'[{self.index}]: "{self.funcName}" {Pixel(self.color, LEDOrder.RGB)}'
 
     def __repr__(
         self,
@@ -245,10 +249,7 @@ class ArrayFunction:
         self.colorSequenceIndex += 1
         if self.colorSequenceIndex >= self.colorSequenceCount:
             self.colorSequenceIndex = 0
-        if isinstance(temp, Pixel):
-            return temp.array
-        else:
-            return temp
+        return temp
 
     def doFade(
         self,
@@ -261,54 +262,41 @@ class ArrayFunction:
             LightFunctionException: if something bad happens
         """
         try:
-            if self.delayCounter >= self.delayCountMax:
-                self.delayCounter = 0
+            self.delayCounter += 1
+            if self.delayCounter == self.delayCountMax:
                 for rgbIndex in range(len(self.color)):
                     if self.color[rgbIndex] != self.colorNext[rgbIndex]:
-                        if self.color[rgbIndex] - self.colorFade > self.colorNext[rgbIndex]:
+                        if self.color[rgbIndex] - self.colorFade >= self.colorNext[rgbIndex]:
                             self.color[rgbIndex] -= self.colorFade
-                        elif self.color[rgbIndex] + self.colorFade < self.colorNext[rgbIndex]:
+                        elif self.color[rgbIndex] + self.colorFade <= self.colorNext[rgbIndex]:
                             self.color[rgbIndex] += self.colorFade
                         else:
                             self.color[rgbIndex] = self.colorNext[rgbIndex]
-            self.delayCounter += 1
-            # self._virtualLEDBuffer[self.index] = np.copy(self.color)
-        except SystemExit:
+            if self.delayCounter >= self.delayCountMax:
+                self.delayCounter = 0
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise FunctionException from ex
 
-    def doMove(
+    def updateArrayIndex(
         self,
     ) -> None:
         """Update the object index."""
         self.indexPrevious = self.index
-        newIndexNoModulo = self.index + (self.step * self.direction)
-        self.index = (self.index + (self.step * self.direction)) % (ArrayFunction.Controller.virtualLEDCount - 1)
-        self.indexRange = np.array(
-            list(
-                range(
-                    self.indexPrevious,
-                    newIndexNoModulo,
-                    self.direction,
-                )
-            )
-        )
-        modulo = np.where(self.indexRange >= (ArrayFunction.Controller.virtualLEDCount - 1))
-        self.indexRange[modulo] -= ArrayFunction.Controller.virtualLEDCount
-        modulo = np.where(self.indexRange < 0)
-        self.indexRange[modulo] += ArrayFunction.Controller.virtualLEDCount
-        self.index = self.indexRange[-1]
+        self.calcRange()
+        self.indexPrevious = self.index
+        self.index = int(self.indexRange[-1])
         self.indexUpdated = True
 
     def calcRange(
         self,
-        indexFrom: int,
-        indexTo: int,
+        # indexFrom: int,
+        # indexTo: int,
     ) -> np.ndarray[(Any,), np.int32]:
         """Calculate index range.
 
@@ -319,16 +307,21 @@ class ArrayFunction:
         Returns:
             array of indices
         """
-        if indexTo >= indexFrom:
-            direction = 1
-        else:
-            direction = -1
-        rng = np.arange(start=indexFrom, stop=indexTo, step=direction, dtype=np.int32)
-        modulo = np.where(rng >= (ArrayFunction.Controller.virtualLEDCount - 1))
-        rng[modulo] -= ArrayFunction.Controller.virtualLEDCount
-        modulo = np.where(rng < 0)
-        rng[modulo] += ArrayFunction.Controller.virtualLEDCount
-        return rng
+        newIndexNoModulo = self.index + (self.step * self.direction)
+        self.indexRange = np.array(
+            list(
+                range(
+                    self.indexPrevious + self.direction,
+                    newIndexNoModulo + self.direction,
+                    self.direction,
+                )
+            )
+        )
+        modulo = np.where(self.indexRange >= (ArrayFunction.Controller.virtualLEDCount))
+        self.indexRange[modulo] -= ArrayFunction.Controller.virtualLEDCount
+        modulo = np.where(self.indexRange < 0)
+        self.indexRange[modulo] += ArrayFunction.Controller.virtualLEDCount
+        return self.indexRange
 
     @staticmethod
     def functionCollisionDetection(
@@ -372,34 +365,34 @@ class ArrayFunction:
             explosionIndices = []
             explosionColors = []
             if foundBounce is True:
-                for meteor in lightFunctions:
-                    if "function" in meteor.runFunction.__name__:
-                        if meteor.bounce is True:
-                            if isinstance(meteor.collideWith, ArrayFunction):
-                                othermeteor = meteor.collideWith
+                for func in lightFunctions:
+                    if "function" in func.runFunction.__name__:
+                        if func.bounce is True:
+                            if isinstance(func.collideWith, ArrayFunction):
+                                othermeteor = func.collideWith
                                 # previous = int(meteor.step)
-                                if (meteor.direction * othermeteor.direction) < 0:
-                                    meteor.direction *= -1
+                                if (func.direction * othermeteor.direction) < 0:
+                                    func.direction *= -1
                                     othermeteor.direction *= -1
                                 else:
                                     temp = othermeteor.step
-                                    othermeteor.step = meteor.step
-                                    meteor.step = temp
-                                meteor.index = (
-                                    meteor.collideIntersect + (meteor.step * meteor.direction)
+                                    othermeteor.step = func.step
+                                    func.step = temp
+                                func.index = (
+                                    func.collideIntersect + (func.step * func.direction)
                                 ) % ArrayFunction.Controller.virtualLEDCount
                                 othermeteor.index = (
-                                    meteor.index + othermeteor.direction
+                                    func.index + othermeteor.direction
                                 ) % ArrayFunction.Controller.virtualLEDCount
-                                meteor.indexPrevious = meteor.collideIntersect
+                                func.indexPrevious = func.collideIntersect
                                 othermeteor.indexPrevious = othermeteor.collideIntersect
-                                meteor.bounce = False
+                                func.bounce = False
                                 othermeteor.collision = False
-                                meteor.collideWith = None
+                                func.collideWith = None
                                 othermeteor.collideWith = None
                                 if collision.explode:
-                                    if isinstance(meteor.indexRange, np.ndarray):
-                                        middle = meteor.indexRange[len(meteor.indexRange) // 2]
+                                    if isinstance(func.indexRange, np.ndarray):
+                                        middle = func.indexRange[len(func.indexRange) // 2]
                                     radius = ArrayFunction.Controller.realLEDCount // 20
                                     for i in range(radius):
                                         explosionIndices.append(
@@ -418,13 +411,13 @@ class ArrayFunction:
                                     ArrayFunction.Controller.virtualLEDBuffer[explosionIndices] = np.array(
                                         explosionColors
                                     )
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise FunctionException from ex
 
     @staticmethod
@@ -443,13 +436,13 @@ class ArrayFunction:
         """
         try:
             ArrayFunction.Controller.virtualLEDBuffer[:] *= 0
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise FunctionException from ex
 
     @staticmethod
@@ -470,13 +463,13 @@ class ArrayFunction:
             ArrayFunction.Controller.virtualLEDBuffer[:] = ArrayFunction.Controller.virtualLEDBuffer * (
                 1 - fade.fadeAmount
             )
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise FunctionException from ex
 
     @staticmethod
@@ -495,13 +488,13 @@ class ArrayFunction:
         """
         try:
             pass
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise FunctionException from ex
 
     @staticmethod
@@ -529,13 +522,13 @@ class ArrayFunction:
                 ArrayFunction.Controller.virtualLEDBuffer += cycle.colorSequenceNext
             # increment delay counter
             cycle.delayCounter += 1
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise FunctionException from ex
 
     @staticmethod
@@ -593,13 +586,13 @@ class ArrayFunction:
             )
             # update LEDs with new values
             ArrayFunction.Controller.virtualLEDBuffer[np.sort(marquee.indexRange)] = marquee.colorSequence
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise FunctionException from ex
 
     @staticmethod
@@ -670,13 +663,13 @@ class ArrayFunction:
             ArrayFunction.Controller.virtualLEDBuffer[cylon.indexRange] = cylon.colorSequence[
                 : ArrayFunction.Controller.virtualLEDCount
             ]
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise FunctionException from ex
 
     @staticmethod
@@ -728,13 +721,13 @@ class ArrayFunction:
                     temp, (ArrayFunction.Controller.virtualLEDCount)
                 )
             merge.delayCounter += 1
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise FunctionException from ex
 
     @staticmethod
@@ -834,13 +827,13 @@ class ArrayFunction:
                     accelerate.color, ArrayFunction.Controller.backgroundColor, 50
                 )
 
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise FunctionException from ex
 
     @staticmethod
@@ -928,13 +921,13 @@ class ArrayFunction:
                 change.color = change.colorNext
             # assign LED color to LED string
             ArrayFunction.Controller.virtualLEDBuffer[change.index] = change.color
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise FunctionException from ex
 
     @staticmethod
@@ -987,13 +980,13 @@ class ArrayFunction:
                 ArrayFunction.Controller.virtualLEDBuffer[meteor.indexRange] = meteor.color
             # update delay counter
             meteor.delayCounter += 1
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise FunctionException from ex
 
     @staticmethod
@@ -1025,7 +1018,7 @@ class ArrayFunction:
                     # reset delay counter
                     sprite.delayCounter = 0
                     # move index
-                    sprite.doMove()
+                    sprite.updateArrayIndex()
                 # if we are fading off
                 if sprite.state == SpriteState.FADING_OFF.value:
                     # fade the color
@@ -1069,13 +1062,13 @@ class ArrayFunction:
                 sprite.indexUpdated = False
                 # assign LEDs to LED string
                 ArrayFunction.Controller.virtualLEDBuffer[sprite.indexRange] = [sprite.color] * len(sprite.indexRange)
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise FunctionException from ex
 
     @staticmethod
@@ -1145,11 +1138,13 @@ class ArrayFunction:
                     raindrop.state = RaindropStates.OFF.value
             # increment delay
             # raindrop.delayCounter += 1
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except Exception as ex:
+        except LightBerryException:  # pragma: no cover
+            raise
+        except Exception as ex:  # pragma: no cover
             raise FunctionException from ex
 
     @staticmethod
@@ -1310,11 +1305,13 @@ class ArrayFunction:
             thing.delayCounter += 1
             # assign colors to indices
             ArrayFunction.Controller.virtualLEDBuffer[thing.indexRange] = thing.color
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except Exception as ex:
+        except LightBerryException:  # pragma: no cover
+            raise
+        except Exception as ex:  # pragma: no cover
             raise FunctionException from ex
 
     @staticmethod
@@ -1335,11 +1332,13 @@ class ArrayFunction:
             for index in range(ArrayFunction.Controller.realLEDCount):
                 if random.random() > twinkle.random:
                     ArrayFunction.Controller.overlayDictionary[index] = twinkle.colorSequenceNext
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except Exception as ex:
+        except LightBerryException:  # pragma: no cover
+            raise
+        except Exception as ex:  # pragma: no cover
             raise FunctionException from ex
 
     @staticmethod
@@ -1361,9 +1360,11 @@ class ArrayFunction:
             if random.random() > blink.random:
                 for index in range(ArrayFunction.Controller.realLEDCount):
                     ArrayFunction.Controller.overlayDictionary[index] = color
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except Exception as ex:
+        except LightBerryException:  # pragma: no cover
+            raise
+        except Exception as ex:  # pragma: no cover
             raise FunctionException from ex

@@ -231,34 +231,34 @@ class Pixel:
 class PixelColors:
     """List of commonly used colors for ease of use."""
 
-    OFF = Pixel((0, 0, 0), order=LEDOrder.RGB).pixel.array
-    RED3 = Pixel((64, 0, 0), order=LEDOrder.RGB).pixel.array
-    RED2 = Pixel((128, 0, 0), order=LEDOrder.RGB).pixel.array
-    RED = Pixel((255, 0, 0), order=LEDOrder.RGB).pixel.array
-    ORANGE3 = Pixel((64, 64, 0), order=LEDOrder.RGB).pixel.array
-    ORANGE2 = Pixel((128, 128, 0), order=LEDOrder.RGB).pixel.array
-    ORANGE = Pixel((255, 128, 0), order=LEDOrder.RGB).pixel.array
-    YELLOW = Pixel((255, 210, 80), order=LEDOrder.RGB).pixel.array
-    LIME = Pixel((128, 255, 0), order=LEDOrder.RGB).pixel.array
-    GREEN3 = Pixel((0, 64, 0), order=LEDOrder.RGB).pixel.array
-    GREEN2 = Pixel((0, 128, 0), order=LEDOrder.RGB).pixel.array
-    GREEN = Pixel((0, 255, 0), order=LEDOrder.RGB).pixel.array
-    TEAL = Pixel((0, 255, 128), order=LEDOrder.RGB).pixel.array
-    CYAN3 = Pixel((0, 64, 64), order=LEDOrder.RGB).pixel.array
-    CYAN2 = Pixel((0, 128, 128), order=LEDOrder.RGB).pixel.array
-    CYAN = Pixel((0, 255, 255), order=LEDOrder.RGB).pixel.array
-    SKY = Pixel((0, 128, 255), order=LEDOrder.RGB).pixel.array
-    BLUE = Pixel((0, 0, 255), order=LEDOrder.RGB).pixel.array
-    BLUE2 = Pixel((0, 0, 128), order=LEDOrder.RGB).pixel.array
-    BLUE3 = Pixel((0, 0, 64), order=LEDOrder.RGB).pixel.array
-    VIOLET = Pixel((128, 0, 255), order=LEDOrder.RGB).pixel.array
-    PURPLE = Pixel((128, 0, 128), order=LEDOrder.RGB).pixel.array
-    PURPLE2 = Pixel((64, 0, 64), order=LEDOrder.RGB).pixel.array
-    MIDNIGHT = Pixel((70, 0, 128), order=LEDOrder.RGB).pixel.array
-    MAGENTA = Pixel((255, 0, 255), order=LEDOrder.RGB).pixel.array
-    PINK = Pixel((255, 0, 128), order=LEDOrder.RGB).pixel.array
-    WHITE = Pixel((255, 255, 255), order=LEDOrder.RGB).pixel.array
-    GRAY = Pixel((128, 118, 108), order=LEDOrder.RGB).pixel.array
+    OFF = Pixel((0, 0, 0), order=LEDOrder.RGB).array
+    RED3 = Pixel((64, 0, 0), order=LEDOrder.RGB).array
+    RED2 = Pixel((128, 0, 0), order=LEDOrder.RGB).array
+    RED = Pixel((255, 0, 0), order=LEDOrder.RGB).array
+    ORANGE3 = Pixel((64, 64, 0), order=LEDOrder.RGB).array
+    ORANGE2 = Pixel((128, 128, 0), order=LEDOrder.RGB).array
+    ORANGE = Pixel((255, 128, 0), order=LEDOrder.RGB).array
+    YELLOW = Pixel((255, 210, 80), order=LEDOrder.RGB).array
+    LIME = Pixel((128, 255, 0), order=LEDOrder.RGB).array
+    GREEN3 = Pixel((0, 64, 0), order=LEDOrder.RGB).array
+    GREEN2 = Pixel((0, 128, 0), order=LEDOrder.RGB).array
+    GREEN = Pixel((0, 255, 0), order=LEDOrder.RGB).array
+    TEAL = Pixel((0, 255, 128), order=LEDOrder.RGB).array
+    CYAN3 = Pixel((0, 64, 64), order=LEDOrder.RGB).array
+    CYAN2 = Pixel((0, 128, 128), order=LEDOrder.RGB).array
+    CYAN = Pixel((0, 255, 255), order=LEDOrder.RGB).array
+    SKY = Pixel((0, 128, 255), order=LEDOrder.RGB).array
+    BLUE = Pixel((0, 0, 255), order=LEDOrder.RGB).array
+    BLUE2 = Pixel((0, 0, 128), order=LEDOrder.RGB).array
+    BLUE3 = Pixel((0, 0, 64), order=LEDOrder.RGB).array
+    VIOLET = Pixel((128, 0, 255), order=LEDOrder.RGB).array
+    PURPLE = Pixel((128, 0, 128), order=LEDOrder.RGB).array
+    PURPLE2 = Pixel((64, 0, 64), order=LEDOrder.RGB).array
+    MIDNIGHT = Pixel((70, 0, 128), order=LEDOrder.RGB).array
+    MAGENTA = Pixel((255, 0, 255), order=LEDOrder.RGB).array
+    PINK = Pixel((255, 0, 128), order=LEDOrder.RGB).array
+    WHITE = Pixel((255, 255, 255), order=LEDOrder.RGB).array
+    GRAY = Pixel((128, 118, 108), order=LEDOrder.RGB).array
 
     @classmethod
     def pseudoRandom(
