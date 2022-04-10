@@ -501,6 +501,49 @@ class ArrayFunction:
             raise FunctionException from ex
 
     @staticmethod
+    def functionFade(
+        fade: "ArrayFunction",
+    ) -> None:
+        """Fade all Pixels toward OFF.
+
+        Args:
+            fade: tracking object
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightFunctionException: if something bad happens
+        """
+        try:
+            for x in range(ArrayFunction.Controller.realLEDColumnCount):
+                for y in range(ArrayFunction.Controller.realLEDRowCount):
+                    # ArrayFunction.Controller.virtualLEDBuffer[:] = ArrayFunction.Controller.virtualLEDBuffer[:] + (
+                    #     (1 - fade.fadeAmount) * fade.color
+                    # )
+                    for rgbIndex in range(len(fade.color)):
+                        if ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] != fade.color[rgbIndex]:
+                            if (
+                                ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] - fade.colorFade
+                                > fade.color[rgbIndex]
+                            ):
+                                ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] -= fade.colorFade
+                            elif (
+                                ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] + fade.colorFade
+                                < fade.color[rgbIndex]
+                            ):
+                                ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] += fade.colorFade
+                            else:
+                                ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] = fade.colorNext[rgbIndex]
+        except KeyboardInterrupt:
+            raise
+        except SystemExit:
+            raise
+        except LightBerryException:
+            raise
+        except Exception as ex:
+            raise FunctionException from ex
+
+    @staticmethod
     def functionNone(
         nothing: "ArrayFunction",
     ) -> None:

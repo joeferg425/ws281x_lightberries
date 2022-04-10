@@ -7,7 +7,7 @@ from lightberries.array_controller import ArrayController
 import logging
 from lightberries.array_functions import ArrayFunction
 from lightberries.exceptions import LightBerryException, ControllerException
-from lightberries.matrix_functions import LightMatrixFunction
+from lightberries.matrix_functions import MatrixFunction
 from lightberries.matrix_patterns import (
     SolidColorMatrix,
     MatrixOrder,
@@ -80,7 +80,7 @@ class MatrixController(ArrayController):
         )
 
         # give LightFunction class a pointer to this class
-        LightMatrixFunction.Controller = self
+        MatrixFunction.Controller = self
 
     def useColorMatrix(
         self,
@@ -298,8 +298,8 @@ class MatrixController(ArrayController):
             if delayCount is not None:
                 _delayCount = int(delayCount)
             # create the tracking object
-            flux: LightMatrixFunction = LightMatrixFunction(
-                LightMatrixFunction.functionMatrixColorFlux, self.colorSequence
+            flux: MatrixFunction = MatrixFunction(
+                MatrixFunction.functionMatrixColorFlux, self.colorSequence
             )
             # set refresh counter
             flux.delayCounter = _delayCount
@@ -339,8 +339,8 @@ class MatrixController(ArrayController):
             if delayCount is not None:
                 _delayCount = int(delayCount)
             # create the tracking object
-            marquee: LightMatrixFunction = LightMatrixFunction(
-                LightMatrixFunction.functionMatrixMarquee, self.colorSequence
+            marquee: MatrixFunction = MatrixFunction(
+                MatrixFunction.functionMatrixMarquee, self.colorSequence
             )
             # set refresh counter
             marquee.delayCounter = _delayCount
@@ -384,8 +384,8 @@ class MatrixController(ArrayController):
             else:
                 _text = str(text)
             # create the tracking object
-            marquee: LightMatrixFunction = LightMatrixFunction(
-                LightMatrixFunction.functionMatrixMarquee, self.colorSequence
+            marquee: MatrixFunction = MatrixFunction(
+                MatrixFunction.functionMatrixMarquee, self.colorSequence
             )
             # set refresh counter
             marquee.delayCounter = _delayCount
@@ -423,7 +423,7 @@ class MatrixController(ArrayController):
             if delayCount is not None:
                 _delayCount = int(delayCount)
             # create the tracking object
-            eye: LightMatrixFunction = LightMatrixFunction(LightMatrixFunction.functionMatrixEye, self.colorSequence)
+            eye: MatrixFunction = MatrixFunction(MatrixFunction.functionMatrixEye, self.colorSequence)
             eye.rowIndex = int(self.realLEDRowCount / 2)
             eye.columnIndex = int(self.realLEDColumnCount / 2)
             # set refresh counter
@@ -481,7 +481,7 @@ class MatrixController(ArrayController):
             if ballCount is not None:
                 _ballCount = int(ballCount)
             if _fadeAmount == 0.0:
-                off: ArrayFunction = ArrayFunction(LightMatrixFunction.functionOff, self.colorSequence)
+                off: ArrayFunction = ArrayFunction(MatrixFunction.functionOff, self.colorSequence)
                 self.privateLightFunctions.append(off)
             else:
                 # fade the whole LED strand
@@ -492,8 +492,8 @@ class MatrixController(ArrayController):
                 self.privateLightFunctions.append(fade)
             # create the tracking object
             for _ in range(_ballCount):
-                bounce: LightMatrixFunction = LightMatrixFunction(
-                    LightMatrixFunction.functionMatrixBounce, self.colorSequence
+                bounce: MatrixFunction = MatrixFunction(
+                    MatrixFunction.functionMatrixBounce, self.colorSequence
                 )
                 bounce.rowIndex = random.randint(0, self.realLEDRowCount - 1)
                 bounce.columnIndex = random.randint(0, self.realLEDColumnCount - 1)
@@ -562,7 +562,7 @@ class MatrixController(ArrayController):
             if fireworkCount is not None:
                 _zoomyCount = int(fireworkCount)
             if _fadeAmount == 1.0:
-                off: ArrayFunction = ArrayFunction(LightMatrixFunction.functionOff, self.colorSequence)
+                off: ArrayFunction = ArrayFunction(MatrixFunction.functionOff, self.colorSequence)
                 self.privateLightFunctions.append(off)
             else:
                 # fade the whole LED strand
@@ -573,8 +573,8 @@ class MatrixController(ArrayController):
                 self.privateLightFunctions.append(fade)
             # create the tracking object
             for _ in range(_zoomyCount):
-                firework: LightMatrixFunction = LightMatrixFunction(
-                    LightMatrixFunction.functionsMatrixFireworks, self.colorSequence
+                firework: MatrixFunction = MatrixFunction(
+                    MatrixFunction.functionMatrixFireworks, self.colorSequence
                 )
                 firework.rowIndex = random.randint(0, self.realLEDRowCount - 1)
                 firework.columnIndex = random.randint(0, self.realLEDColumnCount - 1)
@@ -640,8 +640,8 @@ class MatrixController(ArrayController):
             # add function to list
             self.privateLightFunctions.append(fade)
             # create the tracking object
-            radar: LightMatrixFunction = LightMatrixFunction(
-                LightMatrixFunction.functionsMatrixRadar, self.colorSequence
+            radar: MatrixFunction = MatrixFunction(
+                MatrixFunction.functionsMatrixRadar, self.colorSequence
             )
             max_radius = max(int(self.realLEDRowCount / 2), int(self.realLEDColumnCount / 2))
             radar.rowIndex = random.randint(0, self.realLEDRowCount - 1)
@@ -710,7 +710,7 @@ class MatrixController(ArrayController):
             self.privateLightFunctions.append(off)
             # create the tracking objects
             for _ in range(_snakeCount):
-                snake = LightMatrixFunction(LightMatrixFunction.functionsMatrixSnake, self.colorSequence)
+                snake = MatrixFunction(MatrixFunction.functionsMatrixSnake, self.colorSequence)
                 snake.sizeMax = _snakeLength
                 snake.size = random.randint(int(snake.sizeMax / 2), snake.sizeMax)
                 snake.rowIndex = np.ones((snake.size), dtype=np.int32) * random.randint(0, self.realLEDRowCount - 1)

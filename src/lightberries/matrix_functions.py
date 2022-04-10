@@ -12,7 +12,7 @@ from lightberries.pixel import PixelColors
 LOGGER = logging.getLogger("lightberries")
 
 
-class LightMatrixFunction(ArrayFunction):
+class MatrixFunction(ArrayFunction):
     """This class defines everything necessary to modify LED patterns in interesting ways."""
 
     Controller: ClassVar["lightberries.matrix_controller.MatrixController"]
@@ -39,7 +39,7 @@ class LightMatrixFunction(ArrayFunction):
 
     @staticmethod
     def functionMatrixColorFlux(
-        flux: "LightMatrixFunction",
+        flux: "MatrixFunction",
     ) -> None:
         """
 
@@ -54,18 +54,18 @@ class LightMatrixFunction(ArrayFunction):
         try:
             roll_index = 1
             if flux.delayCounter >= flux.delayCountMax:
-                LightMatrixFunction.Controller.virtualLEDBuffer[:, :, 0] = np.roll(
-                    LightMatrixFunction.Controller.virtualLEDBuffer[:, :, 0],
+                MatrixFunction.Controller.virtualLEDBuffer[:, :, 0] = np.roll(
+                    MatrixFunction.Controller.virtualLEDBuffer[:, :, 0],
                     random.randint(-1, 0),
                     roll_index,
                 )
-                LightMatrixFunction.Controller.virtualLEDBuffer[:, :, 1] = np.roll(
-                    LightMatrixFunction.Controller.virtualLEDBuffer[:, :, 1],
+                MatrixFunction.Controller.virtualLEDBuffer[:, :, 1] = np.roll(
+                    MatrixFunction.Controller.virtualLEDBuffer[:, :, 1],
                     random.randint(-1, 0),
                     roll_index,
                 )
-                LightMatrixFunction.Controller.virtualLEDBuffer[:, :, 2] = np.roll(
-                    LightMatrixFunction.Controller.virtualLEDBuffer[:, :, 2],
+                MatrixFunction.Controller.virtualLEDBuffer[:, :, 2] = np.roll(
+                    MatrixFunction.Controller.virtualLEDBuffer[:, :, 2],
                     random.randint(-1, 0),
                     roll_index,
                 )
@@ -82,7 +82,7 @@ class LightMatrixFunction(ArrayFunction):
 
     @staticmethod
     def functionMatrixMarquee(
-        marquee: "LightMatrixFunction",
+        marquee: "MatrixFunction",
     ) -> None:
         """
 
@@ -97,8 +97,8 @@ class LightMatrixFunction(ArrayFunction):
         try:
             roll_index = 0
             if marquee.delayCounter >= marquee.delayCountMax:
-                LightMatrixFunction.Controller.virtualLEDBuffer = np.roll(
-                    LightMatrixFunction.Controller.virtualLEDBuffer,
+                MatrixFunction.Controller.virtualLEDBuffer = np.roll(
+                    MatrixFunction.Controller.virtualLEDBuffer,
                     -1,
                     roll_index,
                 )
@@ -115,7 +115,7 @@ class LightMatrixFunction(ArrayFunction):
 
     @staticmethod
     def functionMatrixEye(
-        eye: "LightMatrixFunction",
+        eye: "MatrixFunction",
     ) -> None:
         """
 
@@ -158,7 +158,7 @@ class LightMatrixFunction(ArrayFunction):
 
     @staticmethod
     def functionMatrixBounce(
-        bounce: "LightMatrixFunction",
+        bounce: "MatrixFunction",
     ) -> None:
         """
 
@@ -217,8 +217,8 @@ class LightMatrixFunction(ArrayFunction):
             raise FunctionException from ex
 
     @staticmethod
-    def functionsMatrixFireworks(
-        firework: "LightMatrixFunction",
+    def functionMatrixFireworks(
+        firework: "MatrixFunction",
     ) -> None:
         """
         Args:
@@ -238,7 +238,7 @@ class LightMatrixFunction(ArrayFunction):
                     firework.rowIndex = random.randint(0, firework.Controller.realLEDRowCount - 1)
                     firework.columnIndex = random.randint(0, firework.Controller.realLEDColumnCount - 1)
                     firework.delayCountMax = random.randint(1, 5)
-                    if firework.colorCycle and random.randint(0, 10) >= 7:
+                    if firework.colorCycle:
                         firework.color = firework.colorSequenceNext
                 firework.delayCounter = 0
 
@@ -282,7 +282,7 @@ class LightMatrixFunction(ArrayFunction):
 
     @staticmethod
     def functionsMatrixRadar(
-        radar: "LightMatrixFunction",
+        radar: "MatrixFunction",
     ) -> None:
         """
         Args:
@@ -366,7 +366,7 @@ class LightMatrixFunction(ArrayFunction):
 
     @staticmethod
     def functionsMatrixSnake(
-        snake: "LightMatrixFunction",
+        snake: "MatrixFunction",
     ) -> None:
         """
         Args:

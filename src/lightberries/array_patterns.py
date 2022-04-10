@@ -9,7 +9,7 @@ from lightberries.exceptions import (
     LightBerryException,
     PatternException,
 )
-from lightberries.pixel import Pixel, PixelColors
+from lightberries.pixel import Pixel, PixelColors, LEDOrder
 
 LOGGER = logging.getLogger("LightBerries")
 
