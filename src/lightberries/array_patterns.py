@@ -9,7 +9,7 @@ from lightberries.exceptions import (
     LightBerryException,
     PatternException,
 )
-from lightberries.pixel import Pixel, PixelColors, LEDOrder
+from lightberries.pixel import Pixel, PixelColors
 
 LOGGER = logging.getLogger("LightBerries")
 
@@ -33,7 +33,7 @@ def ConvertPixelArrayToNumpyArray(
     """
     try:
         if len(colorSequence) > 0:
-            return np.array([p.array for p in colorSequence])
+            return np.array([Pixel(p).array for p in colorSequence])
         else:
             return np.zeros((0, 3))
     except SystemExit:  # pragma: no cover

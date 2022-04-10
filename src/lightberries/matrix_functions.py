@@ -5,7 +5,6 @@ import numpy as np
 import logging
 from lightberries.array_functions import ArrayFunction
 import lightberries.matrix_controller
-
 from lightberries.exceptions import LightBerryException, FunctionException
 from lightberries.pixel import PixelColors
 
@@ -19,6 +18,7 @@ class MatrixFunction(ArrayFunction):
 
     def __init__(
         self,
+        matrixController: "lightberries.matrix_controller.MatrixController",
         funcPointer: Callable,
         colorSequence: np.ndarray[(3, Any), np.int32],
     ) -> None:
@@ -28,7 +28,7 @@ class MatrixFunction(ArrayFunction):
             funcPointer: a function pointer that updates LEDs in the LightController object.
             colorSequence: a sequence of RGB values.
         """
-        super().__init__(funcPointer, colorSequence)
+        super().__init__(matrixController, funcPointer, colorSequence)
 
         self.rowIndex: int = 0
         self.columnIndex: int = 0

@@ -2,13 +2,14 @@
 from __future__ import annotations
 import random
 import time
-from lightberries.array_patterns import ArrayPattern, ConvertPixelArrayToNumpyArray
+from lightberries.array_patterns import ArrayPattern
 from lightberries.matrix_controller import MatrixController
-from lightberries.pixel import PixelColors
+from lightberries.pixel import Pixel, PixelColors
 from lightberries.array_functions import ArrayFunction
 from lightberries.matrix_functions import MatrixFunction
 import os
 import pygame
+import numpy as np
 
 # the number of pixels in the light string
 PIXEL_ROW_COUNT = 16
@@ -50,7 +51,16 @@ lightControl = MatrixController(
 
 class sprite:
     def __init__(
-        self, name: str, x: int, y: int, dx: float, dy: float, bounded: bool = False, stop=False, size: int = 1
+        self,
+        name: str,
+        x: int,
+        y: int,
+        dx: float,
+        dy: float,
+        bounded: bool = False,
+        stop=False,
+        size: int = 1,
+        color: np.ndarray[(3), np.int32] = PixelColors.WHITE.array,
     ) -> None:
         self.name = name
         self._x = x
@@ -61,6 +71,7 @@ class sprite:
         self.stop = stop
         self.bounded = bounded
         self.size = size
+        self.color = color
 
     @property
     def x(self) -> int:
@@ -151,19 +162,18 @@ class sprite:
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 MAX_ENEMY_SPEED = 0.3
 PAUSE_DELAY = 0.3
-color = PixelColors.GREEN
 pygame.init()
-joysticks = []
-clock = pygame.time.Clock()
+# joysticks = []
+# clock = pygame.time.Clock()
 keepPlaying = True
 THRESHOLD = 0.05
-fade = ArrayFunction(ArrayFunction.functionFade, ArrayPattern.DefaultColorSequenceByMonth())
+fade = ArrayFunction(lightControl, ArrayFunction.functionFade, ArrayPattern.DefaultColorSequenceByMonth())
 fade.fadeAmount = 0.3
 fade.colorFade = int(0.3 * 256)
-fade.color = PixelColors.OFF
-for i in range(0, pygame.joystick.get_count()):
-    joysticks.append(pygame.joystick.Joystick(i))
-    joysticks[-1].init()
+fade.color = PixelColors.OFF.array
+# for i in range(0, pygame.joystick.get_count()):
+#     joysticks.append(pygame.joystick.Joystick(i))
+#     joysticks[-1].init()
 x_change = 0
 y_change = 0
 x_reticle = 0
@@ -187,10 +197,11 @@ player = sprite(
     0,
     0,
     stop=True,
+    color=PixelColors.GREEN.array,
 )
 fireworks = []
 for i in range(10):
-    firework = MatrixFunction(MatrixFunction.functionMatrixFireworks, ArrayPattern.RainbowArray(6))
+    firework = MatrixFunction(lightControl, MatrixFunction.functionMatrixFireworks, ArrayPattern.RainbowArray(6))
     firework.rowIndex = random.randint(0, lightControl.realLEDRowCount - 1)
     firework.columnIndex = random.randint(0, lightControl.realLEDColumnCount - 1)
     firework.size = 1
@@ -210,10 +221,22 @@ death_rays = []
 death_ray_time = time.time() - 10
 DEATH_RAY_DELAY = 5
 FAKE_PAUSE_DELAY = 3
-READY = ConvertPixelArrayToNumpyArray([PixelColors.YELLOW, PixelColors.CYAN])
-NOT_READY = ConvertPixelArrayToNumpyArray([PixelColors.YELLOW, PixelColors.ORANGE])
+READY = np.array([Pixel(PixelColors.YELLOW.array).array, Pixel(PixelColors.CYAN.array).array])
+NOT_READY = np.array([Pixel(PixelColors.YELLOW.array).array, Pixel(PixelColors.ORANGE.array).array])
+joystick_count = 0
+joystick = None
 while True:
     events = list(pygame.event.get())
+    print(pygame.joystick.get_count())
+    if joystick_count != pygame.joystick.get_count():
+        if pygame.joystick.get_count() > 0:
+            joystick = pygame.joystick.Joystick(0)
+            joystick.init()
+        else:
+            joystick.quit()
+        joystick_count = pygame.joystick.get_count()
+        if joystick_count == 0:
+            pause = True
     if fake_pause and time.time() - fake_pause_time > FAKE_PAUSE_DELAY:
         pause = False
         fake_pause = False
@@ -243,7 +266,7 @@ while True:
             fizzled.clear()
             dead_ones.clear()
             score = 1
-            fade.color = PixelColors.OFF
+            fade.color = PixelColors.OFF.array
 
     fade.run()
     if time.time() - death_ray_time >= DEATH_RAY_DELAY:
@@ -269,7 +292,17 @@ while True:
                     and abs(x_reticle) >= MIN_BULLET_SPEED
                     and time.time() - death_ray_time > DEATH_RAY_DELAY
                 ) and not (pause or fake_pause):
-                    death_rays.append(sprite("death ray", player.x, player.y, x_reticle, y_reticle, bounded=True))
+                    death_rays.append(
+                        sprite(
+                            "death ray",
+                            player.x,
+                            player.y,
+                            x_reticle,
+                            y_reticle,
+                            bounded=True,
+                            color=PixelColors.CYAN.array,
+                        )
+                    )
                     death_ray_time = time.time()
             elif event.dict["axis"] == 5 and event.dict["value"] > 0.5:
                 # if np.abs(x_reticle) > 0.25 and np.abs(y_reticle) > 0.25:
@@ -287,6 +320,7 @@ while True:
                             x_reticle,
                             y_reticle,
                             bounded=True,
+                            color=PixelColors.BLUE.array,
                         )
                     )
         if "joy" in event.dict and "button" in event.dict:
@@ -309,7 +343,7 @@ while True:
     x_change * 0.5
     if not player.dead and not pause:
         player.go()
-    lightControl.virtualLEDBuffer[player.x, player.y] = color
+    lightControl.virtualLEDBuffer[player.x, player.y] = Pixel(player.color).array
     for bullet in bullets:
         if not player.dead and not (pause or fake_pause):
             bullet.go()
@@ -317,12 +351,12 @@ while True:
             fizzled.append(bullet)
         else:
             if not player.dead:
-                lightControl.virtualLEDBuffer[bullet.x, bullet.y] = PixelColors.BLUE
+                lightControl.virtualLEDBuffer[bullet.x, bullet.y] = Pixel(bullet.color).array
     for fizzle in fizzled:
         if fizzle in bullets:
             bullets.remove(fizzle)
     fizzled.clear()
-    if time.time() - enemy_time >= ENEMY_DELAY and not player.dead and not pause:
+    if time.time() - enemy_time >= ENEMY_DELAY and not player.dead and not pause and not fake_pause:
         enemy_time = time.time()
         enemy = sprite(
             "enemy",
@@ -330,6 +364,7 @@ while True:
             random.randint(0, lightControl.realLEDRowCount - 1),
             random.random() * [-1, 1][random.randint(0, 1)],
             random.random() * [-1, 1][random.randint(0, 1)],
+            color=PixelColors.RED.array,
         )
         if abs(enemy.dx) < MIN_ENEMY_SPEED:
             if enemy.dx < 0:
@@ -361,7 +396,7 @@ while True:
             for xy in zip(enemy.xs, enemy.ys):
                 if xy == player:
                     player.dead = True
-                    fade.color = PixelColors.RED
+                    fade.color = Pixel(PixelColors.RED.array).array
                     player_dead_time = time.time()
                 if bullets:
                     for bullet in bullets:
@@ -385,16 +420,16 @@ while True:
                     break
 
         if not enemy.dead and not player.dead:
-            lightControl.virtualLEDBuffer[enemy.xs, enemy.ys] = PixelColors.RED
+            lightControl.virtualLEDBuffer[enemy.xs, enemy.ys] = Pixel(enemy.color).array
     for death_ray in death_rays:
         rxs, rys = death_ray.xy_ray
-        lightControl.virtualLEDBuffer[rxs, rys] = PixelColors.CYAN
+        lightControl.virtualLEDBuffer[rxs, rys] = Pixel(death_ray.color).array
     death_rays.clear()
     for dead in dead_ones:
         lightControl.virtualLEDBuffer[
             dead.xs,
             dead.ys,
-        ] = PixelColors.YELLOW
+        ] = Pixel(PixelColors.YELLOW.array).array
         if dead in enemies:
             try:
                 enemies.remove(dead)
