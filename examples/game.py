@@ -201,17 +201,21 @@ player = sprite(
 )
 fireworks = []
 for i in range(10):
-    firework = MatrixFunction(lightControl, MatrixFunction.functionMatrixFireworks, ArrayPattern.RainbowArray(6))
+    firework = MatrixFunction(lightControl, MatrixFunction.functionMatrixFireworks, ArrayPattern.RainbowArray(10))
     firework.rowIndex = random.randint(0, lightControl.realLEDRowCount - 1)
     firework.columnIndex = random.randint(0, lightControl.realLEDColumnCount - 1)
     firework.size = 1
     firework.step = 1
-    firework.sizeMax = min(lightControl.realLEDRowCount, lightControl.realLEDColumnCount)
+    firework.sizeMax = min(int(lightControl.realLEDRowCount / 2), int(lightControl.realLEDColumnCount / 2))
     firework.colorCycle = True
+    for _ in range(i):
+        firework.color = firework.colorSequenceNext
     fireworks.append(firework)
 win = False
 win_time = time.time()
-pause = False
+WIN_SCORE = lightControl.realLEDColumnCount
+WIN_DURATION = 10
+pause = True
 pause_time = time.time()
 fake_pause_time = time.time() - 5
 fake_pause = False
@@ -219,15 +223,16 @@ b9_time = time.time()
 b10_time = time.time() - 1
 death_rays = []
 death_ray_time = time.time() - 10
-DEATH_RAY_DELAY = 5
+DEATH_RAY_DELAY = 3
 FAKE_PAUSE_DELAY = 3
 READY = np.array([Pixel(PixelColors.YELLOW.array).array, Pixel(PixelColors.CYAN.array).array])
 NOT_READY = np.array([Pixel(PixelColors.YELLOW.array).array, Pixel(PixelColors.ORANGE.array).array])
 joystick_count = 0
 joystick = None
+DEATH_RAY_DURATION = 0.4
+DEATH_RAY_FLICKER = 0.1
 while True:
     events = list(pygame.event.get())
-    print(pygame.joystick.get_count())
     if joystick_count != pygame.joystick.get_count():
         if pygame.joystick.get_count() > 0:
             joystick = pygame.joystick.Joystick(0)
@@ -237,11 +242,13 @@ while True:
         joystick_count = pygame.joystick.get_count()
         if joystick_count == 0:
             pause = True
+        else:
+            pause = False
     if fake_pause and time.time() - fake_pause_time > FAKE_PAUSE_DELAY:
         pause = False
         fake_pause = False
 
-    if score >= lightControl.realLEDColumnCount:
+    if score >= WIN_SCORE:
         if not win:
             win = True
             win_time = time.time()
@@ -250,7 +257,7 @@ while True:
         fade.run()
         lightControl.copyVirtualLedsToWS281X()
         lightControl.refreshLEDs()
-        if time.time() - win_time > 3:
+        if time.time() - win_time > WIN_DURATION:
             win = False
             score = 1
             player.dead = True
@@ -335,11 +342,15 @@ while True:
         if time.time() - b9_time < 0.1 and time.time() - b10_time < 0.1:
             fake_pause = True
             fake_pause_time = time.time()
-    # if np.abs(x_change) > THRESHOLD:
-    player.dx = x_change
+    if np.abs(x_change) > THRESHOLD:
+        player.dx = x_change
+    else:
+        player.dx = 0
     x_change * 0.5
-    # if np.abs(y_change) > THRESHOLD:
-    player.dy = y_change
+    if np.abs(y_change) > THRESHOLD:
+        player.dy = y_change
+    else:
+        player.dy = 0
     x_change * 0.5
     if not player.dead and not pause:
         player.go()
@@ -390,6 +401,20 @@ while True:
             enemy.x = random.randint(0, lightControl.realLEDColumnCount - 1)
             enemy.y = random.randint(0, lightControl.realLEDRowCount - 1)
         enemies.append(enemy)
+    for death_ray in death_rays:
+        duration = int((time.time() - death_ray_time) / DEATH_RAY_FLICKER)
+        death_ray.x = player.x
+        death_ray.y = player.y
+        if x_reticle > 0.0:
+            death_ray.dx = x_reticle
+        if y_reticle > 0.0:
+            death_ray.dy = y_reticle
+        rxs, rys = death_ray.xy_ray
+        if np.array_equal(death_ray.color, PixelColors.MAGENTA.array):
+            death_ray.color = PixelColors.CYAN.array
+        else:
+            death_ray.color = PixelColors.MAGENTA.array
+        lightControl.virtualLEDBuffer[rxs, rys] = Pixel(death_ray.color).array
     for enemy in enemies:
         if not player.dead and not (pause or fake_pause):
             enemy.go()
@@ -421,10 +446,8 @@ while True:
 
         if not enemy.dead and not player.dead:
             lightControl.virtualLEDBuffer[enemy.xs, enemy.ys] = Pixel(enemy.color).array
-    for death_ray in death_rays:
-        rxs, rys = death_ray.xy_ray
-        lightControl.virtualLEDBuffer[rxs, rys] = Pixel(death_ray.color).array
-    death_rays.clear()
+    if time.time() - death_ray_time >= DEATH_RAY_DURATION:
+        death_rays.clear()
     for dead in dead_ones:
         lightControl.virtualLEDBuffer[
             dead.xs,

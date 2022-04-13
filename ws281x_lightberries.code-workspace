@@ -27,6 +27,7 @@
 			"matrixification",
 			"ndarray",
 			"numpy",
+			"pygame",
 			"pyplot",
 			"pytest",
 			"ROYGBIV",
@@ -113,6 +114,15 @@
 				"type": "python",
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/game.py",
+				"console": "integratedTerminal",
+				"sudo": true,
+				"justMyCode": false
+			},
+			{
+				"name": "example: game2",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/examples/game2.py",
 				"console": "integratedTerminal",
 				"sudo": true,
 				"justMyCode": false
