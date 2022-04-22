@@ -142,7 +142,7 @@ class ArrayController:
             self.privateNextModeChange: float = time.time()
             self.privateRefreshDelay: float = 0.001
             self.privateSecondsPerMode: float = 120.0
-            self.privateBackgroundColor: np.ndarray[(3,), np.int32] = PixelColors.OFF
+            self.privateBackgroundColor: np.ndarray[(3,), np.int32] = PixelColors.OFF.array
             self.privateColorSequence: np.ndarray[(3, Any), np.int32] = ConvertPixelArrayToNumpyArray([])
             self.privateColorSequenceCount: int = 0
             self.privateColorSequenceIndex: int = 0
@@ -825,7 +825,7 @@ class ArrayController:
             # defaults
             _sequence: np.ndarray[(Any, 3), np.int32] = ArrayPattern.DefaultColorSequenceByMonth()
             _foregroundColor: np.ndarray[(3,), np.int32] = _sequence[random.randint(0, len(_sequence) - 1)]
-            _backgroundColor = ArrayPattern.DEFAULT_BACKGROUND_COLOR
+            _backgroundColor = ArrayPattern.DEFAULT_BACKGROUND_COLOR.array
 
             # use the passed in color
             if foregroundColor is not None:
@@ -864,7 +864,7 @@ class ArrayController:
         """
         LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSinglePseudoRandom.__name__)
         try:
-            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR
+            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR.array
             # set background color
             if backgroundColor is not None:
                 _backgroundColor = Pixel(backgroundColor).array
@@ -898,7 +898,7 @@ class ArrayController:
         """
         LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSingleRandom.__name__)
         try:
-            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR
+            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR.array
             # set the background color to the default values
             if backgroundColor is not None:
                 _backgroundColor = Pixel(backgroundColor).array
@@ -934,7 +934,7 @@ class ArrayController:
         """
         LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSequence.__name__)
         try:
-            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR
+            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR.array
             _colorSequence: np.ndarray[(Any, 3), np.int32] = ArrayPattern.DefaultColorSequenceByMonth()
             # set the color sequence to the default one for this month, or use the passed in argument
             if colorSequence is not None:
@@ -973,7 +973,7 @@ class ArrayController:
         """
         LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSequencePseudoRandom.__name__)
         try:
-            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR
+            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR.array
             _sequenceLength: int = random.randint(self.realLEDCount // 20, self.realLEDCount // 10)
             # either calculate a sequence length or use the passed value
             if sequenceLength is not None:
@@ -1014,7 +1014,7 @@ class ArrayController:
         """
         LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSequenceRandom.__name__)
         try:
-            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR
+            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR.array
             _sequenceLength: int = random.randint(self.realLEDCount // 20, self.realLEDCount // 10)
             # set background color
             if backgroundColor is not None:
@@ -1056,7 +1056,7 @@ class ArrayController:
         """
         LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorSequenceRepeating.__name__)
         try:
-            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR
+            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR.array
             _colorSequence: np.ndarray[(Any, 3), np.int32] = ArrayPattern.DefaultColorSequenceByMonth()
             # use argument or default
             if colorSequence is not None:
@@ -1106,7 +1106,7 @@ class ArrayController:
         """
         LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorTransition.__name__)
         try:
-            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR
+            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR.array
             _colorSequence: np.ndarray[(Any, 3), np.int32] = ArrayPattern.DefaultColorSequenceByMonth()
             _stepsPerTransition: int = random.randint(3, 7)
             _wrap: bool = self.getRandomBoolean()
@@ -1160,7 +1160,7 @@ class ArrayController:
         """
         LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorTransitionRepeating.__name__)
         try:
-            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR
+            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR.array
             _colorSequence: np.ndarray[(3, Any), np.int32] = ArrayPattern.DefaultColorSequenceByMonth()
             _stepsPerTransition: int = random.randint(3, 7)
             _wrap: bool = self.getRandomBoolean()
@@ -1211,7 +1211,7 @@ class ArrayController:
         """
         LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorRainbow.__name__)
         try:
-            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR
+            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR.array
             _rainbowPixelCount: int = random.randint(10, self.realLEDCount // 2)
             if backgroundColor is not None:
                 _backgroundColor = Pixel(backgroundColor).array
@@ -1248,7 +1248,7 @@ class ArrayController:
         """
         LOGGER.debug("\n%s.%s:", self.__class__.__name__, self.useColorRainbowRepeating.__name__)
         try:
-            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR
+            _backgroundColor: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_BACKGROUND_COLOR.array
             _rainbowPixelCount: int = random.randint(10, self.realLEDCount // 2)
             if backgroundColor is not None:
                 _backgroundColor = Pixel(backgroundColor).array

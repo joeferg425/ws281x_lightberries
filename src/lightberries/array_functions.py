@@ -249,10 +249,10 @@ class ArrayFunction:
         Returns:
             the next color in the sequence
         """
-        temp = self.colorSequence[self.colorSequenceIndex]
         self.colorSequenceIndex += 1
         if self.colorSequenceIndex >= self.colorSequenceCount:
             self.colorSequenceIndex = 0
+        temp = self.colorSequence[self.colorSequenceIndex]
         return temp
 
     def doFade(
@@ -515,32 +515,28 @@ class ArrayFunction:
             LightFunctionException: if something bad happens
         """
         try:
-            for x in range(ArrayFunction.Controller.realLEDColumnCount):
-                for y in range(ArrayFunction.Controller.realLEDRowCount):
-                    # ArrayFunction.Controller.virtualLEDBuffer[:] = ArrayFunction.Controller.virtualLEDBuffer[:] + (
-                    #     (1 - fade.fadeAmount) * fade.color
-                    # )
-                    for rgbIndex in range(len(fade.color)):
-                        if ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] != fade.color[rgbIndex]:
-                            if (
-                                ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] - fade.colorFade
-                                > fade.color[rgbIndex]
-                            ):
-                                ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] -= fade.colorFade
-                            elif (
-                                ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] + fade.colorFade
-                                < fade.color[rgbIndex]
-                            ):
-                                ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] += fade.colorFade
-                            else:
-                                ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] = fade.colorNext[rgbIndex]
-        except KeyboardInterrupt:
+            for i in range(ArrayFunction.Controller.realLEDCount):
+                for rgbIndex in range(len(fade.color)):
+                    if ArrayFunction.Controller.virtualLEDBuffer[i, rgbIndex] != fade.color[rgbIndex]:
+                        if (
+                            ArrayFunction.Controller.virtualLEDBuffer[i, rgbIndex] - fade.colorFade
+                            > fade.color[rgbIndex]
+                        ):
+                            ArrayFunction.Controller.virtualLEDBuffer[i, rgbIndex] -= fade.colorFade
+                        elif (
+                            ArrayFunction.Controller.virtualLEDBuffer[i, rgbIndex] + fade.colorFade
+                            < fade.color[rgbIndex]
+                        ):
+                            ArrayFunction.Controller.virtualLEDBuffer[i, rgbIndex] += fade.colorFade
+                        else:
+                            ArrayFunction.Controller.virtualLEDBuffer[i, rgbIndex] = fade.colorNext[rgbIndex]
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise FunctionException from ex
 
     @staticmethod
@@ -557,7 +553,7 @@ class ArrayFunction:
             KeyboardInterrupt: if user quits
             LightFunctionException: if something bad happens
         """
-        try:
+        try:  # pragma: no cover
             pass  # pragma: no cover
         except KeyboardInterrupt:  # pragma: no cover
             raise
@@ -617,6 +613,8 @@ class ArrayFunction:
             LightFunctionException: if something bad happens
         """
         try:
+            # increment delay counter
+            marquee.delayCounter += 1
             # wait for several LED cycles to change LEDs
             if marquee.delayCounter >= marquee.delayCountMax:
                 # reset delay counter
@@ -637,6 +635,7 @@ class ArrayFunction:
                     )
                 # if we will undershoot
                 elif marquee.indexMax < marquee.size:
+                    # TODO: should make a wrap-around version
                     # switch direction
                     marquee.direction *= -1
                     # set index to either the next step or zero
@@ -648,8 +647,6 @@ class ArrayFunction:
                 else:
                     # next index is valid, use it
                     marquee.index = marquee.indexNext
-            # increment delay counter
-            marquee.delayCounter += 1
             # calculate color sequence range
             marquee.indexRange = np.arange(
                 marquee.index,
@@ -681,8 +678,8 @@ class ArrayFunction:
             LightFunctionException: if something bad happens
         """
         try:
-            # if cylon.size > LightFunction.Controller.virtualLEDCount:
-            # cylon.size = LightFunction.Controller.virtualLEDCount - 1
+            # update delay counter
+            cylon.delayCounter += 1
             # wait for several LED cycles to change LEDs
             if cylon.delayCounter >= cylon.delayCountMax:
                 # reset delay counter
@@ -711,8 +708,8 @@ class ArrayFunction:
                     # find where LEDs go off the end
                     over = np.where(cylon.indexRange >= (ArrayFunction.Controller.virtualLEDCount))[0]
                     # reverse their direction
-                    cylon.indexRange[over] = (
-                        np.arange(-1, (len(over) + 1) * -1, -1) + ArrayFunction.Controller.virtualLEDCount
+                    cylon.indexRange[over] = np.arange(-1, (len(over) + 1) * -1, -1) + (
+                        ArrayFunction.Controller.virtualLEDCount - 1
                     )
                 # if LEDs go off the other end
                 elif cylon.indexMin < -1:
@@ -726,8 +723,6 @@ class ArrayFunction:
                     over = np.where(cylon.indexRange < 0)[0]
                     # reverse their direction
                     cylon.indexRange[over] = np.arange(1, (len(over) + 1), 1)
-            # update delay counter
-            cylon.delayCounter += 1
             # update index
             cylon.index = cylon.indexNext
             # update LEDs with new values
@@ -758,6 +753,7 @@ class ArrayFunction:
             LightFunctionException: if something bad happens
         """
         try:
+            merge.delayCounter += 1
             # check delay counter
             if merge.delayCounter >= merge.delayCountMax:
                 # reset delay counter
@@ -770,7 +766,7 @@ class ArrayFunction:
                 # [[0,1,2],
                 #  [3,4,5]]
                 temp = np.reshape(
-                    ArrayFunction.Controller.virtualLEDIndexArray,
+                    ArrayFunction.Controller.virtualLEDIndexBuffer,
                     (segmentCount, merge.size),
                 )
                 # now roll each row in a different direction and then undo
@@ -788,10 +784,9 @@ class ArrayFunction:
                     else:
                         temp[i] = temp[1]
                 # turn the matrix back into an array
-                ArrayFunction.Controller.virtualLEDIndexArray = np.reshape(
+                ArrayFunction.Controller.virtualLEDIndexBuffer = np.reshape(
                     temp, (ArrayFunction.Controller.virtualLEDCount)
                 )
-            merge.delayCounter += 1
         except SystemExit:  # pragma: no cover
             raise
         except KeyboardInterrupt:  # pragma: no cover
@@ -818,6 +813,8 @@ class ArrayFunction:
         try:
             accelerate.indexPrevious = accelerate.index
             splash = False
+            # increment delay counter
+            accelerate.delayCounter += 1
             # check delay counter, update index when it hits max
             if accelerate.delayCounter >= accelerate.delayCountMax:
                 # reset delay counter
@@ -825,15 +822,15 @@ class ArrayFunction:
                 # update step counter
                 accelerate.stepCounter += 1
                 # calculate next index
-                accelerate.index = int(
-                    (accelerate.index + (accelerate.direction * accelerate.step))
-                    % ArrayFunction.Controller.virtualLEDCount
-                )
+                accelerate.indexNext = int((accelerate.index + (accelerate.direction * accelerate.step)))
+                accelerate.index = accelerate.indexNext % ArrayFunction.Controller.virtualLEDCount
                 accelerate.indexRange = np.arange(
-                    accelerate.indexPrevious,
-                    accelerate.index + accelerate.direction,
+                    accelerate.indexPrevious + accelerate.direction,
+                    accelerate.indexNext + accelerate.direction,
                     accelerate.direction,
                 )
+                modulo = np.where(accelerate.indexRange >= (ArrayFunction.Controller.realLEDCount))
+                accelerate.indexRange[modulo] -= ArrayFunction.Controller.realLEDCount
                 if accelerate.colorCycle is True:
                     accelerate.color = accelerate.colorSequenceNext
             # check index step counter, update speed state when it hits step count max
@@ -853,7 +850,7 @@ class ArrayFunction:
                 # update state counter
                 accelerate.state += 1
             # check state counter, reset speed state when it hits max speed
-            if accelerate.state >= accelerate.stateMax:
+            if accelerate.state > accelerate.stateMax:
                 # "splash" color when we hit the end
                 splash = True
                 #  create the "splash" index array before updating direction etc.
@@ -861,15 +858,15 @@ class ArrayFunction:
                     list(
                         range(
                             accelerate.indexPrevious,
-                            accelerate.index + (accelerate.step * accelerate.direction * 4),
+                            accelerate.indexNext + (accelerate.step * accelerate.direction * 4),
                             accelerate.direction,
                         )
                     ),
                     dtype=np.int32,
                 )
                 # make sure that the splash doesn't go off the edge of the virtual led array
-                modulo = np.where(splashRange >= (ArrayFunction.Controller.realLEDCount - 1))
-                splashRange[modulo] -= ArrayFunction.Controller.realLEDCount
+                modulo = np.where(splashRange >= (ArrayFunction.Controller.realLEDCount))
+                splashRange[modulo] %= ArrayFunction.Controller.realLEDCount
                 modulo = np.where(splashRange < 0)
                 splashRange[modulo] += ArrayFunction.Controller.realLEDCount
                 # reset delay
@@ -890,8 +887,6 @@ class ArrayFunction:
                 accelerate.index = ArrayFunction.Controller.getRandomIndex()
                 accelerate.indexPrevious = accelerate.index
                 accelerate.indexRange = np.arange(accelerate.indexPrevious, accelerate.index + 1)
-            # increment delay counter
-            accelerate.delayCounter += 1
             ArrayFunction.Controller.virtualLEDBuffer[accelerate.indexRange] = accelerate.color
             if splash is True:
                 ArrayFunction.Controller.virtualLEDBuffer[splashRange, :] = ArrayFunction.Controller.fadeColor(

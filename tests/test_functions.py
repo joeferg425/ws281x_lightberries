@@ -1,6 +1,6 @@
 from lightberries.array_functions import ArrayFunction
 from lightberries.array_patterns import ArrayPattern, ConvertPixelArrayToNumpyArray
-from lightberries.pixel import PixelColors, Pixel
+from lightberries.pixel import PixelColors
 from numpy.testing import assert_array_equal
 from lightberries.array_controller import ArrayController
 
@@ -10,6 +10,13 @@ import numpy as np
 def newController() -> ArrayController:
     return ArrayController(
         ledCount=3,
+        simulate=True,
+    )
+
+
+def newControllerBigger() -> ArrayController:
+    return ArrayController(
+        ledCount=6,
         simulate=True,
     )
 
@@ -57,6 +64,7 @@ def test_run():
     function = ArrayFunction(control, assert_func)
     control.functionList.append(function)
     control._runFunctions()
+    function.run()
 
 
 def test_colorSequenceCount():
@@ -80,22 +88,31 @@ def test_colorSequenceNext():
     pattern = ConvertPixelArrayToNumpyArray([PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE])
     function = ArrayFunction(control, assert_func, pattern)
     control.functionList.append(function)
+    left = function.color
+    right = PixelColors.RED.array
+    assert_array_equal(left, right)
+    left = function.colorSequenceNext
+    right = PixelColors.GREEN.array
+    assert_array_equal(left, right)
+    left = function.colorSequenceNext
+    right = PixelColors.BLUE.array
+    assert_array_equal(left, right)
     left = function.colorSequenceNext
     right = PixelColors.RED.array
     assert_array_equal(left, right)
 
 
-def test_colorSequenceNext_rollover():
-    control = newController()
-    pattern = ConvertPixelArrayToNumpyArray([PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE])
-    function = ArrayFunction(control, assert_func, pattern)
-    control.functionList.append(function)
-    function.colorSequenceNext
-    function.colorSequenceNext
-    function.colorSequenceNext
-    left = function.colorSequenceNext
-    right = PixelColors.RED.array
-    assert_array_equal(left, right)
+# def test_colorSequenceNext_rollover():
+#     control = newController()
+#     pattern = ConvertPixelArrayToNumpyArray([PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE])
+#     function = ArrayFunction(control, assert_func, pattern)
+#     control.functionList.append(function)
+#     function.colorSequenceNext
+#     function.colorSequenceNext
+#     function.colorSequenceNext
+#     left = function.colorSequenceNext
+#     right = PixelColors.RED.array
+#     assert_array_equal(left, right)
 
 
 def test_doFade():
@@ -334,8 +351,127 @@ def test_functionSolidColorCycle():
     control.functionList.append(function1)
     assert_array_equal(control.virtualLEDBuffer, one)
     control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, three)
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, four)
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, two)
+
+
+def test_functionFade():
+    control = newController()
+    pattern = ConvertPixelArrayToNumpyArray([PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE])
+    one = ConvertPixelArrayToNumpyArray([PixelColors.OFF, PixelColors.OFF, PixelColors.OFF])
+    two = ConvertPixelArrayToNumpyArray([PixelColors.RED2, PixelColors.RED2, PixelColors.RED2])
+    three = ConvertPixelArrayToNumpyArray([PixelColors.RED, PixelColors.RED, PixelColors.RED])
+    three -= [1, 0, 0]
+    function1 = ArrayFunction(control, ArrayFunction.functionFade, pattern)
+    function1.colorFade = 127
+    control.functionList.append(function1)
+    assert_array_equal(control.virtualLEDBuffer, one)
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, two)
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, three)
+    function1.color = PixelColors.OFF.array
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, two)
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, one)
+
+
+def test_functionMarquee():
+    control = newController()
+    pattern = ConvertPixelArrayToNumpyArray([PixelColors.RED])
+    one = ConvertPixelArrayToNumpyArray([PixelColors.RED, PixelColors.OFF, PixelColors.OFF])
+    two = ConvertPixelArrayToNumpyArray([PixelColors.OFF, PixelColors.RED, PixelColors.OFF])
+    three = ConvertPixelArrayToNumpyArray([PixelColors.OFF, PixelColors.OFF, PixelColors.RED])
+    off = ArrayFunction(control, ArrayFunction.functionOff, pattern)
+    control.functionList.append(off)
+    function = ArrayFunction(control, ArrayFunction.functionMarquee, pattern)
+    control.functionList.append(function)
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, two)
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, three)
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, two)
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, one)
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, two)
+
+
+def test_functionCylon():
+    control = newController()
+    pattern = ConvertPixelArrayToNumpyArray([PixelColors.RED])
+    one = ConvertPixelArrayToNumpyArray([PixelColors.RED, PixelColors.OFF, PixelColors.OFF])
+    two = ConvertPixelArrayToNumpyArray([PixelColors.OFF, PixelColors.RED, PixelColors.OFF])
+    three = ConvertPixelArrayToNumpyArray([PixelColors.OFF, PixelColors.OFF, PixelColors.RED])
+    off = ArrayFunction(control, ArrayFunction.functionOff, pattern)
+    control.functionList.append(off)
+    function = ArrayFunction(control, ArrayFunction.functionCylon, pattern)
+    control.functionList.append(function)
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, two)
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, three)
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, two)
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, one)
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, two)
+
+
+def test_functionMerge():
+    control = newControllerBigger()
+    pattern = ConvertPixelArrayToNumpyArray(
+        [PixelColors.RED, PixelColors.OFF, PixelColors.OFF, PixelColors.OFF, PixelColors.OFF, PixelColors.RED]
+    )
+    one = np.array([0, 1, 2, 3, 4, 5])
+    two = np.array([2, 0, 1, 1, 0, 2])
+    three = np.array([1, 2, 0, 0, 2, 1])
+    four = np.array([0, 1, 2, 2, 1, 0])
+    function = ArrayFunction(control, ArrayFunction.functionMerge, pattern)
+    function.size = 3
+    control.functionList.append(function)
+    control.setvirtualLEDBuffer(pattern)
+    assert_array_equal(control.virtualLEDBuffer, pattern)
+    assert_array_equal(control.virtualLEDIndexBuffer, one)
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, pattern)
+    assert_array_equal(control.virtualLEDIndexBuffer, two)
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, pattern)
+    assert_array_equal(control.virtualLEDIndexBuffer, three)
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, pattern)
+    assert_array_equal(control.virtualLEDIndexBuffer, four)
+
+
+def test_functionAccelerate():
+    control = newController()
+    pattern = ConvertPixelArrayToNumpyArray([PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE])
+    one = ConvertPixelArrayToNumpyArray([PixelColors.OFF, PixelColors.RED, PixelColors.OFF])
+    two = ConvertPixelArrayToNumpyArray([PixelColors.RED, PixelColors.OFF, PixelColors.RED])
+    three = ConvertPixelArrayToNumpyArray([PixelColors.OFF, PixelColors.RED, PixelColors.RED])
+    four = ConvertPixelArrayToNumpyArray([PixelColors.RED, PixelColors.RED, PixelColors.RED])
+    five = ConvertPixelArrayToNumpyArray([PixelColors.GREEN, PixelColors.GREEN, PixelColors.GREEN])
+    off = ArrayFunction(control, ArrayFunction.functionOff, pattern)
+    control.functionList.append(off)
+    function = ArrayFunction(control, ArrayFunction.functionAccelerate, pattern)
+    function.stateMax = 5
+    control.functionList.append(function)
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, one)
+    control._runFunctions()
     assert_array_equal(control.virtualLEDBuffer, two)
     control._runFunctions()
     assert_array_equal(control.virtualLEDBuffer, three)
     control._runFunctions()
     assert_array_equal(control.virtualLEDBuffer, four)
+    function.colorCycle = True
+    control._runFunctions()
+    assert_array_equal(control.virtualLEDBuffer, five)
+    control._runFunctions()
