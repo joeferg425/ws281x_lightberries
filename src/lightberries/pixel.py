@@ -59,7 +59,7 @@ class Pixel:
                 self._value = 0
 
             # if it is an int and in range
-            elif isinstance(rgb, (int, np.int_)) and rgb >= 0 and rgb <= 0xFFFFFF:
+            elif isinstance(rgb, (int, np.int_, np.int32)) and rgb >= 0 and rgb <= 0xFFFFFF:
                 rgb = int(rgb)
                 # convert to tuple
                 value = (
