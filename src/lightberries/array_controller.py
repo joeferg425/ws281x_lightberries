@@ -1,5 +1,6 @@
 """Class defines methods for interacting with Light Strings, Patterns, and Functions."""
 from __future__ import annotations
+from math import ceil
 import sys
 import time
 import random
@@ -717,7 +718,7 @@ class ArrayController:
         self,
         color: np.ndarray[(3,), np.int32],
         colorNext: np.ndarray[(3,), np.int32],
-        fadeCount: int,
+        fadeAmount: float,
     ) -> np.ndarray[(3,), np.int32]:
         """Fade an LED's color by the given amount and return the new RGB value.
 
@@ -731,15 +732,20 @@ class ArrayController:
         """
         # copy it to make sure we don't change the original by reference
         _color: np.ndarray[(3,), np.int32] = np.copy(color)
+        _fadeAmount = ceil(fadeAmount * 256)
+        if _fadeAmount < 0:
+            _fadeAmount = 1
+        elif _fadeAmount > 255:
+            _fadeAmount = 255
         # loop through RGB values
         for rgbIndex in range(len(_color)):
             # the values closest to the target color might match already
             if _color[rgbIndex] != colorNext[rgbIndex]:
                 # subtract or add as appropriate in order to get closer to target color
-                if _color[rgbIndex] - fadeCount > colorNext[rgbIndex]:
-                    _color[rgbIndex] -= fadeCount
-                elif _color[rgbIndex] + fadeCount < colorNext[rgbIndex]:
-                    _color[rgbIndex] += fadeCount
+                if _color[rgbIndex] - _fadeAmount > colorNext[rgbIndex]:
+                    _color[rgbIndex] -= _fadeAmount
+                elif _color[rgbIndex] + _fadeAmount < colorNext[rgbIndex]:
+                    _color[rgbIndex] += _fadeAmount
                 else:
                     _color[rgbIndex] = colorNext[rgbIndex]
         return _color
@@ -1662,8 +1668,6 @@ class ArrayController:
                     change.index = int(index)
                     # set the fade to off amount
                     change.fadeAmount = _fadeAmount
-                    # set the color fade
-                    change.colorFade = _fadeStepCount
                     # this is used to help calculate fade duration in the function
                     change.stepCountMax = _fadeStepCount
                     # copy the current color of this LED index

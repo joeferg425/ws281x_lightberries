@@ -1,5 +1,6 @@
 """This file defines functions that modify the LED patterns in interesting ways."""
 from __future__ import annotations
+from math import ceil
 from typing import Callable, Any, Optional
 import logging
 import random
@@ -63,6 +64,15 @@ class ThingColors(IntEnum):
     CYCLE = 0x100
 
 
+class ChangeStates(IntEnum):
+    """States for random change."""
+
+    FADING_ON = 0
+    ON = 1
+    FADING_OFF = 2
+    WAIT = 3
+
+
 class ArrayFunction:
     """This class defines everything necessary to modify LED patterns in interesting ways."""
 
@@ -93,7 +103,6 @@ class ArrayFunction:
         self.colorNext: np.ndarray[(3,), np.int32] = PixelColors.OFF.array
         self.colorGoal: np.ndarray[(3,), np.int32] = PixelColors.OFF.array
         self.colorScaler: float = 0
-        self.colorFade: int = 1
         self.colorCycle: bool = False
 
         self.funcName: str = funcPointer.__name__
@@ -139,7 +148,7 @@ class ArrayFunction:
         self.waking: bool = False
         self.duration: int = 0
         self.direction: int = 1
-        self.fadeAmount: float = 0
+        self.fadeAmount: float = 0.5
         self.fadeSteps: int = 0
         self.random: float = 0.5
         self.flipLength: int = 0
@@ -268,12 +277,17 @@ class ArrayFunction:
         try:
             self.delayCounter += 1
             if self.delayCounter == self.delayCountMax:
+                _fadeAmount = ceil(self.fadeAmount * 256)
+                if _fadeAmount < 0:
+                    _fadeAmount = 1
+                elif _fadeAmount > 255:
+                    _fadeAmount = 255
                 for rgbIndex in range(len(self.color)):
                     if self.color[rgbIndex] != self.colorNext[rgbIndex]:
-                        if self.color[rgbIndex] - self.colorFade >= self.colorNext[rgbIndex]:
-                            self.color[rgbIndex] -= self.colorFade
-                        elif self.color[rgbIndex] + self.colorFade <= self.colorNext[rgbIndex]:
-                            self.color[rgbIndex] += self.colorFade
+                        if self.color[rgbIndex] - _fadeAmount >= self.colorNext[rgbIndex]:
+                            self.color[rgbIndex] -= _fadeAmount
+                        elif self.color[rgbIndex] + _fadeAmount <= self.colorNext[rgbIndex]:
+                            self.color[rgbIndex] += _fadeAmount
                         else:
                             self.color[rgbIndex] = self.colorNext[rgbIndex]
             if self.delayCounter >= self.delayCountMax:
@@ -299,8 +313,6 @@ class ArrayFunction:
 
     def calcRange(
         self,
-        # indexFrom: int,
-        # indexTo: int,
     ) -> np.ndarray[(Any,), np.int32]:
         """Calculate index range.
 
@@ -321,10 +333,14 @@ class ArrayFunction:
                 )
             )
         )
-        modulo = np.where(self.indexRange >= (ArrayFunction.Controller.virtualLEDCount))
-        self.indexRange[modulo] -= ArrayFunction.Controller.virtualLEDCount
-        modulo = np.where(self.indexRange < 0)
-        self.indexRange[modulo] += ArrayFunction.Controller.virtualLEDCount
+        modulo = np.where(self.indexRange >= (ArrayFunction.Controller.virtualLEDCount))[0]
+        while len(modulo):
+            self.indexRange[modulo] -= ArrayFunction.Controller.virtualLEDCount
+            modulo = np.where(self.indexRange >= (ArrayFunction.Controller.virtualLEDCount))[0]
+        modulo = np.where(self.indexRange < 0)[0]
+        while len(modulo):
+            self.indexRange[modulo] += ArrayFunction.Controller.virtualLEDCount
+            modulo = np.where(self.indexRange < 0)[0]
         return self.indexRange
 
     @staticmethod
@@ -515,21 +531,22 @@ class ArrayFunction:
             LightFunctionException: if something bad happens
         """
         try:
+            _fadeAmount = ceil(fade.fadeAmount * 256)
+            if _fadeAmount < 0:
+                _fadeAmount = 1
+            elif _fadeAmount > 255:
+                _fadeAmount = 255
             for i in range(ArrayFunction.Controller.realLEDCount):
                 for rgbIndex in range(len(fade.color)):
                     if ArrayFunction.Controller.virtualLEDBuffer[i, rgbIndex] != fade.color[rgbIndex]:
-                        if (
-                            ArrayFunction.Controller.virtualLEDBuffer[i, rgbIndex] - fade.colorFade
-                            > fade.color[rgbIndex]
-                        ):
-                            ArrayFunction.Controller.virtualLEDBuffer[i, rgbIndex] -= fade.colorFade
+                        if ArrayFunction.Controller.virtualLEDBuffer[i, rgbIndex] - _fadeAmount > fade.color[rgbIndex]:
+                            ArrayFunction.Controller.virtualLEDBuffer[i, rgbIndex] -= _fadeAmount
                         elif (
-                            ArrayFunction.Controller.virtualLEDBuffer[i, rgbIndex] + fade.colorFade
-                            < fade.color[rgbIndex]
+                            ArrayFunction.Controller.virtualLEDBuffer[i, rgbIndex] + _fadeAmount < fade.color[rgbIndex]
                         ):
-                            ArrayFunction.Controller.virtualLEDBuffer[i, rgbIndex] += fade.colorFade
+                            ArrayFunction.Controller.virtualLEDBuffer[i, rgbIndex] += _fadeAmount
                         else:
-                            ArrayFunction.Controller.virtualLEDBuffer[i, rgbIndex] = fade.colorNext[rgbIndex]
+                            ArrayFunction.Controller.virtualLEDBuffer[i, rgbIndex] = fade.color[rgbIndex]
         except KeyboardInterrupt:  # pragma: no cover
             raise
         except SystemExit:  # pragma: no cover
@@ -916,15 +933,6 @@ class ArrayFunction:
             KeyboardInterrupt: if user quits
             LightFunctionException: if something bad happens
         """
-
-        class ChangeStates(IntEnum):
-            """States for random change."""
-
-            FADING_ON = 0
-            ON = 1
-            FADING_OFF = 2
-            WAIT = 3
-
         try:
             # if the random change has completed
             if np.array_equal(change.color, change.colorNext):
@@ -934,11 +942,13 @@ class ArrayFunction:
                     change.state = ChangeStates.ON.value
                 # if the state is "on"
                 elif change.state == ChangeStates.ON.value:
+                    # increment delay counter
+                    change.delayCounter += 1
                     # if we are done delaying
                     if change.delayCounter >= change.delayCountMax:
                         # reset delay counter
                         change.delayCounter = random.randint(0, change.delayCountMax)
-                        # if semi-randomly fading to background color
+                        # randomly fading some LEDs to background color
                         if random.randint(0, 3) == 3:
                             # set next color to background color
                             change.colorNext = ArrayFunction.Controller.backgroundColor
@@ -948,20 +958,20 @@ class ArrayFunction:
                         else:
                             # go to wait state
                             change.state = ChangeStates.WAIT.value
-                    # increment delay counter
-                    change.delayCounter += 1
                 # if state is "fading off"
                 elif change.state == ChangeStates.FADING_OFF.value:
+                    # increment delay counter
+                    change.delayCounter += 1
                     # if we are done delaying
                     if change.delayCounter >= change.delayCountMax:
                         # set state to "waiting"
                         change.state = ChangeStates.WAIT.value
                         # reset delay counter
                         change.delayCounter = random.randint(0, change.delayCountMax)
-                    # increment delay counter
-                    change.delayCounter += 1
                 # if state is "waiting"
                 elif change.state == ChangeStates.WAIT.value:
+                    # increment delay counter
+                    change.delayCounter += 1
                     # if we are done waiting
                     if change.delayCounter >= change.delayCountMax:
                         # randomize next index
@@ -975,12 +985,10 @@ class ArrayFunction:
                         change.state = ChangeStates.FADING_ON.value
                         # randomize delay counter so they aren't synchronized
                         change.delayCounter = random.randint(0, change.delayCountMax)
-                    # increment delay counter
-                    change.delayCounter += 1
             # if fading LEDs
             if change.fadeType == LEDFadeType.FADE_OFF:
                 # fade the color
-                change.color = ArrayFunction.Controller.fadeColor(change.color, change.colorNext, change.colorFade)
+                change.color = ArrayFunction.Controller.fadeColor(change.color, change.colorNext, change.fadeAmount)
             # if instant on/off
             else:
                 # set the color
@@ -1011,41 +1019,19 @@ class ArrayFunction:
             LightFunctionException: if something bad happens
         """
         try:
+            # update delay counter
+            meteor.delayCounter += 1
             # check if we are done delaying
             if meteor.delayCounter >= meteor.delayCountMax:
                 # reset delay counter
                 meteor.delayCounter = 0
                 # calculate index + step
-                meteor.indexMax = meteor.index + (meteor.step * meteor.direction)
-                # modulo next index to make sure it is a valid index in our string
-                meteor.indexNext = meteor.indexMax % ArrayFunction.Controller.virtualLEDCount
-                # save previous index
-                meteor.indexPrevious = meteor.index
-                # assign new index
-                meteor.index = meteor.indexNext
-                # calculate range of indices being updated
-                meteor.indexRange = np.array(
-                    list(
-                        range(
-                            meteor.indexPrevious,
-                            meteor.indexMax,
-                            meteor.direction,
-                        )
-                    )
-                )
-                # make sure indices are valid ones
-                meteor.indexRange[
-                    np.where(meteor.indexRange >= ArrayFunction.Controller.virtualLEDCount)
-                ] -= ArrayFunction.Controller.virtualLEDCount
-                meteor.indexRange[np.where(meteor.indexRange < 0)] += ArrayFunction.Controller.virtualLEDCount
-                # if we are cycling through colors
+                meteor.updateArrayIndex()
                 if meteor.colorCycle:
                     # assign the next color
                     meteor.color = meteor.colorSequenceNext
                 # assign LEDs to LED string
                 ArrayFunction.Controller.virtualLEDBuffer[meteor.indexRange] = meteor.color
-            # update delay counter
-            meteor.delayCounter += 1
         except SystemExit:  # pragma: no cover
             raise
         except KeyboardInterrupt:  # pragma: no cover
@@ -1073,7 +1059,9 @@ class ArrayFunction:
             # if not off
             if sprite.state != SpriteState.OFF.value:
                 # semi-randomly die
-                if random.randint(6, ArrayFunction.Controller.virtualLEDCount // 2) < sprite.stepCounter:
+                _min = min(int(sprite.stepCounter // 3), 5)
+                _max = max(int(sprite.stepCounter // 3), 6)
+                if random.randint(_min, _max) < sprite.stepCounter:
                     sprite.state = SpriteState.FADING_OFF.value
                 # randomize step sizes
                 sprite.step = random.randint(1, 3)
@@ -1088,14 +1076,14 @@ class ArrayFunction:
                 # if we are fading off
                 if sprite.state == SpriteState.FADING_OFF.value:
                     # fade the color
-                    sprite.color = ArrayFunction.Controller.fadeColor(sprite.color, sprite.colorNext, 25)
+                    sprite.color = ArrayFunction.Controller.fadeColor(sprite.color, sprite.colorNext, sprite.fadeAmount)
                     # if we are done fading, then change state
                     if np.array_equal(sprite.color, sprite.colorNext):
                         sprite.state = SpriteState.OFF.value
                 # if we are fading on
                 if sprite.state == SpriteState.FADING_ON.value:
                     # fade the color
-                    sprite.color = ArrayFunction.Controller.fadeColor(sprite.color, sprite.colorGoal, 25)
+                    sprite.color = ArrayFunction.Controller.fadeColor(sprite.color, sprite.colorGoal, sprite.fadeAmount)
                     # if we are done fading
                     if np.array_equal(sprite.color, sprite.colorGoal):
                         # change state
@@ -1119,9 +1107,9 @@ class ArrayFunction:
                     # set target color
                     sprite.colorGoal = sprite.colorSequenceNext
                     # set current color
-                    sprite.color = PixelColors.OFF
+                    sprite.color = PixelColors.OFF.array
                     # set next color
-                    sprite.colorNext = PixelColors.OFF
+                    sprite.colorNext = PixelColors.OFF.array
             # if we changed the index
             if sprite.indexUpdated is True and isinstance(sprite.indexRange, np.ndarray):
                 # reset flag
@@ -1159,17 +1147,17 @@ class ArrayFunction:
                     # set state on
                     raindrop.state = RaindropStates.SPLASH.value
                     # set max width of this raindrop
-                    raindrop.stepCountMax = random.randint(2, raindrop.sizeMax)
+                    raindrop.stepCountMax = random.randint(1, max(raindrop.sizeMax, 2))
                     # set fade amount
                     raindrop.fadeAmount = ((255 / raindrop.stepCountMax) / 255) * 2
                     raindrop.colorScaler = (raindrop.stepCountMax - raindrop.stepCounter) / raindrop.stepCountMax
             # if raindrop is splashing
-            if raindrop.state == RaindropStates.SPLASH.value:
+            elif raindrop.state == RaindropStates.SPLASH.value:
                 # if splash is still growing
-                if raindrop.stepCounter < raindrop.stepCountMax:
+                if raindrop.stepCounter <= raindrop.stepCountMax:
                     # lower valued side of "splash"
-                    indexLowerMin = max(raindrop.index - raindrop.stepCounter - raindrop.step, 0)
-                    indexLowerMax = max(raindrop.index - raindrop.stepCounter, 0)
+                    indexLowerMin = max(raindrop.index - raindrop.step * raindrop.stepCounter, 0)
+                    indexLowerMax = max(raindrop.index + 1 - raindrop.step * raindrop.stepCounter, 0)
                     # higher valued side of "splash"
                     indexHigherMin = min(
                         raindrop.index + raindrop.stepCounter,
@@ -1240,9 +1228,10 @@ class ArrayFunction:
                     if thing.state & ThingMoves.METEOR.value:
                         thing.step = 1
                         # set next index
-                        thing.index = (
-                            thing.index + (thing.step * thing.direction)
-                        ) % ArrayFunction.Controller.virtualLEDCount
+                        thing.updateArrayIndex()
+                        # thing.indexNext = (
+                        #     thing.index + (thing.step * thing.direction)
+                        # ) % ArrayFunction.Controller.virtualLEDCount
                         # randomly change direction
                         if random.randint(0, 99) > 95:
                             thing.direction *= -1
@@ -1254,9 +1243,10 @@ class ArrayFunction:
                         # randomize step size
                         thing.step = random.randint(7, 12)
                         # set next index
-                        thing.index = (
-                            thing.index + (thing.step * thing.direction)
-                        ) % ArrayFunction.Controller.virtualLEDCount
+                        thing.updateArrayIndex()
+                        # thing.index = (
+                        #     thing.index + (thing.step * thing.direction)
+                        # ) % ArrayFunction.Controller.virtualLEDCount
                         # randomly change direction
                         if random.randint(0, 99) > 95:
                             thing.direction *= -1
@@ -1268,9 +1258,10 @@ class ArrayFunction:
                         if random.randint(0, 99) > 80:
                             thing.direction *= -1
                         # set next index
-                        thing.index = (
-                            thing.index + (thing.step * thing.direction)
-                        ) % ArrayFunction.Controller.virtualLEDCount
+                        thing.updateArrayIndex()
+                        # thing.index = (
+                        #     thing.index + (thing.step * thing.direction)
+                        # ) % ArrayFunction.Controller.virtualLEDCount
                     # if we are growing
                     if thing.state & ThingSizes.GROW.value:
                         # artificially limit duration
@@ -1321,12 +1312,12 @@ class ArrayFunction:
                             for _ in range(0, random.randint(1, 3)):
                                 thing.color = thing.colorSequenceNext
                     # calculate range of affected indices
-                    index1 = thing.indexPrevious - (thing.size * thing.direction)
-                    index2 = thing.indexPrevious + ((thing.step + thing.size) * thing.direction)
-                    indexLower = min(index1, index2)
-                    indexHigher = max(index1, index2)
+                    # index1 = thing.indexPrevious - (thing.size * thing.direction)
+                    # index2 = thing.indexPrevious + ((thing.step + thing.size) * thing.direction)
+                    # indexLower = min(index1, index2)
+                    # indexHigher = max(index1, index2)
                     # calculate affected range
-                    thing.indexRange = thing.calcRange(indexLower, indexHigher)
+                    # thing.indexRange = thing.calcRange()
                     # increment step counter
                     thing.stepCounter += 1
                 # we hit our step goal, randomize next state
@@ -1361,12 +1352,12 @@ class ArrayFunction:
                     else:
                         thing.delayCountMax = random.randint(1, 7)
                     # calculate affected range
-                    index1 = thing.indexPrevious - (thing.size * thing.direction)
-                    index2 = thing.indexPrevious + ((thing.step + thing.size) * thing.direction)
-                    indexLower = min(index1, index2)
-                    indexHigher = max(index1, index2)
+                    # index1 = thing.indexPrevious - (thing.size * thing.direction)
+                    # index2 = thing.indexPrevious + ((thing.step + thing.size) * thing.direction)
+                    # indexLower = min(index1, index2)
+                    # indexHigher = max(index1, index2)
                     # rng = np.array(range(_x1, _x2 + 1))
-                    thing.indexRange = thing.calcRange(indexLower, indexHigher)
+                    thing.indexRange = thing.calcRange()
             # increment delay
             thing.delayCounter += 1
             # assign colors to indices
