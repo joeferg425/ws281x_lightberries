@@ -18,46 +18,44 @@ class MatrixOrder(IntEnum):
 DEFAULT_MATRIX_ORDER = MatrixOrder.TraverseColumnThenRow
 
 
-def SingleLED(rowCount: int, columnCount: int) -> np.ndarray[(Any, Any, 3), np.int32]:
-    matrix = np.zeros((rowCount, columnCount, 3))
+def SingleLED(xRange: int, yRange: int) -> np.ndarray[(Any, Any, 3), np.int32]:
+    matrix = np.zeros((yRange, xRange, 3))
     matrix[0, 0, :] = 255
     return matrix
 
 
-def Spectrum(rowCount: int, columnCount: int) -> np.ndarray[(Any, Any, 3), np.int32]:
-    matrix = np.zeros((rowCount, columnCount, 3))
-    row_scalers = np.linspace(0, 127.5, rowCount)
-    column_scalers = np.linspace(0, 127.5, columnCount)
+def Spectrum(xRange: int, yRange: int) -> np.ndarray[(Any, Any, 3), np.int32]:
+    matrix = np.zeros((yRange, xRange, 3))
+    row_scalers = np.linspace(0, 127.5, xRange)
+    column_scalers = np.linspace(0, 127.5, yRange)
     matrix[:, :, 0] += column_scalers
     matrix[:, :, 0] = np.transpose(matrix.transpose((1, 0, 2))[:, :, 0] + row_scalers)
     matrix[:, :, 1] += np.flip(column_scalers)
     matrix[:, :, 1] = np.transpose(matrix.transpose((1, 0, 2))[:, :, 1] + np.flip(row_scalers))
     matrix[:, :, 2] += np.flip(column_scalers)
     matrix[:, :, 2] = np.transpose(matrix.transpose((1, 0, 2))[:, :, 2] + row_scalers)
-    return matrix  # .reshape((3,rowCount * columnCount))
+    return matrix  # .reshape((3,xRange * yRange))
 
 
-def Spectrum2(rowCount: int, columnCount: int) -> np.ndarray[(Any, Any, 3), np.int32]:
-    matrix = np.zeros((rowCount, columnCount, 3))
-    matrix[:, :, 0] += (np.cos(np.linspace(0, 2 * np.pi, columnCount)) * 127.5) + 127.5
-    matrix[:, :, 1] += (np.cos(np.linspace(0, 4 * np.pi, columnCount)) * 127.5) + 127.5
-    matrix[:, :, 2] += (np.cos(np.linspace(0, 6 * np.pi, columnCount)) * 127.5) + 127.5
+def Spectrum2(xRange: int, yRange: int) -> np.ndarray[(Any, Any, 3), np.int32]:
+    matrix = np.zeros((yRange, xRange, 3))
+    matrix[:, :, 0] += (np.cos(np.linspace(0, 2 * np.pi, yRange)) * 127.5) + 127.5
+    matrix[:, :, 1] += (np.cos(np.linspace(0, 4 * np.pi, yRange)) * 127.5) + 127.5
+    matrix[:, :, 2] += (np.cos(np.linspace(0, 6 * np.pi, yRange)) * 127.5) + 127.5
     for i in range(3):
-        for j in range(rowCount):
-            matrix[j, :, i] = np.roll(matrix[j, :, i], j + (i * int(rowCount / 3)))
+        for j in range(xRange):
+            matrix[j, :, i] = np.roll(matrix[j, :, i], j + (i * int(xRange / 3)))
     return matrix
 
 
 def SolidColorMatrix(
-    rowCount: int,
-    columnCount: int,
-    color: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_COLOR_SEQUENCE[0]
+    xRange: int, yRange: int, color: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_COLOR_SEQUENCE[0]
 ) -> np.ndarray[(3, Any), np.int32]:
     """Creates matrix of RGB tuples that are all one color.
 
     Args:
-        rowCount: the total desired rows in matrix
-        columnCount: the total desired rows in matrix
+        xRange: the total desired rows in matrix
+        yRange: the total desired rows in matrix
         color: a pixel object defining the rgb values you want in the pattern
 
     Returns:
@@ -73,7 +71,7 @@ def SolidColorMatrix(
             _color = Pixel(color)
         else:
             _color = color
-        matrix = np.ones(( rowCount,columnCount, 3))
+        matrix = np.ones((yRange, xRange, 3))
         matrix[:, :, 0] *= _color.array[0]
         matrix[:, :, 1] *= _color.array[1]
         matrix[:, :, 2] *= _color.array[2]

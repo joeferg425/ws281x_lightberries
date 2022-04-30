@@ -224,6 +224,12 @@ class WS281xString(Sequence[np.int_]):
                         self.ws281xPixelStrip.setPixelColor(j, p.int)
                     else:
                         self.simulated_ws281xPixelStrip[j] = p.int
+            elif isinstance(key, (np.int_, np.int32)):
+                p = Pixel(value)
+                if self.ws281xPixelStrip:
+                    self.ws281xPixelStrip.setPixelColor(int(key), p.int)
+                else:
+                    self.simulated_ws281xPixelStrip[int(key)] = p.int
             else:
                 p = Pixel(value)
                 if self.ws281xPixelStrip:

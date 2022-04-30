@@ -61,18 +61,24 @@ class Pixel:
             # if it is an int and in range
             elif isinstance(rgb, (int, np.int_, np.int32)) and rgb >= 0 and rgb <= 0xFFFFFF:
                 rgb = int(rgb)
-                # convert to tuple
-                value = (
-                    ((rgb & 0xFF0000) >> 16),
-                    ((rgb & 0x00FF00) >> 8),
-                    ((rgb & 0x0000FF) >> 0),
-                )
-                self._value = (
-                    # use order enum
-                    (int(value[self._order.value[0]]) << 16)
-                    + (int(value[self._order.value[1]]) << 8)
-                    + (int(value[self._order.value[2]]))
-                )
+                if self._order == LEDOrder.RGB:
+                    self._value = rgb & 0xFFFFFF
+                elif self._order == LEDOrder.GRB:
+                    self._value = ((rgb & 0xFF0000) >> 8) + ((rgb & 0x00FF00) << 8) + ((rgb & 0x0000FF) >> 0)
+                else:
+                    raise Exception("not handled")
+                    # # convert to tuple
+                    # value = (
+                    #     ((rgb & 0xFF0000) >> 16),
+                    #     ((rgb & 0x00FF00) >> 8),
+                    #     ((rgb & 0x0000FF) >> 0),
+                    # )
+                    # self._value = (
+                    #     # use order enum
+                    #     (int(value[self._order.value[0]]) << 16)
+                    #     + (int(value[self._order.value[1]]) << 8)
+                    #     + (int(value[self._order.value[2]]))
+                    # )
 
             # this is an instance of this class, just use the value
             elif isinstance(rgb, Pixel):
