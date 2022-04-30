@@ -51,7 +51,7 @@ def Spectrum2(rowCount: int, columnCount: int) -> np.ndarray[(Any, Any, 3), np.i
 def SolidColorMatrix(
     rowCount: int,
     columnCount: int,
-    color: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_COLOR_SEQUENCE[0],
+    color: np.ndarray[(3,), np.int32] = ArrayPattern.DEFAULT_COLOR_SEQUENCE[0]
 ) -> np.ndarray[(3, Any), np.int32]:
     """Creates matrix of RGB tuples that are all one color.
 
@@ -73,10 +73,7 @@ def SolidColorMatrix(
             _color = Pixel(color)
         else:
             _color = color
-        if DEFAULT_MATRIX_ORDER == MatrixOrder.TraverseRowThenColumn:
-            matrix = np.ones((rowCount, columnCount, 3))
-        elif DEFAULT_MATRIX_ORDER == MatrixOrder.TraverseColumnThenRow:
-            matrix = np.ones((columnCount, rowCount, 3))
+        matrix = np.ones(( rowCount,columnCount, 3))
         matrix[:, :, 0] *= _color.array[0]
         matrix[:, :, 1] *= _color.array[1]
         matrix[:, :, 2] *= _color.array[2]

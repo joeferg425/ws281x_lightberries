@@ -1849,11 +1849,11 @@ class ArrayController:
                 # assign the target color
                 sprite.colorGoal = self.colorSequenceNext
                 # initialize sprite to
-                sprite.color = ArrayPattern.DEFAULT_BACKGROUND_COLOR
+                sprite.color = ArrayPattern.DEFAULT_BACKGROUND_COLOR.array
                 # copy color sequence
                 sprite.colorSequence = self.colorSequence
                 # set next color
-                sprite.colorNext = PixelColors.OFF
+                sprite.colorNext = PixelColors.OFF.array
                 # set fade step/amount
                 sprite.fadeSteps = _fadeSteps
                 sprite.fadeAmount = _fadeAmount

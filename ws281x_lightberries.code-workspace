@@ -107,6 +107,24 @@
 				"justMyCode": false
 			},
 			{
+				"name": "example: dot matrix",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/examples/dot_matrix.py",
+				"console": "integratedTerminal",
+				"sudo": true,
+				"justMyCode": false
+			},
+			{
+				"name": "example: dot array",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/examples/dot_array.py",
+				"console": "integratedTerminal",
+				"sudo": true,
+				"justMyCode": false
+			},
+			{
 				"name": "example: game",
 				"type": "python",
 				"request": "launch",
@@ -120,6 +138,15 @@
 				"type": "python",
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/game2.py",
+				"console": "integratedTerminal",
+				"sudo": true,
+				"justMyCode": false
+			},
+			{
+				"name": "example: game two-player",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/examples/game_twoplayer.py",
 				"console": "integratedTerminal",
 				"sudo": true,
 				"justMyCode": false

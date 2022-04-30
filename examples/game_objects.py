@@ -609,10 +609,6 @@ def check_for_collisions():
                         obj1._y = obj2.y - obj1.y_direction
                     else:
                         raise Exception("not handled yet")
-                # if obj2.animate and obj2.dead and key2 not in game_object.dead_objects:
-                # game_object.dead_objects.append(key2)
-            # if obj1.animate and obj1.dead and key1 not in game_object.dead_objects:
-            # game_object.dead_objects.append(key1)
     for key, obj in game_object.objects.items():
         if obj.animate and obj.dead and key not in game_object.dead_objects:
             game_object.dead_objects.append(key)

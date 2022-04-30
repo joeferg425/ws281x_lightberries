@@ -12,7 +12,7 @@ import pygame
 import numpy as np
 
 # the number of pixels in the light string
-PIXEL_ROW_COUNT = 16
+PIXEL_ROW_COUNT = 32
 PIXEL_COLUMN_COUNT = 32
 # GPIO pin to use for PWM signal
 GPIO_PWM_PIN = 18
@@ -28,7 +28,12 @@ GAMMA = None
 LED_STRIP_TYPE = None
 INVERT = False
 PWM_CHANNEL = 0
-MATRIX_COUNT = 2
+MATRIX_LAYOUT = np.array(
+    [
+        [1, 2],
+        [0, 3],
+    ]
+)
 MATRIX_SHAPE = (16, 16)
 
 # create the lightberries Controller object
@@ -44,7 +49,7 @@ lightControl = MatrixController(
     stripTypeLED=LED_STRIP_TYPE,
     ledBrightnessFloat=BRIGHTNESS,
     debug=True,
-    matrixCount=MATRIX_COUNT,
+    matrixLayout=MATRIX_LAYOUT,
     matrixShape=MATRIX_SHAPE,
 )
 

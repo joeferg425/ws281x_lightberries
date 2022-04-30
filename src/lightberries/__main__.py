@@ -32,9 +32,7 @@ if __name__ == "__main__":  # pylint: disable=invalid-name
         description=lightberries.__doc__,
         usage="sudo python3 -m lightberries (Needs root for GPIO access)",
     )
-    parser.add_argument(
-        "-l", "--LED_count", type=int, help="the number of LEDs in your LED string"
-    )
+    parser.add_argument("-l", "--LED_count", type=int, help="the number of LEDs in your LED string")
     parser.add_argument(
         "-d",
         "--function_duration",
@@ -44,19 +42,13 @@ if __name__ == "__main__":  # pylint: disable=invalid-name
     parser.add_argument(
         "-f",
         "--function",
-        choices=[
-            f.replace("useFunction", "")
-            for f in dir(ArrayController)
-            if "useFunction" in f
-        ],
+        choices=[f.replace("useFunction", "").lower() for f in dir(ArrayController) if "useFunction" in f],
         help="the name of the function to demo using randomized parameters",
     )
     parser.add_argument(
         "-c",
         "--color",
-        choices=[
-            f.replace("useColor", "") for f in dir(ArrayController) if "useColor" in f
-        ],
+        choices=[f.replace("useColor", "").lower() for f in dir(ArrayController) if "useColor" in f],
         help="the name of the color pattern to demo using randomized parameters",
     )
     parser.add_argument(

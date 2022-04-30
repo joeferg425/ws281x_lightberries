@@ -38,6 +38,46 @@ class MatrixFunction(ArrayFunction):
         self.columnStep: int = 1
 
     @staticmethod
+    def functionMatrixFade(
+        fade: "ArrayFunction",
+    ) -> None:
+        """Fade all Pixels toward OFF.
+
+        Args:
+            fade: tracking object
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightFunctionException: if something bad happens
+        """
+        try:
+            for x in range(ArrayFunction.Controller.realLEDColumnCount):
+                for y in range(ArrayFunction.Controller.realLEDRowCount):
+                    for rgbIndex in range(len(fade.color)):
+                        if ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] != fade.color[rgbIndex]:
+                            if (
+                                ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] - fade.colorFade
+                                > fade.color[rgbIndex]
+                            ):
+                                ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] -= fade.colorFade
+                            elif (
+                                ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] + fade.colorFade
+                                < fade.color[rgbIndex]
+                            ):
+                                ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] += fade.colorFade
+                            else:
+                                ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] = fade.colorNext[rgbIndex]
+        except KeyboardInterrupt:
+            raise
+        except SystemExit:
+            raise
+        except LightBerryException:
+            raise
+        except Exception as ex:
+            raise FunctionException from ex
+
+    @staticmethod
     def functionMatrixColorFlux(
         flux: "MatrixFunction",
     ) -> None:
@@ -235,8 +275,8 @@ class MatrixFunction(ArrayFunction):
                     firework.size += firework.step
                 else:
                     firework.size = 1
-                    firework.rowIndex = random.randint(0, firework.Controller.realLEDRowCount - 1)
-                    firework.columnIndex = random.randint(0, firework.Controller.realLEDColumnCount - 1)
+                    firework.rowIndex = random.randint(0, firework.Controller.realLEDColumnCount - 1)
+                    firework.columnIndex = random.randint(0, firework.Controller.realLEDRowCount - 1)
                     firework.delayCountMax = random.randint(1, 5)
                     if firework.colorCycle:
                         firework.color = firework.colorSequenceNext
