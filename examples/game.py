@@ -38,8 +38,8 @@ MATRIX_SHAPE = (16, 16)
 
 # create the lightberries Controller object
 lightControl = MatrixController(
-    ledRowCount=PIXEL_ROW_COUNT,
-    ledColumnCount=PIXEL_COLUMN_COUNT,
+    ledXaxisRange=PIXEL_ROW_COUNT,
+    ledYaxisRange=PIXEL_COLUMN_COUNT,
     pwmGPIOpin=GPIO_PWM_PIN,
     channelDMA=DMA_CHANNEL,
     frequencyPWM=PWM_FREQUENCY,
@@ -80,13 +80,13 @@ class sprite:
 
     @property
     def x(self) -> int:
-        self._x = self._x % lightControl.realLEDColumnCount
+        self._x = self._x % lightControl.realLEDYaxisRange
         return round(self._x)
 
     @property
     def xs(self) -> list[int]:
-        xs = [round(self._x + i) % (lightControl.realLEDColumnCount) for i in range(-self.size, self.size + 1)]
-        xs.extend([round(self._x) % (lightControl.realLEDColumnCount) for i in range(-self.size, self.size + 1)])
+        xs = [round(self._x + i) % (lightControl.realLEDYaxisRange) for i in range(-self.size, self.size + 1)]
+        xs.extend([round(self._x) % (lightControl.realLEDYaxisRange) for i in range(-self.size, self.size + 1)])
         return xs
 
     @x.setter
@@ -95,13 +95,13 @@ class sprite:
 
     @property
     def y(self) -> int:
-        self._y = self._y % lightControl.realLEDRowCount
+        self._y = self._y % lightControl.realLEDXaxisRange
         return round(self._y)
 
     @property
     def ys(self) -> list[int]:
-        ys = [round(self._y) % (lightControl.realLEDRowCount) for i in range(-self.size, self.size + 1)]
-        ys.extend([round(self._y + i) % (lightControl.realLEDRowCount) for i in range(-self.size, self.size + 1)])
+        ys = [round(self._y) % (lightControl.realLEDXaxisRange) for i in range(-self.size, self.size + 1)]
+        ys.extend([round(self._y + i) % (lightControl.realLEDXaxisRange) for i in range(-self.size, self.size + 1)])
         return ys
 
     @y.setter
@@ -115,37 +115,37 @@ class sprite:
         rx = self.x
         ry = self.y
         while (
-            (lightControl.realLEDColumnCount - 1) not in xs
+            (lightControl.realLEDYaxisRange - 1) not in xs
             and 0 not in xs
             and 0 not in ys
-            and (lightControl.realLEDRowCount - 1) not in ys
+            and (lightControl.realLEDXaxisRange - 1) not in ys
         ):
             rx += self.dx
             ry += self.dy
             if round(rx) not in xs or round(ry) not in ys:
-                xs.extend([(round(rx) + i) % (lightControl.realLEDColumnCount) for i in range(-1, 2)])
-                xs.extend([round(rx) % (lightControl.realLEDColumnCount) for i in range(-1, 2)])
-                ys.extend([round(ry) % (lightControl.realLEDRowCount) for i in range(-1, 2)])
-                ys.extend([(round(ry) + i) % (lightControl.realLEDRowCount) for i in range(-1, 2)])
+                xs.extend([(round(rx) + i) % (lightControl.realLEDYaxisRange) for i in range(-1, 2)])
+                xs.extend([round(rx) % (lightControl.realLEDYaxisRange) for i in range(-1, 2)])
+                ys.extend([round(ry) % (lightControl.realLEDXaxisRange) for i in range(-1, 2)])
+                ys.extend([(round(ry) + i) % (lightControl.realLEDXaxisRange) for i in range(-1, 2)])
         return xs, ys
 
     def go(self):
         self._x = self._x + self.dx
         self._y = self._y + self.dy
-        if self._x >= (lightControl.realLEDColumnCount - 1) or self._x <= 0:
+        if self._x >= (lightControl.realLEDYaxisRange - 1) or self._x <= 0:
             if self.bounded:
                 self.dead = True
             elif self.stop:
-                if self._x >= (lightControl.realLEDColumnCount - 1):
-                    self._x = lightControl.realLEDColumnCount - 1
+                if self._x >= (lightControl.realLEDYaxisRange - 1):
+                    self._x = lightControl.realLEDYaxisRange - 1
                 elif self._x <= 0:
                     self._x = 0
-        if self._y >= (lightControl.realLEDRowCount - 1) or self._y <= 0:
+        if self._y >= (lightControl.realLEDXaxisRange - 1) or self._y <= 0:
             if self.bounded:
                 self.dead = True
             elif self.stop:
-                if self._y >= (lightControl.realLEDRowCount - 1):
-                    self._y = lightControl.realLEDRowCount - 1
+                if self._y >= (lightControl.realLEDXaxisRange - 1):
+                    self._y = lightControl.realLEDXaxisRange - 1
                 elif self._y <= 0:
                     self._y = 0
 
@@ -172,9 +172,10 @@ pygame.init()
 # clock = pygame.time.Clock()
 keepPlaying = True
 THRESHOLD = 0.05
-fade = ArrayFunction(lightControl, ArrayFunction.functionFade, ArrayPattern.DefaultColorSequenceByMonth())
+# fade = ArrayFunction(lightControl, MatrixFunction.functionMatrixFade, ArrayPattern.DefaultColorSequenceByMonth())
+fade = ArrayFunction(lightControl, MatrixFunction.functionMatrixFadeOff, ArrayPattern.DefaultColorSequenceByMonth())
 fade.fadeAmount = 0.3
-fade.colorFade = int(0.3 * 256)
+# fade.colorFade = int(0.3 * 256)
 fade.color = PixelColors.OFF.array
 # for i in range(0, pygame.joystick.get_count()):
 #     joysticks.append(pygame.joystick.Joystick(i))
@@ -197,8 +198,8 @@ player_dead_time = time.time()
 score = 1
 player = sprite(
     "player",
-    int(lightControl.realLEDColumnCount // 2),
-    int(lightControl.realLEDRowCount // 2),
+    int(lightControl.realLEDYaxisRange // 2),
+    int(lightControl.realLEDXaxisRange // 2),
     0,
     0,
     stop=True,
@@ -207,18 +208,18 @@ player = sprite(
 fireworks = []
 for i in range(10):
     firework = MatrixFunction(lightControl, MatrixFunction.functionMatrixFireworks, ArrayPattern.RainbowArray(10))
-    firework.rowIndex = random.randint(0, lightControl.realLEDRowCount - 1)
-    firework.columnIndex = random.randint(0, lightControl.realLEDColumnCount - 1)
+    firework.rowIndex = random.randint(0, lightControl.realLEDXaxisRange - 1)
+    firework.columnIndex = random.randint(0, lightControl.realLEDYaxisRange - 1)
     firework.size = 1
     firework.step = 1
-    firework.sizeMax = min(int(lightControl.realLEDRowCount / 2), int(lightControl.realLEDColumnCount / 2))
+    firework.sizeMax = min(int(lightControl.realLEDXaxisRange / 2), int(lightControl.realLEDYaxisRange / 2))
     firework.colorCycle = True
     for _ in range(i):
         firework.color = firework.colorSequenceNext
     fireworks.append(firework)
 win = False
 win_time = time.time()
-WIN_SCORE = lightControl.realLEDColumnCount
+WIN_SCORE = lightControl.realLEDYaxisRange
 WIN_DURATION = 10
 pause = True
 pause_time = time.time()
@@ -271,8 +272,8 @@ while True:
         delta = time.time() - player_dead_time
         if delta > 1:
             player.dead = False
-            player.x = random.randint(0, lightControl.realLEDColumnCount - 1)
-            player.y = random.randint(0, lightControl.realLEDRowCount - 1)
+            player.x = random.randint(0, lightControl.realLEDYaxisRange - 1)
+            player.y = random.randint(0, lightControl.realLEDXaxisRange - 1)
             enemies.clear()
             bullets.clear()
             fizzled.clear()
@@ -376,8 +377,8 @@ while True:
         enemy_time = time.time()
         enemy = sprite(
             "enemy",
-            random.randint(0, lightControl.realLEDColumnCount - 1),
-            random.randint(0, lightControl.realLEDRowCount - 1),
+            random.randint(0, lightControl.realLEDYaxisRange - 1),
+            random.randint(0, lightControl.realLEDXaxisRange - 1),
             random.random() * [-1, 1][random.randint(0, 1)],
             random.random() * [-1, 1][random.randint(0, 1)],
             color=PixelColors.RED.array,
@@ -403,8 +404,8 @@ while True:
             else:
                 enemy.dy = MAX_ENEMY_SPEED
         while abs(enemy.x - player.x) < 5 and abs(enemy.y - player.y) < 5:
-            enemy.x = random.randint(0, lightControl.realLEDColumnCount - 1)
-            enemy.y = random.randint(0, lightControl.realLEDRowCount - 1)
+            enemy.x = random.randint(0, lightControl.realLEDYaxisRange - 1)
+            enemy.y = random.randint(0, lightControl.realLEDXaxisRange - 1)
         enemies.append(enemy)
     for death_ray in death_rays:
         duration = int((time.time() - death_ray_time) / DEATH_RAY_FLICKER)

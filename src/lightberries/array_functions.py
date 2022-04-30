@@ -743,9 +743,15 @@ class ArrayFunction:
             # update index
             cylon.index = cylon.indexNext
             # update LEDs with new values
-            ArrayFunction.Controller.virtualLEDBuffer[cylon.indexRange] = cylon.colorSequence[
-                : ArrayFunction.Controller.virtualLEDCount
-            ]
+            # ArrayFunction.Controller.virtualLEDBuffer[cylon.indexRange] = cylon.colorSequence[
+            #     : ArrayFunction.Controller.virtualLEDCount
+            # ]
+            if len(ArrayFunction.Controller.virtualLEDBuffer.shape) == 2:
+                ArrayFunction.Controller.virtualLEDBuffer[cylon.indexRange] = cylon.color
+            else:
+                ArrayFunction.Controller.virtualLEDBuffer[
+                    np.where(ArrayFunction.Controller.virtualLEDIndexBuffer == cylon.indexRange)
+                ] = cylon.color
         except SystemExit:  # pragma: no cover
             raise
         except KeyboardInterrupt:  # pragma: no cover
@@ -904,7 +910,13 @@ class ArrayFunction:
                 accelerate.index = ArrayFunction.Controller.getRandomIndex()
                 accelerate.indexPrevious = accelerate.index
                 accelerate.indexRange = np.arange(accelerate.indexPrevious, accelerate.index + 1)
-            ArrayFunction.Controller.virtualLEDBuffer[accelerate.indexRange] = accelerate.color
+            # ArrayFunction.Controller.virtualLEDBuffer[accelerate.indexRange] = accelerate.color
+            if len(ArrayFunction.Controller.virtualLEDBuffer.shape) == 2:
+                ArrayFunction.Controller.virtualLEDBuffer[accelerate.indexRange] = accelerate.color
+            else:
+                ArrayFunction.Controller.virtualLEDBuffer[
+                    np.where(ArrayFunction.Controller.virtualLEDIndexBuffer == accelerate.indexRange)
+                ] = accelerate.color
             if splash is True:
                 ArrayFunction.Controller.virtualLEDBuffer[splashRange, :] = ArrayFunction.Controller.fadeColor(
                     accelerate.color, ArrayFunction.Controller.backgroundColor, 50
@@ -977,7 +989,13 @@ class ArrayFunction:
                         # randomize next index
                         change.index = ArrayFunction.Controller.getRandomIndex()
                         # get color of current LED index
-                        change.color = np.copy(ArrayFunction.Controller.virtualLEDBuffer[change.index])
+                        # change.color = np.copy(ArrayFunction.Controller.virtualLEDBuffer[change.index])
+                        if len(ArrayFunction.Controller.virtualLEDBuffer.shape) == 2:
+                            change.color = ArrayFunction.Controller.virtualLEDBuffer[change.index]
+                        else:
+                            change.color = ArrayFunction.Controller.virtualLEDBuffer[
+                                np.where(ArrayFunction.Controller.virtualLEDIndexBuffer == change.index)
+                            ]
                         # get next color
                         for _ in range(random.randint(1, 5)):
                             change.colorNext = change.colorSequenceNext
@@ -994,7 +1012,13 @@ class ArrayFunction:
                 # set the color
                 change.color = change.colorNext
             # assign LED color to LED string
-            ArrayFunction.Controller.virtualLEDBuffer[change.index] = change.color
+            # ArrayFunction.Controller.virtualLEDBuffer[change.index] = change.color
+            if len(ArrayFunction.Controller.virtualLEDBuffer.shape) == 2:
+                ArrayFunction.Controller.virtualLEDBuffer[change.index] = change.color
+            else:
+                ArrayFunction.Controller.virtualLEDBuffer[
+                    np.where(ArrayFunction.Controller.virtualLEDIndexBuffer == change.index)
+                ] = change.color
         except SystemExit:  # pragma: no cover
             raise
         except KeyboardInterrupt:  # pragma: no cover
@@ -1031,7 +1055,12 @@ class ArrayFunction:
                     # assign the next color
                     meteor.color = meteor.colorSequenceNext
                 # assign LEDs to LED string
-                ArrayFunction.Controller.virtualLEDBuffer[meteor.indexRange] = meteor.color
+                if len(ArrayFunction.Controller.virtualLEDBuffer.shape) == 2:
+                    ArrayFunction.Controller.virtualLEDBuffer[meteor.indexRange] = meteor.color
+                else:
+                    ArrayFunction.Controller.virtualLEDBuffer[
+                        np.where(ArrayFunction.Controller.virtualLEDIndexBuffer == meteor.indexRange)
+                    ] = meteor.color
         except SystemExit:  # pragma: no cover
             raise
         except KeyboardInterrupt:  # pragma: no cover
@@ -1115,7 +1144,13 @@ class ArrayFunction:
                 # reset flag
                 sprite.indexUpdated = False
                 # assign LEDs to LED string
-                ArrayFunction.Controller.virtualLEDBuffer[sprite.indexRange] = [sprite.color] * len(sprite.indexRange)
+                # ArrayFunction.Controller.virtualLEDBuffer[sprite.indexRange] = [sprite.color] * len(sprite.indexRange)
+                if len(ArrayFunction.Controller.virtualLEDBuffer.shape) == 2:
+                    ArrayFunction.Controller.virtualLEDBuffer[sprite.indexRange] = sprite.color
+                else:
+                    ArrayFunction.Controller.virtualLEDBuffer[
+                        np.where(ArrayFunction.Controller.virtualLEDIndexBuffer == sprite.indexRange)
+                    ] = sprite.color
         except SystemExit:  # pragma: no cover
             raise
         except KeyboardInterrupt:  # pragma: no cover
@@ -1168,13 +1203,28 @@ class ArrayFunction:
                         ArrayFunction.Controller.virtualLEDCount,
                     )
                     if (indexLowerMax - indexLowerMin) > 0:
+                        indexRange = list(range(indexLowerMin, indexLowerMax))
                         ArrayFunction.Controller.virtualLEDBuffer[indexLowerMin:indexLowerMax] = [raindrop.color] * (
                             indexLowerMax - indexLowerMin
                         )
+                        if len(ArrayFunction.Controller.virtualLEDBuffer.shape) == 2:
+                            ArrayFunction.Controller.virtualLEDBuffer[indexRange] = raindrop.color
+                        else:
+                            ArrayFunction.Controller.virtualLEDBuffer[
+                                np.where(ArrayFunction.Controller.virtualLEDIndexBuffer == indexRange)
+                            ] = raindrop.color
                     if (indexHigherMax - indexHigherMin) > 0:
-                        ArrayFunction.Controller.virtualLEDBuffer[indexHigherMin:indexHigherMax] = [raindrop.color] * (
-                            indexHigherMax - indexHigherMin
-                        )
+                        indexRange = list(range(indexHigherMin, indexHigherMax))
+                        # ArrayFunction.Controller.virtualLEDBuffer[indexHigherMin:indexHigherMax]
+                        # = [raindrop.color] * (
+                        # indexHigherMax - indexHigherMin
+                        # )
+                        if len(ArrayFunction.Controller.virtualLEDBuffer.shape) == 2:
+                            ArrayFunction.Controller.virtualLEDBuffer[indexRange] = raindrop.color
+                        else:
+                            ArrayFunction.Controller.virtualLEDBuffer[
+                                np.where(ArrayFunction.Controller.virtualLEDIndexBuffer == indexRange)
+                            ] = raindrop.color
                     # scaled fading as splash grows
                     raindrop.color[:] = raindrop.color * raindrop.colorScaler
                     # increment splash growth counter
@@ -1361,7 +1411,13 @@ class ArrayFunction:
             # increment delay
             thing.delayCounter += 1
             # assign colors to indices
-            ArrayFunction.Controller.virtualLEDBuffer[thing.indexRange] = thing.color
+            # ArrayFunction.Controller.virtualLEDBuffer[thing.indexRange] = thing.color
+            if len(ArrayFunction.Controller.virtualLEDBuffer.shape) == 2:
+                ArrayFunction.Controller.virtualLEDBuffer[thing.indexRange] = thing.color
+            else:
+                ArrayFunction.Controller.virtualLEDBuffer[
+                    np.where(ArrayFunction.Controller.virtualLEDIndexBuffer == thing.indexRange)
+                ] = thing.color
         except SystemExit:  # pragma: no cover
             raise
         except KeyboardInterrupt:  # pragma: no cover

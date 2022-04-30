@@ -1671,7 +1671,14 @@ class ArrayController:
                     # this is used to help calculate fade duration in the function
                     change.stepCountMax = _fadeStepCount
                     # copy the current color of this LED index
-                    change.color = np.copy(self.virtualLEDBuffer[change.index])
+                    # change.color = np.copy(self.virtualLEDBuffer[change.index])
+                    if len(ArrayFunction.Controller.virtualLEDBuffer.shape) == 2:
+                        change.color = np.copy(self.virtualLEDBuffer[change.index])
+                        # ArrayFunction.Controller.virtualLEDBuffer[accelerate.indexRange] = meteor.color
+                    else:
+                        change.color = ArrayFunction.Controller.virtualLEDBuffer[
+                            np.where(ArrayFunction.Controller.virtualLEDIndexBuffer == change.index)
+                        ]
                     # randomly set the color we are fading toward
                     if random.randint(0, 1) == 1:
                         change.colorNext = self.colorSequenceNext

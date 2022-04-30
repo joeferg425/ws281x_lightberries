@@ -120,7 +120,7 @@ class MatrixController(ArrayController):
             # set the color sequence
 
             if matrix is None:
-                matrix = Spectrum2(rowCount=self.realLEDXaxisRange, columnCount=self.realLEDYaxisRange)
+                matrix = Spectrum2(xRange=self.realLEDXaxisRange, yRange=self.realLEDYaxisRange)
 
             self.virtualLEDXaxisRange = matrix.shape[0]
             self.virtualLEDYaxisRange = matrix.shape[1]
@@ -235,11 +235,14 @@ class MatrixController(ArrayController):
                 self.setvirtualLEDBuffer(self.virtualLEDBuffer[: self.realLEDXaxisRange, : self.realLEDYaxisRange])
             elif self.virtualLEDCount < self.realLEDCount:
                 array = SolidColorMatrix(
-                    rowCount=self.realLEDXaxisRange,
-                    columnCount=self.realLEDYaxisRange,
+                    xRange=self.realLEDXaxisRange,
+                    yRange=self.realLEDYaxisRange,
                     color=PixelColors.OFF,
                 )
-                array[: self.virtualLEDXaxisRange, : self.virtualLEDYaxisRange] = self.virtualLEDBuffer
+                try:
+                    array[: self.virtualLEDXaxisRange, : self.virtualLEDYaxisRange] = self.virtualLEDBuffer
+                except: # noqa
+                    pass
                 self.setvirtualLEDBuffer(array)
         except SystemExit:
             raise
@@ -657,7 +660,7 @@ class MatrixController(ArrayController):
         """
         LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionMatrixRadar.__name__)
         try:
-            _fadeAmount: float = random.randint(1, 5) / 100.0
+            _fadeAmount: float = random.randint(5, 10) / 100.0
             _delayCount: int = random.randint(1, 3)
             if fadeAmount is not None:
                 _fadeAmount = float(fadeAmount)

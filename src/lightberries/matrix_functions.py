@@ -215,7 +215,7 @@ class MatrixFunction(ArrayFunction):
                 elif eye.columnIndex >= eye.Controller.realLEDYaxisRange - _max:
                     eye.columnIndex = eye.Controller.realLEDYaxisRange - _max - 1
                 eye.Controller.virtualLEDBuffer *= 0
-                eye.Controller.virtualLEDBuffer[eye.rowIndex, eye.columnIndex, :] = PixelColors.RED
+                eye.Controller.virtualLEDBuffer[eye.rowIndex, eye.columnIndex, :] = PixelColors.RED.array
                 eye.delayCountMax = random.randint(10, 850)
                 eye.delayCounter = 0
             eye.delayCounter += 1
@@ -278,7 +278,14 @@ class MatrixFunction(ArrayFunction):
                     if bounce.colorCycle and random.randint(0, 10) >= 7:
                         bounce.color = bounce.colorSequenceNext
                 bounce.delayCounter = 0
-            bounce.Controller.virtualLEDBuffer[bounce.rowIndex, bounce.columnIndex, :] = bounce.color
+            bounceRange = list(range(bounce.rowIndex, bounce.columnIndex))
+            # bounce.Controller.virtualLEDBuffer[bounce.rowIndex, bounce.columnIndex, :] = bounce.color
+            if len(ArrayFunction.Controller.virtualLEDBuffer.shape) == 2:
+                ArrayFunction.Controller.virtualLEDBuffer[bounceRange] = bounce.color
+            else:
+                ArrayFunction.Controller.virtualLEDBuffer[
+                    np.where(ArrayFunction.Controller.virtualLEDIndexBuffer == bounceRange)
+                ] = bounce.color
             bounce.delayCounter += 1
         except SystemExit:
             raise
@@ -385,7 +392,7 @@ class MatrixFunction(ArrayFunction):
                 y = np.delete(y, i)
             xy = (tuple(x), tuple(y))
 
-            radar.Controller.virtualLEDBuffer[xy] = PixelColors.GREEN3 * 0.5
+            radar.Controller.virtualLEDBuffer[xy] = PixelColors.RED.array * 0.5
 
             if random.random() < radar.activeChance:
                 duration = 20
@@ -414,7 +421,7 @@ class MatrixFunction(ArrayFunction):
 
             gone_enemies = []
             for enemy in radar.enemy:
-                radar.Controller.virtualLEDBuffer[enemy[1]] = PixelColors.RED
+                radar.Controller.virtualLEDBuffer[enemy[1]] = PixelColors.GREEN.array
                 enemy[0] -= 1
                 if enemy[0] <= 0:
                     gone_enemies.append(enemy)

@@ -25,8 +25,8 @@ PWM_CHANNEL = 0
 
 # create the lightberries Controller object
 lightControl = MatrixController(
-    ledRowCount=PIXEL_ROW_COUNT,
-    ledColumnCount=PIXEL_COLUMN_COUNT,
+    ledXaxisRange=PIXEL_ROW_COUNT,
+    ledYaxisRange=PIXEL_COLUMN_COUNT,
     pwmGPIOpin=GPIO_PWM_PIN,
     channelDMA=DMA_CHANNEL,
     frequencyPWM=PWM_FREQUENCY,
