@@ -70,7 +70,30 @@ class WS281xString(Sequence[np.int_]):
                 raise WS281xStringException(
                     "GPIO functionality requires root privilege. Please run command again as root"
                 )
+        self._instantiate_pixelstrip(
+            pwmGPIOpin=pwmGPIOpin,
+            channelDMA=channelDMA,
+            ledCount=ledCount,
+            frequencyPWM=frequencyPWM,
+            channelPWM=channelPWM,
+            invertSignalPWM=invertSignalPWM,
+            gamma=gamma,
+            stripTypeLED=stripTypeLED,
+            ledBrightnessFloat=ledBrightnessFloat,
+        )
 
+    def _instantiate_pixelstrip(
+        self,
+        pwmGPIOpin: int,
+        channelDMA: int,
+        ledCount: int,
+        frequencyPWM: int,
+        channelPWM: int,
+        invertSignalPWM: bool,
+        gamma: float,
+        stripTypeLED: Any,
+        ledBrightnessFloat: Any,
+    ) -> None:
         try:
             # create ws281x pixel strip
             self.ws281xPixelStrip = rpi_ws281x.PixelStrip(

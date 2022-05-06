@@ -1,9 +1,6 @@
 """Test Light strings."""
 from __future__ import annotations
-import lightberries.rpiws281x
-import lightberries.rpiws281x_patch
 
-lightberries.rpiws281x.rpi_ws281x = lightberries.rpiws281x_patch
 from lightberries.ws281x_strings import WS281xString
 from lightberries.pixel import PixelColors
 from numpy.testing import assert_array_equal
@@ -11,6 +8,43 @@ from lightberries.array_patterns import ConvertPixelArrayToNumpyArray
 import pytest
 from lightberries.exceptions import WS281xStringException
 import numpy as np
+import lightberries.rpiws281x
+import lightberries.rpiws281x_patch
+import mock
+from typing import Any
+
+
+def new_instantiate_pixelstrip(
+    self,
+    pwmGPIOpin: int,
+    channelDMA: int,
+    ledCount: int,
+    frequencyPWM: int,
+    channelPWM: int,
+    invertSignalPWM: bool,
+    gamma: float,
+    stripTypeLED: Any,
+    ledBrightnessFloat: Any,
+) -> None:
+    try:
+        # create ws281x pixel strip
+        self.ws281xPixelStrip = lightberries.rpiws281x_patch.PixelStrip(
+            pin=pwmGPIOpin,
+            dma=channelDMA,
+            num=ledCount,
+            freq_hz=frequencyPWM,
+            channel=channelPWM,
+            invert=invertSignalPWM,
+            gamma=gamma,
+            strip_type=stripTypeLED,
+            brightness=int(255 * ledBrightnessFloat),
+        )
+    except SystemExit:  # pragma: no cover
+        raise
+    except KeyboardInterrupt:  # pragma: no cover
+        raise
+    except Exception as ex:  # pragma: no cover
+        raise WS281xStringException from ex
 
 
 def test_creation_simulation():
@@ -24,17 +58,19 @@ def test_creation_simulation():
 def test_creation():
     """Test creation of light string with simple args."""
     led_count = 10
-    s = WS281xString(ledCount=led_count)
-    assert s is not None
-    assert len(s) == led_count
+    with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
+        s = WS281xString(ledCount=led_count)
+        assert s is not None
+        assert len(s) == led_count
 
 
 def test_deletion():
     """Test creation of light string with simple args."""
     led_count = 10
-    s = WS281xString(ledCount=led_count)
-    s.__del__()
-    assert True
+    with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
+        s = WS281xString(ledCount=led_count)
+        s.__del__()
+        assert True
 
 
 def test_creation_led_count_none():
