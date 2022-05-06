@@ -150,6 +150,11 @@ def test_doFade():
     control._runFunctions()
     assert function.delayCounter == 0
     assert_array_equal(function.color, PixelColors.GREEN.array)
+    function.delayCountMax = 0
+    function.fadeAmount = -1.0
+    control._runFunctions()
+    function.fadeAmount = 2567.0
+    control._runFunctions()
 
 
 def test_updateArrayIndex_singlestep():
@@ -387,6 +392,11 @@ def test_functionFade():
     assert_array_equal(control.virtualLEDBuffer, two)
     control._runFunctions()
     assert_array_equal(control.virtualLEDBuffer, one)
+    function1.delayCountMax = 0
+    function1.fadeAmount = -1.0
+    control._runFunctions()
+    function1.fadeAmount = 2567.0
+    control._runFunctions()
 
 
 def test_functionMarquee():
@@ -543,7 +553,9 @@ def test_functionSprites():
     assert_array_equal(control.virtualLEDBuffer, initial)
     while function.state == SpriteState.OFF.value:
         control._runFunctions()
-    control._runFunctions()
+    function.stepCounter = 0
+    while function.state != SpriteState.OFF.value:
+        control._runFunctions()
 
 
 def test_functionRaindrops():
@@ -596,3 +608,68 @@ def test_functionAlive():
     while not function.state & ThingColors.CYCLE.value:
         control._runFunctions()
     control._runFunctions()
+    while not function.state & ThingSizes.GROW.value:
+        control._runFunctions()
+    function.sizeMax = 5
+    function.size = 2
+    function.delayCountMax = 0
+    function.stepCountMax = 114
+    control._runFunctions()
+    while not function.state & ThingSizes.GROW.value:
+        control._runFunctions()
+    function.sizeMax = 5
+    function.size = 3
+    function.delayCountMax = 0
+    function.stepCountMax = 114
+    control._runFunctions()
+    while not function.state & ThingSizes.GROW.value:
+        control._runFunctions()
+    function.sizeMax = 5
+    function.size = 0
+    function.delayCountMax = 0
+    function.stepCountMax = 114
+    control._runFunctions()
+    while not function.state & ThingSizes.GROW.value:
+        control._runFunctions()
+    function.sizeMax = 5
+    function.size = 6
+    function.delayCountMax = 0
+    function.stepCountMax = 114
+    control._runFunctions()
+    while not function.state & ThingMoves.LIGHTSPEED.value:
+        control._runFunctions()
+    function.delayCountMax = 0
+    function.stepCountMax = 114
+    control._runFunctions()
+    while not function.state & ThingSizes.GROW.value:
+        control._runFunctions()
+    function.delayCountMax = 0
+    function.stepCountMax = 114
+    control._runFunctions()
+    while not function.state & ThingSizes.SHRINK.value:
+        control._runFunctions()
+    function.delayCountMax = 0
+    function.stepCountMax = 114
+    control._runFunctions()
+
+
+def test_overlayTwinkle():
+    control = newControllerBigger()
+    pattern = ConvertPixelArrayToNumpyArray([PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE])
+    function = ArrayFunction(control, ArrayFunction.overlayTwinkle, pattern)
+    function.random = 0.0
+    control.functionList.append(function)
+    control._runFunctions()
+    control._copyOverlays()
+    assert np.sum(np.array(control.ws281xString)) != 0
+
+
+def test_overlayBlink():
+    control = newControllerBigger()
+    pattern = ConvertPixelArrayToNumpyArray([PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE])
+    function = ArrayFunction(control, ArrayFunction.overlayBlink, pattern)
+    function.random = 0.0
+    control.functionList.append(function)
+    control._runFunctions()
+    control._copyOverlays()
+    assert np.sum(np.array(control.ws281xString)) != 0

@@ -276,7 +276,7 @@ class ArrayFunction:
         """
         try:
             self.delayCounter += 1
-            if self.delayCounter == self.delayCountMax:
+            if self.delayCounter >= self.delayCountMax:
                 _fadeAmount = ceil(self.fadeAmount * 256)
                 if _fadeAmount < 0:
                     _fadeAmount = 1
@@ -1284,7 +1284,7 @@ class ArrayFunction:
                         # ) % ArrayFunction.Controller.virtualLEDCount
                         # randomly change direction
                         if random.randint(0, 99) > 95:
-                            thing.direction *= -1
+                            thing.direction *= -1  # pragma: no cover
                     # if in fast meteor mode
                     elif thing.state & ThingMoves.LIGHTSPEED.value:
                         # artificially limit duration of this mode
@@ -1299,14 +1299,14 @@ class ArrayFunction:
                         # ) % ArrayFunction.Controller.virtualLEDCount
                         # randomly change direction
                         if random.randint(0, 99) > 95:
-                            thing.direction *= -1
+                            thing.direction *= -1  # pragma: no cover
                     # if slow meteor
                     elif thing.state & ThingMoves.TURTLE.value:
                         # set step to 1
                         thing.step = 1
                         # randomly change direction
                         if random.randint(0, 99) > 80:
-                            thing.direction *= -1
+                            thing.direction *= -1  # pragma: no cover
                         # set next index
                         thing.updateArrayIndex()
                         # thing.index = (
@@ -1321,11 +1321,11 @@ class ArrayFunction:
                         if thing.size < thing.sizeMax:
                             # randomly grow
                             if random.randint(0, 99) > 80:
-                                thing.size += random.randint(1, 5)
+                                thing.size += random.randint(1, 5)  # pragma: no cover
                             # also randomly shrink a bit
-                            elif thing.size > 2:
+                            if thing.size > 2:
                                 if random.randint(0, 99) > 90:
-                                    thing.size -= 1
+                                    thing.size -= 1  # pragma: no cover
                         # make sure we aren't overgrown
                         if thing.size > thing.sizeMax:
                             thing.size = thing.sizeMax
@@ -1343,9 +1343,9 @@ class ArrayFunction:
                             if random.randint(0, 99) > 80:
                                 thing.size -= random.randint(1, 5)
                             # also randomly grow a bit
-                            elif thing.size < thing.sizeMax:
+                            if thing.size < thing.sizeMax:
                                 if random.randint(0, 99) > 90:
-                                    thing.size += 1
+                                    thing.size += 1  # pragma: no cover
                         # make sure we aren't overgrown
                         if thing.size >= thing.sizeMax:
                             thing.size = thing.sizeMax

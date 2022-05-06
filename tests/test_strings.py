@@ -1,12 +1,12 @@
 """Test Light strings."""
 from __future__ import annotations
-import os
 from lightberries.ws281x_strings import WS281xString
 from lightberries.pixel import PixelColors
 from numpy.testing import assert_array_equal
 from lightberries.array_patterns import ConvertPixelArrayToNumpyArray
 import pytest
 from lightberries.exceptions import WS281xStringException
+import numpy as np
 
 
 def test_creation_simulation():
@@ -17,20 +17,20 @@ def test_creation_simulation():
     assert len(s) == led_count
 
 
-# def test_creation():
-#     """Test creation of light string with simple args."""
-#     led_count = 10
-#     s = WS281xString(ledCount=led_count)
-#     assert s is not None
-#     assert len(s) == led_count
+def test_creation():
+    """Test creation of light string with simple args."""
+    led_count = 10
+    s = WS281xString(ledCount=led_count)
+    assert s is not None
+    assert len(s) == led_count
 
 
-# def test_deletion():
-#     """Test creation of light string with simple args."""
-#     led_count = 10
-#     s = WS281xString(ledCount=led_count)
-#     s.__del__()
-#     assert True
+def test_deletion():
+    """Test creation of light string with simple args."""
+    led_count = 10
+    s = WS281xString(ledCount=led_count)
+    s.__del__()
+    assert True
 
 
 def test_creation_led_count_none():
@@ -58,10 +58,57 @@ def test_single_assignment():
         assert_array_equal(assigned_color, random_color)
 
 
+def test_single_assignment_indexerror():
+    """Test creation of light string with simple args."""
+    led_count = 10
+    ws281x = WS281xString(ledCount=led_count, simulate=True)
+    with pytest.raises(IndexError):
+        random_color = PixelColors.random().array
+        ws281x[led_count + 1] = random_color
+
+
+def test_single_assignment_indexerror_numpy():
+    """Test creation of light string with simple args."""
+    led_count = 10
+    led_count_np = np.array(np.arange(11), dtype=np.int32)[-1]
+    ws281x = WS281xString(ledCount=led_count, simulate=True)
+    with pytest.raises(IndexError):
+        random_color = PixelColors.random().array
+        ws281x[led_count_np] = random_color
+
+
+def test_single_access_indexerror():
+    """Test creation of light string with simple args."""
+    led_count = 11
+    ws281x = WS281xString(ledCount=led_count, simulate=True)
+    with pytest.raises(IndexError):
+        ws281x[led_count + 1]
+
+
+def test_single_access_indexerror_numpy():
+    """Test creation of light string with simple args."""
+    led_count = 11
+    led_count_np = np.array(np.arange(12), dtype=np.int32)[-1]
+    ws281x = WS281xString(ledCount=led_count, simulate=True)
+    with pytest.raises(IndexError):
+        ws281x[led_count_np]
+
+
+def test_single_assignment_numpy_int():
+    """Test creation of light string with simple args."""
+    led_count = 10
+    ws281x = WS281xString(ledCount=led_count, simulate=True)
+    for i in np.arange(len(ws281x)):
+        random_color = PixelColors.random().array
+        ws281x[i] = random_color
+        assigned_color = ws281x[i]
+        assert_array_equal(assigned_color, random_color)
+
+
 def test_multiple_assignment():
     """Test creation of light string with simple args."""
     led_count = 10
-    ws281x = WS281xString(ledCount=led_count,simulate=True)
+    ws281x = WS281xString(ledCount=led_count, simulate=True)
 
     # one
     assign_count = 1

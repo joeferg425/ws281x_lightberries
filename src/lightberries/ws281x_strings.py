@@ -9,7 +9,7 @@ from typing import Any, Sequence, overload
 import numpy as np
 from lightberries.array_patterns import ConvertPixelArrayToNumpyArray
 from lightberries.exceptions import WS281xStringException, LightBerryException
-from lightberries.rpi_ws281x_patch import rpi_ws281x
+from lightberries.rpiws281x import rpi_ws281x
 from lightberries.pixel import Pixel, PixelColors
 
 LOGGER = logging.getLogger("LightBerries")
@@ -54,7 +54,6 @@ class WS281xString(Sequence[np.int_]):
             LightStringException: if something bad happens
         """
         self.ws281xPixelStrip = None
-        self.simulated_ws281xPixelStrip = None
         self.simulate = simulate
         # catch error cases first
         if ledCount is None or not isinstance(ledCount, int):
@@ -62,45 +61,46 @@ class WS281xString(Sequence[np.int_]):
         # use passed led count if it is valid
         self._ledCount = ledCount
         if self.simulate:
-            self.simulated_ws281xPixelStrip = np.zeros((self._ledCount), dtype=np.int32)
-        else:
+            import lightberries.rpiws281x_patch as rpiws281x  # noqa
+
             # cant run GPIO stuff without root, tell the user if they forgot
             # linux check is just for debugging with fake GPIO on windows
+        if not self.simulate:
             if sys.platform == "linux" and not os.getuid() == 0:  # pylint: disable = no-member  # pragma: no cover
                 raise WS281xStringException(
                     "GPIO functionality requires root privilege. Please run command again as root"
                 )
 
-            try:
-                # create ws281x pixel strip
-                self.ws281xPixelStrip = rpi_ws281x.PixelStrip(
-                    pin=pwmGPIOpin,
-                    dma=channelDMA,
-                    num=ledCount,
-                    freq_hz=frequencyPWM,
-                    channel=channelPWM,
-                    invert=invertSignalPWM,
-                    gamma=gamma,
-                    strip_type=stripTypeLED,
-                    brightness=int(255 * ledBrightnessFloat),
-                )
-                # try to force cleanup of underlying c objects when user exits
-                atexit.register(self.__del__)
+        try:
+            # create ws281x pixel strip
+            self.ws281xPixelStrip = rpi_ws281x.PixelStrip(
+                pin=pwmGPIOpin,
+                dma=channelDMA,
+                num=ledCount,
+                freq_hz=frequencyPWM,
+                channel=channelPWM,
+                invert=invertSignalPWM,
+                gamma=gamma,
+                strip_type=stripTypeLED,
+                brightness=int(255 * ledBrightnessFloat),
+            )
+            # try to force cleanup of underlying c objects when user exits
+            atexit.register(self.__del__)
 
-                self.ws281xPixelStrip.begin()
-                self._ledCount = self.ws281xPixelStrip.numPixels()
-                LOGGER.debug(
-                    "%s Created WS281X object",
-                    self.__class__.__name__,
-                )
-            except SystemExit:  # pragma: no cover
-                raise
-            except KeyboardInterrupt:  # pragma: no cover
-                raise
-            except LightBerryException:  # pragma: no cover
-                raise
-            except Exception as ex:  # pragma: no cover
-                raise WS281xStringException from ex
+            self.ws281xPixelStrip.begin()
+            self._ledCount = self.ws281xPixelStrip.numPixels()
+            LOGGER.debug(
+                "%s Created WS281X object",
+                self.__class__.__name__,
+            )
+        except SystemExit:  # pragma: no cover
+            raise
+        except KeyboardInterrupt:  # pragma: no cover
+            raise
+        except LightBerryException:  # pragma: no cover
+            raise
+        except Exception as ex:  # pragma: no cover
+            raise WS281xStringException from ex
 
     def __del__(
         self,
@@ -141,8 +141,6 @@ class WS281xString(Sequence[np.int_]):
         """
         if self.ws281xPixelStrip:
             return self.ws281xPixelStrip.numPixels()
-        else:
-            return len(self.simulated_ws281xPixelStrip)
 
     @overload
     def __getitem__(  # noqa D105
@@ -177,24 +175,24 @@ class WS281xString(Sequence[np.int_]):
         """
         try:
             if isinstance(key, int):
-                if self.ws281xPixelStrip:
-                    return Pixel(self.ws281xPixelStrip.getPixelColor(key)).array
-                elif self.simulated_ws281xPixelStrip is not None:
-                    return Pixel(self.simulated_ws281xPixelStrip[key]).array
+                if key >= len(self):
+                    raise IndexError()
+                return Pixel(self.ws281xPixelStrip.getPixelColor(key)).array
+            elif isinstance(key, (np.int_, np.int32)):
+                if int(key) >= len(self):
+                    raise IndexError()
+                return Pixel(self.ws281xPixelStrip.getPixelColor(int(key))).array
             else:
-                if self.ws281xPixelStrip:
-                    return ConvertPixelArrayToNumpyArray(
-                        [Pixel(self.ws281xPixelStrip.getPixelColor(k)) for k in range(self._ledCount)[key]]
-                    )
-                elif self.simulated_ws281xPixelStrip is not None:
-                    return ConvertPixelArrayToNumpyArray(
-                        [Pixel(self.simulated_ws281xPixelStrip[k]) for k in range(self._ledCount)[key]]
-                    )
+                return ConvertPixelArrayToNumpyArray(
+                    [Pixel(self.ws281xPixelStrip.getPixelColor(k)) for k in range(self._ledCount)[key]]
+                )
         except SystemExit:  # pylint:disable=try-except-raise  # pragma: no cover
             raise
         except KeyboardInterrupt:  # pylint:disable=try-except-raise  # pragma: no cover
             raise
         except LightBerryException:  # pragma: no cover
+            raise
+        except IndexError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
             raise WS281xStringException from ex
@@ -220,28 +218,24 @@ class WS281xString(Sequence[np.int_]):
             if isinstance(key, slice):
                 for i, j in enumerate(range(self._ledCount)[key]):
                     p = Pixel(value[i, :])
-                    if self.ws281xPixelStrip:
-                        self.ws281xPixelStrip.setPixelColor(j, p.int)
-                    else:
-                        self.simulated_ws281xPixelStrip[j] = p.int
+                    self.ws281xPixelStrip.setPixelColor(j, p.int)
             elif isinstance(key, (np.int_, np.int32)):
+                if int(key) >= len(self):
+                    raise IndexError()
                 p = Pixel(value)
-                if self.ws281xPixelStrip:
-                    self.ws281xPixelStrip.setPixelColor(int(key), p.int)
-                else:
-                    self.simulated_ws281xPixelStrip[int(key)] = p.int
+                self.ws281xPixelStrip.setPixelColor(int(key), p.int)
             else:
+                if key >= len(self):
+                    raise IndexError()
                 p = Pixel(value)
-                if self.ws281xPixelStrip:
-                    self.ws281xPixelStrip.setPixelColor(key, p.int)
-                else:
-                    self.simulated_ws281xPixelStrip[key] = p.int
-
+                self.ws281xPixelStrip.setPixelColor(key, p.int)
         except SystemExit:  # pragma: no cover
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
         except LightBerryException:  # pragma: no cover
+            raise
+        except IndexError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
             raise WS281xStringException from ex
