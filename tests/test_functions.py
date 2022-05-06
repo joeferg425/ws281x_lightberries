@@ -11,22 +11,88 @@ from lightberries.array_patterns import ArrayPattern, ConvertPixelArrayToNumpyAr
 from lightberries.pixel import PixelColors
 from numpy.testing import assert_array_equal
 from lightberries.array_controller import ArrayController
-
+from lightberries.ws281x_strings import WS281xString, WS281xStringException
 import numpy as np
+from typing import Any
+import mock
+import lightberries.rpiws281x_patch
+
+
+def new_instantiate_pixelstrip(
+    self,
+    pwmGPIOpin: int,
+    channelDMA: int,
+    ledCount: int,
+    frequencyPWM: int,
+    channelPWM: int,
+    invertSignalPWM: bool,
+    gamma: float,
+    stripTypeLED: Any,
+    ledBrightnessFloat: Any,
+) -> None:
+    try:
+        # create ws281x pixel strip
+        self.ws281xPixelStrip = lightberries.rpiws281x_patch.PixelStrip(
+            pin=pwmGPIOpin,
+            dma=channelDMA,
+            num=ledCount,
+            freq_hz=frequencyPWM,
+            channel=channelPWM,
+            invert=invertSignalPWM,
+            gamma=gamma,
+            strip_type=stripTypeLED,
+            brightness=int(255 * ledBrightnessFloat),
+        )
+    except SystemExit:  # pragma: no cover
+        raise
+    except KeyboardInterrupt:  # pragma: no cover
+        raise
+    except Exception as ex:  # pragma: no cover
+        raise WS281xStringException from ex
+
+
+def new_instantiate_WS281xString(
+    self,
+    ledCount: int,
+    pwmGPIOpin: int,
+    channelDMA: int,
+    frequencyPWM: int,
+    invertSignalPWM: bool,
+    ledBrightnessFloat: float,
+    channelPWM: int,
+    stripTypeLED: Any,
+    gamma: Any,
+    simulate: bool,
+) -> None:
+    with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
+        self.ws281xString = WS281xString(
+            ledCount=ledCount,
+            pwmGPIOpin=pwmGPIOpin,
+            channelDMA=channelDMA,
+            frequencyPWM=frequencyPWM,
+            invertSignalPWM=invertSignalPWM,
+            ledBrightnessFloat=ledBrightnessFloat,
+            channelPWM=channelPWM,
+            stripTypeLED=stripTypeLED,
+            gamma=gamma,
+            simulate=simulate,
+        )
 
 
 def newController() -> ArrayController:
-    return ArrayController(
-        ledCount=3,
-        simulate=True,
-    )
+    with mock.patch.object(ArrayController, "_instantiate_WS281xString", new_instantiate_WS281xString):
+        return ArrayController(
+            ledCount=3,
+            simulate=True,
+        )
 
 
 def newControllerBigger() -> ArrayController:
-    return ArrayController(
-        ledCount=6,
-        simulate=True,
-    )
+    with mock.patch.object(ArrayController, "_instantiate_WS281xString", new_instantiate_WS281xString):
+        return ArrayController(
+            ledCount=6,
+            simulate=True,
+        )
 
 
 def assert_func(func: ArrayFunction):

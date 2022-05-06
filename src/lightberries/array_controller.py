@@ -116,7 +116,7 @@ class ArrayController:
                 LOGGER.setLevel(5)
             self.simulate = simulate
             # wrap pixel strip in my own interface object
-            self.ws281xString: Optional[WS281xString] = WS281xString(
+            self._instantiate_WS281xString(
                 ledCount=ledCount,
                 pwmGPIOpin=pwmGPIOpin,
                 channelDMA=channelDMA,
@@ -126,7 +126,7 @@ class ArrayController:
                 channelPWM=channelPWM,
                 stripTypeLED=stripTypeLED,
                 gamma=gamma,
-                simulate=self.simulate,
+                simulate=simulate,
             )
 
             # initialize instance variables
@@ -165,6 +165,32 @@ class ArrayController:
             raise
         except Exception as ex:
             raise ControllerException from ex
+
+    def _instantiate_WS281xString(
+        self,
+        ledCount: int,
+        pwmGPIOpin: int,
+        channelDMA: int,
+        frequencyPWM: int,
+        invertSignalPWM: bool,
+        ledBrightnessFloat: float,
+        channelPWM: int,
+        stripTypeLED: Any,
+        gamma: Any,
+        simulate: bool,
+    ) -> None:
+        self.ws281xString: Optional[WS281xString] = WS281xString(
+            ledCount=ledCount,
+            pwmGPIOpin=pwmGPIOpin,
+            channelDMA=channelDMA,
+            frequencyPWM=frequencyPWM,
+            invertSignalPWM=invertSignalPWM,
+            ledBrightnessFloat=ledBrightnessFloat,
+            channelPWM=channelPWM,
+            stripTypeLED=stripTypeLED,
+            gamma=gamma,
+            simulate=simulate,
+        )
 
     def __del__(
         self,
