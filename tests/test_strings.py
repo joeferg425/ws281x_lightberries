@@ -10,7 +10,7 @@ import numpy as np
 import lightberries.rpiws281x
 import lightberries.rpiws281x_patch
 
-lightberries.rpiws281x.rpi_ws281x = lightberries.rpiws281x_patch
+lightberries.rpiws281x.rpi_ws281x.PixelStrip = lightberries.rpiws281x_patch.PixelStrip
 
 
 def test_creation_simulation():
