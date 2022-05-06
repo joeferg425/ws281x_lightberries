@@ -94,9 +94,9 @@ class WS281xString(Sequence[np.int_]):
         stripTypeLED: Any,
         ledBrightnessFloat: Any,
     ) -> None:
-        try:
+        try:  # pragma: no cover
             # create ws281x pixel strip
-            self.ws281xPixelStrip = rpi_ws281x.PixelStrip(
+            self.ws281xPixelStrip = rpi_ws281x.PixelStrip(  # pragma: no cover
                 pin=pwmGPIOpin,
                 dma=channelDMA,
                 num=ledCount,

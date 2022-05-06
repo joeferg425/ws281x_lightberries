@@ -47,7 +47,7 @@ def new_instantiate_pixelstrip(
         raise WS281xStringException from ex
 
 
-def test_creation_simulation():
+def test_creation():
     """Test creation of light string with simple args."""
     led_count = 10
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
@@ -56,20 +56,11 @@ def test_creation_simulation():
         assert len(s) == led_count
 
 
-def test_creation():
-    """Test creation of light string with simple args."""
-    led_count = 10
-    with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
-        s = WS281xString(ledCount=led_count)
-        assert s is not None
-        assert len(s) == led_count
-
-
 def test_deletion():
     """Test creation of light string with simple args."""
     led_count = 10
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
-        s = WS281xString(ledCount=led_count)
+        s = WS281xString(ledCount=led_count, simulate=True)
         s.__del__()
         assert True
 

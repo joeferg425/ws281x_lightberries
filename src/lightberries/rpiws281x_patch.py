@@ -31,7 +31,7 @@ class PixelStrip:
 
     def begin(self):
         """Fake method."""
-        pass  # pylint: disable = unnecessary-pass
+        pass  # pylint: disable = unnecessary-pass # pragma: no cover
 
     def setPixelColor(self, index: int, color: int):
         """Fake method.
