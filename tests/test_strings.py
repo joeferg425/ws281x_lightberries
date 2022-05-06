@@ -1,5 +1,9 @@
 """Test Light strings."""
 from __future__ import annotations
+import lightberries.rpiws281x
+import lightberries.rpiws281x_patch
+
+lightberries.rpiws281x.rpi_ws281x = lightberries.rpiws281x_patch
 from lightberries.ws281x_strings import WS281xString
 from lightberries.pixel import PixelColors
 from numpy.testing import assert_array_equal
@@ -7,10 +11,6 @@ from lightberries.array_patterns import ConvertPixelArrayToNumpyArray
 import pytest
 from lightberries.exceptions import WS281xStringException
 import numpy as np
-import lightberries.rpiws281x
-import lightberries.rpiws281x_patch
-
-lightberries.rpiws281x.rpi_ws281x.PixelStrip = lightberries.rpiws281x_patch.PixelStrip
 
 
 def test_creation_simulation():
