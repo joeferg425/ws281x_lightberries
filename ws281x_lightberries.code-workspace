@@ -11,24 +11,39 @@
 		"python.formatting.provider": "black",
 		"cSpell.words": [
 			"arange",
+			"asarray",
 			"astype",
+			"colr",
 			"cosx",
 			"Cylon",
+			"detrend",
 			"DONT",
 			"dstack",
 			"dtype",
 			"getuid",
 			"GPIO",
+			"joeferg",
 			"lightberries",
 			"matplotlib",
 			"matrixification",
 			"ndarray",
 			"numpy",
+			"pyaudio",
 			"pygame",
 			"pyplot",
 			"pytest",
+			"Randomizer",
+			"relim",
 			"ROYGBIV",
+			"scipy",
 			"sinx",
+			"testpaths",
+			"Xaxis",
+			"xscrollcommand",
+			"xview",
+			"Yaxis",
+			"ydata",
+			"yscrollcommand",
 			"yview",
 			"zoomy"
 		],
@@ -42,15 +57,23 @@
 	"launch": {
 		"configurations": [
 			{
-				"name": "example: audio",
+				"name": "Python: main",
 				"type": "python",
 				"request": "launch",
-				"program": "${workspaceFolder}/examples/audio.py",
+				"program": "${workspaceFolder}/src/lightberries/__main__.py",
 				"console": "integratedTerminal",
-				"sudo": true
+				"sudo": true,
+				"args": [
+					"-b",
+					"0.1",
+					"-l",
+					"1024",
+					"-f",
+					"sprites"
+				]
 			},
 			{
-				"name": "example: array",
+				"name": "example: basic array",
 				"type": "python",
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/basic_array.py",
@@ -58,10 +81,42 @@
 				"sudo": true
 			},
 			{
-				"name": "example: matrix",
+				"name": "example: basic matrix",
 				"type": "python",
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/basic_matrix.py",
+				"console": "integratedTerminal",
+				"sudo": true
+			},
+			{
+				"name": "example: basic multi matrix",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/examples/basic_multi_matrix.py",
+				"console": "integratedTerminal",
+				"sudo": true
+			},
+			{
+				"name": "example: demo array",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/examples/demo_array.py",
+				"console": "integratedTerminal",
+				"sudo": true
+			},
+			{
+				"name": "example: demo matrix",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/examples/demo_matrix.py",
+				"console": "integratedTerminal",
+				"sudo": true
+			},
+			{
+				"name": "example: audio",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/examples/audio.py",
 				"console": "integratedTerminal",
 				"sudo": true
 			},
@@ -158,18 +213,6 @@
 				"program": "${workspaceFolder}/examples/multi_matrix.py",
 				"console": "integratedTerminal",
 				"sudo": true
-			},
-			{
-				"name": "Python: main",
-				"type": "python",
-				"request": "launch",
-				"program": "${workspaceFolder}/src/lightberries/__main__.py",
-				"console": "integratedTerminal",
-				"sudo": true,
-				"args": [
-					"-b",
-					"0.1"
-				]
 			}
 		],
 		"compounds": []
@@ -184,11 +227,23 @@
 				"args": [
 					"install"
 				],
+				"dependsOn": [
+					"update"
+				],
 				"problemMatcher": [],
 				"group": {
 					"kind": "build",
 					"isDefault": true
 				}
+			},
+			{
+				"label": "update",
+				"type": "shell",
+				"command": "poetry",
+				"args": [
+					"update"
+				],
+				"problemMatcher": [],
 			},
 			{
 				"label": "coverage",

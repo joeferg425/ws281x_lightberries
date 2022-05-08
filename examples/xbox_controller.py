@@ -30,8 +30,8 @@ PWM_CHANNEL = 0
 
 # create the lightberries Controller object
 lightControl = MatrixController(
-    ledRowCount=PIXEL_ROW_COUNT,
-    ledColumnCount=PIXEL_COLUMN_COUNT,
+    ledXaxisRange=PIXEL_ROW_COUNT,
+    ledYaxisRange=PIXEL_COLUMN_COUNT,
     pwmGPIOpin=GPIO_PWM_PIN,
     channelDMA=DMA_CHANNEL,
     frequencyPWM=PWM_FREQUENCY,
@@ -42,8 +42,8 @@ lightControl = MatrixController(
     ledBrightnessFloat=BRIGHTNESS,
     debug=True,
 )
-x = int(lightControl.realLEDRowCount // 2)
-y = int(lightControl.realLEDColumnCount // 2)
+x = int(lightControl.realLEDXaxisRange // 2)
+y = int(lightControl.realLEDYaxisRange // 2)
 
 lightControl.virtualLEDBuffer[x, y, 1] = 255
 
@@ -93,7 +93,7 @@ while True:
     if np.abs(y_change) > THRESHOLD:
         y += y_change
     lightControl.virtualLEDBuffer[
-        round(x) % lightControl.realLEDRowCount, round(y) % lightControl.realLEDColumnCount
+        round(x) % lightControl.realLEDXaxisRange, round(y) % lightControl.realLEDYaxisRange
     ] = color
     lightControl.copyVirtualLedsToWS281X()
     lightControl.refreshLEDs()

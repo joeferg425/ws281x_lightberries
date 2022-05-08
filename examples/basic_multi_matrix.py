@@ -6,8 +6,6 @@ import numpy as np
 # the number of pixels in the light string
 PIXEL_ROW_COUNT = 32
 PIXEL_COLUMN_COUNT = 32
-# PIXEL_ROW_COUNT = 16
-# PIXEL_COLUMN_COUNT = 16
 # GPIO pin to use for PWM signal
 GPIO_PWM_PIN = 18
 # DMA channel
@@ -29,11 +27,6 @@ MATRIX_LAYOUT = np.array(
         [0, 3],
     ],
 )
-# MATRIX_LAYOUT = np.array(
-#     [
-#         [0],
-#     ],
-# )
 
 # create the lightberries Controller object
 lightControl = MatrixController(
@@ -52,11 +45,10 @@ lightControl = MatrixController(
     matrixLayout=MATRIX_LAYOUT,
 )
 
-# lightControl.useFunctionMatrixSnake(collision=False)
+lightControl.useFunctionMatrixFireworks()
 
 try:
-    # lightControl.run()
-    lightControl.demo(secondsPerMode=5, functionNames=[], skipFunctions=["solid", "none"])
+    lightControl.run()
 except KeyboardInterrupt:
     pass
 except SystemExit:

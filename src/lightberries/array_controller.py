@@ -30,7 +30,7 @@ from lightberries.array_functions import (
 )
 
 
-LOGGER = logging.getLogger("LightBerries")
+LOGGER = logging.getLogger("lightBerries")
 DEFAULT_REFRESH_DELAY = 50
 
 
@@ -144,8 +144,8 @@ class ArrayController:
             self.privateRefreshDelay: float = 0.001
             self.privateSecondsPerMode: float = 120.0
             self.privateBackgroundColor: np.ndarray[(3,), np.int32] = PixelColors.OFF.array
-            self.privateColorSequence: np.ndarray[(3, Any), np.int32] = ConvertPixelArrayToNumpyArray([])
-            self.privateColorSequenceCount: int = 0
+            self.privateColorSequence: np.ndarray[(3, Any), np.int32] = ArrayPattern.DefaultColorSequenceByMonth()
+            self.privateColorSequenceCount: int = len(self.privateColorSequence)
             self.privateColorSequenceIndex: int = 0
             self.privateLoopForever: bool = False
             self.privateLightFunctions: List[ArrayFunction] = []
@@ -449,11 +449,10 @@ class ArrayController:
         try:
             LOGGER.debug("%s.%s:", self.__class__.__name__, self.reset.__name__)
             self.privateLightFunctions = []
-            if self.virtualLEDCount > self.realLEDCount:
+            if self.virtualLEDCount >= self.realLEDCount:
                 self.setvirtualLEDBuffer(self.virtualLEDBuffer[: self.realLEDCount])
             elif self.virtualLEDCount < self.realLEDCount:
-                array = ArrayPattern.SolidColorArray(arrayLength=self.realLEDCount, color=PixelColors.OFF)
-                array[: self.virtualLEDCount] = self.virtualLEDBuffer
+                array = ArrayPattern.SolidColorArray(arrayLength=self.realLEDCount, color=PixelColors.OFF.array)
                 self.setvirtualLEDBuffer(array)
         except SystemExit:
             raise
@@ -1414,7 +1413,9 @@ class ArrayController:
             # this function just shifts the existing virtual LED buffer,
             # so make sure the virtual LED buffer is initialized here
             if self.colorSequenceCount >= self.virtualLEDCount - 10:
-                array = ArrayPattern.SolidColorArray(arrayLength=self.colorSequenceCount + 10, color=PixelColors.OFF)
+                array = ArrayPattern.SolidColorArray(
+                    arrayLength=self.colorSequenceCount + 10, color=PixelColors.OFF.array
+                )
                 array[: self.colorSequenceCount] = self.colorSequence
                 self.setvirtualLEDBuffer(array)
             else:

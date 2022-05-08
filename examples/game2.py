@@ -7,7 +7,7 @@ from lightberries.matrix_controller import MatrixController
 from lightberries.pixel import Pixel, PixelColors
 from lightberries.array_functions import ArrayFunction
 from lightberries.matrix_functions import MatrixFunction
-from game_objects import game_object, floor, wall, sprite, player, enemy, projectile, check_for_collisions
+from examples._game_objects import game_object, floor, player, projectile, check_for_collisions
 import os
 import pygame
 import numpy as np
@@ -38,8 +38,8 @@ MATRIX_SHAPE = (16, 16)
 
 # create the lightberries Controller object
 lightControl = MatrixController(
-    ledRowCount=PIXEL_ROW_COUNT,
-    ledColumnCount=PIXEL_COLUMN_COUNT,
+    ledXaxisRange=PIXEL_ROW_COUNT,
+    ledYaxisRange=PIXEL_COLUMN_COUNT,
     pwmGPIOpin=GPIO_PWM_PIN,
     channelDMA=DMA_CHANNEL,
     frequencyPWM=PWM_FREQUENCY,
@@ -80,23 +80,23 @@ player1_dead_time = time.time()
 score = 1
 player1 = player(
     x=int(1),
-    y=random.randint(1, lightControl.realLEDRowCount // 2),
+    y=random.randint(1, lightControl.realLEDXaxisRange // 2),
 )
 fireworks = []
 for i in range(10):
     firework = MatrixFunction(lightControl, MatrixFunction.functionMatrixFireworks, ArrayPattern.RainbowArray(10))
-    firework.rowIndex = random.randint(0, lightControl.realLEDRowCount - 1)
-    firework.columnIndex = random.randint(0, lightControl.realLEDColumnCount - 1)
+    firework.rowIndex = random.randint(0, lightControl.realLEDXaxisRange - 1)
+    firework.columnIndex = random.randint(0, lightControl.realLEDYaxisRange - 1)
     firework.size = 1
     firework.step = 1
-    firework.sizeMax = min(int(lightControl.realLEDRowCount / 2), int(lightControl.realLEDColumnCount / 2))
+    firework.sizeMax = min(int(lightControl.realLEDXaxisRange / 2), int(lightControl.realLEDYaxisRange / 2))
     firework.colorCycle = True
     for _ in range(i):
         firework.color = firework.colorSequenceNext
     fireworks.append(firework)
 win = False
 win_time = time.time()
-WIN_SCORE = lightControl.realLEDColumnCount
+WIN_SCORE = lightControl.realLEDYaxisRange
 WIN_DURATION = 10
 pause_time = time.time()
 fake_pause_time = time.time() - 5
@@ -158,7 +158,7 @@ while True:
         if delta > 1:
             player1 = player(
                 x=1,
-                y=random.randint(1, lightControl.realLEDRowCount // 2),
+                y=random.randint(1, lightControl.realLEDXaxisRange // 2),
             )
             # enemies.clear()
             # bullets.clear()
@@ -354,7 +354,7 @@ while True:
     for obj in game_object.objects.values():
         try:
             lightControl.virtualLEDBuffer[obj.xs, obj.ys] = Pixel(obj.color).array
-        except:
+        except:  # noqa
             pass
     # for floor in floor.floors:
     #     lightControl.virtualLEDBuffer[floor.xs, floor.ys] = Pixel(floor.color).array

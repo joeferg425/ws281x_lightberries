@@ -9,7 +9,7 @@ from lightberries.exceptions import LightBerryException, FunctionException
 from lightberries.pixel import PixelColors
 from math import ceil
 
-LOGGER = logging.getLogger("lightberries")
+LOGGER = logging.getLogger("lightBerries")
 
 
 class MatrixFunction(ArrayFunction):
@@ -318,6 +318,10 @@ class MatrixFunction(ArrayFunction):
                     firework.rowIndex = random.randint(0, firework.Controller.realLEDYaxisRange - 1)
                     firework.columnIndex = random.randint(0, firework.Controller.realLEDXaxisRange - 1)
                     firework.delayCountMax = random.randint(1, 5)
+                    _sizeMax = min(
+                        MatrixFunction.Controller.realLEDXaxisRange, MatrixFunction.Controller.realLEDYaxisRange
+                    )
+                    firework.sizeMax = random.randint(int(_sizeMax // 2), _sizeMax)
                     if firework.colorCycle:
                         firework.color = firework.colorSequenceNext
                 firework.delayCounter = 0

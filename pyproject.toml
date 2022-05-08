@@ -12,6 +12,7 @@ packages = [
 python = "^3.8"
 numpy = "^1.22"
 rpi-ws281x = {version = "^4.3", optional = true}
+pygame = {version = "^2.1.2", extras = ["examples"]}
 
 [tool.poetry.dev-dependencies]
 black = "^22.1"
@@ -19,6 +20,9 @@ flake8 = "^4.0"
 matplotlib = "^3.5"
 pytest = "^7.1"
 mock = "^4.0.3"
+
+[tool.poetry.extras]
+examples = ["pyaudio"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

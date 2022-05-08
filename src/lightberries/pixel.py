@@ -8,7 +8,7 @@ import numpy as np
 
 from lightberries.exceptions import LightBerryException, PixelException
 
-LOGGER = logging.getLogger("LightBerries")
+LOGGER = logging.getLogger("lightBerries")
 
 
 class LEDOrder(enum.Enum):

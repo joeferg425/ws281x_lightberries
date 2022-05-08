@@ -26,10 +26,10 @@ PWM_CHANNEL = 0
 
 
 class LightsProcess:
-    """Handles LightBerries functions in a seperate process."""
+    """Handles LightBerries functions in a separate process."""
 
     def __init__(self, app) -> None:
-        """Handles LightBerries functions in a seperate process.
+        """Handles LightBerries functions in a separate process.
 
         Args:
             app: the tkinter app
@@ -225,7 +225,7 @@ class App:
         self.root.protocol("WM_DELETE_WINDOW", self.destroy)
         self.root.title("LightBerries GUI")
 
-        # create seperate process for controlling lights
+        # create separate process for controlling lights
         self.lights = LightsProcess(self)
 
         # connect callbacks to GUI widgets/controls

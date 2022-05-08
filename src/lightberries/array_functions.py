@@ -13,7 +13,7 @@ from lightberries.array_patterns import ArrayPattern, ConvertPixelArrayToNumpyAr
 
 # pylint: disable=no-member
 
-LOGGER = logging.getLogger("LightBerries")
+LOGGER = logging.getLogger("lightBerries")
 
 
 class LEDFadeType(IntEnum):
@@ -95,9 +95,10 @@ class ArrayFunction:
         self.privateColorSequenceIndex: int = 0
 
         if colorSequence is None or len(colorSequence) == 0:
-            self.colorSequence = ArrayPattern.DefaultColorSequenceByMonth()
+            self.privateColorSequence = ArrayPattern.DefaultColorSequenceByMonth()
         else:
-            self.colorSequence = colorSequence
+            self.privateColorSequence = colorSequence
+        self.privateColorSequenceCount = len(self.privateColorSequence)
         self.color: np.ndarray[(3,), np.int32] = self.colorSequence[0]
         self.colorBegin: np.ndarray[(3,), np.int32] = PixelColors.OFF.array
         self.colorNext: np.ndarray[(3,), np.int32] = PixelColors.OFF.array
@@ -715,7 +716,7 @@ class ArrayFunction:
                     cylon.indexMax = cylon.indexNext
                     cylon.indexRange = np.arange(cylon.indexMax, cylon.indexMin, cylon.direction)
                 # check if color sequence would go off of far end of light string
-                if cylon.indexMax > ArrayFunction.Controller.virtualLEDCount:
+                if cylon.indexMax >= ArrayFunction.Controller.virtualLEDCount:
                     # if the last LED is headed off the end
                     if cylon.indexNext >= ArrayFunction.Controller.virtualLEDCount:
                         # reverse direction
@@ -729,7 +730,7 @@ class ArrayFunction:
                         ArrayFunction.Controller.virtualLEDCount - 1
                     )
                 # if LEDs go off the other end
-                elif cylon.indexMin < -1:
+                elif cylon.indexMin < 0:
                     # if the last LED is headed off the end
                     if cylon.indexNext < 0:
                         # reverse direction

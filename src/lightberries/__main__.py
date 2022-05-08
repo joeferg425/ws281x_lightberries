@@ -5,7 +5,7 @@ import logging
 import lightberries
 from lightberries.array_controller import ArrayController
 
-LOGGER = logging.getLogger("LightBerries")
+LOGGER = logging.getLogger("lightBerries")
 
 if __name__ == "__main__":  # pylint: disable=invalid-name
     # the number of pixels in the light string

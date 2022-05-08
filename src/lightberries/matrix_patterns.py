@@ -7,7 +7,7 @@ from lightberries.pixel import Pixel
 from lightberries.array_patterns import ArrayPattern
 from enum import IntEnum
 
-LOGGER = logging.getLogger("lightberries")
+LOGGER = logging.getLogger("lightBerries")
 
 
 class MatrixOrder(IntEnum):

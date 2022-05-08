@@ -11,7 +11,7 @@ from lightberries.exceptions import (
 )
 from lightberries.pixel import Pixel, PixelColors
 
-LOGGER = logging.getLogger("LightBerries")
+LOGGER = logging.getLogger("lightBerries")
 
 
 def ConvertPixelArrayToNumpyArray(

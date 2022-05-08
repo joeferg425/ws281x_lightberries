@@ -4,9 +4,9 @@ See https://github.com/rpi-ws281x/rpi-ws281x-python for referenced module.
 """
 from __future__ import annotations
 import logging
-from lightberries.array_controller import ArrayController as ArrayController
-from lightberries.matrix_controller import MatrixController as MatrixController
+from lightberries.array_controller import ArrayController as ArrayController  # noqa
+from lightberries.matrix_controller import MatrixController as MatrixController  # noqa
 
 # setup logging
-LOGGER = logging.getLogger("LightBerries")
+LOGGER = logging.getLogger("lightBerries")
 logging.addLevelName(5, "VERBOSE")

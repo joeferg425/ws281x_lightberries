@@ -2,9 +2,7 @@
 from lightberries import MatrixController
 from PIL import Image
 import numpy as np
-import time
-
-# import cv2
+import sys
 
 # the number of pixels in the light string
 PIXEL_ROW_COUNT = 16
@@ -28,8 +26,8 @@ MATRIX_SHAPE = (16, 16)
 
 # create the lightberries Controller object
 lightControl = MatrixController(
-    ledRowCount=PIXEL_ROW_COUNT,
-    ledColumnCount=PIXEL_COLUMN_COUNT,
+    ledXaxisRange=PIXEL_ROW_COUNT,
+    ledYaxisRange=PIXEL_COLUMN_COUNT,
     pwmGPIOpin=GPIO_PWM_PIN,
     channelDMA=DMA_CHANNEL,
     frequencyPWM=PWM_FREQUENCY,
@@ -42,7 +40,7 @@ lightControl = MatrixController(
     matrixCount=MATRIX_COUNT,
     matrixShape=MATRIX_SHAPE,
 )
-import sys
+
 img = Image.open(sys.argv[1])
 img.load()
 data = np.asarray(img, dtype="int32")

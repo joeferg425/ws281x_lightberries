@@ -1,10 +1,9 @@
 #!/usr/bin/python3
 """An example of using this module."""
-from lightberries.matrix_controller import MatrixController
+from lightberries.array_controller import ArrayController
 
 # the number of pixels in the light string
-PIXEL_ROW_COUNT = 16
-PIXEL_COLUMN_COUNT = 16
+PIXEL_COUNT = 1024
 # GPIO pin to use for PWM signal
 GPIO_PWM_PIN = 18
 # DMA channel
@@ -12,7 +11,7 @@ DMA_CHANNEL = 10
 # frequency to run the PWM signal at
 PWM_FREQUENCY = 800000
 # brightness of LEDs in range [0.0, 1.0]
-BRIGHTNESS = 0.25
+BRIGHTNESS = 0.75
 # to understand the rest of these arguments read
 # their documentation: https://github.com/rpi-ws281x/rpi-ws281x-python
 GAMMA = None
@@ -21,10 +20,9 @@ INVERT = False
 PWM_CHANNEL = 0
 
 
-# create the lightberries Controller object
-lightControl = MatrixController(
-    ledXaxisRange=PIXEL_ROW_COUNT,
-    ledYaxisRange=PIXEL_COLUMN_COUNT,
+# create the LightBerries Controller object
+lightControl = ArrayController(
+    ledCount=PIXEL_COUNT,
     pwmGPIOpin=GPIO_PWM_PIN,
     channelDMA=DMA_CHANNEL,
     frequencyPWM=PWM_FREQUENCY,
@@ -35,11 +33,9 @@ lightControl = MatrixController(
     ledBrightnessFloat=BRIGHTNESS,
     debug=True,
 )
-# run the fireworks function
-lightControl.useFunctionMatrixFireworks(fireworkCount=5, fadeAmount=0.2)
 # run the configuration until killed
 try:
-    lightControl.run()
+    lightControl.demo(secondsPerMode=30, skipFunctions=["none", "solid"], skipColors=["single"])
 except KeyboardInterrupt:
     pass
 except SystemExit:

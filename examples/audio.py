@@ -5,7 +5,6 @@ import time
 import multiprocessing
 import pyaudio
 
-# import scipy.signal
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -71,15 +70,15 @@ class RollingDataFromQueue:
             self.fftData = 10 * np.log10(np.abs(np.fft.fft(self.newDataChunk) * self.window))
 
             # make FFT adjustments
-            lenfftData = len(self.fftData)
-            self.fftData = self.fftData[lenfftData // 2 :]
-            lenfftData = len(self.fftData)
+            lenFFTData = len(self.fftData)
+            self.fftData = self.fftData[lenFFTData // 2 :]
+            lenFFTData = len(self.fftData)
             self.fftData = np.nan_to_num(self.fftData)
 
             # chunk the data up for display in fewer segments
-            chunkLength = lenfftData // LightOutput.EQUALIZER_SECTION_COUNT
+            chunkLength = lenFFTData // LightOutput.EQUALIZER_SECTION_COUNT
             self.fftChunks = np.array(
-                [np.sum(self.fftData[i : i + chunkLength]) / chunkLength for i in range(0, lenfftData, chunkLength)]
+                [np.sum(self.fftData[i : i + chunkLength]) / chunkLength for i in range(0, lenFFTData, chunkLength)]
             )
             # mask any artifacts at the ends
             self.fftChunks[-1] = np.mean(self.fftChunks)
@@ -89,7 +88,7 @@ class RollingDataFromQueue:
             # self.fftChunks = scipy.signal.detrend(self.fftChunks)
             # normalize so data starts from zero
             self.fftChunks -= np.min(self.fftChunks)
-            # cube it to exaggurate differences
+            # cube it to exaggerate differences
             self.fftChunks **= 3
             # rescale to zero
             self.fftChunks -= np.min(self.fftChunks)
@@ -150,10 +149,10 @@ class LightOutput(RollingDataFromQueue):
                     )
 
                     # define callback function
-                    # def SetPixel(irgb):
+                    # def SetPixel(iRGB):
                     #     try:
-                    #         i = irgb[0]
-                    #         rgb = irgb[1]
+                    #         i = iRGB[0]
+                    #         rgb = iRGB[1]
                     #         value = int(rgb)
                     #         # bypass virtual LED array in LightBerries to try for better update speeds
                     #         self.lightController.ws28xxLightString.pixelStrip.setPixelColor(i, value)
@@ -333,14 +332,14 @@ if __name__ == "__main__":
     PROCESS_CHOICE = ProcessChoice.LIGHTS
     try:
         # create queues for sending & receiving data across processes
-        inq: multiprocessing.Queue = multiprocessing.Queue()
-        outq: multiprocessing.Queue = multiprocessing.Queue()
+        inQ: multiprocessing.Queue = multiprocessing.Queue()
+        outQ: multiprocessing.Queue = multiprocessing.Queue()
 
         # choose between plotting and updating LEDs
         if PROCESS_CHOICE == ProcessChoice.LIGHTS:
-            process = multiprocessing.Process(target=LightOutput, args=(inq, outq))
+            process = multiprocessing.Process(target=LightOutput, args=(inQ, outQ))
         else:
-            process = multiprocessing.Process(target=PlotOutput, args=(inq, outq, PlotChoice.AVERAGED_FFT))
+            process = multiprocessing.Process(target=PlotOutput, args=(inQ, outQ, PlotChoice.AVERAGED_FFT))
 
         # start the selected process
         process.start()
@@ -378,7 +377,7 @@ if __name__ == "__main__":
             while True:
                 # check for output data from process signifying "exit" status
                 try:
-                    msg = outq.get_nowait()
+                    msg = outQ.get_nowait()
                     # if we get anything, break out of loop
                     break
                 except multiprocessing.queues.Empty:
@@ -392,7 +391,7 @@ if __name__ == "__main__":
                     print("Audio chunk data length is", len(data))
                     FIRST_RUN = False
                 # put the data in the queue going to the processing function
-                inq.put_nowait(data)
+                inQ.put_nowait(data)
         except KeyboardInterrupt:
             pass
         except Exception:

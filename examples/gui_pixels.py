@@ -34,13 +34,13 @@ lightberries.pixel, Pixel.DEFAULT_PIXEL_ORDER = lightberries.pixel.LEDOrder.RGB
 
 
 class LightsProcess:
-    """Handles LightBerries functions in a seperate process."""
+    """Handles LightBerries functions in a separate process."""
 
     selfObject = None
     appObject = None
 
     def __init__(self, app) -> None:
-        """Handles LightBerries functions in a seperate process.
+        """Handles LightBerries functions in a separate process.
 
         Args:
             app: the tkinter app

@@ -19,7 +19,7 @@ from lightberries.matrix_patterns import (
 from lightberries.array_patterns import ArrayPattern
 from lightberries.pixel import PixelColors
 
-LOGGER = logging.getLogger("lightberries")
+LOGGER = logging.getLogger("lightBerries")
 
 
 class MatrixController(ArrayController):
@@ -241,7 +241,7 @@ class MatrixController(ArrayController):
                 )
                 try:
                     array[: self.virtualLEDXaxisRange, : self.virtualLEDYaxisRange] = self.virtualLEDBuffer
-                except: # noqa
+                except:  # noqa
                     pass
                 self.setvirtualLEDBuffer(array)
         except SystemExit:
@@ -586,7 +586,7 @@ class MatrixController(ArrayController):
             if fadeAmount is None:
                 fadeAmount: float = random.randint(10, 50) / 100.0
             # _fadeAmount: float = 0.0
-            _delayCount: int = random.randint(1, 6)
+            _delayCount: int = random.randint(0, 3)
             # _delayCount: int = 1
             _zoomyCount: int = random.randint(1, 6)
             # _zoomyCount: int = 1

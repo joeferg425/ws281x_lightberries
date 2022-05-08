@@ -12,7 +12,7 @@ from lightberries.exceptions import WS281xStringException, LightBerryException
 from lightberries.rpiws281x import rpi_ws281x
 from lightberries.pixel import Pixel, PixelColors
 
-LOGGER = logging.getLogger("LightBerries")
+LOGGER = logging.getLogger("lightBerries")
 
 
 class WS281xString(Sequence[np.int_]):
