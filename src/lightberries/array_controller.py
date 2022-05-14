@@ -10,7 +10,6 @@ from typing import (
     Dict,
     List,
     Optional,
-    Union,
     Any,
 )
 import numpy as np
@@ -108,7 +107,7 @@ class ArrayController:
                 if sys.platform != "linux":
                     fh = logging.FileHandler(__name__ + ".log")
                 else:
-                    fh = logging.FileHandler("/home/pi/" + __name__ + ".log")
+                    fh = logging.FileHandler("/home/pi/" + __name__ + ".log")  # pragma: no cover
                 fh.setLevel(logging.DEBUG)
                 LOGGER.addHandler(fh)
                 LOGGER.setLevel(logging.DEBUG)
@@ -157,13 +156,13 @@ class ArrayController:
             self.refreshCallback: Callable = refreshCallback
             # initialize stuff
             self.reset()
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def _instantiate_WS281xString(
@@ -204,19 +203,19 @@ class ArrayController:
             LightControlException: if something bad happens
         """
         try:
-            if hasattr(self, "_ledBuffer") and self.ws281xString is not None:
+            if self.ws281xString is not None:
                 self.off()
                 self.copyVirtualLedsToWS281X()
                 self.refreshLEDs()
                 self.ws281xString.__del__()
                 self.ws281xString = None
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     @property
@@ -375,7 +374,10 @@ class ArrayController:
         Args:
             colorSequenceIndex: the new index
         """
-        self.privateColorSequenceIndex = colorSequenceIndex
+        if colorSequenceIndex >= len(self.colorSequence):
+            self.privateColorSequenceIndex = 0
+        else:
+            self.privateColorSequenceIndex = colorSequenceIndex
 
     @property
     def colorSequenceNext(
@@ -388,12 +390,7 @@ class ArrayController:
         """
         temp = self.colorSequence[self.colorSequenceIndex]
         self.colorSequenceIndex += 1
-        if self.colorSequenceIndex >= self.colorSequenceCount:
-            self.colorSequenceIndex = 0
-        if isinstance(temp, Pixel):
-            return temp.array
-        else:
-            return temp
+        return temp
 
     @property
     def functionList(self) -> List[ArrayFunction]:
@@ -454,18 +451,18 @@ class ArrayController:
             elif self.virtualLEDCount < self.realLEDCount:
                 array = ArrayPattern.SolidColorArray(arrayLength=self.realLEDCount, color=PixelColors.OFF.array)
                 self.setvirtualLEDBuffer(array)
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def setvirtualLEDBuffer(
         self,
-        ledBuffer: Union[List[Pixel], np.ndarray[(3, Any), np.int32]],
+        ledBuffer: np.ndarray[(3, Any), np.int32],
     ) -> None:
         """Assign a sequence of pixel data to the LED.
 
@@ -480,16 +477,7 @@ class ArrayController:
         """
         try:
             # make sure the passed LED array is the correct type
-            if isinstance(ledBuffer, list):
-                _ledBuffer = ConvertPixelArrayToNumpyArray(ledBuffer)
-            elif isinstance(ledBuffer, np.ndarray):
-                _ledBuffer = ledBuffer
-            else:
-                _ledBuffer = ArrayPattern.SolidColorArray(arrayLength=self.realLEDCount, color=self.backgroundColor)
-
-                # check assignment length
-                # if len(_ledBuffer) >= self.realLEDCount:
-                _ledBuffer = ArrayPattern.SolidColorArray(arrayLength=self.realLEDCount, color=self.backgroundColor)
+            _ledBuffer = ledBuffer
             _ledBufferLen = int(_ledBuffer.size / 3)
 
             # check assignment length
@@ -514,13 +502,13 @@ class ArrayController:
                         np.array([PixelColors.OFF.tuple for i in range(self.realLEDCount - self.virtualLEDCount)]),
                     )
                 )
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def copyVirtualLedsToWS281X(
@@ -555,13 +543,13 @@ class ArrayController:
                     ),
                 )
             )
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def refreshLEDs(
@@ -580,13 +568,13 @@ class ArrayController:
             if isinstance(self.refreshCallback, Callable):
                 self.refreshCallback()
             self.ws281xString.refresh()
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def off(
@@ -605,13 +593,13 @@ class ArrayController:
             self.virtualLEDBuffer *= 0
             # set to background color
             self.virtualLEDBuffer[:] += self.backgroundColor
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def _runFunctions(
@@ -629,13 +617,13 @@ class ArrayController:
             # invoke the function pointer saved in the light data object
             for function in self.privateLightFunctions:
                 function.runFunction(function)
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def _copyOverlays(
@@ -657,13 +645,13 @@ class ArrayController:
             for index, ledValue in self.privateOverlayDict.items():
                 self.ws281xString[index] = ledValue
             self.privateOverlayDict = {}
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def getRandomIndex(
@@ -682,13 +670,13 @@ class ArrayController:
         """
         try:
             return random.randint(0, (self.virtualLEDCount - 1))
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def getRandomIndices(
@@ -713,14 +701,14 @@ class ArrayController:
             temp = []
             for _ in range(count):
                 temp.append(self.getRandomIndex())
-            return np.array(temp)
-        except SystemExit:
+            return np.array(temp, dtype=np.int32)
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def getRandomDirection(self) -> int:
@@ -805,26 +793,26 @@ class ArrayController:
                     self._copyOverlays()
                     # tell the ws28xx controller to transmit the new data
                     self.refreshLEDs()
-                except KeyboardInterrupt:
+                except KeyboardInterrupt:  # pragma: no cover
                     raise
-                except SystemExit:
+                except SystemExit:  # pragma: no cover
                     raise
-                except LightBerryException:
+                except LightBerryException:  # pragma: no cover
                     raise
-                except Exception as ex:
+                except Exception as ex:  # pragma: no cover
                     raise ControllerException from ex
             self.privateLastModeChange = time.time()
             if self.secondsPerMode is None:
                 self.privateNextModeChange = self.privateLastModeChange + (random.random(30, 120))
             else:
                 self.privateNextModeChange = self.privateLastModeChange + (self.secondsPerMode)
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             LOGGER.exception(
                 "%s.%s Exception: %s",
                 self.__class__.__name__,
@@ -869,13 +857,13 @@ class ArrayController:
             # assign temporary values to instance variables
             self.backgroundColor = _backgroundColor
             self.colorSequence = ConvertPixelArrayToNumpyArray([_foregroundColor])
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useColorSinglePseudoRandom(
@@ -903,13 +891,13 @@ class ArrayController:
             self.backgroundColor = _backgroundColor
             # set the color sequence
             self.colorSequence = ConvertPixelArrayToNumpyArray([PixelColors.pseudoRandom()])
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useColorSingleRandom(
@@ -937,13 +925,13 @@ class ArrayController:
             self.backgroundColor = _backgroundColor
             # set the color sequence to a single random value
             self.colorSequence = ConvertPixelArrayToNumpyArray([PixelColors.random()])
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useColorSequence(
@@ -976,13 +964,13 @@ class ArrayController:
             self.backgroundColor = _backgroundColor
             # set the color sequence
             self.colorSequence = ConvertPixelArrayToNumpyArray(_colorSequence)
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useColorSequencePseudoRandom(
@@ -1017,13 +1005,13 @@ class ArrayController:
             self.colorSequence = ConvertPixelArrayToNumpyArray(
                 [PixelColors.pseudoRandom() for i in range(_sequenceLength)]
             )
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useColorSequenceRandom(
@@ -1056,13 +1044,13 @@ class ArrayController:
             # create color sequence
             self.backgroundColor = _backgroundColor
             self.colorSequence = ConvertPixelArrayToNumpyArray([PixelColors.random() for i in range(_sequenceLength)])
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useColorSequenceRepeating(
@@ -1102,13 +1090,13 @@ class ArrayController:
             self.colorSequence = ArrayPattern.RepeatingColorSequenceArray(
                 arrayLength=_arrayLength, colorSequence=_colorSequence
             )
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useColorTransition(
@@ -1157,13 +1145,13 @@ class ArrayController:
                 colorSequence=_colorSequence,
                 wrap=_wrap,
             )
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useColorTransitionRepeating(
@@ -1213,13 +1201,13 @@ class ArrayController:
             self.colorSequence = ArrayPattern.RepeatingColorSequenceArray(
                 arrayLength=_arrayLength, colorSequence=_tempColorSequence
             )
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useColorRainbow(
@@ -1250,13 +1238,13 @@ class ArrayController:
                 _rainbowPixelCount = int(rainbowPixelCount)
             self.backgroundColor = _backgroundColor
             self.colorSequence = np.array(ArrayPattern.RainbowArray(arrayLength=_rainbowPixelCount))
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useColorRainbowRepeating(
@@ -1290,13 +1278,13 @@ class ArrayController:
             self.colorSequence = np.copy(
                 ArrayPattern.RepeatingRainbowArray(arrayLength=_arrayLength, segmentLength=_rainbowPixelCount)
             )
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useFunctionNone(
@@ -1315,13 +1303,13 @@ class ArrayController:
             # create an object to put in the light data list so we don't just abort the run
             nothing = ArrayFunction(self, ArrayFunction.functionNone, self.colorSequence)
             self.privateLightFunctions.append(nothing)
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useFunctionSolidColorCycle(
@@ -1355,13 +1343,13 @@ class ArrayController:
             # clear LEDs, assign first color in sequence to all LEDs
             self.virtualLEDBuffer *= 0
             self.virtualLEDBuffer += self.colorSequence[0, :]
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useFunctionMarquee(
@@ -1420,13 +1408,13 @@ class ArrayController:
                 self.setvirtualLEDBuffer(array)
             else:
                 self.setvirtualLEDBuffer(self.colorSequence)
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useFunctionCylon(
@@ -1486,13 +1474,13 @@ class ArrayController:
             cylon.delayCountMax = _delayCount
             # add function to function list
             self.privateLightFunctions.append(cylon)
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useFunctionMerge(
@@ -1550,13 +1538,13 @@ class ArrayController:
             merge.delayCountMax = _delayCount
             # add function to list
             self.privateLightFunctions.append(merge)
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useFunctionAccelerate(
@@ -1622,13 +1610,13 @@ class ArrayController:
             accelerate.index = self.getRandomIndex()
             # add to list
             self.privateLightFunctions.append(accelerate)
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useFunctionRandomChange(
@@ -1719,13 +1707,13 @@ class ArrayController:
                     change.fadeType = _fadeType
                     # add function to list
                     self.privateLightFunctions.append(change)
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useFunctionMeteors(
@@ -1834,13 +1822,13 @@ class ArrayController:
                 collision = ArrayFunction(self, ArrayFunction.functionCollisionDetection, self.colorSequence)
                 collision.explode = _explode
                 self.privateLightFunctions.append(collision)
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useFunctionSprites(
@@ -1899,13 +1887,13 @@ class ArrayController:
             fade = ArrayFunction(self, ArrayFunction.functionFadeOff, self.colorSequence)
             fade.fadeAmount = _fadeAmount
             self.privateLightFunctions.append(fade)
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useFunctionRaindrops(
@@ -1984,13 +1972,13 @@ class ArrayController:
             fade: ArrayFunction = ArrayFunction(self, ArrayFunction.functionFadeOff, self.colorSequence)
             fade.fadeAmount = _fadeAmount
             self.privateLightFunctions.append(fade)
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useFunctionAlive(
@@ -2069,13 +2057,13 @@ class ArrayController:
             fade = ArrayFunction(self, ArrayFunction.functionFadeOff, self.colorSequence)
             fade.fadeAmount = _fadeAmount
             self.privateLightFunctions.append(fade)
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useOverlayTwinkle(
@@ -2106,13 +2094,13 @@ class ArrayController:
             twinkle: ArrayFunction = ArrayFunction(self, ArrayFunction.overlayTwinkle, _colorSequence)
             twinkle.random = _twinkleChance
             self.privateLightFunctions.append(twinkle)
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def useOverlayBlink(
@@ -2139,13 +2127,13 @@ class ArrayController:
             blink.random = _blinkChance
             blink.colorSequence = self.colorSequence
             self.privateLightFunctions.append(blink)
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:
+        except LightBerryException:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise ControllerException from ex
 
     def demo(
@@ -2250,22 +2238,22 @@ class ArrayController:
                             getattr(self, function)()
                             # run the combination
                             self.run()
-                    except SystemExit:
+                    except SystemExit:  # pragma: no cover
                         raise
-                    except KeyboardInterrupt:
+                    except KeyboardInterrupt:  # pragma: no cover
                         raise
-                    except Exception as ex:
+                    except Exception as ex:  # pragma: no cover
                         LOGGER.exception(
                             "%s.%s Exception: %s",
                             self.__class__.__name__,
                             self.demo.__name__,
                             ex,
                         )
-        except SystemExit:
+        except SystemExit:  # pragma: no cover
             raise
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             raise
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             LOGGER.exception(
                 "%s.%s Exception: %s",
                 self.__class__.__name__,

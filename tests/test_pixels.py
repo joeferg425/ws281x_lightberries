@@ -16,7 +16,7 @@ def test_pixel_creation_default():
     p = Pixel()
     assert isinstance(p, Pixel), f"Pixel: {p} is not {type(Pixel)}"
     exp = 0x000000
-    assert p.int == exp, f"Pixel.int: {p.int} != expected value: {exp}"
+    assert p.int_value == exp, f"Pixel.int: {p.int_value} != expected value: {exp}"
     exp = 3
     assert len(p.array) == exp, f"Pixel.array: {p.array} != expected value: {exp}"
     exp = "000000"
@@ -37,7 +37,7 @@ def test_pixel_creation_None():
     p = Pixel(None)
     assert isinstance(p, Pixel), f"Pixel: {p} is not {type(Pixel)}"
     exp = 0x000000
-    assert p.int == exp, f"Pixel.int: {p.int} != expected value: {exp}"
+    assert p.int_value == exp, f"Pixel.int: {p.int_value} != expected value: {exp}"
     exp = 3
     assert len(p.array) == exp, f"Pixel.array: {p.array} != expected value: {exp}"
     exp = "000000"
@@ -67,7 +67,7 @@ def test_pixel_creation_invalid_rgb_type():
 def test_pixel_int_value():
     """Test default pixel creation and attributes."""
     p = Pixel(0x100, order=LEDOrder.RGB)
-    assert p.int == 0x100
+    assert p.int_value == 0x100
     exp = np.array([0, 1, 0])
     assert_array_equal(p.array, exp, err_msg=f"Pixel.tuple: {p.array} != expected value: {exp}")
 
@@ -118,7 +118,7 @@ def test_pixel_creationint_args(arg: int | np.ndarray[(3), np.float32] | "Pixel"
     p = Pixel(arg)
     assert isinstance(p, Pixel), f"Pixel: {p} is not {type(Pixel)}"
     exp = 0x010000
-    assert p.int == exp, f"Pixel.int: {p.int} != expected value: {exp}"
+    assert p.int_value == exp, f"Pixel.int: {p.int_value} != expected value: {exp}"
     exp = 3
     assert len(p.array) == exp, f"Pixel.array: {p.array} != expected value: {exp}"
     exp = "010000"
@@ -147,7 +147,7 @@ def test_pixel_creation_pixel_order(arg: int | np.ndarray[(3), np.float32] | "Pi
     p = Pixel(arg)
     assert isinstance(p, Pixel), f"Pixel: {p} is not {type(Pixel)}"
     exp = 0x000100
-    assert p.int == exp, f"Pixel.int: {p.int} != expected value: {exp}"
+    assert p.int_value == exp, f"Pixel.int: {p.int_value} != expected value: {exp}"
     exp = 3
     assert len(p.array) == exp, f"Pixel.array: {p.array} != expected value: {exp}"
     exp = "000100"

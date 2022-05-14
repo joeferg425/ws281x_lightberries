@@ -45,7 +45,7 @@ class Pixel:
         """
         try:
             # initialize to zero
-            self._value: int = 0
+            self.int_value: int = 0
 
             if order is None:
                 self._order = Pixel.DEFAULT_PIXEL_ORDER
@@ -56,33 +56,19 @@ class Pixel:
 
             # none gets a zero
             if rgb is None:
-                self._value = 0
+                self.int_value = 0
 
             # if it is an int and in range
             elif isinstance(rgb, (int, np.int_, np.int32)) and rgb >= 0 and rgb <= 0xFFFFFF:
                 rgb = int(rgb)
                 if self._order == LEDOrder.RGB:
-                    self._value = rgb & 0xFFFFFF
+                    self.int_value = rgb & 0xFFFFFF
                 elif self._order == LEDOrder.GRB:
-                    self._value = ((rgb & 0xFF0000) >> 8) + ((rgb & 0x00FF00) << 8) + ((rgb & 0x0000FF) >> 0)
-                # else:
-                # raise Exception("not handled")
-                # # convert to tuple
-                # value = (
-                #     ((rgb & 0xFF0000) >> 16),
-                #     ((rgb & 0x00FF00) >> 8),
-                #     ((rgb & 0x0000FF) >> 0),
-                # )
-                # self._value = (
-                #     # use order enum
-                #     (int(value[self._order.value[0]]) << 16)
-                #     + (int(value[self._order.value[1]]) << 8)
-                #     + (int(value[self._order.value[2]]))
-                # )
+                    self.int_value = ((rgb & 0xFF0000) >> 8) + ((rgb & 0x00FF00) << 8) + ((rgb & 0x0000FF) >> 0)
 
             # this is an instance of this class, just use the value
             elif isinstance(rgb, Pixel):
-                self._value = rgb._value
+                self.int_value = rgb.int_value
 
             # if it is a tuple, list, or numpy array
             elif (
@@ -94,16 +80,12 @@ class Pixel:
                 if rgb[0] > 255 or rgb[1] > 255 or rgb[2] > 255:
                     raise PixelException(f"Invalid Pixel values: {rgb}")
                 # create a 3-byte int from the three bytes
-                self._value = (
+                self.int_value = (
                     # this is where the rgb order comes into play
                     (int(rgb[self._order.value[0]]) << 16)
                     + (int(rgb[self._order.value[1]]) << 8)
                     + (int(rgb[self._order.value[2]]))
                 )
-
-            # i think this is old and unused
-            # elif isinstance(rgb, PixelColors):
-            # self._value = rgb.value._value
 
             # we've got an error boys!
             else:
@@ -136,7 +118,7 @@ class Pixel:
         Returns:
             the integer value of the RGB values
         """
-        return self._value
+        return self.int_value
 
     def __str__(
         self,
@@ -147,9 +129,9 @@ class Pixel:
             a string representation of the pixel
         """
         rgbValue = (
-            (self._value & 0xFF0000) >> 16,
-            (self._value & 0xFF00) >> 8,
-            self._value & 0xFF,
+            (self.int_value & 0xFF0000) >> 16,
+            (self.int_value & 0xFF00) >> 8,
+            self.int_value & 0xFF,
         )
         return "PX #" + f"{rgbValue[0]:02X}" + f"{rgbValue[1]:02X}" + f"{rgbValue[2]:02X}"
 
@@ -161,7 +143,7 @@ class Pixel:
         Returns:
             a string representation of the Pixel instance
         """
-        return f"<{self.__class__.__name__}> {self.__str__()} ({self._value}/{self._order.name})"
+        return f"<{self.__class__.__name__}> {self.__str__()} ({self.int_value}/{self._order.name})"
 
     def __eq__(self, other: object) -> bool:
         """Text pixel equality with other objects.
@@ -175,7 +157,7 @@ class Pixel:
         if other is None or not isinstance(other, (int, np.ndarray, tuple, Pixel)):
             return False
         # convert the pixel orders to the same order then compare
-        return self.pixel._value == Pixel(other, LEDOrder.RGB).pixel._value
+        return self.pixel.int_value == Pixel(other, LEDOrder.RGB).pixel.int_value
 
     @property
     def tuple(
@@ -187,9 +169,9 @@ class Pixel:
             the RGB value into tuple
         """
         rgbTuple = (
-            (self._value & 0xFF0000) >> 16,
-            (self._value & 0xFF00) >> 8,
-            self._value & 0xFF,
+            (self.int_value & 0xFF0000) >> 16,
+            (self.int_value & 0xFF00) >> 8,
+            self.int_value & 0xFF,
         )
         return (
             rgbTuple[0],
@@ -239,10 +221,6 @@ class Pixel:
         """
         rgb = self.tuple
         return f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
-
-    @property
-    def int(self) -> int:
-        return self._value
 
 
 class PixelColors:

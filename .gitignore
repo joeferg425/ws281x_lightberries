@@ -114,3 +114,4 @@ LightBerries/Sphinx-docs/
 poetry.lock
 *.bmp
 *.orig
+.*

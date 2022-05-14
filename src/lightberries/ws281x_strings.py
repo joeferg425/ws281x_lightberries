@@ -162,8 +162,7 @@ class WS281xString(Sequence[np.int_]):
         Returns:
             the number of LEDs in the array
         """
-        if self.ws281xPixelStrip:
-            return self.ws281xPixelStrip.numPixels()
+        return self._ledCount
 
     @overload
     def __getitem__(  # noqa D105
@@ -196,29 +195,14 @@ class WS281xString(Sequence[np.int_]):
             LightBerryException: if propagating an exception
             LightStringException: if something bad happens
         """
-        try:
-            if isinstance(key, int):
-                if key >= len(self):
-                    raise IndexError()
-                return Pixel(self.ws281xPixelStrip.getPixelColor(key)).array
-            elif isinstance(key, (np.int_, np.int32)):
-                if int(key) >= len(self):
-                    raise IndexError()
-                return Pixel(self.ws281xPixelStrip.getPixelColor(int(key))).array
-            else:
-                return ConvertPixelArrayToNumpyArray(
-                    [Pixel(self.ws281xPixelStrip.getPixelColor(k)) for k in range(self._ledCount)[key]]
-                )
-        except SystemExit:  # pylint:disable=try-except-raise  # pragma: no cover
-            raise
-        except KeyboardInterrupt:  # pylint:disable=try-except-raise  # pragma: no cover
-            raise
-        except LightBerryException:  # pragma: no cover
-            raise
-        except IndexError:  # pragma: no cover
-            raise
-        except Exception as ex:  # pragma: no cover
-            raise WS281xStringException from ex
+        if isinstance(key, int):
+            return Pixel(self.ws281xPixelStrip.getPixelColor(key)).array
+        elif isinstance(key, (np.int_, np.int32)):
+            return Pixel(self.ws281xPixelStrip.getPixelColor(int(key))).array
+        else:
+            return ConvertPixelArrayToNumpyArray(
+                [Pixel(self.ws281xPixelStrip.getPixelColor(k)) for k in range(self._ledCount)[key]]
+            )
 
     def __setitem__(
         self,
@@ -241,17 +225,17 @@ class WS281xString(Sequence[np.int_]):
             if isinstance(key, slice):
                 for i, j in enumerate(range(self._ledCount)[key]):
                     p = Pixel(value[i, :])
-                    self.ws281xPixelStrip.setPixelColor(j, p.int)
+                    self.ws281xPixelStrip.setPixelColor(j, p.int_value)
             elif isinstance(key, (np.int_, np.int32)):
-                if int(key) >= len(self):
+                if int(key) >= self._ledCount:
                     raise IndexError()
                 p = Pixel(value)
-                self.ws281xPixelStrip.setPixelColor(int(key), p.int)
+                self.ws281xPixelStrip.setPixelColor(int(key), p.int_value)
             else:
-                if key >= len(self):
+                if key >= self._ledCount:
                     raise IndexError()
                 p = Pixel(value)
-                self.ws281xPixelStrip.setPixelColor(key, p.int)
+                self.ws281xPixelStrip.setPixelColor(key, p.int_value)
         except SystemExit:  # pragma: no cover
             raise
         except KeyboardInterrupt:  # pragma: no cover
