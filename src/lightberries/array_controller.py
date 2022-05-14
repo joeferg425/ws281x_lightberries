@@ -522,35 +522,22 @@ class ArrayController:
             LightBerryException: if propagating an exception
             LightControlException: if something bad happens
         """
-        try:
-            # callback function to do work
+        # callback function to do work
 
-            def SetPixel(i_rgb):
-                i = i_rgb[0]
-                rgb = i_rgb[1]
-                if i < self.realLEDCount:
-                    # value = (int(rgb[0]) << 16) + (int(rgb[1]) << 8) + int(rgb[2])
-                    self.ws281xString[i] = rgb
+        def SetPixel(i_rgb):
+            self.ws281xString[i_rgb[0]] = i_rgb[1]
 
-            # fast method of calling the callback method on each index of LED array
-            list(
-                map(
-                    SetPixel,
-                    enumerate(
-                        self.virtualLEDBuffer[self.virtualLEDIndexBuffer][
-                            np.where(self.virtualLEDIndexBuffer < self.realLEDCount)
-                        ]
-                    ),
-                )
+        # fast method of calling the callback method on each index of LED array
+        list(
+            map(
+                SetPixel,
+                enumerate(
+                    self.virtualLEDBuffer[self.virtualLEDIndexBuffer][
+                        np.where(self.virtualLEDIndexBuffer < self.realLEDCount)
+                    ]
+                ),
             )
-        except SystemExit:  # pragma: no cover
-            raise
-        except KeyboardInterrupt:  # pragma: no cover
-            raise
-        except LightBerryException:  # pragma: no cover
-            raise
-        except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+        )
 
     def refreshLEDs(
         self,

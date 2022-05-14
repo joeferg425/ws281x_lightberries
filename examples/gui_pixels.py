@@ -30,7 +30,7 @@ GAMMA = None
 LED_STRIP_TYPE = None
 INVERT = False
 PWM_CHANNEL = 0
-lightberries.pixel, Pixel.DEFAULT_PIXEL_ORDER = lightberries.pixel.LEDOrder.RGB
+Pixel.DEFAULT_PIXEL_ORDER = lightberries.pixel.LEDOrder.RGB.value
 
 
 class LightsProcess:

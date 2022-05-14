@@ -15,7 +15,7 @@ class MatrixOrder(IntEnum):
     TraverseColumnThenRow = 1
 
 
-DEFAULT_MATRIX_ORDER = MatrixOrder.TraverseColumnThenRow
+DEFAULT_MATRIX_ORDER: int = MatrixOrder.TraverseColumnThenRow.value
 
 
 def SingleLED(xRange: int, yRange: int) -> np.ndarray[(Any, Any, 3), np.int32]:

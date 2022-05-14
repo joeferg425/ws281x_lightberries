@@ -6,7 +6,7 @@ import random
 from typing import Any
 import numpy as np
 
-from lightberries.exceptions import LightBerryException, PixelException
+from lightberries.exceptions import PixelException
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -24,7 +24,7 @@ class LEDOrder(enum.Enum):
 class Pixel:
     """This class defines a single LED pixel."""
 
-    DEFAULT_PIXEL_ORDER: LEDOrder = LEDOrder.GRB
+    DEFAULT_PIXEL_ORDER: list[int] = LEDOrder.GRB.value
 
     def __init__(
         self,
@@ -43,62 +43,54 @@ class Pixel:
             LightBerryException: if propagating an exception
             LightPixelException: if something bad happens
         """
-        try:
-            # initialize to zero
-            self.int_value: int = 0
+        # initialize to zero
+        self.int_value: int = 0
 
-            if order is None:
-                self._order = Pixel.DEFAULT_PIXEL_ORDER
-            elif isinstance(order, LEDOrder):
-                self._order = order
-            else:
-                raise PixelException(f"Unknown RGB order: {order}")
+        if order is None:
+            self._order = Pixel.DEFAULT_PIXEL_ORDER
+        elif isinstance(order, LEDOrder):
+            self._order = order.value
+        elif isinstance(order, list):
+            self._order = order
+        else:
+            raise PixelException(f"Unknown RGB order: {order}")
 
-            # none gets a zero
-            if rgb is None:
-                self.int_value = 0
+        # none gets a zero
+        if rgb is None:
+            self.int_value = 0
 
-            # if it is an int and in range
-            elif isinstance(rgb, (int, np.int_, np.int32)) and rgb >= 0 and rgb <= 0xFFFFFF:
-                rgb = int(rgb)
-                if self._order == LEDOrder.RGB:
-                    self.int_value = rgb & 0xFFFFFF
-                elif self._order == LEDOrder.GRB:
-                    self.int_value = ((rgb & 0xFF0000) >> 8) + ((rgb & 0x00FF00) << 8) + ((rgb & 0x0000FF) >> 0)
+        # if it is an int and in range
+        elif isinstance(rgb, (int, np.int_, np.int32)) and rgb >= 0 and rgb <= 0xFFFFFF:
+            rgb = int(rgb)
+            if self._order == LEDOrder.RGB.value:
+                self.int_value = rgb & 0xFFFFFF
+            elif self._order == LEDOrder.GRB.value:
+                self.int_value = ((rgb & 0xFF0000) >> 8) + ((rgb & 0x00FF00) << 8) + ((rgb & 0x0000FF) >> 0)
 
-            # this is an instance of this class, just use the value
-            elif isinstance(rgb, Pixel):
-                self.int_value = rgb.int_value
+        # this is an instance of this class, just use the value
+        elif isinstance(rgb, Pixel):
+            self.int_value = rgb.int_value
 
-            # if it is a tuple, list, or numpy array
-            elif (
-                isinstance(rgb, tuple)
-                or isinstance(rgb, list)
-                or isinstance(rgb, np.ndarray)
-                # and has length three
-            ) and len(rgb) == 3:
-                if rgb[0] > 255 or rgb[1] > 255 or rgb[2] > 255:
-                    raise PixelException(f"Invalid Pixel values: {rgb}")
-                # create a 3-byte int from the three bytes
-                self.int_value = (
-                    # this is where the rgb order comes into play
-                    (int(rgb[self._order.value[0]]) << 16)
-                    + (int(rgb[self._order.value[1]]) << 8)
-                    + (int(rgb[self._order.value[2]]))
-                )
+        # if it is a tuple, list, or numpy array
+        elif (
+            isinstance(rgb, tuple)
+            or isinstance(rgb, list)
+            or isinstance(rgb, np.ndarray)
+            # and has length three
+        ) and len(rgb) == 3:
+            if rgb[0] > 255 or rgb[1] > 255 or rgb[2] > 255:
+                raise PixelException(f"Invalid Pixel values: {rgb}")
+            # create a 3-byte int from the three bytes
+            self.int_value = (
+                # this is where the rgb order comes into play
+                (int(rgb[self._order[0]]) << 16)
+                + (int(rgb[self._order[1]]) << 8)
+                + (int(rgb[self._order[2]]))
+            )
 
-            # we've got an error boys!
-            else:
-                raise PixelException(f"Cannot assign pixel using value: {str(rgb)} ({type(rgb)})")
-
-        except SystemExit:  # pragma: no cover
-            raise
-        except KeyboardInterrupt:  # pragma: no cover
-            raise
-        except LightBerryException:  # pragma: no cover
-            raise
-        except Exception as ex:  # pragma: no cover
-            raise PixelException from ex
+        # we've got an error boys!
+        else:
+            raise PixelException(f"Cannot assign pixel using value: {str(rgb)} ({type(rgb)})")
 
     def __len__(
         self,
@@ -143,7 +135,7 @@ class Pixel:
         Returns:
             a string representation of the Pixel instance
         """
-        return f"<{self.__class__.__name__}> {self.__str__()} ({self.int_value}/{self._order.name})"
+        return f"<{self.__class__.__name__}> {self.__str__()} ({self.int_value}/{LEDOrder (self._order).name})"
 
     def __eq__(self, other: object) -> bool:
         """Text pixel equality with other objects.

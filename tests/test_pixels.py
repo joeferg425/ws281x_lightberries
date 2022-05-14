@@ -12,7 +12,7 @@ from lightberries.exceptions import PixelException
 
 def test_pixel_creation_default():
     """Test default pixel creation and attributes."""
-    Pixel.DEFAULT_PIXEL_ORDER = LEDOrder.GRB
+    Pixel.DEFAULT_PIXEL_ORDER = LEDOrder.GRB.value
     p = Pixel()
     assert isinstance(p, Pixel), f"Pixel: {p} is not {type(Pixel)}"
     exp = 0x000000
@@ -33,7 +33,7 @@ def test_pixel_creation_default():
 
 def test_pixel_creation_None():
     """Test default pixel creation and attributes."""
-    Pixel.DEFAULT_PIXEL_ORDER = LEDOrder.GRB
+    Pixel.DEFAULT_PIXEL_ORDER = LEDOrder.GRB.value
     p = Pixel(None)
     assert isinstance(p, Pixel), f"Pixel: {p} is not {type(Pixel)}"
     exp = 0x000000
@@ -114,7 +114,7 @@ def test_pixel_creationint_args(arg: int | np.ndarray[(3), np.float32] | "Pixel"
     Args:
         arg: initial pixel value
     """
-    Pixel.DEFAULT_PIXEL_ORDER = LEDOrder.RGB
+    Pixel.DEFAULT_PIXEL_ORDER = LEDOrder.RGB.value
     p = Pixel(arg)
     assert isinstance(p, Pixel), f"Pixel: {p} is not {type(Pixel)}"
     exp = 0x010000
@@ -143,7 +143,7 @@ def test_pixel_creation_pixel_order(arg: int | np.ndarray[(3), np.float32] | "Pi
     Args:
         arg: initial pixel value
     """
-    Pixel.DEFAULT_PIXEL_ORDER = LEDOrder.GRB
+    Pixel.DEFAULT_PIXEL_ORDER = LEDOrder.GRB.value
     p = Pixel(arg)
     assert isinstance(p, Pixel), f"Pixel: {p} is not {type(Pixel)}"
     exp = 0x000100
