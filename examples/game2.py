@@ -7,7 +7,7 @@ from lightberries.matrix_controller import MatrixController
 from lightberries.pixel import Pixel, PixelColors
 from lightberries.array_functions import ArrayFunction
 from lightberries.matrix_functions import MatrixFunction
-from examples._game_objects import game_object, floor, player, projectile, check_for_collisions
+from _game_objects import game_object, floor, player, projectile, check_for_collisions
 import os
 import pygame
 import numpy as np
@@ -15,7 +15,7 @@ import numpy as np
 pause = True
 
 # the number of pixels in the light string
-PIXEL_ROW_COUNT = 16
+PIXEL_ROW_COUNT = 32
 PIXEL_COLUMN_COUNT = 32
 game_object.frame_size_x = PIXEL_COLUMN_COUNT
 game_object.frame_size_y = PIXEL_ROW_COUNT
@@ -33,8 +33,13 @@ GAMMA = None
 LED_STRIP_TYPE = None
 INVERT = False
 PWM_CHANNEL = 0
-MATRIX_COUNT = 2
 MATRIX_SHAPE = (16, 16)
+MATRIX_LAYOUT = np.array(
+    [
+        [1, 2],
+        [0, 3],
+    ],
+)
 
 # create the lightberries Controller object
 lightControl = MatrixController(
@@ -49,8 +54,8 @@ lightControl = MatrixController(
     stripTypeLED=LED_STRIP_TYPE,
     ledBrightnessFloat=BRIGHTNESS,
     debug=True,
-    matrixCount=MATRIX_COUNT,
     matrixShape=MATRIX_SHAPE,
+    matrixLayout=MATRIX_LAYOUT,
 )
 
 
@@ -60,7 +65,8 @@ MAX_ENEMY_SPEED = 0.3
 PAUSE_DELAY = 0.3
 pygame.init()
 THRESHOLD = 0.05
-fade = ArrayFunction(lightControl, ArrayFunction.functionFade, ArrayPattern.DefaultColorSequenceByMonth())
+# fade = ArrayFunction(lightControl, ArrayFunction.functionFade, ArrayPattern.DefaultColorSequenceByMonth())
+fade = ArrayFunction(lightControl, MatrixFunction.functionMatrixFadeOff, ArrayPattern.DefaultColorSequenceByMonth())
 fade.fadeAmount = 0.3
 fade.colorFade = int(0.3 * 256)
 fade.color = PixelColors.OFF.array

@@ -12,7 +12,7 @@ import pygame
 import numpy as np
 
 # the number of pixels in the light string
-PIXEL_ROW_COUNT = 16
+PIXEL_ROW_COUNT = 32
 PIXEL_COLUMN_COUNT = 32
 # GPIO pin to use for PWM signal
 GPIO_PWM_PIN = 18
@@ -28,8 +28,13 @@ GAMMA = None
 LED_STRIP_TYPE = None
 INVERT = False
 PWM_CHANNEL = 0
-MATRIX_COUNT = 2
 MATRIX_SHAPE = (16, 16)
+MATRIX_LAYOUT = np.array(
+    [
+        [1, 2],
+        [0, 3],
+    ],
+)
 
 # create the lightberries Controller object
 lightControl = MatrixController(
@@ -44,8 +49,8 @@ lightControl = MatrixController(
     stripTypeLED=LED_STRIP_TYPE,
     ledBrightnessFloat=BRIGHTNESS,
     debug=True,
-    matrixCount=MATRIX_COUNT,
     matrixShape=MATRIX_SHAPE,
+    matrixLayout=MATRIX_LAYOUT,
 )
 
 
@@ -179,10 +184,12 @@ pygame.init()
 # clock = pygame.time.Clock()
 keepPlaying = True
 THRESHOLD = 0.05
-fade = ArrayFunction(lightControl, ArrayFunction.functionFade, ArrayPattern.DefaultColorSequenceByMonth())
+# fade = ArrayFunction(lightControl, ArrayFunction.functionFade, ArrayPattern.DefaultColorSequenceByMonth())
+fade = ArrayFunction(lightControl, MatrixFunction.functionMatrixFadeOff, ArrayPattern.DefaultColorSequenceByMonth())
 fade.fadeAmount = 0.3
-fade.colorFade = int(0.3 * 256)
 fade.color = PixelColors.OFF.array
+# fade.colorFade = int(0.3 * 256)
+# fade.color = PixelColors.OFF.array
 # for i in range(0, pygame.joystick.get_count()):
 #     joysticks.append(pygame.joystick.Joystick(i))
 #     joysticks[-1].init()
