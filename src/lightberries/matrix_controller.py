@@ -65,10 +65,10 @@ class MatrixController(ArrayController):
             refreshCallback,
             simulate,
         )
-        self.realLEDYaxisRange = ledYaxisRange
-        self.realLEDXaxisRange = ledXaxisRange
-        self.virtualLEDYaxisRange = ledYaxisRange
-        self.virtualLEDXaxisRange = ledXaxisRange
+        self.realLEDYaxisRange = ledXaxisRange
+        self.realLEDXaxisRange = ledYaxisRange
+        self.virtualLEDYaxisRange = ledXaxisRange
+        self.virtualLEDXaxisRange = ledYaxisRange
         self.virtualLEDIndexBuffer: np.ndarray[(Any,), np.int32]
         if matrixLayout is not None:
             self.matrixLayout = matrixLayout
@@ -144,14 +144,14 @@ class MatrixController(ArrayController):
             self.virtualLEDBuffer = ledMatrix
             self.privateVirtualLEDCount = int(ledMatrix.size / 3)
             self.virtualLEDIndexBuffer = np.arange(self.virtualLEDCount)
-            if DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseColumnThenRow:
+            if DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseColumnThenRow.value:
                 self.virtualLEDIndexBuffer = np.reshape(
                     self.virtualLEDIndexBuffer,
                     (self.virtualLEDXaxisRange, self.virtualLEDYaxisRange),
                 )
                 for i in range(1, self.virtualLEDXaxisRange, 2):
                     self.virtualLEDIndexBuffer[i, :] = np.flip(self.virtualLEDIndexBuffer[i, :])
-            elif DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseRowThenColumn:
+            elif DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseRowThenColumn.value:
                 self.virtualLEDIndexBuffer = np.reshape(
                     self.virtualLEDIndexBuffer,
                     (self.virtualLEDXaxisRange, self.virtualLEDYaxisRange),
@@ -165,19 +165,19 @@ class MatrixController(ArrayController):
                 led_count -= led_count % matrix_led_count
                 led_count += self.realLEDCount
             self.virtualLEDIndexBuffer = np.zeros((self.realLEDYaxisRange, self.realLEDXaxisRange), dtype=np.int32)
-            # self.virtualLEDIndexBuffer = np.zeros((self.realLEDColumnCount * self.realLEDRowCount), dtype=np.int32)
+            # self.virtualLEDIndexBuffer = np.zeros((self.realLEDXaxisRange, self.realLEDYaxisRange), dtype=np.int32)
             for matrix_row in range(self.matrixLayout.shape[0]):
                 for matrix_column in range(self.matrixLayout.shape[1]):
                     matrix_index = self.matrixLayout[matrix_row, matrix_column]
                     temp = np.arange(matrix_led_count, dtype=np.int32)
-                    if DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseColumnThenRow:
+                    if DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseColumnThenRow.value:
                         temp = np.reshape(
                             temp,
                             (self.matrixShape[0], self.matrixShape[1]),
                         )
                         for i in range(1, self.matrixShape[1], 2):
                             temp[i, :] = np.flip(temp[i, :])
-                    elif DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseRowThenColumn:
+                    elif DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseRowThenColumn.value:
                         temp = np.reshape(
                             temp,
                             (self.matrixShape[1], self.matrixShape[0]),
@@ -185,38 +185,9 @@ class MatrixController(ArrayController):
                         for i in range(1, self.matrixShape[0], 2):
                             temp[:, i] = np.flip(temp[:, i])
                     temp += matrix_led_count * matrix_index
-                    r = matrix_row * self.matrixShape[0]
-                    c = matrix_column * self.matrixShape[1]
+                    r = matrix_row * self.matrixShape[1]
+                    c = matrix_column * self.matrixShape[0]
                     self.virtualLEDIndexBuffer[c : c + self.matrixShape[1], r : r + self.matrixShape[0]] = temp
-                    # self.virtualLEDIndexBuffer[ i : i + matrix_led_count] = temp
-                    # i = matrix_index * matrix_led_count
-                    # if DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseColumnThenRow:
-                    #     self.virtualLEDIndexBuffer[i : i + matrix_led_count] = np.reshape(
-                    #         temp, (self.matrixShape[0] * self.matrixShape[1])
-                    #     )
-                    # elif DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseRowThenColumn:
-                    #     self.virtualLEDIndexBuffer[i : i + matrix_led_count] = np.reshape(
-                    #         temp,
-                    #         (self.matrixShape[0] * self.matrixShape[1]),
-                    #         order="F",
-                    #     )
-            # self.virtualLEDIndexBuffer[:256] = np.arange(256) + 256
-            # self.virtualLEDIndexBuffer[256:] = np.arange(256)
-            # if DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseColumnThenRow:
-            #     self.virtualLEDIndexBuffer = np.reshape(
-            #         self.virtualLEDIndexBuffer,
-            #         (self.matrixShape[0] * self.matrixCount * self.matrixShape[1]),
-            #         order="F",
-            #     )
-            # elif DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseRowThenColumn:
-            #     self.virtualLEDIndexBuffer = np.reshape(
-            #         self.virtualLEDIndexBuffer, (self.matrixShape[0] * self.matrixCount * self.matrixShape[1])
-            #     )
-            # self.virtualLEDIndexBuffer = np.reshape(
-            #     self.virtualLEDIndexBuffer,
-            #     (self.matrixShape[0] * self.matrixCount * self.matrixShape[1]),
-            #     # order="F",
-            # )
 
     def reset(
         self,
@@ -274,25 +245,14 @@ class MatrixController(ArrayController):
 
             # fast method of calling the callback method on each index of LED array
             if len(self.virtualLEDBuffer.shape) > 2:
-                # x = np.where(self.virtualLEDIndexBuffer < self.realLEDCount)
-                # y = self.virtualLEDIndexBuffer[np.where(self.virtualLEDIndexBuffer < self.realLEDCount)]
-                if DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseColumnThenRow:
+                if DEFAULT_MATRIX_ORDER is MatrixOrder.TraverseColumnThenRow.value:
                     list(
                         map(
                             SetPixel,
-                            # enumerate(
                             zip(
                                 self.virtualLEDIndexBuffer[np.where(self.virtualLEDIndexBuffer < self.realLEDCount)],
                                 self.virtualLEDBuffer[np.where(self.virtualLEDIndexBuffer < self.realLEDCount)],
                             )
-                            # self.virtualLEDBuffer.reshape(
-                            #     (
-                            #         self.virtualLEDRowCount * self.virtualLEDColumnCount,
-                            #         3,
-                            #     ),
-                            #     # order="F",
-                            # )
-                            # ),
                         )
                     )
                 else:
@@ -317,7 +277,7 @@ class MatrixController(ArrayController):
                             self.virtualLEDBuffer[self.virtualLEDIndexBuffer][
                                 np.where(self.virtualLEDIndexBuffer < self.realLEDCount)
                             ]
-                        ),
+                        )
                     )
                 )
         except SystemExit:

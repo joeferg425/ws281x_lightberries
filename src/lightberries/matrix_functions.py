@@ -219,7 +219,6 @@ class MatrixFunction(ArrayFunction):
                 eye.delayCountMax = random.randint(10, 850)
                 eye.delayCounter = 0
             eye.delayCounter += 1
-
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -278,14 +277,11 @@ class MatrixFunction(ArrayFunction):
                     if bounce.colorCycle and random.randint(0, 10) >= 7:
                         bounce.color = bounce.colorSequenceNext
                 bounce.delayCounter = 0
-            bounceRange = list(range(bounce.rowIndex, bounce.columnIndex))
-            # bounce.Controller.virtualLEDBuffer[bounce.rowIndex, bounce.columnIndex, :] = bounce.color
+            bounceRange = ((bounce.columnIndex), (bounce.rowIndex))
             if len(ArrayFunction.Controller.virtualLEDBuffer.shape) == 2:
                 ArrayFunction.Controller.virtualLEDBuffer[bounceRange] = bounce.color
             else:
-                ArrayFunction.Controller.virtualLEDBuffer[
-                    np.where(ArrayFunction.Controller.virtualLEDIndexBuffer == bounceRange)
-                ] = bounce.color
+                ArrayFunction.Controller.virtualLEDBuffer[bounceRange] = bounce.color
             bounce.delayCounter += 1
         except SystemExit:
             raise

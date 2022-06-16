@@ -3,9 +3,20 @@
 from lightberries.matrix_controller import MatrixController
 import numpy as np
 
+TEST = 1
+TEST = 2
+TEST = 4
+
+
 # the number of pixels in the light string
-PIXEL_ROW_COUNT = 32
-PIXEL_COLUMN_COUNT = 32
+if TEST == 1:
+    PIXEL_ROW_COUNT = 16
+else:
+    PIXEL_ROW_COUNT = 32
+if TEST == 4:
+    PIXEL_COLUMN_COUNT = 32
+else:
+    PIXEL_COLUMN_COUNT = 16
 # GPIO pin to use for PWM signal
 GPIO_PWM_PIN = 18
 # DMA channel
@@ -21,17 +32,31 @@ LED_STRIP_TYPE = None
 INVERT = False
 PWM_CHANNEL = 0
 MATRIX_SHAPE = (16, 16)
-MATRIX_LAYOUT = np.array(
-    [
-        [1, 2],
-        [0, 3],
-    ],
-)
+if TEST == 1:
+    MATRIX_LAYOUT = np.array(
+        [
+            [0],
+        ],
+    )
+elif TEST == 2:
+    MATRIX_LAYOUT = np.array(
+        [
+            [1],
+            [0],
+        ],
+    )
+else:
+    MATRIX_LAYOUT = np.array(
+        [
+            [1, 2],
+            [0, 3],
+        ],
+    )
 
 # create the lightberries Controller object
 lightControl = MatrixController(
-    ledXaxisRange=PIXEL_ROW_COUNT,
-    ledYaxisRange=PIXEL_COLUMN_COUNT,
+    ledXaxisRange=PIXEL_COLUMN_COUNT,
+    ledYaxisRange=PIXEL_ROW_COUNT,
     pwmGPIOpin=GPIO_PWM_PIN,
     channelDMA=DMA_CHANNEL,
     frequencyPWM=PWM_FREQUENCY,
@@ -45,15 +70,15 @@ lightControl = MatrixController(
     matrixLayout=MATRIX_LAYOUT,
 )
 
-lightControl.useFunctionMatrixFireworks()
-
+lightControl.useFunctionMatrixBounce(ballCount=6)
 try:
     lightControl.run()
 except KeyboardInterrupt:
     pass
 except SystemExit:
     pass
-# turn all LEDs off
-lightControl.off()
-# cleanup memory
-del lightControl
+finally:
+    # turn all LEDs off
+    lightControl.off()
+    # cleanup memory
+    del lightControl
