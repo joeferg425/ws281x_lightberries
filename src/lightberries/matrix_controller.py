@@ -252,7 +252,7 @@ class MatrixController(ArrayController):
                             zip(
                                 self.virtualLEDIndexBuffer[np.where(self.virtualLEDIndexBuffer < self.realLEDCount)],
                                 self.virtualLEDBuffer[np.where(self.virtualLEDIndexBuffer < self.realLEDCount)],
-                            )
+                            ),
                         )
                     )
                 else:
@@ -277,7 +277,7 @@ class MatrixController(ArrayController):
                             self.virtualLEDBuffer[self.virtualLEDIndexBuffer][
                                 np.where(self.virtualLEDIndexBuffer < self.realLEDCount)
                             ]
-                        )
+                        ),
                     )
                 )
         except SystemExit:
@@ -398,7 +398,13 @@ class MatrixController(ArrayController):
             marquee.delayCountMax = _delayCount
             # add this function to our function list
             self.privateLightFunctions.append(marquee)
-            self.setvirtualLEDBuffer(TextMatrix(_text, self.colorSequence[0]))
+            self.setvirtualLEDBuffer(
+                TextMatrix(
+                    yRange=self.realLEDYaxisRange,
+                    text=_text,
+                    color=self.colorSequence[0],
+                )
+            )
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -738,4 +744,146 @@ class MatrixController(ArrayController):
         except LightBerryException:
             raise
         except Exception as ex:
+            raise ControllerException from ex
+
+    def getFunctionMatrixMethodsList(self) -> list[str]:
+        """Get the list of methods in this class (by name) that set the color functions.
+
+        Returns:
+            a list of method name strings
+        """
+        attrs = list(dir(self))
+        functions = [f for f in attrs if f[:17] == "useFunctionMatrix"]
+        functions.sort()
+        return functions
+
+    def demo(
+        self,
+        secondsPerMode: float = 0.5,
+        functionNames: list[str] = None,
+        colorNames: list[str] = None,
+        skipFunctions: list[str] = None,
+        skipColors: list[str] = None,
+        justMatrixFunctions: bool = False,
+    ):
+        """Run colors and functions semi-randomly.
+
+        Args:
+            secondsPerMode: seconds to run current function
+            functionNames: function names to run
+            colorNames: color pattern names to run
+            skipFunctions: function strings to omit (run if "skipFunction not in name")
+            skipColors: color pattern strings to omit (run if "skipColor not in name")
+            justMatrixFunctions: set true to only use matrix functions
+
+        Raises:
+            SystemExit: if exiting
+            KeyboardInterrupt: if user quits
+            LightControlException: if something bad happens
+        """
+        try:
+            _secondsPerMode: int = 60
+            if secondsPerMode is not None:
+                _secondsPerMode = int(secondsPerMode)
+            self.secondsPerMode = _secondsPerMode
+
+            if functionNames is None:
+                functionNames = []
+            elif not isinstance(functionNames, list):
+                functionNames = [functionNames]
+            if colorNames is None:
+                colorNames = []
+            elif not isinstance(colorNames, list):
+                colorNames = [colorNames]
+            if skipFunctions is None:
+                skipFunctions = []
+            elif not isinstance(skipFunctions, list):
+                skipFunctions = [skipFunctions]
+            if skipColors is None:
+                skipColors = []
+            elif not isinstance(skipColors, list):
+                skipColors = [skipColors]
+
+            if justMatrixFunctions:
+                functions = self.getFunctionMatrixMethodsList()
+            else:
+                functions = self.getFunctionMethodsList()
+            colors = self.getColorMethodsList()
+            # get methods that match user's string
+            if len(functionNames) > 0:
+                matches = []
+                for name in functionNames:
+                    matches.extend([f for f in functions if name.lower() in f.lower()])
+                functions = matches
+            # get methods that match user's string
+            if len(colorNames) > 0:
+                matches = []
+                for name in colorNames:
+                    matches.extend([f for f in colors if name.lower() in f.lower()])
+                colors = matches
+            # remove methods that user requested
+            if len(skipFunctions) > 0:
+                matches = []
+                for name in skipFunctions:
+                    for function in functions:
+                        if name.lower() in function.lower():
+                            functions.remove(function)
+            # remove methods that user requested
+            if len(skipColors) > 0:
+                matches = []
+                for name in skipColors:
+                    for color in colors:
+                        if name.lower() in color.lower():
+                            colors.remove(color)
+
+            if len(functions) == 0:
+                raise ControllerException("No functions selected in demo")
+            elif len(colors) == 0:
+                raise ControllerException("No colors selected in demo")
+            else:
+                while True:
+                    try:
+                        # make a temporary copy (so we can go through each one)
+                        functionsCopy = functions.copy()
+                        colorsCopy = colors.copy()
+                        # loop while we still have a color and a function
+                        while (len(functionsCopy) * len(colorsCopy)) > 0:
+                            # get a new function if there is one
+                            if len(functionsCopy) > 0:
+                                function = functionsCopy[random.randint(0, len(functionsCopy) - 1)]
+                                functionsCopy.remove(function)
+                            # get a new color pattern if there is one
+                            if len(colorsCopy) > 0:
+                                color = colorsCopy[random.randint(0, len(colorsCopy) - 1)]
+                                colorsCopy.remove(color)
+                            # reset
+                            self.reset()
+                            # apply color
+                            getattr(self, color)()
+                            # configure function
+                            getattr(self, function)()
+                            # run the combination
+                            self.run()
+                    except SystemExit:  # pragma: no cover
+                        raise
+                    except KeyboardInterrupt:  # pragma: no cover
+                        raise
+                    except Exception as ex:  # pragma: no cover
+                        LOGGER.exception(
+                            "%s.%s Exception: %s",
+                            self.__class__.__name__,
+                            self.demo.__name__,
+                            ex,
+                        )
+        except SystemExit:  # pragma: no cover
+            raise
+        except KeyboardInterrupt:  # pragma: no cover
+            raise
+        except Exception as ex:  # pragma: no cover
+            LOGGER.exception(
+                "%s.%s Exception: %s",
+                self.__class__.__name__,
+                self.demo.__name__,
+                ex,
+            )
             raise ControllerException from ex

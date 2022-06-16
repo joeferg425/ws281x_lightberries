@@ -7,8 +7,6 @@ import random
 import logging
 from typing import (
     Callable,
-    Dict,
-    List,
     Optional,
     Any,
 )
@@ -135,7 +133,7 @@ class ArrayController:
                 color=PixelColors.OFF.array,
             )
             self.virtualLEDIndexBuffer: np.ndarray[(Any,), np.int32] = np.array(range(len(self.ws281xString)))
-            self.privateOverlayDict: Dict[int, np.ndarray[(3,), np.int32]] = {}
+            self.privateOverlayDict: dict[int, np.ndarray[(3,), np.int32]] = {}
             self.privateVirtualLEDCount: int = len(self.virtualLEDBuffer)
             self.privateVirtualLEDIndexCount: int = len(self.virtualLEDIndexBuffer)
             self.privateLastModeChange: float = time.time() - 1000
@@ -147,7 +145,7 @@ class ArrayController:
             self.privateColorSequenceCount: int = len(self.privateColorSequence)
             self.privateColorSequenceIndex: int = 0
             self.privateLoopForever: bool = False
-            self.privateLightFunctions: List[ArrayFunction] = []
+            self.privateLightFunctions: list[ArrayFunction] = []
 
             # give LightFunction class a pointer to this class
             ArrayFunction.Controller = self
@@ -393,7 +391,7 @@ class ArrayController:
         return temp
 
     @property
-    def functionList(self) -> List[ArrayFunction]:
+    def functionList(self) -> list[ArrayFunction]:
         """The list of function objects that will be used to modify the light pattern.
 
         Returns:
@@ -402,7 +400,7 @@ class ArrayController:
         return self.privateLightFunctions
 
     @property
-    def overlayDictionary(self) -> Dict[int, Any]:
+    def overlayDictionary(self) -> dict[int, Any]:
         """The list of indices and associated colors to temporarily assign LEDs.
 
         Returns:
@@ -410,7 +408,7 @@ class ArrayController:
         """
         return self.privateOverlayDict
 
-    def getColorMethodsList(self) -> List[str]:
+    def getColorMethodsList(self) -> list[str]:
         """Get the list of methods in this class (by name) that set the color sequence.
 
         Returns:
@@ -421,7 +419,7 @@ class ArrayController:
         colors.sort()
         return colors
 
-    def getFunctionMethodsList(self) -> List[str]:
+    def getFunctionMethodsList(self) -> list[str]:
         """Get the list of methods in this class (by name) that set the color functions.
 
         Returns:
@@ -923,7 +921,7 @@ class ArrayController:
 
     def useColorSequence(
         self,
-        colorSequence: List[Pixel] = None,
+        colorSequence: list[Pixel] = None,
         backgroundColor: Pixel = None,
     ) -> None:
         """Sets the the color sequence used by light functions to one of your choice.
@@ -1042,7 +1040,7 @@ class ArrayController:
 
     def useColorSequenceRepeating(
         self,
-        colorSequence: List[Pixel] = None,
+        colorSequence: list[Pixel] = None,
         backgroundColor: Pixel = None,
     ) -> None:
         """Sets the color sequence used by light functions.
@@ -1088,7 +1086,7 @@ class ArrayController:
 
     def useColorTransition(
         self,
-        colorSequence: List[Pixel] = None,
+        colorSequence: list[Pixel] = None,
         stepsPerTransition: int = None,
         wrap: bool = None,
         backgroundColor: Pixel = None,
@@ -1143,7 +1141,7 @@ class ArrayController:
 
     def useColorTransitionRepeating(
         self,
-        colorSequence: List[Pixel] = None,
+        colorSequence: list[Pixel] = None,
         stepsPerTransition: int = None,
         wrap: bool = None,
         backgroundColor: Pixel = None,
@@ -1632,7 +1630,7 @@ class ArrayController:
             _changeCount: int = random.randint(self.virtualLEDCount // 5, self.virtualLEDCount)
             _fadeStepCount: int = random.randint(5, 20)
             _delayCountMax: int = random.randint(30, 50)
-            fadeTypes: List[LEDFadeType] = list(LEDFadeType)
+            fadeTypes: list[LEDFadeType] = list(LEDFadeType)
             _fadeType: LEDFadeType = fadeTypes[random.randint(0, len(fadeTypes) - 1)]
             if changeCount is not None:
                 _changeCount = int(changeCount)
@@ -1741,7 +1739,7 @@ class ArrayController:
             _meteorCount: int = random.randint(2, 6)
             _collide: bool = self.getRandomBoolean()
             _cycleColors: bool = self.getRandomBoolean()
-            fadeTypes: List[LEDFadeType] = list(LEDFadeType)
+            fadeTypes: list[LEDFadeType] = list(LEDFadeType)
             _fadeType: LEDFadeType = fadeTypes[random.randint(0, len(fadeTypes) - 1)]
             if self.colorSequenceCount >= 2 and self.colorSequenceCount <= 6:
                 _meteorCount = self.colorSequenceCount
@@ -2126,10 +2124,10 @@ class ArrayController:
     def demo(
         self,
         secondsPerMode: float = 0.5,
-        functionNames: List[str] = None,
-        colorNames: List[str] = None,
-        skipFunctions: List[str] = None,
-        skipColors: List[str] = None,
+        functionNames: list[str] = None,
+        colorNames: list[str] = None,
+        skipFunctions: list[str] = None,
+        skipColors: list[str] = None,
     ):
         """Run colors and functions semi-randomly.
 

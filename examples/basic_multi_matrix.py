@@ -70,7 +70,8 @@ lightControl = MatrixController(
     matrixLayout=MATRIX_LAYOUT,
 )
 
-lightControl.useFunctionMatrixBounce(ballCount=6)
+# lightControl.useFunctionMatrixBounce(ballCount=6)
+lightControl.useFunctionMatrixMarqueeText(text="this is a test of the broadcast system", delayCount=0)
 try:
     lightControl.run()
 except KeyboardInterrupt:

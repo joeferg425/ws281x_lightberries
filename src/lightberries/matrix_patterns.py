@@ -86,7 +86,7 @@ def SolidColorMatrix(
         raise PatternException from ex
 
 
-def TextMatrix(text: str, color: np.ndarray[(Any, 3), np.int32]) -> np.ndarray[(Any, Any, 3), np.int32]:
+def TextMatrix(yRange: int, text: str, color: np.ndarray[(Any, 3), np.int32]) -> np.ndarray[(Any, Any, 3), np.int32]:
     from lightberries.matrix_letters import letters_to_matrices
 
     letters = letters_to_matrices(text + "     ")
@@ -106,4 +106,8 @@ def TextMatrix(text: str, color: np.ndarray[(Any, 3), np.int32]) -> np.ndarray[(
         for letter in letters:
             matrix[: letter.shape[0], idx : idx + letter.shape[1], :] = letter
             idx += letter.shape[1]
-    return matrix * color
+    matrix *= color
+    ydelta = yRange - matrix.shape[1]
+    _matrix = np.zeros((matrix.shape[0], ydelta + matrix.shape[1], 3))
+    _matrix[: matrix.shape[0], : matrix.shape[1], :] = matrix
+    return _matrix

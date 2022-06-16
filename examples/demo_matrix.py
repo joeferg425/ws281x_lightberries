@@ -36,7 +36,7 @@ lightControl = MatrixController(
 )
 
 try:
-    lightControl.demo(secondsPerMode=30, functionNames=[], skipFunctions=["solid", "none"])
+    lightControl.demo(secondsPerMode=30, functionNames=[], skipFunctions=["solid", "none"], justMatrixFunctions=True,)
 except KeyboardInterrupt:
     pass
 except SystemExit:
