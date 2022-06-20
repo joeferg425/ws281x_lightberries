@@ -8,8 +8,18 @@ import lightberries.matrix_controller
 from lightberries.exceptions import LightBerryException, FunctionException
 from lightberries.pixel import PixelColors
 from math import ceil
+from enum import IntEnum
 
 LOGGER = logging.getLogger("lightBerries")
+
+
+class EyeMoveType(IntEnum):
+    """Enumeration of types of LED fade for use in functions."""
+
+    MOVE = 0
+    TWITCH = 1
+    BLINK = 2
+    BLINKED = 3
 
 
 class MatrixFunction(ArrayFunction):
@@ -32,7 +42,11 @@ class MatrixFunction(ArrayFunction):
         super().__init__(matrixController, funcPointer, colorSequence)
 
         self.rowIndex: int = 0
+        self.rowIndexLast: int = 0
+        self.rowRange: list[int] = []
         self.columnIndex: int = 0
+        self.columnIndexLast: int = 0
+        self.columnRange: list[int] = []
         self.rowDirection: int = 1
         self.columnDirection: int = 1
         self.rowStep: int = 1
@@ -204,19 +218,163 @@ class MatrixFunction(ArrayFunction):
             _min = 1
             _max = 1
             if eye.delayCounter >= eye.delayCountMax:
-                eye.rowIndex += random.randint(-5, 5)
-                eye.columnIndex += random.randint(-5, 5)
-                if eye.rowIndex < _min:
-                    eye.rowIndex = _min
-                elif eye.rowIndex >= eye.Controller.realLEDXaxisRange - _max:
-                    eye.rowIndex = eye.Controller.realLEDXaxisRange - _max - 1
-                if eye.columnIndex < _min:
-                    eye.columnIndex = _min
-                elif eye.columnIndex >= eye.Controller.realLEDYaxisRange - _max:
-                    eye.columnIndex = eye.Controller.realLEDYaxisRange - _max - 1
+                if eye.state == EyeMoveType.MOVE.value:
+                    eye.rowIndexLast = eye.rowIndex
+                    eye.rowIndex += random.randint(
+                        -int(eye.Controller.realLEDXaxisRange / 2), int(eye.Controller.realLEDXaxisRange / 2)
+                    )
+                    eye.columnIndexLast = eye.columnIndex
+                    eye.columnIndex += random.randint(
+                        -int(eye.Controller.realLEDYaxisRange / 2), int(eye.Controller.realLEDYaxisRange / 2)
+                    )
+                    if eye.rowIndex < _min:
+                        eye.rowIndex = _min
+                    elif eye.rowIndex >= eye.Controller.realLEDXaxisRange - _max:
+                        eye.rowIndex = eye.Controller.realLEDXaxisRange - _max - 1
+                    if eye.columnIndex < _min:
+                        eye.columnIndex = _min
+                    elif eye.columnIndex >= eye.Controller.realLEDYaxisRange - _max:
+                        eye.columnIndex = eye.Controller.realLEDYaxisRange - _max - 1
+
+                    eye.delayCountMax = random.randint(0, 9)
+                    if eye.delayCountMax >= 3:
+                        eye.delayCountMax = random.randint(5, 20)
+                    elif eye.delayCountMax >= 8:
+                        eye.delayCountMax = random.randint(50, 100)
+                    eye.delayCountMax = random.randint(0, 30)
+                    r = random.randint(0, 4)
+                    if r == 3:
+                        eye.state = EyeMoveType.TWITCH.value
+                    elif r == 4:
+                        eye.state = EyeMoveType.BLINK.value
+                elif eye.state == EyeMoveType.TWITCH.value:
+                    r = eye.rowIndex
+                    eye.rowIndex = eye.rowIndexLast
+                    eye.rowIndexLast = r
+                    r = eye.columnIndex
+                    eye.columnIndex = eye.columnIndexLast
+                    eye.columnIndexLast = r
+                    eye.delayCountMax = random.randint(0, 5)
+                    r = random.randint(0, 4)
+                    if r == 3:
+                        eye.state = EyeMoveType.MOVE.value
+                    elif r == 4:
+                        eye.state = EyeMoveType.BLINK.value
+                elif eye.state == EyeMoveType.BLINK.value:
+                    eye.delayCountMax = 2
+                    if eye.stepCounter > 1:
+                        r = random.randint(0, 1)
+                        if r == 0:
+                            eye.state = EyeMoveType.MOVE.value
+                            eye.stepCounter = 0
+                        elif r == 1:
+                            eye.state = EyeMoveType.TWITCH.value
+                            eye.stepCounter = 0
+                    else:
+                        eye.state = EyeMoveType.BLINKED.value
+                    eye.stepCounter += 1
+                elif eye.state == EyeMoveType.BLINKED.value:
+                    eye.state = EyeMoveType.BLINK.value
+
                 eye.Controller.virtualLEDBuffer *= 0
-                eye.Controller.virtualLEDBuffer[eye.rowIndex, eye.columnIndex, :] = PixelColors.RED.array
-                eye.delayCountMax = random.randint(10, 850)
+
+                if eye.state == EyeMoveType.BLINK.value:
+                    xy = (tuple(eye.rowRange), tuple(eye.columnRange))
+                    eye.Controller.virtualLEDBuffer[xy] = PixelColors.RED.array
+                elif eye.state != EyeMoveType.BLINKED.value:
+                    eye.size = 3
+                    x = (
+                        np.round(np.sin(np.linspace(0, 2 * np.pi, 1 + (4 * eye.size))) * (eye.size)).astype(
+                            dtype=np.int32
+                        )
+                        + eye.rowIndex
+                    )
+                    xi = np.where((x >= eye.Controller.realLEDYaxisRange) | (x < 0))[0]
+                    y = (
+                        np.round(np.cos(np.linspace(0, 2 * np.pi, 1 + (4 * eye.size))) * (eye.size)).astype(
+                            dtype=np.int32
+                        )
+                        + eye.columnIndex
+                    )
+                    yi = np.where((y >= eye.Controller.realLEDXaxisRange) | (y < 0))[0]
+                    if len(xi) > 0 and len(yi) > 0:
+                        i = np.concatenate((xi, yi))
+                    elif len(xi) > 0:
+                        i = xi
+                    else:
+                        i = yi
+                    if len(i) > 0:
+                        x = np.delete(x, i)
+                        y = np.delete(y, i)
+                    # xy = (tuple(x), tuple(y))
+                    # eye.Controller.virtualLEDBuffer[xy] = PixelColors.RED.array
+                    eye.rowRange = list(x)
+                    eye.columnRange = list(y)
+
+                    eye.size = 4
+                    x = (
+                        np.round(np.sin(np.linspace(0, 2 * np.pi, 1 + (4 * eye.size))) * (eye.size)).astype(
+                            dtype=np.int32
+                        )
+                        + eye.rowIndex
+                    )
+                    xi = np.where((x >= eye.Controller.realLEDYaxisRange) | (x < 0))[0]
+                    y = (
+                        np.round(np.cos(np.linspace(0, 2 * np.pi, 1 + (4 * eye.size))) * (eye.size)).astype(
+                            dtype=np.int32
+                        )
+                        + eye.columnIndex
+                    )
+                    yi = np.where((y >= eye.Controller.realLEDXaxisRange) | (y < 0))[0]
+                    if len(xi) > 0 and len(yi) > 0:
+                        i = np.concatenate((xi, yi))
+                    elif len(xi) > 0:
+                        i = xi
+                    else:
+                        i = yi
+                    if len(i) > 0:
+                        x = np.delete(x, i)
+                        y = np.delete(y, i)
+                    # xy = (tuple(x), tuple(y))
+                    # eye.Controller.virtualLEDBuffer[xy] = PixelColors.RED.array
+                    eye.rowRange.extend(list(x))
+                    eye.columnRange.extend(list(y))
+
+                    x = np.array(
+                        [
+                            eye.rowIndex - 2,
+                            eye.rowIndex - 2,
+                            eye.rowIndex + 2,
+                            eye.rowIndex + 2,
+                        ]
+                    )
+                    xi = np.where((x >= eye.Controller.realLEDYaxisRange) | (x < 0))[0]
+                    y = np.array(
+                        [
+                            eye.columnIndex - 2,
+                            eye.columnIndex + 2,
+                            eye.columnIndex - 2,
+                            eye.columnIndex + 2,
+                        ]
+                    )
+                    yi = np.where((y >= eye.Controller.realLEDXaxisRange) | (y < 0))[0]
+                    if len(xi) > 0 and len(yi) > 0:
+                        i = np.concatenate((xi, yi))
+                    elif len(xi) > 0:
+                        i = xi
+                    else:
+                        i = yi
+                    if len(i) > 0:
+                        x = np.delete(x, i)
+                        y = np.delete(y, i)
+                    # xy = (tuple(x), tuple(y))
+                    # eye.Controller.virtualLEDBuffer[xy] = PixelColors.RED.array
+                    eye.rowRange.extend(list(x))
+                    eye.columnRange.extend(list(y))
+
+                    xy = (tuple(eye.rowRange), tuple(eye.columnRange))
+                    eye.Controller.virtualLEDBuffer[xy] = PixelColors.RED.array
+
                 eye.delayCounter = 0
             eye.delayCounter += 1
         except SystemExit:
@@ -321,8 +479,6 @@ class MatrixFunction(ArrayFunction):
                     if firework.colorCycle:
                         firework.color = firework.colorSequenceNext
                 firework.delayCounter = 0
-
-            # _x = np.sin(np.linspace(0, np.pi, 1 + (4 * zoomy.size)) * (zoomy.size))
             x = (
                 np.round(np.sin(np.linspace(0, 2 * np.pi, 1 + (4 * firework.size))) * (firework.size)).astype(
                     dtype=np.int32
