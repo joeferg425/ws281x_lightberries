@@ -153,15 +153,6 @@
 				"sudo": true
 			},
 			{
-				"name": "example: xbox",
-				"type": "python",
-				"request": "launch",
-				"program": "${workspaceFolder}/examples/xbox.py",
-				"console": "integratedTerminal",
-				"sudo": true,
-				"justMyCode": false
-			},
-			{
 				"name": "example: dot matrix",
 				"type": "python",
 				"request": "launch",
@@ -180,39 +171,57 @@
 				"justMyCode": false
 			},
 			{
-				"name": "example: game",
-				"type": "python",
-				"request": "launch",
-				"program": "${workspaceFolder}/examples/game.py",
-				"console": "integratedTerminal",
-				"sudo": true,
-				"justMyCode": false
-			},
-			{
-				"name": "example: game2",
-				"type": "python",
-				"request": "launch",
-				"program": "${workspaceFolder}/examples/game2.py",
-				"console": "integratedTerminal",
-				"sudo": true,
-				"justMyCode": false
-			},
-			{
-				"name": "example: game two-player",
-				"type": "python",
-				"request": "launch",
-				"program": "${workspaceFolder}/examples/game_twoplayer.py",
-				"console": "integratedTerminal",
-				"sudo": true,
-				"justMyCode": false
-			},
-			{
 				"name": "example: multi matrix",
 				"type": "python",
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/multi_matrix.py",
 				"console": "integratedTerminal",
 				"sudo": true
+			},
+			{
+				"name": "game: xbox controller demo",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/games/xbox_controller.py",
+				"console": "integratedTerminal",
+				"sudo": true,
+				"justMyCode": false
+			},
+			{
+				"name": "game: space",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/games/space.py",
+				"console": "integratedTerminal",
+				"sudo": true,
+				"justMyCode": false
+			},
+			{
+				"name": "game: jump",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/games/jump.py",
+				"console": "integratedTerminal",
+				"sudo": true,
+				"justMyCode": false
+			},
+			{
+				"name": "game: space two-player",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/games/space_twoplayer.py",
+				"console": "integratedTerminal",
+				"sudo": true,
+				"justMyCode": false
+			},
+			{
+				"name": "game: eat",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/games/eat.py",
+				"console": "integratedTerminal",
+				"sudo": true,
+				"justMyCode": false
 			}
 		],
 		"compounds": []

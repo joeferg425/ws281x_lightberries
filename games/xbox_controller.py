@@ -49,13 +49,14 @@ lightControl.virtualLEDBuffer[x, y, 1] = 255
 
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 
-color = PixelColors.RED
+SPEED = 1.5
+color = PixelColors.RED.array
 pygame.init()
 joysticks = []
 clock = pygame.time.Clock()
 keepPlaying = True
 THRESHOLD = 0.05
-fade = ArrayFunction(ArrayFunction.functionFadeOff, ArrayPattern.DefaultColorSequenceByMonth())
+fade = ArrayFunction(lightControl, ArrayFunction.functionFadeOff, ArrayPattern.DefaultColorSequenceByMonth())
 fade.fadeAmount = 0.3
 for i in range(0, pygame.joystick.get_count()):
     joysticks.append(pygame.joystick.Joystick(i))
@@ -63,23 +64,28 @@ for i in range(0, pygame.joystick.get_count()):
 x_change = 0
 y_change = 0
 while True:
-    # clock.tick(50)
     fade.run()
     events = list(pygame.event.get())
     for event in events:
         if "joy" in event.dict and "axis" in event.dict:
             if event.dict["axis"] == 0:
-                y_change = -event.dict["value"]
+                if np.abs(event.dict["value"]) > THRESHOLD:
+                    x_change = event.dict["value"] * SPEED
+                else:
+                    x_change = 0
             elif event.dict["axis"] == 1:
-                x_change = event.dict["value"]
+                if np.abs(event.dict["value"]) > THRESHOLD:
+                    y_change = event.dict["value"] * SPEED
+                else:
+                    y_change = 0
         elif "joy" in event.dict and "button" in event.dict:
             if event.dict["button"] == 0:
-                color = PixelColors.random()
+                color = PixelColors.random().array
             elif event.dict["button"] == 1:
                 lightControl.virtualLEDBuffer *= 0
             elif event.dict["button"] == 2:
                 lightControl.virtualLEDBuffer *= 0
-                lightControl.virtualLEDBuffer[:, :] += PixelColors.random()
+                lightControl.virtualLEDBuffer[:, :] += PixelColors.random().array
             elif event.dict["button"] == 9:
                 fade.fadeAmount -= 0.05
                 if fade.fadeAmount < 0.0:
@@ -88,10 +94,10 @@ while True:
                 fade.fadeAmount += 0.05
                 if fade.fadeAmount > 1.0:
                     fade.fadeAmount = 1.0
-    if np.abs(x_change) > THRESHOLD:
-        x += x_change
-    if np.abs(y_change) > THRESHOLD:
-        y += y_change
+    # if np.abs(x_change) > THRESHOLD:
+    x += x_change
+    # if np.abs(y_change) > THRESHOLD:
+    y += y_change
     lightControl.virtualLEDBuffer[
         round(x) % lightControl.realLEDXaxisRange, round(y) % lightControl.realLEDYaxisRange
     ] = color

@@ -38,8 +38,16 @@ class game_object:
         self.collided: list["game_object"] = []
         self.destructible = destructible
         self.animate = False
+        self.health = 1
+        self.max_health = 1
+        self.damage = 0
+        self.id = game_object.object_counter
         game_object.objects[game_object.object_counter] = self
         game_object.object_counter += 1
+
+    @property
+    def dead(self) -> bool:
+        return False
 
     @property
     def x(self) -> int:
@@ -118,7 +126,7 @@ class game_object:
         pass
 
     def __str__(self) -> str:
-        return f"{self.name} [{self.x},{self.y}]"
+        return f"{self.name}#{self.id} [{self.x},{self.y}]"
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__}> {self}"
@@ -209,6 +217,10 @@ class sprite(game_object):
         bounded: bool = True,
         dx: float = 0.0,
         dy: float = 0.0,
+        health: int = 1,
+        max_health: int = 1,
+        damage: int = 1,
+        phased: bool = False,
     ) -> None:
         super().__init__(
             x=x,
@@ -220,13 +232,19 @@ class sprite(game_object):
             destructible=destructible,
         )
         self.animate = True
+        self.health = health
+        self.max_health = max_health
+        self.damage = damage
         self._dead = False
         self._dx = dx
         self._dy = dy
-        self._dead = False
         self.airborn = False
         self.bounded = bounded
+        self.phased = phased
         sprite.sprites[game_object.object_counter] = self
+
+    def __str__(self) -> str:
+        return f"{self.name}#{self.id} [{self.x},{self.y}] ({'dead' if self.dead else 'alive'})"
 
     @property
     def x_direction(self):
@@ -259,13 +277,23 @@ class sprite(game_object):
     @property
     def dead(self) -> bool:
         if self._dead:
+            if self.id not in game_object.dead_objects:
+                game_object.dead_objects.append(self.id)
+            return True
+        elif self.health <= 0:
+            if self.id not in game_object.dead_objects:
+                game_object.dead_objects.append(self.id)
             return True
         elif not self.bounded:
             return False
         else:
             if self.x >= (game_object.frame_size_x - 1) or self.x <= 0:
+                if self.id not in game_object.dead_objects:
+                    game_object.dead_objects.append(self.id)
                 return True
             elif self.y >= (game_object.frame_size_y - 1):
+                if self.id not in game_object.dead_objects:
+                    game_object.dead_objects.append(self.id)
                 return True
             else:
                 return False
@@ -569,21 +597,20 @@ class projectile(sprite):
 
 
 def check_for_collisions():
-    # for o in objects:
-    #     print(o)
     for key in game_object.dead_objects:
-        game_object.objects.pop(key)
+        if key in game_object.objects:
+            game_object.objects.pop(key)
     game_object.dead_objects.clear()
-    if len(game_object.objects) > 1:
+    if len(game_object.objects) > 0:
         for obj1 in game_object.objects.values():
             obj1.go()
+            obj1.collided.clear()
         keys = list(game_object.objects.keys())
+    if len(game_object.objects) > 1:
         for i, key1 in enumerate(keys[:-1]):
             obj1 = game_object.objects[key1]
-            obj1.collided.clear()
             for key2 in keys[i + 1 :]:
                 obj2 = game_object.objects[key2]
-                obj2.collided.clear()
                 x = []
                 if obj1.animate and obj2.animate:
                     x = set(obj1.move_xys).intersection(set(obj2.move_xys))
@@ -600,15 +627,20 @@ def check_for_collisions():
                 #     x = set(range(obj1.y_last, obj1.y, obj1.y_direction)).intersection(obj2.ys)
                 if x:
                     obj1.collided.append(obj2)
+                    obj1.health -= obj2.damage
                     obj2.collided.append(obj1)
+                    obj2.health -= obj1.damage
                     if not obj1.animate and not obj2.animate:
                         pass
                     elif obj2.animate:
-                        obj2._y = obj1.y - obj2.y_direction
+                        if not obj2.phased:
+                            obj2._y = obj1.y - obj2.y_direction
                     elif obj1.animate:
-                        obj1._y = obj2.y - obj1.y_direction
+                        if not obj1.phased:
+                            obj1._y = obj2.y - obj1.y_direction
                     else:
                         raise Exception("not handled yet")
-    for key, obj in game_object.objects.items():
-        if obj.animate and obj.dead and key not in game_object.dead_objects:
-            game_object.dead_objects.append(key)
+                    if obj1.dead and obj1.id not in game_object.dead_objects:
+                        game_object.dead_objects.append(obj1.id)
+                    if obj2.dead and obj2.id not in game_object.dead_objects:
+                        game_object.dead_objects.append(obj2.id)
