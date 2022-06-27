@@ -2,6 +2,7 @@
 from __future__ import annotations
 import numpy as np
 from lightberries.pixel import PixelColors
+import time
 
 GRAVITY = 0.5
 MAX_GRAVITY = 2
@@ -36,14 +37,25 @@ class game_object:
         self.color = color
         self.has_gravity = has_gravity
         self.collided: list["game_object"] = []
+        self.collision_xys: list[tuple[int, int]] = []
         self.destructible = destructible
         self.animate = False
         self.health = 1
         self.max_health = 1
         self.damage = 0
+        self.death_timestamp: float = time.time()
+        self.respawn_delay: float = 1.0
+        self.score: int = 0
         self.id = game_object.object_counter
         game_object.objects[game_object.object_counter] = self
         game_object.object_counter += 1
+
+    def collide(self, obj: "game_object", xys: list[tuple[int, int]]) -> None:
+        self.collided.append(obj)
+        self.collision_xys.append(xys)
+        self.health -= obj.damage
+        if self.dead and self.id not in game_object.dead_objects:
+            game_object.dead_objects.append(self.id)
 
     @property
     def dead(self) -> bool:
@@ -246,6 +258,12 @@ class sprite(game_object):
     def __str__(self) -> str:
         return f"{self.name}#{self.id} [{self.x},{self.y}] ({'dead' if self.dead else 'alive'})"
 
+    def collide(self, obj: "game_object", xys: list[tuple[int, int]]) -> None:
+        super().collide(obj, xys)
+        if self.animate:
+            if not self.phased:
+                self._y = obj.y - self.y_direction
+
     @property
     def x_direction(self):
         if self.dx > 0:
@@ -257,10 +275,12 @@ class sprite(game_object):
 
     @property
     def y_direction(self):
-        if self.dy >= 0:
+        if self.dy > 0:
             return 1
-        else:
+        elif self.dy < 0:
             return -1
+        else:
+            return 0
 
     @property
     def xs(self) -> list[int]:
@@ -279,24 +299,21 @@ class sprite(game_object):
         if self._dead:
             if self.id not in game_object.dead_objects:
                 game_object.dead_objects.append(self.id)
-            return True
+            self._dead = True
         elif self.health <= 0:
             if self.id not in game_object.dead_objects:
                 game_object.dead_objects.append(self.id)
-            return True
-        elif not self.bounded:
-            return False
-        else:
+            self._dead = True
+        elif self.bounded:
             if self.x >= (game_object.frame_size_x - 1) or self.x <= 0:
                 if self.id not in game_object.dead_objects:
                     game_object.dead_objects.append(self.id)
-                return True
-            elif self.y >= (game_object.frame_size_y - 1):
+                self._dead = True
+            elif self.y >= (game_object.frame_size_y - 1) or self.y <= 0:
                 if self.id not in game_object.dead_objects:
                     game_object.dead_objects.append(self.id)
-                return True
-            else:
-                return False
+                self._dead = True
+        return self._dead
 
     @property
     def move_range(self) -> int:
@@ -523,6 +540,7 @@ class projectile(sprite):
 
     def __init__(
         self,
+        owner: game_object,
         x: int,
         y: int,
         size: int = 1,
@@ -544,30 +562,68 @@ class projectile(sprite):
             dx=dx,
             dy=dy,
         )
+        self.owner = owner
         projectile.projectiles[game_object.object_counter] = self
 
     @property
     def xs(self) -> list[int]:
-        xs = [round(self._x + i) for i in range(-self.size, self.size + 1)]
-        xs.extend([round(self._x) for i in range(-self.size, self.size + 1)])
-        return xs
+        xchange = self.x_last - self.x
+        if xchange != 0:
+            if xchange > 0:
+                return [round(self.x_last + i) for i in range(xchange)]
+            else:
+                return [round(self.x_last + i) for i in range(0, xchange, -1)]
+        else:
+            return [self.x] * (self.move_max)
 
     @property
     def ys(self) -> list[int]:
-        ys = [round(self._y) for i in range(-self.size, self.size + 1)]
-        ys.extend([round(self._y + i) for i in range(-self.size, self.size + 1)])
-        return ys
+        ychange = self.y_last - self.y
+        if ychange != 0:
+            if ychange > 0:
+                return [round(self.y_last + i) for i in range(ychange)]
+            else:
+                return [round(self.y_last + i) for i in range(0, ychange, -1)]
+        else:
+            return [self.y] * (self.move_max)
+
+    @property
+    def move_xs(self) -> list[tuple[int, int]]:
+        xchange = self.x_last - self.x
+        if xchange != 0:
+            if xchange > 0:
+                return [round(self.x_last + i) for i in range(xchange)]
+            else:
+                return [round(self.x_last + i) for i in range(0, xchange, -1)]
+        else:
+            return [self.x] * (self.move_max)
+
+    @property
+    def move_ys(self) -> list[tuple[int, int]]:
+        ychange = self.y_last - self.y
+        if ychange != 0:
+            if ychange > 0:
+                return [round(self.y_last + i) for i in range(ychange)]
+            else:
+                return [round(self.y_last + i) for i in range(0, ychange, -1)]
+        else:
+            return [self.y] * (self.move_max)
 
     @property
     def dead(self) -> bool:
         if self.collided:
-            return True
+            if self.id not in game_object.dead_objects:
+                game_object.dead_objects.append(self.id)
+            self._dead = True
         elif self.x >= (game_object.frame_size_x - 1) or self.x <= 0:
-            return True
+            if self.id not in game_object.dead_objects:
+                game_object.dead_objects.append(self.id)
+            self._dead = True
         elif self.y >= (game_object.frame_size_y - 1) or self.y <= 0:
-            return True
-        else:
-            return False
+            if self.id not in game_object.dead_objects:
+                game_object.dead_objects.append(self.id)
+            self._dead = True
+        return self._dead
 
     @property
     def xy_ray(self) -> tuple[list[int], list[int]]:
@@ -592,13 +648,23 @@ class projectile(sprite):
 
     def go(self):
         if not self.dead and not game_object.pause:
-            self._x = self._x + self.dx
-            self._y = self._y + self.dy
+            self.x = self._x + self.dx
+            self.y = self._y + self.dy
+
+    def collide(self, obj: "game_object", xys: list[tuple[int, int]]) -> None:
+        if obj.id != self.owner.id:
+            self.collided.append(obj)
+            self.collision_xys.append(xys)
+            self.health -= obj.damage
+            if self.dead and self.id not in game_object.dead_objects:
+                game_object.dead_objects.append(self.id)
 
 
 def check_for_collisions():
     for key in game_object.dead_objects:
         if key in game_object.objects:
+            if game_object.objects[key].animate:
+                game_object.objects[key].death_timestamp = time.time()
             game_object.objects.pop(key)
     game_object.dead_objects.clear()
     if len(game_object.objects) > 0:
@@ -626,21 +692,25 @@ def check_for_collisions():
                 # elif not x and not obj2.has_gravity and obj1.has_gravity and obj1.x in obj2.xs:
                 #     x = set(range(obj1.y_last, obj1.y, obj1.y_direction)).intersection(obj2.ys)
                 if x:
-                    obj1.collided.append(obj2)
-                    obj1.health -= obj2.damage
-                    obj2.collided.append(obj1)
-                    obj2.health -= obj1.damage
-                    if not obj1.animate and not obj2.animate:
-                        pass
-                    elif obj2.animate:
-                        if not obj2.phased:
-                            obj2._y = obj1.y - obj2.y_direction
-                    elif obj1.animate:
-                        if not obj1.phased:
-                            obj1._y = obj2.y - obj1.y_direction
-                    else:
-                        raise Exception("not handled yet")
-                    if obj1.dead and obj1.id not in game_object.dead_objects:
-                        game_object.dead_objects.append(obj1.id)
-                    if obj2.dead and obj2.id not in game_object.dead_objects:
-                        game_object.dead_objects.append(obj2.id)
+                    obj1.collide(obj2, x)
+                    # obj1.collided.append(obj2)
+                    # obj1.collision_xys.append(x)
+                    # obj1.health -= obj2.damage
+                    obj2.collide(obj1, x)
+                    # obj2.collided.append(obj1)
+                    # obj2.collision_xys.append(x)
+                    # obj2.health -= obj1.damage
+                    # if not obj1.animate and not obj2.animate:
+                    #     pass
+                    # elif obj2.animate:
+                    #     if not obj2.phased:
+                    #         obj2._y = obj1.y - obj2.y_direction
+                    # elif obj1.animate:
+                    #     if not obj1.phased:
+                    #         obj1._y = obj2.y - obj1.y_direction
+                    # else:
+                    #     raise Exception("not handled yet")
+                    # if obj1.dead and obj1.id not in game_object.dead_objects:
+                    #     game_object.dead_objects.append(obj1.id)
+                    # if obj2.dead and obj2.id not in game_object.dead_objects:
+                    #     game_object.dead_objects.append(obj2.id)

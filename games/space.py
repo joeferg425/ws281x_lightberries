@@ -330,8 +330,8 @@ while True:
                             "bullet",
                             player.x,
                             player.y,
-                            x_reticle,
-                            y_reticle,
+                            x_reticle * 1.5,
+                            y_reticle * 1.5,
                             bounded=True,
                             color=PixelColors.BLUE.array,
                         )
@@ -379,8 +379,8 @@ while True:
             "enemy",
             random.randint(0, lightControl.realLEDYaxisRange - 1),
             random.randint(0, lightControl.realLEDXaxisRange - 1),
-            random.random() * [-1, 1][random.randint(0, 1)],
-            random.random() * [-1, 1][random.randint(0, 1)],
+            random.random() * random.uniform(-1.0, 1.0),
+            random.random() * random.uniform(-1.0, 1.0),
             color=PixelColors.RED.array,
         )
         if abs(enemy.dx) < MIN_ENEMY_SPEED:
