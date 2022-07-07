@@ -1,11 +1,40 @@
 #!/usr/bin/python3
 from __future__ import annotations
+from enum import IntEnum
 import numpy as np
 from lightberries.pixel import PixelColors
 import time
 
 GRAVITY = 0.5
 MAX_GRAVITY = 2
+
+
+class XboxButton(IntEnum):
+    A = 0
+    B = 1
+    X = 2
+    Y = 3
+    OPTIONS = 4
+    XBOX = 5
+    START = 6
+    JOY_LEFT = 7
+    JOY_RIGHT = 8
+    BUMPER_LEFT = 9
+    BUMPER_RIGHT = 10
+    UP = 11
+    DOWN = 12
+    LEFT = 13
+    RIGHT = 14
+    SHARE = 15
+
+
+class XboxJoystick(IntEnum):
+    JOY_LEFT_X = 0
+    JOY_LEFT_Y = 1
+    JOY_RIGHT_X = 2
+    JOY_RIGHT_Y = 3
+    TRIGGER_LEFT = 4
+    TRIGGER_RIGHT = 5
 
 
 class game_object:
@@ -250,7 +279,7 @@ class sprite(game_object):
         self._dead = False
         self._dx = dx
         self._dy = dy
-        self.airborn = False
+        self.airborne = False
         self.bounded = bounded
         self.phased = phased
         sprite.sprites[game_object.object_counter] = self
@@ -567,45 +596,45 @@ class projectile(sprite):
 
     @property
     def xs(self) -> list[int]:
-        xchange = self.x_last - self.x
-        if xchange != 0:
-            if xchange > 0:
-                return [round(self.x_last + i) for i in range(xchange)]
+        x_change = self.x_last - self.x
+        if x_change != 0:
+            if x_change > 0:
+                return [round(self.x_last + i) for i in range(x_change)]
             else:
-                return [round(self.x_last + i) for i in range(0, xchange, -1)]
+                return [round(self.x_last + i) for i in range(0, x_change, -1)]
         else:
             return [self.x] * (self.move_max)
 
     @property
     def ys(self) -> list[int]:
-        ychange = self.y_last - self.y
-        if ychange != 0:
-            if ychange > 0:
-                return [round(self.y_last + i) for i in range(ychange)]
+        y_change = self.y_last - self.y
+        if y_change != 0:
+            if y_change > 0:
+                return [round(self.y_last + i) for i in range(y_change)]
             else:
-                return [round(self.y_last + i) for i in range(0, ychange, -1)]
+                return [round(self.y_last + i) for i in range(0, y_change, -1)]
         else:
             return [self.y] * (self.move_max)
 
     @property
     def move_xs(self) -> list[tuple[int, int]]:
-        xchange = self.x_last - self.x
-        if xchange != 0:
-            if xchange > 0:
-                return [round(self.x_last + i) for i in range(xchange)]
+        x_change = self.x_last - self.x
+        if x_change != 0:
+            if x_change > 0:
+                return [round(self.x_last + i) for i in range(x_change)]
             else:
-                return [round(self.x_last + i) for i in range(0, xchange, -1)]
+                return [round(self.x_last + i) for i in range(0, x_change, -1)]
         else:
             return [self.x] * (self.move_max)
 
     @property
     def move_ys(self) -> list[tuple[int, int]]:
-        ychange = self.y_last - self.y
-        if ychange != 0:
-            if ychange > 0:
-                return [round(self.y_last + i) for i in range(ychange)]
+        y_change = self.y_last - self.y
+        if y_change != 0:
+            if y_change > 0:
+                return [round(self.y_last + i) for i in range(y_change)]
             else:
-                return [round(self.y_last + i) for i in range(0, ychange, -1)]
+                return [round(self.y_last + i) for i in range(0, y_change, -1)]
         else:
             return [self.y] * (self.move_max)
 
