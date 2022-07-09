@@ -235,6 +235,9 @@ class Pixel:
         rgb = self.tuple
         return f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
 
+    def invert(self) -> Pixel:
+        return Pixel([255 - a for a in self.array])
+
 
 class PixelColors:
     """List of commonly used colors for ease of use."""
@@ -270,6 +273,7 @@ class PixelColors:
     PINK = Pixel((255, 0, 127), order=LEDOrder.RGB)
     WHITE = Pixel((255, 255, 255), order=LEDOrder.RGB)
     GRAY = Pixel((127, 118, 108), order=LEDOrder.RGB)
+    DARKGRAY = Pixel((64, 55, 50), order=LEDOrder.RGB)
 
     @classmethod
     def pseudoRandom(

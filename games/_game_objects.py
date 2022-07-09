@@ -9,6 +9,11 @@ GRAVITY = 0.5
 MAX_GRAVITY = 2
 
 
+class SpriteShape(IntEnum):
+    CROSS = 0
+    CIRCLE = 1
+
+
 class XboxButton(IntEnum):
     A = 0
     B = 1
@@ -56,6 +61,7 @@ class game_object:
         destructible: bool = True,
     ) -> None:
         self.name = name
+        self.owner = None
         self.x_last = x
         self.y_last = y
         self._x = x
@@ -72,19 +78,23 @@ class game_object:
         self.health = 1
         self.max_health = 1
         self.damage = 0
-        self.death_timestamp: float = time.time()
+        self.timestamp_death: float = time.time()
+        self.timestamp_spawn = self.timestamp_death
         self.respawn_delay: float = 1.0
         self.score: int = 0
+        self.point_value = 1
         self.id = game_object.object_counter
+        self.children: dict[int, game_object] = {}
         game_object.objects[game_object.object_counter] = self
         game_object.object_counter += 1
 
     def collide(self, obj: "game_object", xys: list[tuple[int, int]]) -> None:
-        self.collided.append(obj)
-        self.collision_xys.append(xys)
-        self.health -= obj.damage
-        if self.dead and self.id not in game_object.dead_objects:
-            game_object.dead_objects.append(self.id)
+        if not obj.owner == self:
+            self.collided.append(obj)
+            self.collision_xys.append(xys)
+            self.health -= obj.damage
+            if self.dead and self.id not in game_object.dead_objects:
+                game_object.dead_objects.append(self.id)
 
     @property
     def dead(self) -> bool:
@@ -182,8 +192,6 @@ class game_object:
 
 
 class floor(game_object):
-    floors: dict[int, floor] = {}
-
     def __init__(
         self,
         x: int,
@@ -201,7 +209,6 @@ class floor(game_object):
             has_gravity=False,
             destructible=False,
         )
-        floor.floors[game_object.object_counter] = self
 
     @property
     def xs(self) -> list[int]:
@@ -213,8 +220,6 @@ class floor(game_object):
 
 
 class wall(game_object):
-    walls: dict[int, wall] = {}
-
     def __init__(
         self,
         x: int,
@@ -232,7 +237,6 @@ class wall(game_object):
             has_gravity=False,
             destructible=False,
         )
-        wall.walls[game_object.object_counter] = self
 
     @property
     def xs(self) -> list[tuple[int, int]]:
@@ -244,8 +248,6 @@ class wall(game_object):
 
 
 class sprite(game_object):
-    sprites: dict[int, sprite] = {}
-
     def __init__(
         self,
         x: int,
@@ -256,12 +258,14 @@ class sprite(game_object):
         has_gravity: bool = True,
         destructible: bool = True,
         bounded: bool = True,
+        wrap: bool = False,
         dx: float = 0.0,
         dy: float = 0.0,
         health: int = 1,
         max_health: int = 1,
         damage: int = 1,
         phased: bool = False,
+        shape: SpriteShape = SpriteShape.CROSS,
     ) -> None:
         super().__init__(
             x=x,
@@ -277,19 +281,21 @@ class sprite(game_object):
         self.max_health = max_health
         self.damage = damage
         self._dead = False
+        self.dead_time = 0.0
         self._dx = dx
         self._dy = dy
         self.airborne = False
         self.bounded = bounded
+        self.wrap = wrap
         self.phased = phased
-        sprite.sprites[game_object.object_counter] = self
+        self.shape = shape
 
     def __str__(self) -> str:
         return f"{self.name}#{self.id} [{self.x},{self.y}] ({'dead' if self.dead else 'alive'})"
 
     def collide(self, obj: "game_object", xys: list[tuple[int, int]]) -> None:
         super().collide(obj, xys)
-        if self.animate:
+        if self.animate and not obj.owner == self:
             if not self.phased:
                 self._y = obj.y - self.y_direction
 
@@ -313,36 +319,82 @@ class sprite(game_object):
 
     @property
     def xs(self) -> list[int]:
-        xs = [round(self._x + i) for i in range(-self.size, self.size + 1)]
-        xs.extend([round(self._x) for i in range(-self.size, self.size + 1)])
-        return xs
+        if self.shape == SpriteShape.CROSS:
+            xs = [round(self._x + i) for i in range(-self.size, self.size + 1)]
+            xs.extend([round(self._x) for i in range(-self.size, self.size + 1)])
+        elif self.shape == SpriteShape.CIRCLE:
+            xs = (
+                np.round(np.sin(np.linspace(0, 2 * np.pi, 1 + (4 * self.size))) * (self.size)).astype(dtype=np.int32)
+                + self.x
+            )
+        xs = np.array(xs)
+        fix = np.where(xs < 0)
+        if fix:
+            xs[fix] += game_object.frame_size_x
+        fix = np.where(xs >= game_object.frame_size_x)
+        if fix:
+            xs[fix] -= game_object.frame_size_x
+        return [int(x) for x in xs]
 
     @property
     def ys(self) -> list[int]:
-        ys = [round(self._y) for i in range(-self.size, self.size + 1)]
-        ys.extend([round(self._y + i) for i in range(-self.size, self.size + 1)])
-        return ys
+        if self.shape == SpriteShape.CROSS:
+            ys = [round(self._y) for i in range(-self.size, self.size + 1)]
+            ys.extend([round(self._y + i) for i in range(-self.size, self.size + 1)])
+        elif self.shape == SpriteShape.CIRCLE:
+            ys = (
+                np.round(np.cos(np.linspace(0, 2 * np.pi, 1 + (4 * self.size))) * (self.size)).astype(dtype=np.int32)
+                + self.y
+            )
+        ys = np.array(ys)
+        fix = np.where(ys < 0)
+        if fix:
+            ys[fix] += game_object.frame_size_y
+        fix = np.where(ys >= game_object.frame_size_y)
+        if fix:
+            ys[fix] -= game_object.frame_size_y
+        return [int(y) for y in ys]
+
+    @property
+    def move_xs(self) -> list[tuple[int, int]]:
+        return self.xs
+
+    @property
+    def move_ys(self) -> list[tuple[int, int]]:
+        return self.ys
 
     @property
     def dead(self) -> bool:
         if self._dead:
             if self.id not in game_object.dead_objects:
                 game_object.dead_objects.append(self.id)
-            self._dead = True
+            if not self._dead:
+                self.dead_time = time.time()
+                self._dead = True
         elif self.health <= 0:
             if self.id not in game_object.dead_objects:
                 game_object.dead_objects.append(self.id)
-            self._dead = True
+            if not self._dead:
+                self.dead_time = time.time()
+                self._dead = True
         elif self.bounded:
             if self.x >= (game_object.frame_size_x - 1) or self.x <= 0:
                 if self.id not in game_object.dead_objects:
                     game_object.dead_objects.append(self.id)
-                self._dead = True
+                if not self._dead:
+                    self.dead_time = time.time()
+                    self._dead = True
             elif self.y >= (game_object.frame_size_y - 1) or self.y <= 0:
                 if self.id not in game_object.dead_objects:
                     game_object.dead_objects.append(self.id)
-                self._dead = True
+                if not self._dead:
+                    self.dead_time = time.time()
+                    self._dead = True
         return self._dead
+
+    @dead.setter
+    def dead(self, value: bool) -> None:
+        self._dead = value
 
     @property
     def move_range(self) -> int:
@@ -375,29 +427,38 @@ class sprite(game_object):
                 self.dy += GRAVITY
             self.x = self._x + self.dx
             self.y = self._y + self.dy
+            if self.wrap:
+                if self.x >= game_object.frame_size_x:
+                    self.x -= game_object.frame_size_x
+                elif self.x < 0:
+                    self.x += game_object.frame_size_x
+                if self.wrap and self.y >= game_object.frame_size_y:
+                    self.y -= game_object.frame_size_y
+                elif self.y < 0:
+                    self.y += game_object.frame_size_y
 
 
 class player(sprite):
-    players: dict[int, player] = {}
-
     def __init__(
         self,
         x: int,
         y: int,
+        name="player",
+        color: np.ndarray[(3), np.int32] = PixelColors.GREEN.array,
+        has_gravity: bool = True,
     ) -> None:
         super().__init__(
             x=x,
             y=y,
             size=0,
-            name="player",
-            color=PixelColors.GREEN.array,
-            has_gravity=True,
+            name=name,
+            color=color,
+            has_gravity=has_gravity,
             destructible=False,
             bounded=True,
             dx=0.0,
             dy=0.0,
         )
-        player.players[game_object.object_counter] = self
         self.jump_count = 0
         self._x_aim = 0.0
         self._y_aim = 0.0
@@ -480,8 +541,6 @@ class player(sprite):
 
 
 class enemy(sprite):
-    enemies: dict[int, enemy] = {}
-
     def __init__(
         self,
         x: int,
@@ -492,6 +551,8 @@ class enemy(sprite):
         destructible: bool = True,
         dx: float = 0.0,
         dy: float = 0.0,
+        wrap: bool = False,
+        has_gravity: bool = True,
     ) -> None:
         super().__init__(
             x=x,
@@ -499,46 +560,13 @@ class enemy(sprite):
             size=size,
             name=name,
             color=color,
-            has_gravity=True,
+            has_gravity=has_gravity,
             destructible=destructible,
             bounded=False,
             dx=dx,
             dy=dy,
+            wrap=wrap,
         )
-        enemy.enemies[game_object.object_counter] = self
-
-    @property
-    def xs(self) -> list[int]:
-        xs = [round(self._x + i) for i in range(-self.size, self.size + 1)]
-        xs.extend([round(self._x) for i in range(-self.size, self.size + 1)])
-        return xs
-
-    @property
-    def ys(self) -> list[int]:
-        ys = [round(self._y) for i in range(-self.size, self.size + 1)]
-        ys.extend([round(self._y + i) for i in range(-self.size, self.size + 1)])
-        return ys
-
-    @property
-    def xy_ray(self) -> tuple[list[int], list[int]]:
-        xs = [self.x]
-        ys = [self.y]
-        rx = self.x
-        ry = self.y
-        while (
-            (game_object.frame_size_x - 1) not in xs
-            and 0 not in xs
-            and 0 not in ys
-            and (game_object.frame_size_y - 1) not in ys
-        ):
-            rx += self.dx
-            ry += self.dy
-            if round(rx) not in xs or round(ry) not in ys:
-                xs.extend([(round(rx) + i) for i in range(-1, 2)])
-                xs.extend([round(rx) for i in range(-1, 2)])
-                ys.extend([round(ry) for i in range(-1, 2)])
-                ys.extend([(round(ry) + i) for i in range(-1, 2)])
-        return xs, ys
 
     def go(self):
         if not self.dead and not game_object.pause:
@@ -546,27 +574,18 @@ class enemy(sprite):
                 self.dy += GRAVITY
             self._x = self._x + self.dx
             self._y = self._y + self.dy
-            # if self._x >= (lightControl.realLEDColumnCount - 1) or self._x <= 0:
-            #     if self.bounded:
-            #         self.dead = True
-            #     elif self.stop:
-            #         if self._x >= (lightControl.realLEDColumnCount - 1):
-            #             self._x = lightControl.realLEDColumnCount - 1
-            #         elif self._x <= 0:
-            #             self._x = 0
-            # if self._y >= (lightControl.realLEDRowCount - 1) or self._y <= 0:
-            #     if self.bounded:
-            #         self.dead = True
-            #     elif self.stop:
-            #         if self._y >= (lightControl.realLEDRowCount - 1):
-            #             self._y = lightControl.realLEDRowCount - 1
-            #         elif self._y <= 0:
-            #             self._y = 0
+            if self.wrap:
+                if self.x >= game_object.frame_size_x:
+                    self.x -= game_object.frame_size_x
+                elif self.x < 0:
+                    self.x += game_object.frame_size_x
+                if self.wrap and self.y >= game_object.frame_size_y:
+                    self.y -= game_object.frame_size_y
+                elif self.y < 0:
+                    self.y += game_object.frame_size_y
 
 
 class projectile(sprite):
-    projectiles: dict[int, enemy] = {}
-
     def __init__(
         self,
         owner: game_object,
@@ -576,6 +595,7 @@ class projectile(sprite):
         name: str = "projectile",
         color: np.ndarray[(3), np.int32] = PixelColors.BLUE.array,
         destructible: bool = True,
+        bounded: bool = True,
         dx: float = 0.0,
         dy: float = 0.0,
     ) -> None:
@@ -587,16 +607,16 @@ class projectile(sprite):
             color=color,
             has_gravity=False,
             destructible=destructible,
-            bounded=True,
+            bounded=bounded,
             dx=dx,
             dy=dy,
         )
         self.owner = owner
-        projectile.projectiles[game_object.object_counter] = self
+        self.owner.children[self.id] = self
 
     @property
     def xs(self) -> list[int]:
-        x_change = self.x_last - self.x
+        x_change = int(self.x_last - self.x)
         if x_change != 0:
             if x_change > 0:
                 return [round(self.x_last + i) for i in range(x_change)]
@@ -607,7 +627,7 @@ class projectile(sprite):
 
     @property
     def ys(self) -> list[int]:
-        y_change = self.y_last - self.y
+        y_change = int(self.y_last - self.y)
         if y_change != 0:
             if y_change > 0:
                 return [round(self.y_last + i) for i in range(y_change)]
@@ -618,7 +638,7 @@ class projectile(sprite):
 
     @property
     def move_xs(self) -> list[tuple[int, int]]:
-        x_change = self.x_last - self.x
+        x_change = int(self.x_last - self.x)
         if x_change != 0:
             if x_change > 0:
                 return [round(self.x_last + i) for i in range(x_change)]
@@ -629,7 +649,7 @@ class projectile(sprite):
 
     @property
     def move_ys(self) -> list[tuple[int, int]]:
-        y_change = self.y_last - self.y
+        y_change = int(self.y_last - self.y)
         if y_change != 0:
             if y_change > 0:
                 return [round(self.y_last + i) for i in range(y_change)]
@@ -640,7 +660,7 @@ class projectile(sprite):
 
     @property
     def dead(self) -> bool:
-        if self.collided:
+        if self.health <= 0:
             if self.id not in game_object.dead_objects:
                 game_object.dead_objects.append(self.id)
             self._dead = True
@@ -653,6 +673,10 @@ class projectile(sprite):
                 game_object.dead_objects.append(self.id)
             self._dead = True
         return self._dead
+
+    @dead.setter
+    def dead(self, value: bool) -> None:
+        self._dead = value
 
     @property
     def xy_ray(self) -> tuple[list[int], list[int]]:
@@ -685,15 +709,26 @@ class projectile(sprite):
             self.collided.append(obj)
             self.collision_xys.append(xys)
             self.health -= obj.damage
+            self.owner.score += obj.point_value
+            obj.point_value = 0
             if self.dead and self.id not in game_object.dead_objects:
                 game_object.dead_objects.append(self.id)
 
 
 def check_for_collisions():
+    t = time.time()
     for key in game_object.dead_objects:
         if key in game_object.objects:
-            if game_object.objects[key].animate:
-                game_object.objects[key].death_timestamp = time.time()
+            o = game_object.objects[key]
+            if o.animate:
+                o.timestamp_death = t
+            if o.children:
+                for child_key in o.children:
+                    c = o.children[child_key]
+                    if c.animate:
+                        c.dead = True
+                        game_object.dead_objects.append(c.id)
+                        o.timestamp_death = t
             game_object.objects.pop(key)
     game_object.dead_objects.clear()
     if len(game_object.objects) > 0:
@@ -715,31 +750,6 @@ def check_for_collisions():
                     x = set(obj1.xys).intersection(set(obj2.move_xys))
                 else:
                     pass
-                    # x = set(obj1.xys).intersection(set(obj2.xys))
-                # if not x and not obj1.has_gravity and obj2.has_gravity and obj2.x in obj1.xs:
-                #     x = set(range(obj2.y_last, obj2.y, obj2.y_direction)).intersection(obj1.ys)
-                # elif not x and not obj2.has_gravity and obj1.has_gravity and obj1.x in obj2.xs:
-                #     x = set(range(obj1.y_last, obj1.y, obj1.y_direction)).intersection(obj2.ys)
                 if x:
                     obj1.collide(obj2, x)
-                    # obj1.collided.append(obj2)
-                    # obj1.collision_xys.append(x)
-                    # obj1.health -= obj2.damage
                     obj2.collide(obj1, x)
-                    # obj2.collided.append(obj1)
-                    # obj2.collision_xys.append(x)
-                    # obj2.health -= obj1.damage
-                    # if not obj1.animate and not obj2.animate:
-                    #     pass
-                    # elif obj2.animate:
-                    #     if not obj2.phased:
-                    #         obj2._y = obj1.y - obj2.y_direction
-                    # elif obj1.animate:
-                    #     if not obj1.phased:
-                    #         obj1._y = obj2.y - obj1.y_direction
-                    # else:
-                    #     raise Exception("not handled yet")
-                    # if obj1.dead and obj1.id not in game_object.dead_objects:
-                    #     game_object.dead_objects.append(obj1.id)
-                    # if obj2.dead and obj2.id not in game_object.dead_objects:
-                    #     game_object.dead_objects.append(obj2.id)

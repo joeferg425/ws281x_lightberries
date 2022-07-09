@@ -3,90 +3,195 @@ import random
 import numpy as np
 from lightberries.array_patterns import ArrayPattern
 from lightberries.matrix_controller import MatrixController
-from lightberries.pixel import PixelColors
+from lightberries.pixel import PixelColors, Pixel
 from lightberries.array_functions import ArrayFunction
 import os
 import pygame
-from _game_objects import XboxButton, XboxJoystick
+from _game_objects import XboxButton, XboxJoystick, sprite, game_object, SpriteShape
+
+import time
+
+
+class xbox_test(sprite):
+    def __init__(
+        self,
+        x: int,
+        y: int,
+        size: int,
+        name: str,
+        color: np.ndarray[3, np.int32] = PixelColors.WHITE.array,
+        has_gravity: bool = True,
+        destructible: bool = True,
+        bounded: bool = True,
+        wrap: bool = False,
+        dx: float = 0,
+        dy: float = 0,
+        health: int = 1,
+        max_health: int = 1,
+        damage: int = 1,
+        phased: bool = False,
+        shape: SpriteShape = SpriteShape.CROSS,
+    ) -> None:
+        super().__init__(
+            x,
+            y,
+            size,
+            name,
+            color,
+            has_gravity,
+            destructible,
+            bounded,
+            wrap,
+            dx,
+            dy,
+            health,
+            max_health,
+            damage,
+            phased,
+            shape,
+        )
+        self.button_delay = 0.25
+        self.a_time = time.time()
+        self.b_time = time.time()
+        self.x_time = time.time()
+        self.y_time = time.time()
+        self.up_time = time.time()
+        self.down_time = time.time()
+        self.left_time = time.time()
+        self.right_time = time.time()
 
 
 def run_xbox_controller_test(lights: MatrixController):
     os.environ["SDL_VIDEODRIVER"] = "dummy"
-
+    game_object.frame_size_x = lights.realLEDXaxisRange
+    game_object.frame_size_y = lights.realLEDYaxisRange
     SPEED = 1.5
     pygame.init()
-    joysticks = []
+    joysticks = {}
+    left_sprites: dict[int, xbox_test] = {}
+    right_sprites: dict[int, xbox_test] = {}
     THRESHOLD = 0.05
     fade = ArrayFunction(lights, ArrayFunction.functionFadeOff, ArrayPattern.DefaultColorSequenceByMonth())
     fade.fadeAmount = 0.3
-    for i in range(0, pygame.joystick.get_count()):
-        joysticks.append(pygame.joystick.Joystick(i))
-        joysticks[-1].init()
-    x1 = random.randint(0, lights.realLEDXaxisRange)
-    x2 = random.randint(0, lights.realLEDXaxisRange)
-    y1 = random.randint(0, lights.realLEDYaxisRange)
-    y2 = random.randint(0, lights.realLEDYaxisRange)
-    x1_change = 0
-    x2_change = 0
-    y1_change = 0
-    y2_change = 0
-    color1 = PixelColors.pseudoRandom().array
-    color2 = PixelColors.pseudoRandom().array
-    lights.virtualLEDBuffer[x1, y1] = color1
-    lights.virtualLEDBuffer[x2, y2] = color2
     exiting = False
     while not exiting:
+        if len(joysticks) < pygame.joystick.get_count() and pygame.joystick.get_count() <= 4:
+            for i in range(0, pygame.joystick.get_count()):
+                if i not in joysticks:
+                    joysticks[i] = pygame.joystick.Joystick(i)
+                    joysticks[i].init()
+                    left_sprites[i] = xbox_test(
+                        name="left joystick",
+                        size=0,
+                        x=random.randint(0, lights.realLEDXaxisRange),
+                        y=random.randint(0, lights.realLEDYaxisRange),
+                        dx=0,
+                        dy=0,
+                        wrap=True,
+                        bounded=False,
+                        has_gravity=False,
+                        color=PixelColors.pseudoRandom().array,
+                    )
+                    right_sprites[i] = xbox_test(
+                        name="right joystick",
+                        size=0,
+                        x=random.randint(0, lights.realLEDXaxisRange),
+                        y=random.randint(0, lights.realLEDYaxisRange),
+                        dx=0,
+                        dy=0,
+                        wrap=True,
+                        bounded=False,
+                        has_gravity=False,
+                        color=PixelColors.pseudoRandom().array,
+                    )
         fade.run()
-        events = list(pygame.event.get())
-        for event in events:
-            if "joy" in event.dict and "axis" in event.dict:
-                if event.dict["axis"] == XboxJoystick.JOY_LEFT_X:
-                    if np.abs(event.dict["value"]) > THRESHOLD:
-                        x1_change = event.dict["value"] * SPEED
-                    else:
-                        x1_change = 0
-                elif event.dict["axis"] == XboxJoystick.JOY_LEFT_Y:
-                    if np.abs(event.dict["value"]) > THRESHOLD:
-                        y1_change = event.dict["value"] * SPEED
-                    else:
-                        y1_change = 0
-                elif event.dict["axis"] == XboxJoystick.JOY_RIGHT_X:
-                    if np.abs(event.dict["value"]) > THRESHOLD:
-                        x2_change = event.dict["value"] * SPEED
-                    else:
-                        x2_change = 0
-                elif event.dict["axis"] == XboxJoystick.JOY_RIGHT_Y:
-                    if np.abs(event.dict["value"]) > THRESHOLD:
-                        y2_change = event.dict["value"] * SPEED
-                    else:
-                        y2_change = 0
-            elif "joy" in event.dict and "button" in event.dict:
-                if event.dict["button"] == XboxButton.A:
-                    color1 = PixelColors.random().array
-                elif event.dict["button"] == XboxButton.X:
-                    color2 = PixelColors.random().array
-                elif event.dict["button"] == XboxButton.B:
-                    lights.virtualLEDBuffer *= 0
-                elif event.dict["button"] == XboxButton.Y:
-                    lights.virtualLEDBuffer *= 0
-                    lights.virtualLEDBuffer[:, :] += PixelColors.random().array
-                elif event.dict["button"] == XboxButton.XBOX:
-                    exiting = True
-                    break
-                elif event.dict["button"] == XboxButton.BUMPER_RIGHT:
-                    fade.fadeAmount -= 0.05
-                    if fade.fadeAmount < 0.0:
-                        fade.fadeAmount = 0.0
-                elif event.dict["button"] == XboxButton.BUMPER_LEFT:
-                    fade.fadeAmount += 0.05
-                    if fade.fadeAmount > 1.0:
-                        fade.fadeAmount = 1.0
-        x1 += x1_change
-        y1 += y1_change
-        x2 += x2_change
-        y2 += y2_change
-        lights.virtualLEDBuffer[round(x1) % lights.realLEDXaxisRange, round(y1) % lights.realLEDYaxisRange] = color1
-        lights.virtualLEDBuffer[round(x2) % lights.realLEDXaxisRange, round(y2) % lights.realLEDYaxisRange] = color2
+        for event in pygame.event.get():
+            if "joy" in event.dict:
+                t = time.time()
+                left_obj = left_sprites[event.dict["joy"]]
+                right_obj = right_sprites[event.dict["joy"]]
+                if "axis" in event.dict:
+                    if event.dict["axis"] == XboxJoystick.JOY_LEFT_X:
+                        if np.abs(event.dict["value"]) > THRESHOLD:
+                            left_obj.dx = event.dict["value"] * SPEED
+                        else:
+                            left_obj.dx = 0
+                    elif event.dict["axis"] == XboxJoystick.JOY_LEFT_Y:
+                        if np.abs(event.dict["value"]) > THRESHOLD:
+                            left_obj.dy = event.dict["value"] * SPEED
+                        else:
+                            left_obj.dy = 0
+                    elif event.dict["axis"] == XboxJoystick.JOY_RIGHT_X:
+                        if np.abs(event.dict["value"]) > THRESHOLD:
+                            right_obj.dx = event.dict["value"] * SPEED
+                        else:
+                            right_obj.dx = 0
+                    elif event.dict["axis"] == XboxJoystick.JOY_RIGHT_Y:
+                        if np.abs(event.dict["value"]) > THRESHOLD:
+                            right_obj.dy = event.dict["value"] * SPEED
+                        else:
+                            right_obj.dy = 0
+                    elif event.dict["axis"] == XboxJoystick.TRIGGER_LEFT:
+                        if np.abs(event.dict["value"]) > THRESHOLD:
+                            left_obj.color = PixelColors.random().array
+                    elif event.dict["axis"] == XboxJoystick.TRIGGER_RIGHT:
+                        if np.abs(event.dict["value"]) > THRESHOLD:
+                            right_obj.color = PixelColors.random().array
+                elif "button" in event.dict:
+                    if event.dict["button"] == XboxButton.X:
+                        if t - right_obj.y_time > right_obj.button_delay:
+                            right_obj.y_time = t
+                            if right_obj.shape == SpriteShape.CROSS:
+                                right_obj.shape = SpriteShape.CIRCLE
+                            else:
+                                right_obj.shape = SpriteShape.CROSS
+                    elif event.dict["button"] == XboxButton.A:
+                        if t - left_obj.a_time > left_obj.button_delay:
+                            left_obj.a_time = t
+                            if left_obj.shape == SpriteShape.CROSS:
+                                left_obj.shape = SpriteShape.CIRCLE
+                            else:
+                                left_obj.shape = SpriteShape.CROSS
+                    elif event.dict["button"] == XboxButton.B:
+                        lights.virtualLEDBuffer *= 0
+                    elif event.dict["button"] == XboxButton.UP:
+                        if t - right_obj.up_time > right_obj.button_delay:
+                            right_obj.up_time = t
+                            if right_obj.size < 5:
+                                right_obj.size += 1
+                    elif event.dict["button"] == XboxButton.DOWN:
+                        if t - right_obj.down_time > right_obj.button_delay:
+                            right_obj.down_time = t
+                            if right_obj.size > 0:
+                                right_obj.size -= 1
+                    elif event.dict["button"] == XboxButton.RIGHT:
+                        if t - left_obj.up_time > left_obj.button_delay:
+                            left_obj.right_time = t
+                            if left_obj.size < 5:
+                                left_obj.size += 1
+                    elif event.dict["button"] == XboxButton.LEFT:
+                        if t - left_obj.left_time > left_obj.button_delay:
+                            left_obj.left_time = t
+                            if left_obj.size > 0:
+                                left_obj.size -= 1
+                    elif event.dict["button"] == XboxButton.XBOX:
+                        exiting = True
+                        game_object.dead_objects.extend(game_object.objects)
+                        break
+                    elif event.dict["button"] == XboxButton.BUMPER_RIGHT:
+                        fade.fadeAmount -= 0.05
+                        if fade.fadeAmount < 0.0:
+                            fade.fadeAmount = 0.0
+                    elif event.dict["button"] == XboxButton.BUMPER_LEFT:
+                        fade.fadeAmount += 0.05
+                        if fade.fadeAmount > 1.0:
+                            fade.fadeAmount = 1.0
+        for obj in game_object.objects.values():
+            obj.go()
+            try:
+                lights.virtualLEDBuffer[obj.xs, obj.ys] = Pixel(obj.color).array
+            except:  # noqa
+                pass
         lights.copyVirtualLedsToWS281X()
         lights.refreshLEDs()
 

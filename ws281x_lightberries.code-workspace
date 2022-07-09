@@ -209,15 +209,6 @@
 				"justMyCode": false
 			},
 			{
-				"name": "game: space two-player",
-				"type": "python",
-				"request": "launch",
-				"program": "${workspaceFolder}/games/space_twoplayer.py",
-				"console": "integratedTerminal",
-				"sudo": true,
-				"justMyCode": false
-			},
-			{
 				"name": "game: eat",
 				"type": "python",
 				"request": "launch",

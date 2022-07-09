@@ -275,7 +275,6 @@ def run_eat_game(lights: MatrixController) -> None:
     pygame.init()
     pygame_quit = False
     while not pygame_quit:
-        events = list(pygame.event.get())
         if joystick_count != pygame.joystick.get_count():
             if pygame.joystick.get_count() > joystick_count:
                 joystick_count = pygame.joystick.get_count()
@@ -337,7 +336,7 @@ def run_eat_game(lights: MatrixController) -> None:
             fade.run()
         for index, player in players.items():
             if player.dead:
-                delta = time.time() - player.death_timestamp
+                delta = time.time() - player.timestamp_death
                 if delta > player.respawn_delay:
                     color = player.color
                     players[index] = snake(
@@ -348,7 +347,6 @@ def run_eat_game(lights: MatrixController) -> None:
                         color=color,
                         tail_length=SNAKE_START_LENGTH,
                     )
-        for index, player in players.items():
             if index % 2 == 0:
                 if index == 0:
                     x = 0
@@ -375,7 +373,7 @@ def run_eat_game(lights: MatrixController) -> None:
                     lights.virtualLEDBuffer[-int(player.score) :, x, :] = ArrayPattern.ColorTransitionArray(
                         int(player.score), NOT_READY
                     )
-        for event in events:
+        for event in pygame.event.get():
             if "joy" in event.dict and "axis" in event.dict:
                 if event.dict["axis"] == XboxJoystick.JOY_LEFT_X:
                     x_changes[event.dict["joy"]] = event.dict["value"]

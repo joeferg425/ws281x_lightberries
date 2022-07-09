@@ -7,159 +7,343 @@ from lightberries.matrix_controller import MatrixController
 from lightberries.pixel import Pixel, PixelColors
 from lightberries.array_functions import ArrayFunction
 from lightberries.matrix_functions import MatrixFunction
-from _game_objects import XboxButton, XboxJoystick
+from _game_objects import XboxButton, XboxJoystick, game_object, player, projectile, check_for_collisions, enemy
 import os
 import pygame
 import numpy as np
 
 
-class sprite:
+class SpaceShip(player):
     def __init__(
         self,
-        name: str,
         x: int,
         y: int,
-        dx: float,
-        dy: float,
-        lights: MatrixController,
-        bounded: bool = False,
-        stop=False,
-        size: int = 1,
-        color: np.ndarray[(3), np.int32] = PixelColors.WHITE.array,
     ) -> None:
-        self.name = name
-        self._x = x
-        self._y = y
-        self.dx = dx
-        self.dy = dy
-        self.dead = False
-        self.stop = stop
-        self.bounded = bounded
-        self.size = size
-        self.color = color
-        self.lights = lights
+        super().__init__(
+            x=x,
+            y=y,
+            name=SpaceShip.__name__,
+            color=PixelColors.pseudoRandom().array,
+            has_gravity=False,
+        )
+        self.bullet_time = time.time()
+        self.deathray_time = self.bullet_time
+        self.color_time = self.bullet_time
+        self.shield = Shield(self)
+        self.shield._dead = True
+        game_object.dead_objects.append(self.shield.id)
+
+
+class Bullet(projectile):
+    def __init__(
+        self,
+        owner: game_object,
+        x: int,
+        y: int,
+        dx: float = 0,
+        dy: float = 0,
+        size: int = 1,
+    ) -> None:
+        super().__init__(
+            owner=owner,
+            x=x,
+            y=y,
+            size=size,
+            name="Bullet",
+            color=PixelColors.BLUE.array,
+            destructible=True,
+            bounded=True,
+            dx=dx,
+            dy=dy,
+        )
+
+    def collide(self, obj: "game_object", xys: list[tuple[int, int]]) -> None:
+        if obj.id != self.owner.id and (not obj.owner or self.owner.id != obj.owner.id):
+            self.collided.append(obj)
+            self.collision_xys.append(xys)
+            self.health -= obj.damage
+            self.owner.score += obj.point_value
+            if isinstance(obj, ShieldEnemy) and isinstance(self.owner, SpaceShip):
+                if self.owner.shield.dead:
+                    self.owner.shield = Shield(self.owner)
+            obj.point_value = 0
+            if self.dead and self.id not in game_object.dead_objects:
+                self.shield._dead = True
+                game_object.dead_objects.append(self.shield.id)
+                game_object.dead_objects.append(self.id)
+
+
+class SpaceEnemy(enemy):
+    SpaceEnemies: dict[int, SpaceEnemy] = {}
+
+    def __init__(
+        self,
+        x: int,
+        y: int,
+        dx: float = 0,
+        dy: float = 0,
+        color: np.ndarray[3, np.int32] = PixelColors.RED.array,
+    ) -> None:
+        super().__init__(
+            x=x,
+            y=y,
+            size=1,
+            name="space_enemy",
+            color=color,
+            destructible=True,
+            has_gravity=False,
+            wrap=True,
+            dx=dx,
+            dy=dy,
+        )
+        SpaceEnemy.SpaceEnemies[game_object.object_counter] = self
+
+    @property
+    def dead(self) -> bool:
+        dead = super().dead
+        if dead:
+            self.color = PixelColors.YELLOW.array
+        return dead
+
+
+class ShieldEnemy(SpaceEnemy):
+    def __init__(
+        self,
+        x: int,
+        y: int,
+        dx: float = 0,
+        dy: float = 0,
+        color: np.ndarray[3, np.int32] = PixelColors.ORANGE.array,
+    ) -> None:
+        super().__init__(
+            x,
+            y,
+            dx,
+            dy,
+            color,
+        )
+        self.name = "ShieldEnemy"
+
+
+class Shield(projectile):
+    def __init__(
+        self,
+        owner: game_object,
+    ) -> None:
+        super().__init__(
+            owner,
+            x=0,
+            y=0,
+            size=3,
+            name="Shield",
+            color=PixelColors.CYAN3.array,
+            destructible=True,
+            bounded=False,
+            dx=0.0,
+            dy=0.0,
+        )
+        self.max_health = 3
+        self.health = 3
+        self.damage = 3
 
     @property
     def x(self) -> int:
-        self._x = self._x % self.lights.realLEDYaxisRange
-        return round(self._x)
-
-    @property
-    def xs(self) -> list[int]:
-        xs = [round(self._x + i) % (self.lights.realLEDYaxisRange) for i in range(-self.size, self.size + 1)]
-        xs.extend([round(self._x) % (self.lights.realLEDYaxisRange) for i in range(-self.size, self.size + 1)])
-        return xs
-
-    @x.setter
-    def x(self, value) -> None:
-        self._x = value
+        return self.owner.x
 
     @property
     def y(self) -> int:
-        self._y = self._y % self.lights.realLEDXaxisRange
-        return round(self._y)
+        return self.owner.y
+
+    @property
+    def xs(self) -> list[int]:
+        xs = (
+            np.round(np.sin(np.linspace(0, 2 * np.pi, 1 + (4 * self.size))) * (self.size)).astype(dtype=np.int32)
+            + self.x
+        )
+        xs = np.array(xs)
+        fix = np.where(xs < 0)
+        if fix:
+            xs[fix] *= 0
+        fix = np.where(xs >= game_object.frame_size_x)
+        if fix:
+            xs[fix] *= 0
+            xs[fix] += game_object.frame_size_x
+        return [int(x) for x in xs]
+
+    @property
+    def move_xs(self) -> list[int]:
+        return self.xs
 
     @property
     def ys(self) -> list[int]:
-        ys = [round(self._y) % (self.lights.realLEDXaxisRange) for i in range(-self.size, self.size + 1)]
-        ys.extend([round(self._y + i) % (self.lights.realLEDXaxisRange) for i in range(-self.size, self.size + 1)])
-        return ys
-
-    @y.setter
-    def y(self, value) -> None:
-        self._y = value
+        ys = (
+            np.round(np.cos(np.linspace(0, 2 * np.pi, 1 + (4 * self.size))) * (self.size)).astype(dtype=np.int32)
+            + self.y
+        )
+        ys = np.array(ys)
+        fix = np.where(ys < 0)
+        if fix:
+            ys[fix] *= 0
+        fix = np.where(ys >= game_object.frame_size_y)
+        if fix:
+            ys[fix] *= 0
+            ys[fix] += game_object.frame_size_y
+        return [int(y) for y in ys]
 
     @property
-    def xy_ray(self) -> tuple[list[int], list[int]]:
+    def move_ys(self) -> list[int]:
+        return self.ys
+
+    def go(self):
+        pass
+
+    def collide(self, obj: "game_object", xys: list[tuple[int, int]]) -> None:
+        if obj.id != self.owner.id and (not obj.owner or obj.owner.id != self.owner.id):
+            self.collided.append(obj)
+            self.collision_xys.append(xys)
+            self.health -= obj.damage
+            # self.owner.score += obj.point_value
+            obj.point_value = 0
+            if self.dead and self.id not in game_object.dead_objects:
+                game_object.dead_objects.append(self.id)
+
+
+class death_ray(projectile):
+    death_rays: dict[int, death_ray] = {}
+
+    def __init__(
+        self,
+        owner: game_object,
+    ) -> None:
+        super().__init__(
+            owner=owner,
+            x=0,
+            y=0,
+            size=1,
+            name="death_ray",
+            color=PixelColors.CYAN.array,
+            destructible=False,
+            dx=0.0,
+            dy=0.0,
+        )
+        self.life_time = 0.3
+        self.alternate = True
+        self.score = 0
+        self.damage = 3
+        death_ray.death_rays[game_object.object_counter] = self
+
+    def go(self):
+        if self.alternate:
+            self.color = PixelColors.CYAN.array
+        else:
+            self.color = PixelColors.MAGENTA.array
+        self.alternate = not self.alternate
+        if time.time() - self.timestamp_spawn > self.life_time:
+            self._dead = True
+            game_object.dead_objects.append(self.id)
+
+    @property
+    def x(self) -> int:
+        return self.owner.x
+
+    @property
+    def y(self) -> int:
+        return self.owner.y
+
+    @property
+    def dx(self) -> int:
+        return self.owner.x_aim
+
+    @property
+    def dy(self) -> int:
+        return self.owner.y_aim
+
+    @property
+    def move_xs(self) -> list[int]:
+        return self.xs
+
+    @property
+    def xs(self) -> list[int]:
         xs = [self.x]
         ys = [self.y]
         rx = self.x
         ry = self.y
         while (
-            (self.lights.realLEDYaxisRange - 1) not in xs
+            (game_object.frame_size_x - 1) not in xs
             and 0 not in xs
             and 0 not in ys
-            and (self.lights.realLEDXaxisRange - 1) not in ys
+            and (game_object.frame_size_y - 1) not in ys
         ):
             rx += self.dx
             ry += self.dy
             if round(rx) not in xs or round(ry) not in ys:
-                xs.extend([(round(rx) + i) % (self.lights.realLEDYaxisRange) for i in range(-1, 2)])
-                xs.extend([round(rx) % (self.lights.realLEDYaxisRange) for i in range(-1, 2)])
-                ys.extend([round(ry) % (self.lights.realLEDXaxisRange) for i in range(-1, 2)])
-                ys.extend([(round(ry) + i) % (self.lights.realLEDXaxisRange) for i in range(-1, 2)])
-        return xs, ys
+                xs.extend([(round(rx) + i) % (game_object.frame_size_x) for i in range(-1, 2)])
+                xs.extend([round(rx) % (game_object.frame_size_x) for i in range(-1, 2)])
+                ys.extend([round(ry) % (game_object.frame_size_y) for i in range(-1, 2)])
+                ys.extend([(round(ry) + i) % (game_object.frame_size_y) for i in range(-1, 2)])
+        return xs
 
-    def go(self):
-        self._x = self._x + self.dx
-        self._y = self._y + self.dy
-        if self._x >= (self.lights.realLEDYaxisRange - 1) or self._x <= 0:
-            if self.bounded:
-                self.dead = True
-            elif self.stop:
-                if self._x >= (self.lights.realLEDYaxisRange - 1):
-                    self._x = self.lights.realLEDYaxisRange - 1
-                elif self._x <= 0:
-                    self._x = 0
-        if self._y >= (self.lights.realLEDXaxisRange - 1) or self._y <= 0:
-            if self.bounded:
-                self.dead = True
-            elif self.stop:
-                if self._y >= (self.lights.realLEDXaxisRange - 1):
-                    self._y = self.lights.realLEDXaxisRange - 1
-                elif self._y <= 0:
-                    self._y = 0
+    @property
+    def move_ys(self) -> list[int]:
+        return self.ys
 
-    def __str__(self) -> str:
-        return f"{self.name} [{self.x},{self.y}]"
+    @property
+    def ys(self) -> list[int]:
+        xs = [self.x]
+        ys = [self.y]
+        rx = self.x
+        ry = self.y
+        while (
+            (game_object.frame_size_x - 1) not in xs
+            and 0 not in xs
+            and 0 not in ys
+            and (game_object.frame_size_y - 1) not in ys
+        ):
+            rx += self.dx
+            ry += self.dy
+            if round(rx) not in xs or round(ry) not in ys:
+                xs.extend([(round(rx) + i) % (game_object.frame_size_x) for i in range(-1, 2)])
+                xs.extend([round(rx) % (game_object.frame_size_x) for i in range(-1, 2)])
+                ys.extend([round(ry) % (game_object.frame_size_y) for i in range(-1, 2)])
+                ys.extend([(round(ry) + i) % (game_object.frame_size_y) for i in range(-1, 2)])
+        return ys
 
-    def __repr__(self) -> str:
-        return str(self.__class__.__name__) + " " + str(self)
+    def collide(self, obj: game_object, xys: list[tuple[int, int]]) -> None:
+        if obj.id != self.owner.id:
+            self.collided.append(obj)
+            self.collision_xys.append(xys)
+            self.health -= obj.damage
+            self.owner.score += obj.point_value
+            obj.point_value = 0
+            if self.dead and self.id not in game_object.dead_objects:
+                game_object.dead_objects.append(self.id)
 
-    def __eq__(self, obj: object) -> bool:
-        if not isinstance(obj, (sprite, tuple)):
-            return False
-        elif isinstance(obj, tuple):
-            return self.x == obj[0] and self.y == obj[1]
-        else:
-            return self.x == obj.x and self.y == obj.y
+    @property
+    def dead(self) -> bool:
+        return self._dead
+
+    @dead.setter
+    def dead(self, value: bool) -> None:
+        pass
 
 
 def run_space_game(lights: MatrixController):
     os.environ["SDL_VIDEODRIVER"] = "dummy"
-    MAX_ENEMY_SPEED = 0.3
+    game_object.frame_size_x = lights.realLEDXaxisRange
+    game_object.frame_size_y = lights.realLEDYaxisRange
+    MAX_ENEMY_SPEED = 0.5
     PAUSE_DELAY = 0.3
     pygame.init()
     THRESHOLD = 0.05
     fade = ArrayFunction(lights, MatrixFunction.functionMatrixFadeOff, ArrayPattern.DefaultColorSequenceByMonth())
-    fade.fadeAmount = 0.3
+    fade.fadeAmount = 0.5
     fade.color = PixelColors.OFF.array
-    x_change = 0
-    y_change = 0
-    x_reticle = 0
-    y_reticle = 0
-    bullets: list[sprite] = []
-    enemies: list[sprite] = []
-    fizzled = []
-    dead_ones = []
     BULLET_DELAY = 0.2
     MIN_BULLET_SPEED = 0.05
-    MIN_ENEMY_SPEED = 0.01
-    ENEMY_DELAY = 2.0
-    bullet_time = time.time()
+    ENEMY_DELAY = 1.5
+    enemy_delay = ENEMY_DELAY
+    SHIELD_ENEMY_CHANCE = 10
     enemy_time = time.time()
-    player_dead_time = time.time()
-    score = 1
-    player = sprite(
-        "player",
-        int(lights.realLEDYaxisRange // 2),
-        int(lights.realLEDXaxisRange // 2),
-        0,
-        0,
-        stop=True,
-        color=PixelColors.GREEN.array,
-        lights=lights,
-    )
     fireworks = []
     for i in range(10):
         firework = MatrixFunction(lights, MatrixFunction.functionMatrixFireworks, ArrayPattern.RainbowArray(10))
@@ -174,256 +358,184 @@ def run_space_game(lights: MatrixController):
         fireworks.append(firework)
     win = False
     win_time = time.time()
-    WIN_SCORE = lights.realLEDYaxisRange
+    WIN_SCORE = int(lights.realLEDYaxisRange // 2)
     WIN_DURATION = 10
+    RESPAWN_DELAY = 1
     pause = True
     pause_time = time.time()
-    fake_pause_time = time.time() - 5
-    fake_pause = False
-    left_bumper_time = time.time()
-    right_bumper_time = time.time() - 1
-    death_rays = []
-    death_ray_time = time.time() - 10
     DEATH_RAY_DELAY = 3
-    FAKE_PAUSE_DELAY = 3
-    READY = np.array([Pixel(PixelColors.YELLOW.array).array, Pixel(PixelColors.CYAN.array).array])
-    NOT_READY = np.array([Pixel(PixelColors.YELLOW.array).array, Pixel(PixelColors.ORANGE.array).array])
-    joystick_count = 0
-    joystick = None
-    DEATH_RAY_DURATION = 0.4
     exiting = False
+    joysticks: dict[int, pygame.joystick.Joystick] = {}
+    spaceships: dict[int, SpaceShip] = {}
     while not exiting:
-        events = list(pygame.event.get())
-        if joystick_count != pygame.joystick.get_count():
-            if pygame.joystick.get_count() > 0:
-                joystick = pygame.joystick.Joystick(0)
-                joystick.init()
+        if len(joysticks) != pygame.joystick.get_count():
+            if len(joysticks) < pygame.joystick.get_count() and pygame.joystick.get_count() <= 4:
+                for i in range(0, pygame.joystick.get_count()):
+                    if i not in joysticks:
+                        joysticks[i] = pygame.joystick.Joystick(i)
+                        joysticks[i].init()
+                        spaceships[i] = SpaceShip(
+                            x=random.randint(0, lights.realLEDXaxisRange),
+                            y=random.randint(0, lights.realLEDYaxisRange),
+                        )
             else:
-                joystick.quit()
-            joystick_count = pygame.joystick.get_count()
-            if joystick_count == 0:
+                while len(spaceships) > pygame.joystick.get_count():
+                    spaceships[len(spaceships) - 1]._dead = True
+                    joysticks[len(spaceships) - 1].quit()
+                    spaceships.pop(len(spaceships) - 1)
+            if pygame.joystick.get_count() == 0:
                 pause = True
             else:
                 pause = False
-        if fake_pause and time.time() - fake_pause_time > FAKE_PAUSE_DELAY:
-            pause = False
-            fake_pause = False
-
-        if score >= WIN_SCORE:
+        enemy_delay = ENEMY_DELAY * len(joysticks)
+        if any([player.score >= WIN_SCORE for player in spaceships.values()]):
             if not win:
+                for ship in spaceships.values():
+                    if ship.score >= WIN_SCORE:
+                        break
                 win = True
                 win_time = time.time()
+                for firework in fireworks:
+                    firework.color = Pixel(ship.color).array
             for firework in fireworks:
                 firework.run()
-            fade.run()
             lights.copyVirtualLedsToWS281X()
             lights.refreshLEDs()
             if time.time() - win_time > WIN_DURATION:
                 win = False
-                score = 1
-                player.dead = True
+                for i in spaceships.keys():
+                    spaceships[i].score = 0
+                    spaceships[i]._dead = True
+            fade.run()
             continue
-        if player.dead:
-            delta = time.time() - player_dead_time
-            if delta > 1:
-                player.dead = False
-                player.x = random.randint(0, lights.realLEDYaxisRange - 1)
-                player.y = random.randint(0, lights.realLEDXaxisRange - 1)
-                enemies.clear()
-                bullets.clear()
-                fizzled.clear()
-                dead_ones.clear()
-                score = 1
-                fade.color = PixelColors.OFF.array
-
-        fade.run()
-        if time.time() - death_ray_time >= DEATH_RAY_DELAY:
-            lights.virtualLEDBuffer[:score, 0] = ArrayPattern.ColorTransitionArray(score, READY)
         else:
-            lights.virtualLEDBuffer[:score, 0] = ArrayPattern.ColorTransitionArray(score, NOT_READY)
-        for event in events:
-            if "joy" in event.dict and "axis" in event.dict:
-                if event.dict["axis"] == XboxJoystick.JOY_LEFT_X:
-                    x_change = event.dict["value"]
-                elif event.dict["axis"] == XboxJoystick.JOY_LEFT_Y:
-                    y_change = event.dict["value"]
-                elif event.dict["axis"] == XboxJoystick.JOY_RIGHT_X:
-                    x_reticle = event.dict["value"]
-                elif event.dict["axis"] == XboxJoystick.JOY_RIGHT_Y:
-                    y_reticle = event.dict["value"]
-                elif event.dict["axis"] == XboxJoystick.TRIGGER_LEFT and event.dict["value"] > 0.5:
-                    if (
-                        abs(y_reticle) >= MIN_BULLET_SPEED
-                        and abs(x_reticle) >= MIN_BULLET_SPEED
-                        and time.time() - death_ray_time > DEATH_RAY_DELAY
-                    ) and not (pause or fake_pause):
-                        death_rays.append(
-                            sprite(
-                                "death ray",
-                                player.x,
-                                player.y,
-                                x_reticle,
-                                y_reticle,
-                                bounded=True,
-                                color=PixelColors.CYAN.array,
-                                lights=lights,
-                            )
-                        )
-                        death_ray_time = time.time()
-                elif event.dict["axis"] == XboxJoystick.TRIGGER_RIGHT and event.dict["value"] > 0.5:
-                    if (
-                        (time.time() - bullet_time >= BULLET_DELAY)
-                        and (abs(y_reticle) >= MIN_BULLET_SPEED and abs(x_reticle) >= MIN_BULLET_SPEED)
-                        and not (pause or fake_pause)
-                    ):
-                        bullet_time = time.time()
-                        bullets.append(
-                            sprite(
-                                "bullet",
-                                player.x,
-                                player.y,
-                                x_reticle * 1.5,
-                                y_reticle * 1.5,
-                                bounded=True,
-                                color=PixelColors.BLUE.array,
-                                lights=lights,
-                            )
-                        )
-            if "joy" in event.dict and "button" in event.dict:
-                if event.dict["button"] == XboxButton.START:
-                    if time.time() - pause_time > PAUSE_DELAY:
-                        pause_time = time.time()
-                        pause = not pause
-                elif event.dict["button"] == XboxButton.XBOX:
-                    exiting = True
-                    break
-                elif event.dict["button"] == XboxButton.BUMPER_LEFT:
-                    left_bumper_time = time.time()
-                elif event.dict["button"] == XboxButton.BUMPER_RIGHT:
-                    right_bumper_time = time.time()
-            if time.time() - left_bumper_time < 0.1 and time.time() - right_bumper_time < 0.1:
-                fake_pause = True
-                fake_pause_time = time.time()
-        if np.abs(x_change) > THRESHOLD:
-            player.dx = x_change
-        else:
-            player.dx = 0
-        x_change * 0.5
-        if np.abs(y_change) > THRESHOLD:
-            player.dy = y_change
-        else:
-            player.dy = 0
-        x_change * 0.5
-        if not player.dead and not pause:
-            player.go()
-        lights.virtualLEDBuffer[player.x, player.y] = Pixel(player.color).array
-        for bullet in bullets:
-            if not player.dead and not (pause or fake_pause):
-                bullet.go()
-            if bullet.dead:
-                fizzled.append(bullet)
+            fade.run()
+        for index, ship in spaceships.items():
+            if ship.dead:
+                if time.time() - ship.dead_time > RESPAWN_DELAY:
+                    color = spaceships[index].color
+                    spaceships[index] = SpaceShip(
+                        x=random.randint(0, lights.realLEDYaxisRange - 1),
+                        y=random.randint(0, lights.realLEDXaxisRange - 1),
+                    )
+                    spaceships[index].color = color
+            ready = np.array([Pixel(PixelColors.GRAY.array).array, Pixel(ship.color).array])
+            not_ready = np.array([Pixel(PixelColors.OFF.array).array, Pixel(ship.color).array])
+            if index % 2 == 0:
+                if index == 0:
+                    x = 0
+                else:
+                    x = lights.realLEDYaxisRange - 1
+                if time.time() - ship.deathray_time >= DEATH_RAY_DELAY:
+                    lights.virtualLEDBuffer[: int(ship.score), x, :] = ArrayPattern.ColorTransitionArray(
+                        int(ship.score), ready
+                    )
+                else:
+                    lights.virtualLEDBuffer[: int(ship.score), x, :] = ArrayPattern.ColorTransitionArray(
+                        int(ship.score), not_ready
+                    )
             else:
-                if not player.dead:
-                    lights.virtualLEDBuffer[bullet.x, bullet.y] = Pixel(bullet.color).array
-        for fizzle in fizzled:
-            if fizzle in bullets:
-                bullets.remove(fizzle)
-        fizzled.clear()
-        if time.time() - enemy_time >= ENEMY_DELAY and not player.dead and not pause and not fake_pause:
+                if index == 1:
+                    x = 0
+                else:
+                    x = lights.realLEDYaxisRange - 1
+                if ship.score > 0:
+                    if time.time() - ship.deathray_time >= DEATH_RAY_DELAY:
+                        lights.virtualLEDBuffer[-int(ship.score) :, x, :] = ArrayPattern.ColorTransitionArray(
+                            int(ship.score), ready
+                        )
+                    else:
+                        lights.virtualLEDBuffer[-int(ship.score) :, x, :] = ArrayPattern.ColorTransitionArray(
+                            int(ship.score), not_ready
+                        )
+        for event in pygame.event.get():
+            if "joy" in event.dict:
+                t = time.time()
+                ship = spaceships[event.dict["joy"]]
+                if not ship.dead:
+                    if "axis" in event.dict:
+                        if np.abs(event.dict["value"]) > THRESHOLD:
+                            value = event.dict["value"]
+                        else:
+                            value = 0
+                        if event.dict["axis"] == XboxJoystick.JOY_LEFT_X:
+                            ship.dx = value
+                        elif event.dict["axis"] == XboxJoystick.JOY_LEFT_Y:
+                            ship.dy = value
+                        elif event.dict["axis"] == XboxJoystick.JOY_RIGHT_X:
+                            ship.x_aim = value
+                        elif event.dict["axis"] == XboxJoystick.JOY_RIGHT_Y:
+                            ship.y_aim = value
+                        elif event.dict["axis"] == XboxJoystick.TRIGGER_LEFT and event.dict["value"] > 0.5:
+                            if (
+                                abs(ship.y_aim) >= MIN_BULLET_SPEED
+                                and abs(ship.x_aim) >= MIN_BULLET_SPEED
+                                and time.time() - ship.deathray_time > DEATH_RAY_DELAY
+                            ) and not (pause):
+                                if t - ship.deathray_time > DEATH_RAY_DELAY:
+                                    ship.deathray_time = t
+                                    death_ray(
+                                        owner=ship,
+                                    )
+                        elif event.dict["axis"] == XboxJoystick.TRIGGER_RIGHT and value > 0.5:
+                            if (
+                                (t - ship.bullet_time >= BULLET_DELAY)
+                                and (abs(ship.y_aim) >= MIN_BULLET_SPEED and abs(ship.x_aim) >= MIN_BULLET_SPEED)
+                                and not (pause)
+                            ):
+                                ship.bullet_time = t
+                                Bullet(
+                                    x=ship.x + ship.x_aim,
+                                    y=ship.y + ship.y_aim,
+                                    dx=ship.x_aim * 2,
+                                    dy=ship.y_aim * 2,
+                                    owner=ship,
+                                )
+                    if "button" in event.dict:
+                        if event.dict["button"] == XboxButton.START:
+                            if t - pause_time > PAUSE_DELAY:
+                                pause_time = t
+                                pause = not pause
+                        elif event.dict["button"] == XboxButton.XBOX:
+                            exiting = True
+                            break
+                        elif event.dict["button"] == XboxButton.Y:
+                            if t - ship.color_time > 0.15:
+                                ship.color_time = t
+                                ship.color = PixelColors.pseudoRandom().array
+        if time.time() - enemy_time >= enemy_delay and not pause:  # and not fake_pause:
             enemy_time = time.time()
-            enemy = sprite(
-                "enemy",
-                random.randint(0, lights.realLEDYaxisRange - 1),
-                random.randint(0, lights.realLEDXaxisRange - 1),
-                random.random() * random.uniform(-1.0, 1.0),
-                random.random() * random.uniform(-1.0, 1.0),
-                color=PixelColors.RED.array,
-                lights=lights,
-            )
-            if abs(enemy.dx) < MIN_ENEMY_SPEED:
-                if enemy.dx < 0:
-                    enemy.dx = -MIN_ENEMY_SPEED
-                else:
-                    enemy.dx = MIN_ENEMY_SPEED
-            elif abs(enemy.dx) > MAX_ENEMY_SPEED:
-                if enemy.dx < 0:
-                    enemy.dx = -MAX_ENEMY_SPEED
-                else:
-                    enemy.dx = MAX_ENEMY_SPEED
-            if abs(enemy.dy) < MIN_ENEMY_SPEED:
-                if enemy.dy < 0:
-                    enemy.dy = -MIN_ENEMY_SPEED
-                else:
-                    enemy.dy = MIN_ENEMY_SPEED
-            elif abs(enemy.dy) > MAX_ENEMY_SPEED:
-                if enemy.dy < 0:
-                    enemy.dy = -MAX_ENEMY_SPEED
-                else:
-                    enemy.dy = MAX_ENEMY_SPEED
-            while abs(enemy.x - player.x) < 5 and abs(enemy.y - player.y) < 5:
-                enemy.x = random.randint(0, lights.realLEDYaxisRange - 1)
-                enemy.y = random.randint(0, lights.realLEDXaxisRange - 1)
-            enemies.append(enemy)
-        for death_ray in death_rays:
-            # duration = int((time.time() - death_ray_time) / DEATH_RAY_FLICKER)
-            death_ray.x = player.x
-            death_ray.y = player.y
-            if x_reticle > 0.0:
-                death_ray.dx = x_reticle
-            if y_reticle > 0.0:
-                death_ray.dy = y_reticle
-            rxs, rys = death_ray.xy_ray
-            if np.array_equal(death_ray.color, PixelColors.MAGENTA.array):
-                death_ray.color = PixelColors.CYAN.array
+            if random.randint(0, SHIELD_ENEMY_CHANCE - 1) == SHIELD_ENEMY_CHANCE - 1:
+                e = ShieldEnemy(
+                    x=random.randint(0, lights.realLEDYaxisRange - 1),
+                    y=random.randint(0, lights.realLEDXaxisRange - 1),
+                    dx=random.uniform(-MAX_ENEMY_SPEED, MAX_ENEMY_SPEED),
+                    dy=random.uniform(-MAX_ENEMY_SPEED, MAX_ENEMY_SPEED),
+                )
             else:
-                death_ray.color = PixelColors.MAGENTA.array
-            lights.virtualLEDBuffer[rxs, rys] = Pixel(death_ray.color).array
-        for enemy in enemies:
-            if not player.dead and not (pause or fake_pause):
-                enemy.go()
-                for xy in zip(enemy.xs, enemy.ys):
-                    if xy == player:
-                        player.dead = True
-                        fade.color = Pixel(PixelColors.RED.array).array
-                        player_dead_time = time.time()
-                    if bullets:
-                        for bullet in bullets:
-                            if xy == bullet:
-                                enemy.dead = True
-                                score += 1
-                                dead_ones.append(enemy)
-                                fizzled.append(bullet)
-                                break
-                    if enemy.dead:
-                        break
-                    if death_rays:
-                        for death_ray in death_rays:
-                            rxs, rys = death_ray.xy_ray
-                            rxy = list(zip(rxs, rys))
-                            if xy in rxy:
-                                enemy.dead = True
-                                score += 1
-                                dead_ones.append(enemy)
-                    if enemy.dead:
-                        break
-
-            if not enemy.dead and not player.dead:
-                lights.virtualLEDBuffer[enemy.xs, enemy.ys] = Pixel(enemy.color).array
-        if time.time() - death_ray_time >= DEATH_RAY_DURATION:
-            death_rays.clear()
-        for dead in dead_ones:
-            lights.virtualLEDBuffer[
-                dead.xs,
-                dead.ys,
-            ] = Pixel(PixelColors.YELLOW.array).array
-            if dead in enemies:
+                e = SpaceEnemy(
+                    x=random.randint(0, lights.realLEDYaxisRange - 1),
+                    y=random.randint(0, lights.realLEDXaxisRange - 1),
+                    dx=random.uniform(-MAX_ENEMY_SPEED, MAX_ENEMY_SPEED),
+                    dy=random.uniform(-MAX_ENEMY_SPEED, MAX_ENEMY_SPEED),
+                )
+            failing = True
+            while failing:
+                failing = False
+                for ship in spaceships.values():
+                    if abs(e.x - ship.x) < 5 and abs(e.y - ship.y) < 5:
+                        failing = True
+                        e.x = random.randint(0, lights.realLEDYaxisRange - 1)
+                        e.y = random.randint(0, lights.realLEDXaxisRange - 1)
+        if not pause:
+            check_for_collisions()
+            for obj in game_object.objects.values():
                 try:
-                    enemies.remove(dead)
+                    lights.virtualLEDBuffer[obj.xs, obj.ys] = Pixel(obj.color).array
                 except:  # noqa
                     pass
-        dead_ones.clear()
-        lights.copyVirtualLedsToWS281X()
-        lights.refreshLEDs()
+            lights.copyVirtualLedsToWS281X()
+            lights.refreshLEDs()
 
 
 if __name__ == "__main__":
