@@ -5,14 +5,12 @@ import numpy as np
 from eat import run_eat_game
 from jump import run_jump_game
 from space import run_space_game
-from space_twoplayer import run_space_two_player
 from xbox_controller import run_xbox_controller_test
 
 games = [
     run_eat_game,
     run_jump_game,
     run_space_game,
-    run_space_two_player,
     run_xbox_controller_test,
 ]
 
