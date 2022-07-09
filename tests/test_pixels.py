@@ -28,7 +28,11 @@ def test_pixel_creation_default():
     exp = (0, 0, 0)
     assert p.tuple == exp, f"Pixel.tuple: {p.tuple} != expected value: {exp}"
     exp = np.array([0, 0, 0])
-    assert_array_equal(p.array, exp, err_msg=f"Pixel.tuple: {p.array} != expected value: {exp}")
+    assert_array_equal(p.array, exp, err_msg=f"Pixel.array: {p.array} != expected value: {exp}")
+    exp = (0, 0, 0)
+    assert p.rgb_tuple == exp, f"Pixel.rgb_tuple: {p.rgb_tuple} != expected value: {exp}"
+    exp = np.array([0, 0, 0])
+    assert_array_equal(p.rgb_array, exp, err_msg=f"Pixel.rgb_array: {p.rgb_array} != expected value: {exp}")
 
 
 def test_pixel_creation_None():
@@ -49,7 +53,11 @@ def test_pixel_creation_None():
     exp = (0, 0, 0)
     assert p.tuple == exp, f"Pixel.tuple: {p.tuple} != expected value: {exp}"
     exp = np.array([0, 0, 0])
-    assert_array_equal(p.array, exp, err_msg=f"Pixel.tuple: {p.array} != expected value: {exp}")
+    assert_array_equal(p.array, exp, err_msg=f"Pixel.array: {p.array} != expected value: {exp}")
+    exp = (0, 0, 0)
+    assert p.rgb_tuple == exp, f"Pixel.rgb_tuple: {p.rgb_tuple} != expected value: {exp}"
+    exp = np.array([0, 0, 0])
+    assert_array_equal(p.rgb_array, exp, err_msg=f"Pixel.rgb_array: {p.rgb_array} != expected value: {exp}")
 
 
 def test_pixel_creation_invalid_rgb_value():
@@ -68,8 +76,14 @@ def test_pixel_int_value():
     """Test default pixel creation and attributes."""
     p = Pixel(0x100, order=LEDOrder.RGB)
     assert p.int_value == 0x100
+    exp = (0, 1, 0)
+    assert p.tuple == exp, f"Pixel.tuple: {p.tuple} != expected value: {exp}"
     exp = np.array([0, 1, 0])
-    assert_array_equal(p.array, exp, err_msg=f"Pixel.tuple: {p.array} != expected value: {exp}")
+    assert_array_equal(p.array, exp, err_msg=f"Pixel.array: {p.array} != expected value: {exp}")
+    exp = (0, 1, 0)
+    assert p.rgb_tuple == exp, f"Pixel.rgb_tuple: {p.rgb_tuple} != expected value: {exp}"
+    exp = np.array([0, 1, 0])
+    assert_array_equal(p.rgb_array, exp, err_msg=f"Pixel.rgb_array: {p.rgb_array} != expected value: {exp}")
 
 
 def test_pixel_int_cast_value():
@@ -130,7 +144,11 @@ def test_pixel_creationint_args(arg: int | np.ndarray[(3), np.float32] | "Pixel"
     exp = (1, 0, 0)
     assert p.tuple == exp, f"Pixel.tuple: {p.tuple} != expected value: {exp}"
     exp = np.array([1, 0, 0])
-    assert_array_equal(p.array, exp, err_msg=f"Pixel.tuple: {p.array} != expected value: {exp}")
+    assert_array_equal(p.array, exp, err_msg=f"Pixel.array: {p.array} != expected value: {exp}")
+    exp = (1, 0, 0)
+    assert p.rgb_tuple == exp, f"Pixel.rgb_tuple: {p.rgb_tuple} != expected value: {exp}"
+    exp = np.array([1, 0, 0])
+    assert_array_equal(p.rgb_array, exp, err_msg=f"Pixel.rgb_array: {p.rgb_array} != expected value: {exp}")
 
 
 @pytest.mark.parametrize(
@@ -159,9 +177,11 @@ def test_pixel_creation_pixel_order(arg: int | np.ndarray[(3), np.float32] | "Pi
     exp = (0, 1, 0)
     assert p.tuple == exp, f"Pixel.tuple: {p.tuple} != expected value: {exp}"
     exp = np.array([0, 1, 0])
-    assert_array_equal(p.array, exp, err_msg=f"Pixel.tuple: {p.array} != expected value: {exp}")
-    # exp = np.array([0, 1, 0])
-    # assert_array_equal(p.rgb_array, exp, err_msg=f"Pixel.tuple: {p.array} != expected value: {exp}")
+    assert_array_equal(p.array, exp, err_msg=f"Pixel.array: {p.array} != expected value: {exp}")
+    exp = (1, 0, 0)
+    assert p.rgb_tuple == exp, f"Pixel.rgb_tuple: {p.rgb_tuple} != expected value: {exp}"
+    exp = np.array([1, 0, 0])
+    assert_array_equal(p.rgb_array, exp, err_msg=f"Pixel.rgb_array: {p.rgb_array} != expected value: {exp}")
 
 
 def test_pixel_creation_pixel_order_invalid():

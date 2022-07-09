@@ -193,16 +193,37 @@ class Pixel:
         """
         return np.array(self.tuple)
 
-    # @property
-    # def rgb_array(
-    #     self,
-    # ) -> np.ndarray[(3,), np.int_]:
-    #     """Return Pixel value as a numpy array.
+    @property
+    def rgb_array(
+        self,
+    ) -> np.ndarray[(3,), np.int_]:
+        """Return Pixel value as a numpy array.
 
-    #     Returns:
-    #         RGB value as a numpy array
-    #     """
-    #     return Pixel(self.array).array
+        Returns:
+            RGB value as a numpy array
+        """
+        return np.array(
+            [
+                self.array[self._order[0]],
+                self.array[self._order[1]],
+                self.array[self._order[2]],
+            ]
+        )
+
+    @property
+    def rgb_tuple(
+        self,
+    ) -> tuple[np.int_, np.int_, np.int_]:
+        """Return Pixel value as a numpy array.
+
+        Returns:
+            RGB value as a numpy array
+        """
+        return (
+            self.array[self._order[0]],
+            self.array[self._order[1]],
+            self.array[self._order[2]],
+        )
 
     @property
     def hexstr(self):
