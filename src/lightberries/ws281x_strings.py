@@ -72,7 +72,7 @@ class WS281xString(Sequence[np.int_]):
 
             # cant run GPIO stuff without root, tell the user if they forgot
             # linux check is just for debugging with fake GPIO on windows
-        if not self.simulate:
+        if not self.simulate and not self.testing:
             if sys.platform == "linux" and not os.getuid() == 0:  # pylint: disable = no-member  # pragma: no cover
                 raise WS281xStringException(
                     "GPIO functionality requires root privilege. Please run command again as root"

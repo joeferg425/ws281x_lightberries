@@ -7,7 +7,7 @@ from lightberries.matrix_controller import MatrixController
 from lightberries.pixel import Pixel, PixelColors
 from lightberries.array_functions import ArrayFunction
 from lightberries.matrix_functions import MatrixFunction
-from _game_objects import XboxButton, XboxJoystick, GameObject, Player, Projectile, check_for_collisions, Enemy
+from game_objects import XboxButton, XboxJoystick, GameObject, Player, Projectile, check_for_collisions, Enemy
 import os
 import pygame
 import numpy as np

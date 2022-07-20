@@ -1,3 +1,4 @@
+from __future__ import annotations
 from lightberries.array_functions import (
     ArrayFunction,
     LEDFadeType,
@@ -7,6 +8,7 @@ from lightberries.array_functions import (
     ThingMoves,
     ThingSizes,
 )
+from numpy.typing import NDArray
 from lightberries.array_patterns import ArrayPattern, ConvertPixelArrayToNumpyArray
 from lightberries.pixel import PixelColors
 from numpy.testing import assert_array_equal
@@ -29,6 +31,9 @@ def new_instantiate_pixelstrip(
     gamma: float,
     stripTypeLED: Any,
     ledBrightnessFloat: Any,
+    testing: bool,
+    matrixShape: tuple[int, int] = None,
+    matrixLayout: NDArray[np.int32] | None = None,
 ) -> None:
     try:
         # create ws281x pixel strip
@@ -63,6 +68,9 @@ def new_instantiate_WS281xString(
     stripTypeLED: Any,
     gamma: Any,
     simulate: bool,
+    testing: bool,
+    matrixShape: tuple[int, int] = None,
+    matrixLayout: NDArray[np.int32] | None = None,
 ) -> None:
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
         self.ws281xString = WS281xString(
@@ -76,6 +84,9 @@ def new_instantiate_WS281xString(
             stripTypeLED=stripTypeLED,
             gamma=gamma,
             simulate=simulate,
+            testing=testing,
+            matrixShape=matrixShape,
+            matrixLayout=matrixLayout,
         )
 
 

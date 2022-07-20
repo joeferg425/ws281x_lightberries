@@ -1,6 +1,5 @@
 """Test Light strings."""
 from __future__ import annotations
-
 from lightberries.ws281x_strings import WS281xString
 from lightberries.pixel import PixelColors
 from numpy.testing import assert_array_equal
@@ -11,6 +10,7 @@ import numpy as np
 import lightberries.rpiws281x
 import lightberries.rpiws281x_patch
 import mock
+from numpy.typing import NDArray
 from typing import Any
 
 
@@ -25,6 +25,9 @@ def new_instantiate_pixelstrip(
     gamma: float,
     stripTypeLED: Any,
     ledBrightnessFloat: Any,
+    testing: bool,
+    matrixShape: tuple[int, int] = None,
+    matrixLayout: NDArray[np.int32] | None = None,
 ) -> None:
     try:
         # create ws281x pixel strip
@@ -38,6 +41,9 @@ def new_instantiate_pixelstrip(
             gamma=gamma,
             strip_type=stripTypeLED,
             brightness=int(255 * ledBrightnessFloat),
+            matrixLayout=matrixLayout,
+            matrixShape=matrixShape,
+            testing=testing,
         )
     except SystemExit:  # pragma: no cover
         raise

@@ -7,7 +7,7 @@ from lightberries.pixel import PixelColors, Pixel
 from lightberries.array_functions import ArrayFunction
 import os
 import pygame
-from _game_objects import XboxButton, XboxJoystick, Sprite, GameObject, SpriteShape
+from games.game_objects import XboxButton, XboxJoystick, Sprite, GameObject, SpriteShape
 
 import time
 
