@@ -7,7 +7,7 @@ from lightberries.matrix_controller import MatrixController
 from lightberries.pixel import Pixel, PixelColors
 from lightberries.array_functions import ArrayFunction
 from lightberries.matrix_functions import MatrixFunction
-from _game_objects import game_object, floor, player, projectile, check_for_collisions, XboxButton, XboxJoystick
+from _game_objects import GameObject, Floor, Player, Projectile, check_for_collisions, XboxButton, XboxJoystick
 import os
 import pygame
 import numpy as np
@@ -16,8 +16,8 @@ import numpy as np
 def run_jump_game(lights: MatrixController):
     pause = True
     os.environ["SDL_VIDEODRIVER"] = "dummy"
-    game_object.frame_size_x = lights.realLEDXaxisRange
-    game_object.frame_size_y = lights.realLEDYaxisRange
+    GameObject.frame_size_x = lights.realLEDXaxisRange
+    GameObject.frame_size_y = lights.realLEDYaxisRange
     MAX_ENEMY_SPEED = 0.3
     PAUSE_DELAY = 0.3
     pygame.init()
@@ -41,7 +41,7 @@ def run_jump_game(lights: MatrixController):
     enemy_time = time.time()
     player1_dead_time = time.time()
     score = 1
-    player1 = player(
+    player1 = Player(
         x=int(1),
         y=random.randint(1, lights.realLEDXaxisRange // 2),
     )
@@ -81,8 +81,8 @@ def run_jump_game(lights: MatrixController):
     # floors: list[game_object] = []
 
     # floors.append(
-    floor(0, 9, 18)
-    floor(0, 15, 31)
+    Floor(0, 9, 18)
+    Floor(0, 15, 31)
     # )
     # objects.append(floor)
     exiting = False
@@ -120,7 +120,7 @@ def run_jump_game(lights: MatrixController):
         if player1.dead:
             delta = time.time() - player1_dead_time
             if delta > 1:
-                player1 = player(
+                player1 = Player(
                     x=1,
                     y=random.randint(1, lights.realLEDXaxisRange // 2),
                 )
@@ -175,7 +175,7 @@ def run_jump_game(lights: MatrixController):
                     ):
                         bullet_time = time.time()
                         # bullets.append(
-                        projectile(
+                        Projectile(
                             x=player1.x + player1.x_aim_direction,
                             y=player1.y + player1.y_aim_direction,
                             size=0,
@@ -191,7 +191,7 @@ def run_jump_game(lights: MatrixController):
                     player1._dead = True
                 elif event.dict["button"] == XboxButton.XBOX:
                     exiting = True
-                    game_object.dead_objects.extend(game_object.objects)
+                    GameObject.dead_objects.extend(GameObject.objects)
                     break
                 elif event.dict["button"] == XboxButton.A:
                     if time.time() - jump_time > JUMP_DELAY and player1.dy >= 0 and player1.jump_count < 2:
@@ -319,7 +319,7 @@ def run_jump_game(lights: MatrixController):
         #         except:  # noqa
         #             pass
         check_for_collisions()
-        for obj in game_object.objects.values():
+        for obj in GameObject.objects.values():
             try:
                 lights.virtualLEDBuffer[obj.xs, obj.ys] = Pixel(obj.color).array
             except:  # noqa

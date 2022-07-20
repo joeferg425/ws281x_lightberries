@@ -7,12 +7,12 @@ from lightberries.pixel import PixelColors, Pixel
 from lightberries.array_functions import ArrayFunction
 import os
 import pygame
-from _game_objects import XboxButton, XboxJoystick, sprite, game_object, SpriteShape
+from _game_objects import XboxButton, XboxJoystick, Sprite, GameObject, SpriteShape
 
 import time
 
 
-class xbox_test(sprite):
+class xbox_test(Sprite):
     def __init__(
         self,
         x: int,
@@ -63,8 +63,8 @@ class xbox_test(sprite):
 
 def run_xbox_controller_test(lights: MatrixController):
     os.environ["SDL_VIDEODRIVER"] = "dummy"
-    game_object.frame_size_x = lights.realLEDXaxisRange
-    game_object.frame_size_y = lights.realLEDYaxisRange
+    GameObject.frame_size_x = lights.realLEDXaxisRange
+    GameObject.frame_size_y = lights.realLEDYaxisRange
     SPEED = 1.5
     pygame.init()
     joysticks = {}
@@ -176,7 +176,7 @@ def run_xbox_controller_test(lights: MatrixController):
                                 left_obj.size -= 1
                     elif event.dict["button"] == XboxButton.XBOX:
                         exiting = True
-                        game_object.dead_objects.extend(game_object.objects)
+                        GameObject.dead_objects.extend(GameObject.objects)
                         break
                     elif event.dict["button"] == XboxButton.BUMPER_RIGHT:
                         fade.fadeAmount -= 0.05
@@ -186,7 +186,7 @@ def run_xbox_controller_test(lights: MatrixController):
                         fade.fadeAmount += 0.05
                         if fade.fadeAmount > 1.0:
                             fade.fadeAmount = 1.0
-        for obj in game_object.objects.values():
+        for obj in GameObject.objects.values():
             obj.go()
             try:
                 lights.virtualLEDBuffer[obj.xs, obj.ys] = Pixel(obj.color).array

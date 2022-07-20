@@ -90,6 +90,7 @@ class LightEvent:
 
 class LightGame:
     def __init__(self) -> None:
+        print("LightGame")
         pygame.init()
         self._controller_instance_dict: dict[int, pygame.joystick.Joystick] = {}
         self._controller_index_dict: dict[int, pygame.joystick.Joystick] = {}
@@ -546,69 +547,3 @@ class TriggerRight(Trigger):
 @dataclass
 class TriggerLeft(Trigger):
     event_id: LightEventId = LightEventId.TriggerLeft
-
-
-if __name__ == "__main__":
-    import time
-
-    PYGAME_DEMO = False
-    LIGHTGAME_DEMO = True
-
-    if PYGAME_DEMO:
-        pygame.init()
-        first = True
-        events = []
-        j = None
-        button = None
-        joy = None
-        try:
-            while True:
-                if j is not None:
-                    try:
-                        events = list(pygame.event.get())
-                    except KeyboardInterrupt:
-                        raise
-                    except Exception:
-                        print("cant get events")
-                if len(events) == 0:
-                    if first is True:
-                        try:
-                            if j is not None:
-                                j.quit()
-                        except KeyboardInterrupt:
-                            raise
-                        except Exception:
-                            pass
-                        try:
-                            j = pygame.joystick.Joystick(0)
-                            j.init()
-                            first = True
-                            print(f"connected joystick {0}")
-                        except KeyboardInterrupt:
-                            raise
-                        except Exception as ex:
-                            print(f"\rfailed to connect to joystick {ex}                 ", end="")
-                            time.sleep(0.5)
-                else:
-                    first = False
-                    for event in events:
-                        if "axis" in event.dict:
-                            joy = event
-                        else:
-                            button = event
-                        print(f"\r{joy}             {button}              ", end="")
-        except KeyboardInterrupt:
-            pass
-        except SystemExit:
-            pass
-        except Exception as ex:
-            print(ex)
-        print()
-        print("exiting...")
-
-    elif LIGHTGAME_DEMO:
-        game = LightGame()
-        while True:
-            game.get_joysticks()
-            for event in game.get_events():
-                print(event)

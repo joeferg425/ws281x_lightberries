@@ -7,6 +7,7 @@ import atexit
 import logging
 from typing import Any, Sequence, overload
 import numpy as np
+from numpy.typing import NDArray
 from lightberries.array_patterns import ConvertPixelArrayToNumpyArray
 from lightberries.exceptions import WS281xStringException, LightBerryException
 from lightberries.rpiws281x import rpi_ws281x
@@ -30,6 +31,9 @@ class WS281xString(Sequence[np.int_]):
         stripTypeLED: Any = None,
         gamma: Any = None,
         simulate: bool = False,
+        matrixShape: tuple[int, int] = None,
+        matrixLayout: NDArray[np.int32] | None = None,
+        testing: bool = False,
     ) -> None:
         """Creates a pixel array using the rpi_ws281x library.
 
@@ -55,13 +59,16 @@ class WS281xString(Sequence[np.int_]):
         """
         self.ws281xPixelStrip = None
         self.simulate = simulate
+        self.testing = testing
         # catch error cases first
         if ledCount is None or not isinstance(ledCount, int):
             raise WS281xStringException(f"Cannot create LightString with ledCount: {ledCount}.")
         # use passed led count if it is valid
         self._ledCount = ledCount
-        if self.simulate:
-            import lightberries.rpiws281x_patch as rpiws281x  # noqa
+        if self.testing:
+            global rpi_ws281x
+            # import lightberries.rpiws281x_patch as rpiws281x  # noqa
+            import lightberries.rpiws281x_patch as rpi_ws281x  # noqa
 
             # cant run GPIO stuff without root, tell the user if they forgot
             # linux check is just for debugging with fake GPIO on windows
@@ -80,6 +87,9 @@ class WS281xString(Sequence[np.int_]):
             gamma=gamma,
             stripTypeLED=stripTypeLED,
             ledBrightnessFloat=ledBrightnessFloat,
+            matrixShape=matrixShape,
+            matrixLayout=matrixLayout,
+            testing=testing,
         )
 
     def _instantiate_pixelstrip(
@@ -93,6 +103,9 @@ class WS281xString(Sequence[np.int_]):
         gamma: float,
         stripTypeLED: Any,
         ledBrightnessFloat: Any,
+        matrixShape: tuple[int, int] = None,
+        matrixLayout: NDArray[np.int32] | None = None,
+        testing: bool = False,
     ) -> None:
         try:  # pragma: no cover
             # create ws281x pixel strip

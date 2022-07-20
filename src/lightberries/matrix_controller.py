@@ -1,6 +1,6 @@
 from __future__ import annotations
 import random
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 from numpy.typing import NDArray
 import numpy as np
@@ -18,6 +18,7 @@ from lightberries.matrix_patterns import (
 )
 from lightberries.array_patterns import ArrayPattern
 from lightberries.pixel import PixelColors
+from lightberries.ws281x_strings import WS281xString
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -41,7 +42,9 @@ class MatrixController(ArrayController):
         simulate: bool = False,
         matrixShape: tuple[int, int] = None,
         matrixLayout: NDArray[np.int32] | None = None,
+        testing: bool = False,
     ) -> None:
+        self.testing = testing
         if not ledXaxisRange:
             ledXaxisRange = 4
         else:
@@ -50,26 +53,6 @@ class MatrixController(ArrayController):
             ledYaxisRange = 4
         else:
             ledYaxisRange = int(ledYaxisRange)
-        super().__init__(
-            (ledYaxisRange * ledXaxisRange),
-            pwmGPIOpin,
-            channelDMA,
-            frequencyPWM,
-            invertSignalPWM,
-            ledBrightnessFloat,
-            channelPWM,
-            stripTypeLED,
-            gamma,
-            debug,
-            verbose,
-            refreshCallback,
-            simulate,
-        )
-        self.realLEDYaxisRange = ledXaxisRange
-        self.realLEDXaxisRange = ledYaxisRange
-        self.virtualLEDYaxisRange = ledXaxisRange
-        self.virtualLEDXaxisRange = ledYaxisRange
-        self.virtualLEDIndexBuffer: np.ndarray[(Any,), np.int32]
         if matrixLayout is not None:
             self.matrixLayout = matrixLayout
             self.matrixCount = matrixLayout.shape[0] * matrixLayout.shape[1]
@@ -78,6 +61,27 @@ class MatrixController(ArrayController):
             self.matrixLayout = None
             self.matrixCount = None
             self.matrixShape = None
+        super().__init__(
+            ledCount=(ledYaxisRange * ledXaxisRange),
+            pwmGPIOpin=pwmGPIOpin,
+            channelDMA=channelDMA,
+            frequencyPWM=frequencyPWM,
+            invertSignalPWM=invertSignalPWM,
+            ledBrightnessFloat=ledBrightnessFloat,
+            channelPWM=channelPWM,
+            stripTypeLED=stripTypeLED,
+            gamma=gamma,
+            debug=debug,
+            verbose=verbose,
+            refreshCallback=refreshCallback,
+            simulate=simulate,
+            testing=testing,
+        )
+        self.realLEDYaxisRange = ledXaxisRange
+        self.realLEDXaxisRange = ledYaxisRange
+        self.virtualLEDYaxisRange = ledXaxisRange
+        self.virtualLEDXaxisRange = ledYaxisRange
+        self.virtualLEDIndexBuffer: np.ndarray[(Any,), np.int32]
         self.setvirtualLEDBuffer(
             SolidColorMatrix(
                 xRange=self.realLEDXaxisRange,
@@ -88,6 +92,35 @@ class MatrixController(ArrayController):
 
         # give LightFunction class a pointer to this class
         MatrixFunction.Controller = self
+
+    def _instantiate_WS281xString(
+        self,
+        ledCount: int,
+        pwmGPIOpin: int,
+        channelDMA: int,
+        frequencyPWM: int,
+        invertSignalPWM: bool,
+        ledBrightnessFloat: float,
+        channelPWM: int,
+        stripTypeLED: Any,
+        gamma: Any,
+        simulate: bool,
+        testing: bool = False,
+    ) -> None:
+        self.ws281xString: Optional[WS281xString] = WS281xString(
+            ledCount=ledCount,
+            pwmGPIOpin=pwmGPIOpin,
+            channelDMA=channelDMA,
+            frequencyPWM=frequencyPWM,
+            invertSignalPWM=invertSignalPWM,
+            ledBrightnessFloat=ledBrightnessFloat,
+            channelPWM=channelPWM,
+            stripTypeLED=stripTypeLED,
+            gamma=gamma,
+            simulate=simulate,
+            matrixShape=self.matrixShape,
+            matrixLayout=self.matrixLayout,
+        )
 
     def useColorMatrix(
         self,

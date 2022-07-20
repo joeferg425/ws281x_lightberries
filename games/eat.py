@@ -7,14 +7,14 @@ from lightberries.matrix_controller import MatrixController
 from lightberries.pixel import Pixel, PixelColors
 from lightberries.array_functions import ArrayFunction
 from lightberries.matrix_functions import MatrixFunction
-from _game_objects import game_object, sprite, check_for_collisions, projectile, XboxButton, XboxJoystick
+from _game_objects import GameObject, Sprite, check_for_collisions, Projectile, XboxButton, XboxJoystick
 import os
 import pygame
 import numpy as np
 
 
-class snake(sprite):
-    snakes: dict[int, snake] = {}
+class Snake(Sprite):
+    snakes: dict[int, Snake] = {}
 
     def __init__(
         self,
@@ -38,7 +38,7 @@ class snake(sprite):
             dy=0.0,
             phased=True,
         )
-        snake.snakes[game_object.object_counter] = self
+        Snake.snakes[GameObject.object_counter] = self
         self.speed_increment = 0.1
         self.speed_max = max_speed
         self.speed = speed
@@ -53,7 +53,7 @@ class snake(sprite):
         else:
             self.dy = self.speed * [-1, 1][random.randint(0, 1)]
 
-    def collide(self, obj: "game_object", xys: list[tuple[int, int]]) -> None:
+    def collide(self, obj: "GameObject", xys: list[tuple[int, int]]) -> None:
         if obj.name == "apple":
             self.tail_length += 2
             self.score += 0.5
@@ -62,8 +62,8 @@ class snake(sprite):
                 self.collided.append(obj)
                 self.collision_xys.append(xys)
                 self.health -= obj.damage
-                if self.dead and self.id not in game_object.dead_objects:
-                    game_object.dead_objects.append(self.id)
+                if self.dead and self.id not in GameObject.dead_objects:
+                    GameObject.dead_objects.append(self.id)
         elif obj.name == "bullet":
             pass
         elif obj.name == "bad apple":
@@ -71,14 +71,14 @@ class snake(sprite):
                 self.collided.append(obj)
                 self.collision_xys.append(xys)
                 self.health -= obj.damage
-                if self.dead and self.id not in game_object.dead_objects:
-                    game_object.dead_objects.append(self.id)
+                if self.dead and self.id not in GameObject.dead_objects:
+                    GameObject.dead_objects.append(self.id)
         else:
             self.collided.append(obj)
             self.collision_xys.append(xys)
             self.health -= obj.damage
-            if self.dead and self.id not in game_object.dead_objects:
-                game_object.dead_objects.append(self.id)
+            if self.dead and self.id not in GameObject.dead_objects:
+                GameObject.dead_objects.append(self.id)
 
     @property
     def xs(self) -> list[int]:
@@ -99,7 +99,7 @@ class snake(sprite):
     def go(self):
         last_x = self.x
         last_y = self.y
-        if not self.dead and not game_object.pause:
+        if not self.dead and not GameObject.pause:
             self.x = self._x + self.dx
             self.y = self._y + self.dy
         if self.x != last_x or self.y != last_y:
@@ -115,12 +115,12 @@ class snake(sprite):
                 self.tail = list(zip(xs, ys))
             else:
                 self._dead = True
-                if self.id not in game_object.dead_objects:
-                    game_object.dead_objects.append(self.id)
+                if self.id not in GameObject.dead_objects:
+                    GameObject.dead_objects.append(self.id)
 
 
-class apple(sprite):
-    apples: dict[int, apple] = {}
+class Apple(Sprite):
+    apples: dict[int, Apple] = {}
 
     def __init__(
         self,
@@ -146,32 +146,32 @@ class apple(sprite):
         self.bounded = True
         self.creation_time = time.time()
         self.expiration_delay = 10
-        apple.apples[game_object.object_counter] = self
+        Apple.apples[GameObject.object_counter] = self
 
     @property
     def dead(self) -> bool:
         if self.collided:
-            if self.id not in game_object.dead_objects:
-                game_object.dead_objects.append(self.id)
+            if self.id not in GameObject.dead_objects:
+                GameObject.dead_objects.append(self.id)
             self._dead = True
         return self._dead
 
     def go(self):
         super().go()
         if time.time() - self.creation_time > self.expiration_delay:
-            if self.id not in game_object.dead_objects:
-                game_object.dead_objects.append(self.id)
+            if self.id not in GameObject.dead_objects:
+                GameObject.dead_objects.append(self.id)
             self._dead = True
 
 
-class bad_apple(sprite):
-    bad_apples: dict[int, bad_apple] = {}
+class BadApple(Sprite):
+    bad_apples: dict[int, BadApple] = {}
 
     def __init__(
         self,
         x: int,
         y: int,
-        owner: snake,
+        owner: Snake,
         color: np.ndarray[(3), np.int32] = PixelColors.WHITE.array,
     ) -> None:
         super().__init__(
@@ -193,36 +193,36 @@ class bad_apple(sprite):
         self.owner = owner
         self.creation_time = time.time()
         self.expiration_delay = 2.0
-        bad_apple.bad_apples[game_object.object_counter] = self
+        BadApple.bad_apples[GameObject.object_counter] = self
 
     @property
     def dead(self) -> bool:
         if self.collided:
-            if self.id not in game_object.dead_objects:
-                game_object.dead_objects.append(self.id)
+            if self.id not in GameObject.dead_objects:
+                GameObject.dead_objects.append(self.id)
             self._dead = True
         return self._dead
 
-    def collide(self, obj: "game_object", xys: list[tuple[int, int]]) -> None:
+    def collide(self, obj: "GameObject", xys: list[tuple[int, int]]) -> None:
         if self.owner.id != obj.id:
             self.collided.append(obj)
             self.collision_xys.append(xys)
             self.health -= obj.damage
-            if self.dead and self.id not in game_object.dead_objects:
-                game_object.dead_objects.append(self.id)
+            if self.dead and self.id not in GameObject.dead_objects:
+                GameObject.dead_objects.append(self.id)
 
     def go(self):
         super().go()
         if time.time() - self.creation_time > self.expiration_delay:
             self._dead = True
-            if self.id not in game_object.dead_objects:
-                game_object.dead_objects.append(self.id)
+            if self.id not in GameObject.dead_objects:
+                GameObject.dead_objects.append(self.id)
 
 
 def run_eat_game(lights: MatrixController) -> None:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
-    game_object.frame_size_x = lights.realLEDXaxisRange
-    game_object.frame_size_y = lights.realLEDYaxisRange
+    GameObject.frame_size_x = lights.realLEDXaxisRange
+    GameObject.frame_size_y = lights.realLEDYaxisRange
     pause = True
     PAUSE_DELAY = 0.3
     THRESHOLD = 0.05
@@ -234,7 +234,7 @@ def run_eat_game(lights: MatrixController) -> None:
     )
     fadeFireworks.fadeAmount = 0.3
     fadeFireworks.color = PixelColors.OFF.array
-    players: dict[int, snake] = {}
+    players: dict[int, Snake] = {}
     x_changes: dict[int, float] = {}
     y_changes: dict[int, float] = {}
     joysticks: dict[int, pygame.joystick.Joystick] = {}
@@ -270,7 +270,7 @@ def run_eat_game(lights: MatrixController) -> None:
     READY = np.array([Pixel(PixelColors.YELLOW.array).array, Pixel(PixelColors.CYAN.array).array])
     NOT_READY = np.array([Pixel(PixelColors.YELLOW.array).array, Pixel(PixelColors.ORANGE.array).array])
     joystick_count = 0
-    apples: list[sprite] = []
+    apples: list[Sprite] = []
 
     pygame.init()
     pygame_quit = False
@@ -283,7 +283,7 @@ def run_eat_game(lights: MatrixController) -> None:
                     joysticks[len(players)].init()
                     x_changes[len(players)] = 0.0
                     y_changes[len(players)] = 0.0
-                    players[len(players)] = snake(
+                    players[len(players)] = Snake(
                         x=random.randint(0, lights.realLEDXaxisRange) - 1,
                         y=random.randint(0, lights.realLEDYaxisRange) - 1,
                         tail_length=SNAKE_START_LENGTH,
@@ -322,7 +322,7 @@ def run_eat_game(lights: MatrixController) -> None:
                 win = False
                 for i in players.keys():
                     players[i]._dead = True
-                    players[i] = snake(
+                    players[i] = Snake(
                         x=random.randint(0, lights.realLEDXaxisRange) * 1,
                         y=random.randint(0, lights.realLEDYaxisRange) * 1,
                         tail_length=SNAKE_START_LENGTH,
@@ -339,7 +339,7 @@ def run_eat_game(lights: MatrixController) -> None:
                 delta = time.time() - player.timestamp_death
                 if delta > player.respawn_delay:
                     color = player.color
-                    players[index] = snake(
+                    players[index] = Snake(
                         x=random.randint(0, lights.realLEDXaxisRange // 2),
                         y=random.randint(0, lights.realLEDYaxisRange // 2),
                         speed=START_SPEED,
@@ -383,7 +383,7 @@ def run_eat_game(lights: MatrixController) -> None:
                     player = players[event.dict["joy"]]
                     if time.time() - player.bullet_time >= BULLET_DELAY and not (pause or fake_pause):
                         player.bullet_time = time.time()
-                        projectile(
+                        Projectile(
                             owner=player,
                             name="bullet",
                             x=player.x + (2 * player.x_direction),
@@ -397,7 +397,7 @@ def run_eat_game(lights: MatrixController) -> None:
                 if event.dict["button"] == XboxButton.A:
                     if time.time() - players[event.dict["joy"]].bad_apple_time > BAD_APPLE_DELAY:
                         players[event.dict["joy"]].bad_apple_time = time.time()
-                        bad_apple(
+                        BadApple(
                             x=players[event.dict["joy"]].tail[0][0],
                             y=players[event.dict["joy"]].tail[0][1],
                             color=players[event.dict["joy"]].color,
@@ -428,7 +428,7 @@ def run_eat_game(lights: MatrixController) -> None:
                     x_changes[event.dict["joy"]] = players[event.dict["joy"]].speed
                     y_changes[event.dict["joy"]] = 0
         if pygame_quit:
-            game_object.dead_objects.extend(game_object.objects)
+            GameObject.dead_objects.extend(GameObject.objects)
             break
         if time.time() - b9_time < 0.1 and time.time() - b10_time < 0.1:
             fake_pause = True
@@ -454,7 +454,7 @@ def run_eat_game(lights: MatrixController) -> None:
             and not fake_pause
         ):
             apple_time = time.time()
-            new_apple = apple(
+            new_apple = Apple(
                 random.randint(0, lights.realLEDYaxisRange - 1),
                 random.randint(0, lights.realLEDXaxisRange - 1),
                 color=PixelColors.RED.array,
@@ -467,7 +467,7 @@ def run_eat_game(lights: MatrixController) -> None:
             apples.append(new_apple)
         if not pause:
             check_for_collisions()
-            for obj in game_object.objects.values():
+            for obj in GameObject.objects.values():
                 try:
                     lights.virtualLEDBuffer[obj.xs, obj.ys] = Pixel(obj.color).array
                 except:  # noqa

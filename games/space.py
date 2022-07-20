@@ -7,13 +7,13 @@ from lightberries.matrix_controller import MatrixController
 from lightberries.pixel import Pixel, PixelColors
 from lightberries.array_functions import ArrayFunction
 from lightberries.matrix_functions import MatrixFunction
-from _game_objects import XboxButton, XboxJoystick, game_object, player, projectile, check_for_collisions, enemy
+from _game_objects import XboxButton, XboxJoystick, GameObject, Player, Projectile, check_for_collisions, Enemy
 import os
 import pygame
 import numpy as np
 
 
-class SpaceShip(player):
+class SpaceShip(Player):
     def __init__(
         self,
         x: int,
@@ -31,13 +31,13 @@ class SpaceShip(player):
         self.color_time = self.bullet_time
         self.shield = Shield(self)
         self.shield._dead = True
-        game_object.dead_objects.append(self.shield.id)
+        GameObject.dead_objects.append(self.shield.id)
 
 
-class Bullet(projectile):
+class Bullet(Projectile):
     def __init__(
         self,
-        owner: game_object,
+        owner: GameObject,
         x: int,
         y: int,
         dx: float = 0,
@@ -57,7 +57,7 @@ class Bullet(projectile):
             dy=dy,
         )
 
-    def collide(self, obj: "game_object", xys: list[tuple[int, int]]) -> None:
+    def collide(self, obj: "GameObject", xys: list[tuple[int, int]]) -> None:
         if obj.id != self.owner.id and (not obj.owner or self.owner.id != obj.owner.id):
             self.collided.append(obj)
             self.collision_xys.append(xys)
@@ -67,13 +67,13 @@ class Bullet(projectile):
                 if self.owner.shield.dead:
                     self.owner.shield = Shield(self.owner)
             obj.point_value = 0
-            if self.dead and self.id not in game_object.dead_objects:
+            if self.dead and self.id not in GameObject.dead_objects:
                 self.shield._dead = True
-                game_object.dead_objects.append(self.shield.id)
-                game_object.dead_objects.append(self.id)
+                GameObject.dead_objects.append(self.shield.id)
+                GameObject.dead_objects.append(self.id)
 
 
-class SpaceEnemy(enemy):
+class SpaceEnemy(Enemy):
     SpaceEnemies: dict[int, SpaceEnemy] = {}
 
     def __init__(
@@ -96,7 +96,7 @@ class SpaceEnemy(enemy):
             dx=dx,
             dy=dy,
         )
-        SpaceEnemy.SpaceEnemies[game_object.object_counter] = self
+        SpaceEnemy.SpaceEnemies[GameObject.object_counter] = self
 
     @property
     def dead(self) -> bool:
@@ -125,10 +125,10 @@ class ShieldEnemy(SpaceEnemy):
         self.name = "ShieldEnemy"
 
 
-class Shield(projectile):
+class Shield(Projectile):
     def __init__(
         self,
-        owner: game_object,
+        owner: GameObject,
     ) -> None:
         super().__init__(
             owner,
@@ -164,10 +164,10 @@ class Shield(projectile):
         fix = np.where(xs < 0)
         if fix:
             xs[fix] *= 0
-        fix = np.where(xs >= game_object.frame_size_x)
+        fix = np.where(xs >= GameObject.frame_size_x)
         if fix:
             xs[fix] *= 0
-            xs[fix] += game_object.frame_size_x
+            xs[fix] += GameObject.frame_size_x
         return [int(x) for x in xs]
 
     @property
@@ -184,10 +184,10 @@ class Shield(projectile):
         fix = np.where(ys < 0)
         if fix:
             ys[fix] *= 0
-        fix = np.where(ys >= game_object.frame_size_y)
+        fix = np.where(ys >= GameObject.frame_size_y)
         if fix:
             ys[fix] *= 0
-            ys[fix] += game_object.frame_size_y
+            ys[fix] += GameObject.frame_size_y
         return [int(y) for y in ys]
 
     @property
@@ -197,23 +197,23 @@ class Shield(projectile):
     def go(self):
         pass
 
-    def collide(self, obj: "game_object", xys: list[tuple[int, int]]) -> None:
+    def collide(self, obj: "GameObject", xys: list[tuple[int, int]]) -> None:
         if obj.id != self.owner.id and (not obj.owner or obj.owner.id != self.owner.id):
             self.collided.append(obj)
             self.collision_xys.append(xys)
             self.health -= obj.damage
             # self.owner.score += obj.point_value
             obj.point_value = 0
-            if self.dead and self.id not in game_object.dead_objects:
-                game_object.dead_objects.append(self.id)
+            if self.dead and self.id not in GameObject.dead_objects:
+                GameObject.dead_objects.append(self.id)
 
 
-class death_ray(projectile):
-    death_rays: dict[int, death_ray] = {}
+class DeathRay(Projectile):
+    death_rays: dict[int, DeathRay] = {}
 
     def __init__(
         self,
-        owner: game_object,
+        owner: GameObject,
     ) -> None:
         super().__init__(
             owner=owner,
@@ -230,7 +230,7 @@ class death_ray(projectile):
         self.alternate = True
         self.score = 0
         self.damage = 3
-        death_ray.death_rays[game_object.object_counter] = self
+        DeathRay.death_rays[GameObject.object_counter] = self
 
     def go(self):
         if self.alternate:
@@ -240,7 +240,7 @@ class death_ray(projectile):
         self.alternate = not self.alternate
         if time.time() - self.timestamp_spawn > self.life_time:
             self._dead = True
-            game_object.dead_objects.append(self.id)
+            GameObject.dead_objects.append(self.id)
 
     @property
     def x(self) -> int:
@@ -269,18 +269,18 @@ class death_ray(projectile):
         rx = self.x
         ry = self.y
         while (
-            (game_object.frame_size_x - 1) not in xs
+            (GameObject.frame_size_x - 1) not in xs
             and 0 not in xs
             and 0 not in ys
-            and (game_object.frame_size_y - 1) not in ys
+            and (GameObject.frame_size_y - 1) not in ys
         ):
             rx += self.dx
             ry += self.dy
             if round(rx) not in xs or round(ry) not in ys:
-                xs.extend([(round(rx) + i) % (game_object.frame_size_x) for i in range(-1, 2)])
-                xs.extend([round(rx) % (game_object.frame_size_x) for i in range(-1, 2)])
-                ys.extend([round(ry) % (game_object.frame_size_y) for i in range(-1, 2)])
-                ys.extend([(round(ry) + i) % (game_object.frame_size_y) for i in range(-1, 2)])
+                xs.extend([(round(rx) + i) % (GameObject.frame_size_x) for i in range(-1, 2)])
+                xs.extend([round(rx) % (GameObject.frame_size_x) for i in range(-1, 2)])
+                ys.extend([round(ry) % (GameObject.frame_size_y) for i in range(-1, 2)])
+                ys.extend([(round(ry) + i) % (GameObject.frame_size_y) for i in range(-1, 2)])
         return xs
 
     @property
@@ -294,29 +294,29 @@ class death_ray(projectile):
         rx = self.x
         ry = self.y
         while (
-            (game_object.frame_size_x - 1) not in xs
+            (GameObject.frame_size_x - 1) not in xs
             and 0 not in xs
             and 0 not in ys
-            and (game_object.frame_size_y - 1) not in ys
+            and (GameObject.frame_size_y - 1) not in ys
         ):
             rx += self.dx
             ry += self.dy
             if round(rx) not in xs or round(ry) not in ys:
-                xs.extend([(round(rx) + i) % (game_object.frame_size_x) for i in range(-1, 2)])
-                xs.extend([round(rx) % (game_object.frame_size_x) for i in range(-1, 2)])
-                ys.extend([round(ry) % (game_object.frame_size_y) for i in range(-1, 2)])
-                ys.extend([(round(ry) + i) % (game_object.frame_size_y) for i in range(-1, 2)])
+                xs.extend([(round(rx) + i) % (GameObject.frame_size_x) for i in range(-1, 2)])
+                xs.extend([round(rx) % (GameObject.frame_size_x) for i in range(-1, 2)])
+                ys.extend([round(ry) % (GameObject.frame_size_y) for i in range(-1, 2)])
+                ys.extend([(round(ry) + i) % (GameObject.frame_size_y) for i in range(-1, 2)])
         return ys
 
-    def collide(self, obj: game_object, xys: list[tuple[int, int]]) -> None:
+    def collide(self, obj: GameObject, xys: list[tuple[int, int]]) -> None:
         if obj.id != self.owner.id:
             self.collided.append(obj)
             self.collision_xys.append(xys)
             self.health -= obj.damage
             self.owner.score += obj.point_value
             obj.point_value = 0
-            if self.dead and self.id not in game_object.dead_objects:
-                game_object.dead_objects.append(self.id)
+            if self.dead and self.id not in GameObject.dead_objects:
+                GameObject.dead_objects.append(self.id)
 
     @property
     def dead(self) -> bool:
@@ -328,12 +328,28 @@ class death_ray(projectile):
 
 
 def run_space_game(lights: MatrixController):
-    os.environ["SDL_VIDEODRIVER"] = "dummy"
-    game_object.frame_size_x = lights.realLEDXaxisRange
-    game_object.frame_size_y = lights.realLEDYaxisRange
+    if not lights.testing:
+        os.environ["SDL_VIDEODRIVER"] = "dummy"
+    GameObject.frame_size_x = lights.realLEDXaxisRange
+    GameObject.frame_size_y = lights.realLEDYaxisRange
     MAX_ENEMY_SPEED = 0.5
     PAUSE_DELAY = 0.3
+    print("space")
     pygame.init()
+    rs: list[pygame.Rect] = []
+    if lights.testing:
+        display = pygame.display.set_mode((lights.realLEDXaxisRange * 10, lights.realLEDYaxisRange * 10))
+        display.fill((127, 127, 127))
+        for i in range(32):
+            for j in range(32):
+                rs.append(
+                    pygame.draw.rect(
+                        display,
+                        (0, 0, 0),
+                        (((i * 10) + 1, (j * 10) + 1), (8, 8)),
+                    )
+                )
+        pygame.display.flip()
     THRESHOLD = 0.05
     fade = ArrayFunction(lights, MatrixFunction.functionMatrixFadeOff, ArrayPattern.DefaultColorSequenceByMonth())
     fade.fadeAmount = 0.5
@@ -367,6 +383,7 @@ def run_space_game(lights: MatrixController):
     exiting = False
     joysticks: dict[int, pygame.joystick.Joystick] = {}
     spaceships: dict[int, SpaceShip] = {}
+    print(pygame.joystick.get_count())
     while not exiting:
         if len(joysticks) != pygame.joystick.get_count():
             if len(joysticks) < pygame.joystick.get_count() and pygame.joystick.get_count() <= 4:
@@ -448,6 +465,7 @@ def run_space_game(lights: MatrixController):
                         lights.virtualLEDBuffer[-int(ship.score) :, x, :] = ArrayPattern.ColorTransitionArray(
                             int(ship.score), not_ready
                         )
+        # print(joysticks[0].get_axis(0))
         for event in pygame.event.get():
             if "joy" in event.dict:
                 t = time.time()
@@ -474,7 +492,7 @@ def run_space_game(lights: MatrixController):
                             ) and not (pause):
                                 if t - ship.deathray_time > DEATH_RAY_DELAY:
                                     ship.deathray_time = t
-                                    death_ray(
+                                    DeathRay(
                                         owner=ship,
                                     )
                         elif event.dict["axis"] == XboxJoystick.TRIGGER_RIGHT and value > 0.5:
@@ -529,13 +547,22 @@ def run_space_game(lights: MatrixController):
                         e.y = random.randint(0, lights.realLEDXaxisRange - 1)
         if not pause:
             check_for_collisions()
-            for obj in game_object.objects.values():
+            for obj in GameObject.objects.values():
                 try:
                     lights.virtualLEDBuffer[obj.xs, obj.ys] = Pixel(obj.color).array
                 except:  # noqa
                     pass
-            lights.copyVirtualLedsToWS281X()
-            lights.refreshLEDs()
+            if not lights.simulate:
+                lights.copyVirtualLedsToWS281X()
+                lights.refreshLEDs()
+            else:
+                counter = 0
+                for row in lights.virtualLEDBuffer:
+                    for column in row:
+                        pygame.draw.rect(display, [int(x) for x in column], rs[counter])
+                        counter += 1
+                pygame.display.update()
+                time.sleep(0.15)
 
 
 if __name__ == "__main__":
@@ -563,6 +590,7 @@ if __name__ == "__main__":
         ]
     )
     MATRIX_SHAPE = (16, 16)
+    SIMULATE = True
 
     # create the lightberries Controller object
     lights = MatrixController(
@@ -579,6 +607,8 @@ if __name__ == "__main__":
         debug=True,
         matrixLayout=MATRIX_LAYOUT,
         matrixShape=MATRIX_SHAPE,
+        simulate=True,
+        testing=True,
     )
     while True:
         run_space_game(lights=lights)

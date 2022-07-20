@@ -69,6 +69,7 @@ class ArrayController:
         verbose: bool = False,
         refreshCallback: Callable = None,
         simulate: bool = False,
+        testing: bool = False,
     ) -> None:
         """Create a LightArrayController object for running patterns across a rpi_ws281x LED string.
 
@@ -124,6 +125,7 @@ class ArrayController:
                 stripTypeLED=stripTypeLED,
                 gamma=gamma,
                 simulate=simulate,
+                testing=testing,
             )
 
             # initialize instance variables
@@ -175,6 +177,7 @@ class ArrayController:
         stripTypeLED: Any,
         gamma: Any,
         simulate: bool,
+        testing: bool = False,
     ) -> None:
         self.ws281xString: Optional[WS281xString] = WS281xString(
             ledCount=ledCount,
@@ -187,6 +190,7 @@ class ArrayController:
             stripTypeLED=stripTypeLED,
             gamma=gamma,
             simulate=simulate,
+            testing=testing,
         )
 
     def __del__(

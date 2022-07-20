@@ -97,7 +97,9 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/basic_multi_matrix.py",
 				"console": "integratedTerminal",
-				"sudo": true
+				"linux": {
+					"sudo": true
+				}
 			},
 			{
 				"name": "example: demo array",
@@ -113,7 +115,7 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/demo_matrix.py",
 				"console": "integratedTerminal",
-				"sudo": true
+				// "sudo": true
 			},
 			{
 				"name": "example: audio",
@@ -196,7 +198,9 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/games/space.py",
 				"console": "integratedTerminal",
-				"sudo": true,
+				"linux": {
+					"sudo": true
+				},
 				"justMyCode": false
 			},
 			{
