@@ -1,10 +1,10 @@
 import pygame
-from typing import Generator
+from typing import Callable, Generator
 from enum import IntEnum
 import os
 from dataclasses import dataclass
-
-os.environ["SDL_VIDEODRIVER"] = "dummy"
+from lightberries.matrix_controller import MatrixController
+import time
 
 
 class ButtonState(IntEnum):
@@ -73,9 +73,116 @@ class LightEventId(IntEnum):
 
 
 @dataclass
+class vector:
+    x: float
+    y: float
+
+
+class Controller:
+    def __init__(self, controller: pygame.joystick.Joystick) -> None:
+        self.controller = controller
+
+    @property
+    def B00(self) -> bool:
+        return self.controller.get_button(0)
+
+    @property
+    def B01(self) -> bool:
+        return self.controller.get_button(1)
+
+    @property
+    def B02(self) -> bool:
+        return self.controller.get_button(2)
+
+    @property
+    def B03(self) -> bool:
+        return self.controller.get_button(3)
+
+    @property
+    def B04(self) -> bool:
+        return self.controller.get_button(4)
+
+    @property
+    def B05(self) -> bool:
+        return self.controller.get_button(5)
+
+    @property
+    def B06(self) -> bool:
+        return self.controller.get_button(6)
+
+    @property
+    def B07(self) -> bool:
+        return self.controller.get_button(7)
+
+    @property
+    def B08(self) -> bool:
+        return self.controller.get_button(8)
+
+    @property
+    def B09(self) -> bool:
+        return self.controller.get_button(9)
+
+    @property
+    def B10(self) -> bool:
+        return self.controller.get_button(10)
+
+    @property
+    def B11(self) -> bool:
+        return self.controller.get_button(11)
+
+    @property
+    def B12(self) -> bool:
+        return self.controller.get_button(12)
+
+    @property
+    def B13(self) -> bool:
+        return self.controller.get_button(13)
+
+    @property
+    def B14(self) -> bool:
+        return self.controller.get_button(14)
+
+    @property
+    def B15(self) -> bool:
+        return self.controller.get_button(15)
+
+    @property
+    def H0(self) -> vector:
+        return vector(*self.controller.get_hat(0))
+
+    @property
+    def H1(self) -> vector:
+        return vector(*self.controller.get_hat(1))
+
+    @property
+    def A0(self) -> float:
+        return self.controller.get_axis(0)
+
+    @property
+    def A1(self) -> float:
+        return self.controller.get_axis(1)
+
+    @property
+    def A2(self) -> float:
+        return self.controller.get_axis(2)
+
+    @property
+    def A3(self) -> float:
+        return self.controller.get_axis(3)
+
+    @property
+    def A4(self) -> float:
+        return self.controller.get_axis(4)
+
+    @property
+    def A5(self) -> float:
+        return self.controller.get_axis(5)
+
+
+@dataclass
 class LightEvent:
     controller_instance_id: int
-    controller: pygame.joystick.Joystick
+    controller: Controller
     controller_index: int
     event_id: LightEventId
 
@@ -88,21 +195,103 @@ class LightEvent:
         )
 
 
-class LightGame:
-    def __init__(self) -> None:
-        print("LightGame")
-        pygame.init()
-        self._controller_instance_dict: dict[int, pygame.joystick.Joystick] = {}
-        self._controller_index_dict: dict[int, pygame.joystick.Joystick] = {}
-        self._instance_to_index_dict: dict[int, int] = {}
+class XboxController(Controller):
+    def __init__(self, controller: pygame.joystick.Joystick) -> None:
+        super().__init__(controller=controller)
+        self.controller = controller
 
-    def get_joysticks(self) -> dict[int, pygame.joystick.Joystick]:
+    @property
+    def A(self) -> bool:
+        return self.B00
+
+    @property
+    def B(self) -> bool:
+        return self.B01
+
+    @property
+    def Y(self) -> bool:
+        return self.B03
+
+    @property
+    def X(self) -> bool:
+        return self.B02
+
+    @property
+    def LB(self) -> bool:
+        return self.B09
+
+    @property
+    def RB(self) -> bool:
+        return self.B10
+
+    @property
+    def DPAD(self) -> vector:
+        return self.H0
+
+    @property
+    def LS(self) -> vector:
+        return vector(self.A0, self.A1)
+
+    @property
+    def RS(self) -> vector:
+        return vector(self.A2, self.A3)
+
+    @property
+    def LT(self) -> float:
+        return self.A4
+
+    @property
+    def RT(self) -> float:
+        return self.A5
+
+
+class LightGame:
+    def __init__(self, lights: MatrixController) -> None:
+        pygame.init()
+        self.lights = lights
+        self.rs: list[pygame.Rect] = []
+        self.win = False
+        self.win_time = time.time()
+        self.win_score = int(lights.realLEDYaxisRange // 2)
+        self.display = None
+        self.exiting = False
+        self.pause = True
+        if lights.testing:
+            self.display = pygame.display.set_mode((lights.realLEDXaxisRange * 10, lights.realLEDYaxisRange * 10))
+            self.display.fill((127, 127, 127))
+            for i in range(32):
+                for j in range(32):
+                    self.rs.append(
+                        pygame.draw.rect(
+                            self.display,
+                            (0, 0, 0),
+                            (((i * 10) + 1, (j * 10) + 1), (8, 8)),
+                        )
+                    )
+            pygame.display.flip()
+        else:
+            os.environ["SDL_VIDEODRIVER"] = "dummy"
+        self._controller_instance_dict: dict[int, XboxController] = {}
+        self._controller_index_dict: dict[int, XboxController] = {}
+        self._instance_to_index_dict: dict[int, int] = {}
+        self._callbacks: dict[LightEventId, Callable[[LightEvent], None]] = {}
+
+    def add_callback(self, event_id: LightEventId, callback: Callable[[LightEvent], None]) -> None:
+        self._callbacks[event_id] = callback
+
+    def get_controllers(self) -> dict[int, XboxController]:
         joystick_count = pygame.joystick.get_count()
         for i in range(joystick_count):
             j = pygame.joystick.Joystick(i)
             if i in self._controller_index_dict:
-                self._controller_index_dict[i].quit()
-            self._controller_index_dict[i] = j
+                self._controller_index_dict[i].controller.quit()
+            j.init()
+            xj = XboxController(j)
+            self._controller_index_dict[i] = xj
+            self._controller_instance_dict[j.get_instance_id()] = xj
+            self._instance_to_index_dict[i] = j.get_instance_id()
+            self.pause = False
+        return self._controller_index_dict
 
     def get_events(self) -> Generator[LightEvent, None, None]:
         light_events: list[LightEvent] = []
@@ -337,8 +526,8 @@ class LightGame:
                     print(pygame_event)
             elif pygame_event.type == 1541:
                 controller_index = pygame_event.dict["device_index"]
-                controller_instance_id = len(self._controller_instance_dict)
                 controller = self._controller_index_dict[controller_index]
+                controller_instance_id = controller.controller.get_instance_id()
                 self._controller_instance_dict[controller_instance_id] = controller
                 self._instance_to_index_dict[controller_instance_id] = controller_index
                 light_events.append(
@@ -362,7 +551,22 @@ class LightGame:
             else:
                 print(pygame_event)
         for event in light_events:
+            if event.event_id in self._callbacks:
+                self._callbacks[event.event_id](event)
             yield event
+
+    def get_state(self):
+        state = []
+        for controller in self.get_controllers().values():
+            if controller.get_button(XboxButton.A):
+                state.append(
+                    ButtonBottom(
+                        controller=controller,
+                        controller_index=self._controller_index_dict[controller.get_instance_id()],
+                        controller_instance_id=controller.get_instance_id(),
+                        state=ButtonState.Down,
+                    )
+                )
 
 
 @dataclass
