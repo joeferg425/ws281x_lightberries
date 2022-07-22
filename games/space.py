@@ -2,14 +2,10 @@
 from __future__ import annotations
 import random
 import time
-from light_game import LightEvent, LightEventId, LightGame, XboxController
-from lightberries.array_patterns import ArrayPattern
+from light_game import LightEvent, LightEventId, LightGame
 from lightberries.matrix_controller import MatrixController
-from lightberries.pixel import Pixel, PixelColors
-from lightberries.array_functions import ArrayFunction
-from lightberries.matrix_functions import MatrixFunction
-from game_objects import GameObject, Player, Projectile, check_for_collisions, Enemy
-import pygame
+from lightberries.pixel import PixelColors
+from game_objects import GameObject, Player, Projectile, Enemy
 import numpy as np
 
 
@@ -329,142 +325,40 @@ class DeathRay(Projectile):
 
 class SpaceGame(LightGame):
     MAX_ENEMY_SPEED = 0.5
-    PAUSE_DELAY = 0.3
-    THRESHOLD = 0.05
     BULLET_DELAY = 0.2
     MIN_BULLET_SPEED = 0.05
     ENEMY_DELAY = 1.5
     SHIELD_ENEMY_CHANCE = 10
-    WIN_DURATION = 10
-    RESPAWN_DELAY = 1
     DEATH_RAY_DELAY = 3
 
     def __init__(self, lights: MatrixController):
         super().__init__(lights=lights)
-        GameObject.frame_size_x = lights.realLEDXaxisRange
-        GameObject.frame_size_y = lights.realLEDYaxisRange
-        self.fade = ArrayFunction(
-            lights, MatrixFunction.functionMatrixFadeOff, ArrayPattern.DefaultColorSequenceByMonth()
-        )
-        self.fade.fadeAmount = 0.5
-        self.fade.color = PixelColors.OFF.array
+        self.exiting = False
         self.enemy_delay = SpaceGame.ENEMY_DELAY
         self.enemy_time = time.time()
-        self.fireworks = []
-        for i in range(10):
-            firework = MatrixFunction(lights, MatrixFunction.functionMatrixFireworks, ArrayPattern.RainbowArray(10))
-            firework.rowIndex = random.randint(0, lights.realLEDXaxisRange - 1)
-            firework.columnIndex = random.randint(0, lights.realLEDYaxisRange - 1)
-            firework.size = 1
-            firework.step = 1
-            firework.sizeMax = min(int(lights.realLEDXaxisRange / 2), int(lights.realLEDYaxisRange / 2))
-            firework.colorCycle = True
-            for _ in range(i):
-                firework.color = firework.colorSequenceNext
-            self.fireworks.append(firework)
-        self.pause_time = time.time()
-        self.exiting = False
-        # joysticks: dict[int, pygame.joystick.Joystick] = {}
-        self.spaceships: dict[int, SpaceShip] = {}
+        self.players: dict[int, SpaceShip] = {}
         self.add_callback(event_id=LightEventId.ControllerAdded, callback=self.add_spaceship)
 
-    def add_spaceship(self, event: LightEvent):
-        self.spaceships[event.controller_instance_id] = SpaceShip(
+    def get_new_player(self) -> GameObject:
+        return SpaceShip(
             x=random.randint(0, lights.realLEDXaxisRange - 1),
             y=random.randint(0, lights.realLEDYaxisRange - 1),
         )
 
+    def add_spaceship(self, event: LightEvent):
+        self.players[event.controller_instance_id] = self.get_new_player()
+
     def run(self):
-        # print(pygame.joystick.get_count())
         while True:
-            self.get_controllers()
-            #     if len(joysticks) != pygame.joystick.get_count():
-            #         if len(joysticks) < pygame.joystick.get_count() and pygame.joystick.get_count() <= 4:
-            #             for i in range(0, pygame.joystick.get_count()):
-            #                 if i not in joysticks:
-            #                     joysticks[i] = pygame.joystick.Joystick(i)
-            #                     joysticks[i].init()
-            #                     spaceships[i] = SpaceShip(
-            #                         x=random.randint(0, lights.realLEDXaxisRange),
-            #                         y=random.randint(0, lights.realLEDYaxisRange),
-            #                     )
-            #         else:
-            #             while len(spaceships) > pygame.joystick.get_count():
-            #                 spaceships[len(spaceships) - 1]._dead = True
-            #                 joysticks[len(spaceships) - 1].quit()
-            #                 spaceships.pop(len(spaceships) - 1)
-            #         if pygame.joystick.get_count() == 0:
-            #             pause = True
-            #         else:
-            #             pause = False
             self.enemy_delay = SpaceGame.ENEMY_DELAY * len(self.get_controllers())
-            if any([player.score >= self.win_score for player in self.spaceships.values()]):
-                if not self.win:
-                    for ship in self.spaceships.values():
-                        if ship.score >= self.win_score:
-                            break
-                    self.win = True
-                    self.win_time = time.time()
-                    for firework in self.fireworks:
-                        firework.color = Pixel(ship.color).array
-                for firework in self.fireworks:
-                    firework.run()
-                self.lights.copyVirtualLedsToWS281X()
-                self.lights.refreshLEDs()
-                if time.time() - self.win_time > SpaceGame.WIN_DURATION:
-                    self.win = False
-                    for i in self.spaceships.keys():
-                        self.spaceships[i].score = 0
-                        self.spaceships[i]._dead = True
-                self.fade.run()
-                continue
-            else:
-                self.fade.run()
-            for index, ship in self.spaceships.items():
-                if ship.dead:
-                    if time.time() - ship.dead_time > SpaceGame.RESPAWN_DELAY:
-                        color = self.spaceships[index].color
-                        self.spaceships[index] = SpaceShip(
-                            x=random.randint(0, lights.realLEDYaxisRange - 1),
-                            y=random.randint(0, lights.realLEDXaxisRange - 1),
-                        )
-                        self.spaceships[index].color = color
-                ready = np.array([Pixel(PixelColors.GRAY.array).array, Pixel(ship.color).array])
-                not_ready = np.array([Pixel(PixelColors.OFF.array).array, Pixel(ship.color).array])
-                if index % 2 == 0:
-                    if index == 0:
-                        x = 0
-                    else:
-                        x = self.lights.realLEDYaxisRange - 1
-                    if time.time() - ship.deathray_time >= SpaceGame.DEATH_RAY_DELAY:
-                        self.lights.virtualLEDBuffer[: int(ship.score), x, :] = ArrayPattern.ColorTransitionArray(
-                            int(ship.score), ready
-                        )
-                    else:
-                        self.lights.virtualLEDBuffer[: int(ship.score), x, :] = ArrayPattern.ColorTransitionArray(
-                            int(ship.score), not_ready
-                        )
-                else:
-                    if index == 1:
-                        x = 0
-                    else:
-                        x = self.lights.realLEDYaxisRange - 1
-                    if ship.score > 0:
-                        if time.time() - ship.deathray_time >= SpaceGame.DEATH_RAY_DELAY:
-                            self.lights.virtualLEDBuffer[-int(ship.score) :, x, :] = ArrayPattern.ColorTransitionArray(
-                                int(ship.score), ready
-                            )
-                        else:
-                            self.lights.virtualLEDBuffer[-int(ship.score) :, x, :] = ArrayPattern.ColorTransitionArray(
-                                int(ship.score), not_ready
-                            )
-            # print(joysticks[0].get_axis(0))
+            self.check_for_winner()
+            self.respawn_dead_players()
+            self.show_scores()
             for event in self.get_events():
                 t = time.time()
-                ship = self.spaceships[event.controller_instance_id]
+                ship = self.players[event.controller_instance_id]
                 controller = event.controller
                 if not ship.dead:
-                    # if event.event_id == LightEventId.StickLeft:
                     vector = controller.LS
                     if np.abs(vector.x) > SpaceGame.THRESHOLD:
                         ship.dx = vector.x
@@ -474,7 +368,6 @@ class SpaceGame(LightGame):
                         ship.dy = vector.y
                     else:
                         ship.dy = 0
-                    # elif event.event_id == LightEventId.StickRight:
                     ship.x_aim = controller.RS.x
                     ship.y_aim = controller.RS.y
                     if controller.LT > 0.0:
@@ -535,29 +428,12 @@ class SpaceGame(LightGame):
                 failing = True
                 while failing:
                     failing = False
-                    for ship in self.spaceships.values():
+                    for ship in self.players.values():
                         if abs(e.x - ship.x) < 5 and abs(e.y - ship.y) < 5:
                             failing = True
                             e.x = random.randint(0, lights.realLEDYaxisRange - 1)
                             e.y = random.randint(0, lights.realLEDXaxisRange - 1)
-            if not self.pause:
-                check_for_collisions()
-                for obj in GameObject.objects.values():
-                    try:
-                        self.lights.virtualLEDBuffer[obj.xs, obj.ys] = Pixel(obj.color).array
-                    except:  # noqa
-                        pass
-                if not self.lights.simulate:
-                    self.lights.copyVirtualLedsToWS281X()
-                    self.lights.refreshLEDs()
-                else:
-                    counter = 0
-                    for row in lights.virtualLEDBuffer:
-                        for column in row:
-                            pygame.draw.rect(self.display, [int(x) for x in column], self.rs[counter])
-                            counter += 1
-                    pygame.display.update()
-                    time.sleep(0.10)
+            self.update_game()
 
 
 if __name__ == "__main__":

@@ -1,10 +1,17 @@
 import pygame
 from typing import Callable, Generator
+import random
 from enum import IntEnum
+import numpy as np
 import os
 from dataclasses import dataclass
 from lightberries.matrix_controller import MatrixController
+from lightberries.matrix_functions import MatrixFunction
+from lightberries.array_functions import ArrayFunction
+from lightberries.array_patterns import ArrayPattern
+from lightberries.pixel import Pixel, PixelColors
 import time
+from game_objects import GameObject, Player, check_for_collisions
 
 
 class ButtonState(IntEnum):
@@ -246,9 +253,18 @@ class XboxController(Controller):
 
 
 class LightGame:
+    PAUSE_DELAY = 0.3
+    THRESHOLD = 0.05
+    WIN_DURATION = 10
+    RESPAWN_DELAY = 1
+    SPECIAL_WEAPON_DELAY = 3
+
     def __init__(self, lights: MatrixController) -> None:
         pygame.init()
         self.lights = lights
+        GameObject.frame_size_x = self.lights.realLEDXaxisRange
+        GameObject.frame_size_y = self.lights.realLEDYaxisRange
+        self.players: dict[int, GameObject] = {}
         self.rs: list[pygame.Rect] = []
         self.win = False
         self.win_time = time.time()
@@ -271,10 +287,31 @@ class LightGame:
             pygame.display.flip()
         else:
             os.environ["SDL_VIDEODRIVER"] = "dummy"
+        self.fade = ArrayFunction(
+            lights, MatrixFunction.functionMatrixFadeOff, ArrayPattern.DefaultColorSequenceByMonth()
+        )
+        self.fade.fadeAmount = 0.5
+        self.fade.color = PixelColors.OFF.array
+        self.fireworks = []
+        for i in range(10):
+            firework = MatrixFunction(lights, MatrixFunction.functionMatrixFireworks, ArrayPattern.RainbowArray(10))
+            firework.rowIndex = random.randint(0, lights.realLEDXaxisRange - 1)
+            firework.columnIndex = random.randint(0, lights.realLEDYaxisRange - 1)
+            firework.size = 1
+            firework.step = 1
+            firework.sizeMax = min(int(lights.realLEDXaxisRange / 2), int(lights.realLEDYaxisRange / 2))
+            firework.colorCycle = True
+            for _ in range(i):
+                firework.color = firework.colorSequenceNext
+            self.fireworks.append(firework)
+        self.pause_time = time.time()
         self._controller_instance_dict: dict[int, XboxController] = {}
         self._controller_index_dict: dict[int, XboxController] = {}
         self._instance_to_index_dict: dict[int, int] = {}
         self._callbacks: dict[LightEventId, Callable[[LightEvent], None]] = {}
+
+    def get_new_player(self) -> GameObject:
+        return Player(0, 0)
 
     def add_callback(self, event_id: LightEventId, callback: Callable[[LightEvent], None]) -> None:
         self._callbacks[event_id] = callback
@@ -526,6 +563,8 @@ class LightGame:
                     print(pygame_event)
             elif pygame_event.type == 1541:
                 controller_index = pygame_event.dict["device_index"]
+                if controller_index not in self._controller_index_dict:
+                    self.get_controllers()
                 controller = self._controller_index_dict[controller_index]
                 controller_instance_id = controller.controller.get_instance_id()
                 self._controller_instance_dict[controller_instance_id] = controller
@@ -555,18 +594,90 @@ class LightGame:
                 self._callbacks[event.event_id](event)
             yield event
 
-    def get_state(self):
-        state = []
-        for controller in self.get_controllers().values():
-            if controller.get_button(XboxButton.A):
-                state.append(
-                    ButtonBottom(
-                        controller=controller,
-                        controller_index=self._controller_index_dict[controller.get_instance_id()],
-                        controller_instance_id=controller.get_instance_id(),
-                        state=ButtonState.Down,
+    def check_for_winner(self):
+        t = time.time()
+        if any([player.score >= self.win_score for player in self.players.values()]):
+            if not self.win:
+                for ship in self.spaceships.values():
+                    if ship.score >= self.win_score:
+                        break
+                self.win = True
+                self.win_time = t
+                for firework in self.fireworks:
+                    firework.color = Pixel(ship.color).array
+            for firework in self.fireworks:
+                firework.run()
+            self.lights.copyVirtualLedsToWS281X()
+            self.lights.refreshLEDs()
+            if t - self.win_time > LightGame.WIN_DURATION:
+                self.win = False
+                for i in self.spaceships.keys():
+                    self.spaceships[i].score = 0
+                    self.spaceships[i]._dead = True
+
+    def respawn_dead_players(self):
+        for index, ship in self.players.items():
+            if ship.dead:
+                if time.time() - ship.dead_time > LightGame.RESPAWN_DELAY:
+                    color = self.players[index].color
+                    self.players[index] = self.get_new_player
+                    self.players[index].color = color
+
+    def show_scores(self):
+        for index, ship in self.players.items():
+            ready = np.array([Pixel(PixelColors.GRAY.array).array, Pixel(ship.color).array])
+            not_ready = np.array([Pixel(PixelColors.OFF.array).array, Pixel(ship.color).array])
+            if index % 2 == 0:
+                if index == 0:
+                    x = 0
+                else:
+                    x = self.lights.realLEDYaxisRange - 1
+                if time.time() - ship.deathray_time >= LightGame.SPECIAL_WEAPON_DELAY:
+                    self.lights.virtualLEDBuffer[: int(ship.score), x, :] = ArrayPattern.ColorTransitionArray(
+                        int(ship.score), ready
                     )
-                )
+                else:
+                    self.lights.virtualLEDBuffer[: int(ship.score), x, :] = ArrayPattern.ColorTransitionArray(
+                        int(ship.score), not_ready
+                    )
+            else:
+                if index == 1:
+                    x = 0
+                else:
+                    x = self.lights.realLEDYaxisRange - 1
+                if ship.score > 0:
+                    if time.time() - ship.deathray_time >= LightGame.SPECIAL_WEAPON_DELAY:
+                        self.lights.virtualLEDBuffer[-int(ship.score) :, x, :] = ArrayPattern.ColorTransitionArray(
+                            int(ship.score), ready
+                        )
+                    else:
+                        self.lights.virtualLEDBuffer[-int(ship.score) :, x, :] = ArrayPattern.ColorTransitionArray(
+                            int(ship.score), not_ready
+                        )
+
+    def update_game(self):
+        if not self.win:
+            self.fade.run()
+        else:
+            self.fade.run()
+        if not self.pause and not self.win:
+            check_for_collisions()
+            for obj in GameObject.objects.values():
+                try:
+                    self.lights.virtualLEDBuffer[obj.xs, obj.ys] = Pixel(obj.color).array
+                except:  # noqa
+                    pass
+            if not self.lights.simulate:
+                self.lights.copyVirtualLedsToWS281X()
+                self.lights.refreshLEDs()
+            else:
+                counter = 0
+                for row in self.lights.virtualLEDBuffer:
+                    for column in row:
+                        pygame.draw.rect(self.display, [int(x) for x in column], self.rs[counter])
+                        counter += 1
+                pygame.display.update()
+                time.sleep(0.10)
 
 
 @dataclass
