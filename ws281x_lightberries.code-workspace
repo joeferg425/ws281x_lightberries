@@ -65,7 +65,10 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/src/lightberries/__main__.py",
 				"console": "integratedTerminal",
-				"sudo": true,
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false,
 				"args": [
 					"-b",
 					"0.1",
@@ -81,7 +84,10 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/basic_array.py",
 				"console": "integratedTerminal",
-				"sudo": true
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false
 			},
 			{
 				"name": "example: basic matrix",
@@ -89,7 +95,10 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/basic_matrix.py",
 				"console": "integratedTerminal",
-				"sudo": true
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false
 			},
 			{
 				"name": "example: basic multi matrix",
@@ -99,7 +108,8 @@
 				"console": "integratedTerminal",
 				"linux": {
 					"sudo": true
-				}
+				},
+				"justMyCode": false
 			},
 			{
 				"name": "example: demo array",
@@ -107,7 +117,10 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/demo_array.py",
 				"console": "integratedTerminal",
-				"sudo": true
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false
 			},
 			{
 				"name": "example: demo matrix",
@@ -115,7 +128,10 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/demo_matrix.py",
 				"console": "integratedTerminal",
-				// "sudo": true
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false
 			},
 			{
 				"name": "example: audio",
@@ -123,7 +139,10 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/audio.py",
 				"console": "integratedTerminal",
-				"sudo": true
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false
 			},
 			{
 				"name": "example: GUI functions",
@@ -131,7 +150,10 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/gui_functions.py",
 				"console": "integratedTerminal",
-				"sudo": true
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false
 			},
 			{
 				"name": "example: GUI pixels",
@@ -139,7 +161,10 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/gui_pixels.py",
 				"console": "integratedTerminal",
-				"sudo": true
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false
 			},
 			{
 				"name": "example: simulate",
@@ -147,7 +172,10 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/simulate.py",
 				"console": "integratedTerminal",
-				"sudo": true
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false
 			},
 			{
 				"name": "example: image",
@@ -155,7 +183,10 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/image.py",
 				"console": "integratedTerminal",
-				"sudo": true
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false
 			},
 			{
 				"name": "example: dot matrix",
@@ -163,7 +194,9 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/dot_matrix.py",
 				"console": "integratedTerminal",
-				"sudo": true,
+				"linux": {
+					"sudo": true
+				},
 				"justMyCode": false
 			},
 			{
@@ -172,7 +205,9 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/dot_array.py",
 				"console": "integratedTerminal",
-				"sudo": true,
+				"linux": {
+					"sudo": true
+				},
 				"justMyCode": false
 			},
 			{
@@ -181,7 +216,10 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/multi_matrix.py",
 				"console": "integratedTerminal",
-				"sudo": true
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false
 			},
 			{
 				"name": "game: xbox controller demo",
@@ -189,7 +227,9 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/games/xbox_controller.py",
 				"console": "integratedTerminal",
-				"sudo": true,
+				"linux": {
+					"sudo": true
+				},
 				"justMyCode": false
 			},
 			{
@@ -209,7 +249,9 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/games/jump.py",
 				"console": "integratedTerminal",
-				"sudo": true,
+				"linux": {
+					"sudo": true
+				},
 				"justMyCode": false
 			},
 			{
@@ -218,7 +260,9 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/games/eat.py",
 				"console": "integratedTerminal",
-				"sudo": true,
+				"linux": {
+					"sudo": true
+				},
 				"justMyCode": false
 			}
 		],

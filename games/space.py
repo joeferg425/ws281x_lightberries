@@ -349,7 +349,7 @@ class SpaceGame(LightGame):
         self.players[event.controller_instance_id] = self.get_new_player()
 
     def run(self):
-        while True:
+        while not self.exiting:
             self.enemy_delay = SpaceGame.ENEMY_DELAY * len(self.get_controllers())
             self.check_for_winner()
             self.respawn_dead_players()
@@ -378,6 +378,7 @@ class SpaceGame(LightGame):
                         ) and not (self.pause):
                             if t - ship.deathray_time > SpaceGame.DEATH_RAY_DELAY:
                                 ship.deathray_time = t
+                                ship.timestamp_ready = t
                                 DeathRay(
                                     owner=ship,
                                 )
@@ -433,6 +434,7 @@ class SpaceGame(LightGame):
                             failing = True
                             e.x = random.randint(0, lights.realLEDYaxisRange - 1)
                             e.y = random.randint(0, lights.realLEDXaxisRange - 1)
+            self.check_end_game()
             self.update_game()
 
 
@@ -481,5 +483,4 @@ if __name__ == "__main__":
         simulate=True,
         testing=True,
     )
-    while True:
-        SpaceGame(lights=lights).run()
+    SpaceGame(lights=lights).run()

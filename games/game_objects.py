@@ -85,6 +85,7 @@ class GameObject:
         self.point_value = 1
         self.id = GameObject.object_counter
         self.children: dict[int, GameObject] = {}
+        self.timestamp_ready = self.timestamp_spawn
         GameObject.objects[GameObject.object_counter] = self
         GameObject.object_counter += 1
 
@@ -378,13 +379,13 @@ class Sprite(GameObject):
                 self.dead_time = time.time()
                 self._dead = True
         elif self.bounded:
-            if self.x >= (GameObject.frame_size_x - 1) or self.x <= 0:
+            if self.x > (GameObject.frame_size_x - 1) or self.x < 0:
                 if self.id not in GameObject.dead_objects:
                     GameObject.dead_objects.append(self.id)
                 if not self._dead:
                     self.dead_time = time.time()
                     self._dead = True
-            elif self.y >= (GameObject.frame_size_y - 1) or self.y <= 0:
+            elif self.y > (GameObject.frame_size_y - 1) or self.y < 0:
                 if self.id not in GameObject.dead_objects:
                     GameObject.dead_objects.append(self.id)
                 if not self._dead:

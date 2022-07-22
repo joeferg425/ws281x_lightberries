@@ -11,7 +11,7 @@ from lightberries.array_functions import ArrayFunction
 from lightberries.array_patterns import ArrayPattern
 from lightberries.pixel import Pixel, PixelColors
 import time
-from game_objects import GameObject, Player, check_for_collisions
+from game_objects import GameObject, Player, Sprite, check_for_collisions
 
 
 class ButtonState(IntEnum):
@@ -25,13 +25,13 @@ class XboxButton(IntEnum):
     B = 1
     X = 2
     Y = 3
-    OPTIONS = 4
-    XBOX = 5
-    START = 6
-    JOY_LEFT = 7
-    JOY_RIGHT = 8
-    BUMPER_LEFT = 9
-    BUMPER_RIGHT = 10
+    BUMPER_LEFT = 4
+    BUMPER_RIGHT = 5
+    OPTIONS = 6
+    START = 7
+    JOY_LEFT = 8
+    JOY_RIGHT = 9
+    XBOX = 10
     UP = 11
     DOWN = 12
     LEFT = 13
@@ -272,8 +272,9 @@ class LightGame:
         self.display = None
         self.exiting = False
         self.pause = True
-        if lights.testing:
-            self.display = pygame.display.set_mode((lights.realLEDXaxisRange * 10, lights.realLEDYaxisRange * 10))
+        if lights.simulate:
+            size = 16
+            self.display = pygame.display.set_mode((lights.realLEDXaxisRange * size, lights.realLEDYaxisRange * size))
             self.display.fill((127, 127, 127))
             for i in range(32):
                 for j in range(32):
@@ -281,7 +282,7 @@ class LightGame:
                         pygame.draw.rect(
                             self.display,
                             (0, 0, 0),
-                            (((i * 10) + 1, (j * 10) + 1), (8, 8)),
+                            (((i * size) + 1, (j * size) + 1), (size - 2, size - 2)),
                         )
                     )
             pygame.display.flip()
@@ -305,6 +306,7 @@ class LightGame:
                 firework.color = firework.colorSequenceNext
             self.fireworks.append(firework)
         self.pause_time = time.time()
+        self.timestamp_ready = time.time()
         self._controller_instance_dict: dict[int, XboxController] = {}
         self._controller_index_dict: dict[int, XboxController] = {}
         self._instance_to_index_dict: dict[int, int] = {}
@@ -318,6 +320,7 @@ class LightGame:
 
     def get_controllers(self) -> dict[int, XboxController]:
         joystick_count = pygame.joystick.get_count()
+        player_count = len(self.players)
         for i in range(joystick_count):
             j = pygame.joystick.Joystick(i)
             if i in self._controller_index_dict:
@@ -327,7 +330,10 @@ class LightGame:
             self._controller_index_dict[i] = xj
             self._controller_instance_dict[j.get_instance_id()] = xj
             self._instance_to_index_dict[i] = j.get_instance_id()
-            self.pause = False
+            if not self.pause and joystick_count == 0:
+                self.pause = True
+            elif player_count == 0 and self.pause and joystick_count > 0:
+                self.pause = False
         return self._controller_index_dict
 
     def get_events(self) -> Generator[LightEvent, None, None]:
@@ -339,7 +345,32 @@ class LightGame:
         right_joystick_x_count = 0
         right_joystick_y_count = 0
         for pygame_event in pygame.event.get():
-            if "joy" in pygame_event.dict:
+            if pygame_event.type == 256 or pygame_event.type == 32787:
+                self.exiting = True
+            elif pygame_event.type == 1024 or pygame_event.type == 1025 or pygame_event.type == 1026:
+                # mouse events
+                pass
+            elif (
+                pygame_event.type == 32768
+                or pygame_event.type == 32784
+                or pygame_event.type == 32774
+                or pygame_event.type == 32785
+                or pygame_event.type == 32770
+                or pygame_event.type == 32776
+                or pygame_event.type == 32780
+                or pygame_event.type == 32782
+                or pygame_event.type == 32783
+                or pygame_event.type == 32786
+            ):
+                # window events
+                pass
+            elif pygame_event.type == 4352:
+                # audio events
+                pass
+            elif pygame_event.type == 770:
+                # text events
+                pass
+            elif "joy" in pygame_event.dict:
                 controller_index = pygame_event.dict["joy"]
                 controller_instance_id = pygame_event.dict["instance_id"]
                 controller = self._controller_instance_dict[controller_instance_id]
@@ -558,6 +589,45 @@ class LightGame:
                     else:
                         pass
                         print(pygame_event)
+                elif "hat" in pygame_event.dict:
+                    hat = pygame_event.dict["hat"]
+                    value = pygame_event.dict["value"]
+                    if hat == 0 and value[1] == 1:
+                        light_events.append(
+                            ButtonHatUp(
+                                controller_index=controller_index,
+                                controller=controller,
+                                controller_instance_id=controller_instance_id,
+                                state=ButtonState.Down,
+                            )
+                        )
+                    elif hat == 0 and value[1] == -1:
+                        light_events.append(
+                            ButtonHatDown(
+                                controller_index=controller_index,
+                                controller=controller,
+                                controller_instance_id=controller_instance_id,
+                                state=ButtonState.Down,
+                            )
+                        )
+                    elif hat == 0 and value[0] == -1:
+                        light_events.append(
+                            ButtonHatLeft(
+                                controller_index=controller_index,
+                                controller=controller,
+                                controller_instance_id=controller_instance_id,
+                                state=ButtonState.Down,
+                            )
+                        )
+                    elif hat == 0 and value[0] == 1:
+                        light_events.append(
+                            ButtonHatRight(
+                                controller_index=controller_index,
+                                controller=controller,
+                                controller_instance_id=controller_instance_id,
+                                state=ButtonState.Down,
+                            )
+                        )
                 else:
                     pass
                     print(pygame_event)
@@ -598,61 +668,61 @@ class LightGame:
         t = time.time()
         if any([player.score >= self.win_score for player in self.players.values()]):
             if not self.win:
-                for ship in self.spaceships.values():
-                    if ship.score >= self.win_score:
+                for player in self.players.values():
+                    if player.score >= self.win_score:
                         break
                 self.win = True
                 self.win_time = t
                 for firework in self.fireworks:
-                    firework.color = Pixel(ship.color).array
+                    firework.color = Pixel(player.color).array
             for firework in self.fireworks:
                 firework.run()
             self.lights.copyVirtualLedsToWS281X()
             self.lights.refreshLEDs()
             if t - self.win_time > LightGame.WIN_DURATION:
                 self.win = False
-                for i in self.spaceships.keys():
-                    self.spaceships[i].score = 0
-                    self.spaceships[i]._dead = True
+                for i in self.players.keys():
+                    self.players[i].score = 0
+                    self.players[i]._dead = True
 
     def respawn_dead_players(self):
         for index, ship in self.players.items():
             if ship.dead:
                 if time.time() - ship.dead_time > LightGame.RESPAWN_DELAY:
                     color = self.players[index].color
-                    self.players[index] = self.get_new_player
+                    self.players[index] = self.get_new_player()
                     self.players[index].color = color
 
     def show_scores(self):
-        for index, ship in self.players.items():
-            ready = np.array([Pixel(PixelColors.GRAY.array).array, Pixel(ship.color).array])
-            not_ready = np.array([Pixel(PixelColors.OFF.array).array, Pixel(ship.color).array])
+        for index, player in self.players.items():
+            ready = np.array([Pixel(PixelColors.GRAY.array).array, Pixel(player.color).array])
+            not_ready = np.array([Pixel(PixelColors.OFF.array).array, Pixel(player.color).array])
             if index % 2 == 0:
                 if index == 0:
                     x = 0
                 else:
                     x = self.lights.realLEDYaxisRange - 1
-                if time.time() - ship.deathray_time >= LightGame.SPECIAL_WEAPON_DELAY:
-                    self.lights.virtualLEDBuffer[: int(ship.score), x, :] = ArrayPattern.ColorTransitionArray(
-                        int(ship.score), ready
+                if time.time() - player.timestamp_ready >= LightGame.SPECIAL_WEAPON_DELAY:
+                    self.lights.virtualLEDBuffer[: int(player.score), x, :] = ArrayPattern.ColorTransitionArray(
+                        int(player.score), ready
                     )
                 else:
-                    self.lights.virtualLEDBuffer[: int(ship.score), x, :] = ArrayPattern.ColorTransitionArray(
-                        int(ship.score), not_ready
+                    self.lights.virtualLEDBuffer[: int(player.score), x, :] = ArrayPattern.ColorTransitionArray(
+                        int(player.score), not_ready
                     )
             else:
                 if index == 1:
                     x = 0
                 else:
                     x = self.lights.realLEDYaxisRange - 1
-                if ship.score > 0:
-                    if time.time() - ship.deathray_time >= LightGame.SPECIAL_WEAPON_DELAY:
-                        self.lights.virtualLEDBuffer[-int(ship.score) :, x, :] = ArrayPattern.ColorTransitionArray(
-                            int(ship.score), ready
+                if player.score > 0:
+                    if time.time() - player.timestamp_ready >= LightGame.SPECIAL_WEAPON_DELAY:
+                        self.lights.virtualLEDBuffer[-int(player.score) :, x, :] = ArrayPattern.ColorTransitionArray(
+                            int(player.score), ready
                         )
                     else:
-                        self.lights.virtualLEDBuffer[-int(ship.score) :, x, :] = ArrayPattern.ColorTransitionArray(
-                            int(ship.score), not_ready
+                        self.lights.virtualLEDBuffer[-int(player.score) :, x, :] = ArrayPattern.ColorTransitionArray(
+                            int(player.score), not_ready
                         )
 
     def update_game(self):
@@ -660,7 +730,7 @@ class LightGame:
             self.fade.run()
         else:
             self.fade.run()
-        if not self.pause and not self.win:
+        if not self.pause and not self.win and not self.exiting:
             check_for_collisions()
             for obj in GameObject.objects.values():
                 try:
@@ -678,6 +748,13 @@ class LightGame:
                         counter += 1
                 pygame.display.update()
                 time.sleep(0.10)
+
+    def check_end_game(self):
+        if self.exiting:
+            for obj in self.players:
+                if isinstance(obj, Sprite):
+                    obj._dead = True
+            GameObject.dead_objects.extend(GameObject.objects)
 
 
 @dataclass
