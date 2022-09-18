@@ -233,7 +233,6 @@ class MatrixController(ArrayController):
             LightControlException: if something bad happens
         """
         try:
-            LOGGER.debug("%s.%s:", self.__class__.__name__, self.reset.__name__)
             self.privateLightFunctions = []
             if self.virtualLEDCount > self.realLEDCount:
                 self.setvirtualLEDBuffer(self.virtualLEDBuffer[: self.realLEDXaxisRange, : self.realLEDYaxisRange])

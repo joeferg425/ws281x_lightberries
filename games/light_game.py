@@ -25,13 +25,13 @@ class XboxButton(IntEnum):
     B = 1
     X = 2
     Y = 3
-    BUMPER_LEFT = 4
-    BUMPER_RIGHT = 5
-    OPTIONS = 6
-    START = 7
-    JOY_LEFT = 8
-    JOY_RIGHT = 9
-    XBOX = 10
+    OPTIONS = 4
+    XBOX = 5
+    START = 6
+    JOY_LEFT = 7
+    JOY_RIGHT = 8
+    BUMPER_LEFT = 9
+    BUMPER_RIGHT = 10
     UP = 11
     DOWN = 12
     LEFT = 13
@@ -188,6 +188,7 @@ class Controller:
 
 @dataclass
 class LightEvent:
+    id: int
     controller_instance_id: int
     controller: Controller
     controller_index: int
@@ -196,6 +197,7 @@ class LightEvent:
     def __str__(self) -> str:
         return (
             f"{self.__class__.__name__:20s}> "
+            + f"id={self.id:2d}, "
             + f"event_id={self.event_id.name:15s}:{self.event_id.value}, "
             + f"controller_instance_id={self.controller_instance_id}, "
             + f"controller_index={self.controller_index}"
@@ -260,7 +262,6 @@ class LightGame:
     SPECIAL_WEAPON_DELAY = 3
 
     def __init__(self, lights: MatrixController) -> None:
-        pygame.init()
         self.lights = lights
         GameObject.frame_size_x = self.lights.realLEDXaxisRange
         GameObject.frame_size_y = self.lights.realLEDYaxisRange
@@ -288,6 +289,7 @@ class LightGame:
             pygame.display.flip()
         else:
             os.environ["SDL_VIDEODRIVER"] = "dummy"
+        pygame.init()
         self.fade = ArrayFunction(
             lights, MatrixFunction.functionMatrixFadeOff, ArrayPattern.DefaultColorSequenceByMonth()
         )
@@ -345,6 +347,8 @@ class LightGame:
         right_joystick_x_count = 0
         right_joystick_y_count = 0
         for pygame_event in pygame.event.get():
+            if time.time() - self.timestamp_ready < 1:
+                continue
             if pygame_event.type == 256 or pygame_event.type == 32787:
                 self.exiting = True
             elif pygame_event.type == 1024 or pygame_event.type == 1025 or pygame_event.type == 1026:
@@ -379,6 +383,7 @@ class LightGame:
                     if button_id == XboxButton.A:
                         light_events.append(
                             ButtonBottom(
+                                id=button_id,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -388,6 +393,7 @@ class LightGame:
                     elif button_id == XboxButton.B:
                         light_events.append(
                             ButtonRight(
+                                id=button_id,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -397,6 +403,7 @@ class LightGame:
                     elif button_id == XboxButton.X:
                         light_events.append(
                             ButtonLeft(
+                                id=button_id,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -406,6 +413,7 @@ class LightGame:
                     elif button_id == XboxButton.Y:
                         light_events.append(
                             ButtonTop(
+                                id=button_id,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -415,6 +423,7 @@ class LightGame:
                     elif button_id == XboxButton.BUMPER_LEFT:
                         light_events.append(
                             ButtonBumperLeft(
+                                id=button_id,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -424,6 +433,7 @@ class LightGame:
                     elif button_id == XboxButton.BUMPER_RIGHT:
                         light_events.append(
                             ButtonBumperRight(
+                                id=button_id,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -433,6 +443,7 @@ class LightGame:
                     elif button_id == XboxButton.START:
                         light_events.append(
                             ButtonStart(
+                                id=button_id,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -442,6 +453,7 @@ class LightGame:
                     elif button_id == XboxButton.OPTIONS:
                         light_events.append(
                             ButtonOptions(
+                                id=button_id,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -451,6 +463,7 @@ class LightGame:
                     elif button_id == XboxButton.XBOX:
                         light_events.append(
                             ButtonPower(
+                                id=button_id,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -460,6 +473,7 @@ class LightGame:
                     elif button_id == XboxButton.SHARE:
                         light_events.append(
                             ButtonShare(
+                                id=button_id,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -469,6 +483,7 @@ class LightGame:
                     elif button_id == XboxButton.UP:
                         light_events.append(
                             ButtonHatUp(
+                                id=button_id,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -478,6 +493,7 @@ class LightGame:
                     elif button_id == XboxButton.DOWN:
                         light_events.append(
                             ButtonHatDown(
+                                id=button_id,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -487,6 +503,7 @@ class LightGame:
                     elif button_id == XboxButton.LEFT:
                         light_events.append(
                             ButtonHatLeft(
+                                id=button_id,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -496,6 +513,7 @@ class LightGame:
                     elif button_id == XboxButton.RIGHT:
                         light_events.append(
                             ButtonHatRight(
+                                id=button_id,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -505,6 +523,7 @@ class LightGame:
                     elif button_id == XboxButton.JOY_LEFT:
                         light_events.append(
                             ButtonStickLeft(
+                                id=button_id,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -514,6 +533,7 @@ class LightGame:
                     elif button_id == XboxButton.JOY_RIGHT:
                         light_events.append(
                             ButtonStickRight(
+                                id=button_id,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -527,6 +547,7 @@ class LightGame:
                     if axis == XboxJoystick.JOY_RIGHT_X:
                         if right_joystick_x_count >= len(right_joysticks):
                             light_event = StickRight(
+                                id=-3,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -538,6 +559,7 @@ class LightGame:
                     elif axis == XboxJoystick.JOY_RIGHT_Y:
                         if right_joystick_y_count >= len(right_joysticks):
                             light_event = StickRight(
+                                id=-3,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -549,6 +571,7 @@ class LightGame:
                     elif axis == XboxJoystick.JOY_LEFT_X:
                         if left_joystick_x_count >= len(left_joysticks):
                             light_event = StickLeft(
+                                id=-4,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -560,6 +583,7 @@ class LightGame:
                     elif axis == XboxJoystick.JOY_LEFT_Y:
                         if left_joystick_y_count >= len(left_joysticks):
                             light_event = StickLeft(
+                                id=-4,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -571,6 +595,7 @@ class LightGame:
                     elif axis == XboxJoystick.TRIGGER_RIGHT:
                         light_events.append(
                             TriggerRight(
+                                id=-5,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -580,6 +605,7 @@ class LightGame:
                     elif axis == XboxJoystick.TRIGGER_LEFT:
                         light_events.append(
                             TriggerLeft(
+                                id=-6,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -595,6 +621,7 @@ class LightGame:
                     if hat == 0 and value[1] == 1:
                         light_events.append(
                             ButtonHatUp(
+                                id=XboxButton.UP,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -604,6 +631,7 @@ class LightGame:
                     elif hat == 0 and value[1] == -1:
                         light_events.append(
                             ButtonHatDown(
+                                id=XboxButton.DOWN,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -613,6 +641,7 @@ class LightGame:
                     elif hat == 0 and value[0] == -1:
                         light_events.append(
                             ButtonHatLeft(
+                                id=XboxButton.LEFT,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -622,6 +651,7 @@ class LightGame:
                     elif hat == 0 and value[0] == 1:
                         light_events.append(
                             ButtonHatRight(
+                                id=XboxButton.RIGHT,
                                 controller_index=controller_index,
                                 controller=controller,
                                 controller_instance_id=controller_instance_id,
@@ -641,6 +671,7 @@ class LightGame:
                 self._instance_to_index_dict[controller_instance_id] = controller_index
                 light_events.append(
                     ControllerAdded(
+                        id=-1,
                         controller_instance_id=controller_instance_id,
                         controller_index=controller_index,
                         controller=controller,
@@ -652,6 +683,7 @@ class LightGame:
                 controller_index = self._instance_to_index_dict[controller_instance_id]
                 light_events.append(
                     ControllerRemoved(
+                        id=-2,
                         controller_instance_id=controller_instance_id,
                         controller_index=controller_index,
                         controller=controller,
@@ -690,6 +722,8 @@ class LightGame:
             if ship.dead:
                 if time.time() - ship.dead_time > LightGame.RESPAWN_DELAY:
                     color = self.players[index].color
+                    self.players[index].x = random.randint(0, self.lights.realLEDXaxisRange - 1)
+                    self.players[index].y = random.randint(0, self.lights.realLEDYaxisRange - 1)
                     self.players[index] = self.get_new_player()
                     self.players[index].color = color
 
@@ -775,7 +809,8 @@ class ButtonEvent(LightEvent):
     def __str__(self) -> str:
         return (
             f"{self.__class__.__name__:20s}> "
-            + f"event_id={self.event_id.name:15s}:{self.event_id.value}, "
+            + f"id={self.id:2d}, "
+            + f"event_id={self.event_id.value:2d}:{self.event_id.name:15s}, "
             + f"controller_index={self.controller_index}, "
             + f"controller_instance_id={self.controller_instance_id}, "
             + f"button_state={self.state.name}"
@@ -799,7 +834,7 @@ class ButtonLeft(ButtonEvent):
 
 @dataclass
 class ButtonRight(ButtonEvent):
-    event_id = LightEventId.ButtonRight
+    event_id: LightEventId = LightEventId.ButtonRight
 
 
 @dataclass
@@ -846,6 +881,7 @@ class ButtonHat(ButtonEvent):
     def __str__(self) -> str:
         return (
             f"{self.__class__.__name__:20s}> "
+            + f"id={self.id:2d}, "
             + f"event_id={self.event_id.name:15s}:{self.event_id.value}, "
             + f"controller_index={self.controller_index}, "
             + f"controller_instance_id={self.controller_instance_id}, "
@@ -898,6 +934,7 @@ class Stick(LightEvent):
     def __str__(self) -> str:
         return (
             f"{self.__class__.__name__:20s}> "
+            + f"id={self.id:2d}, "
             + f"event_id={self.event_id.name:15s}:{self.event_id.value}, "
             + f"controller_index={self.controller_index}, "
             + f"controller_instance_id={self.controller_instance_id}, "
@@ -924,6 +961,7 @@ class Trigger(LightEvent):
     def __str__(self) -> str:
         return (
             f"{self.__class__.__name__:20s}> "
+            + f"id={self.id:2d}, "
             + f"event_id={self.event_id.name:15s}:{self.event_id.value}, "
             + f"controller_index={self.controller_index}, "
             + f"controller_instance_id={self.controller_instance_id}, "

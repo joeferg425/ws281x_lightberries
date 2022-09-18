@@ -6,6 +6,7 @@ from eat import run_eat_game
 from jump import run_jump_game
 from space import run_space_game
 from xbox_controller import run_xbox_controller_test
+import logging
 
 games = [
     run_eat_game,
@@ -13,6 +14,8 @@ games = [
     run_space_game,
     run_xbox_controller_test,
 ]
+
+LOGGER = logging.getLogger(__name__)
 
 
 def run_picker():
@@ -69,7 +72,9 @@ def run_picker():
             except SystemExit:
                 raise
             except Exception as ex:  # noqa
-                print(ex)
+                LOGGER.exception(
+                    "picker",
+                )
 
 
 if __name__ == "__main__":

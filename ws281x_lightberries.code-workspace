@@ -186,7 +186,10 @@
 				"linux": {
 					"sudo": true
 				},
-				"justMyCode": false
+				"justMyCode": false,
+				"args": [
+					"../eyes.bmp"
+				]
 			},
 			{
 				"name": "example: dot matrix",

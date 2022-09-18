@@ -280,8 +280,8 @@ class EatGame(LightGame):
 
     def get_new_player(self) -> GameObject:
         return Snake(
-            x=random.randint(0, lights.realLEDXaxisRange - 1),
-            y=random.randint(0, lights.realLEDYaxisRange - 1),
+            x=random.randint(0, self.lights.realLEDXaxisRange - 1),
+            y=random.randint(0, self.lights.realLEDYaxisRange - 1),
         )
 
     def add_spaceship(self, event: LightEvent):
@@ -393,69 +393,68 @@ class EatGame(LightGame):
             # )
             for event in self.get_events():
                 t = time.time()
-                snake = self.players[event.controller_instance_id]
-                controller = cast("XboxController", event.controller)
-                print(event)
-                if not snake.dead:
-                    vector = controller.LS
-                    # if "joy" in event.dict and "axis" in event.dict:
-                    # if event.dict["axis"] == XboxJoystick.JOY_LEFT_X:
-                    snake.x_change = vector.x
-                    # elif event.dict["axis"] == XboxJoystick.JOY_LEFT_Y:
-                    snake.y_change = vector.x
-                    if controller.RT > 0.0:
-                        if t - snake.bullet_time >= EatGame.BULLET_DELAY and not self.pause:
-                            snake.bullet_time = t
-                            Projectile(
-                                owner=snake,
-                                name="bullet",
-                                x=snake.x + (2 * snake.x_direction),
-                                y=snake.y + (2 * snake.y_direction),
-                                dx=snake.x_direction * 2,
-                                dy=snake.y_direction * 2,
-                                color=PixelColors.BLUE.array,
-                                size=0,
-                            )
-                    # if "joy" in event.dict and "button" in event.dict:
-                    if event.event_id == LightEventId.ButtonBottom:
-                        if t - snake.bad_apple_time > EatGame.BAD_APPLE_DELAY:
-                            snake.bad_apple_time = t
-                            BadApple(
-                                x=snake.tail[0][0],
-                                y=snake.tail[0][1],
-                                color=snake.color,
-                                owner=snake,
-                            )
-                    elif event.event_id == LightEventId.ButtonTop:
-                        if t - snake.color_change_time > EatGame.COLOR_CHANGE_DELAY:
-                            snake.color_change_time = t
-                            snake.color = PixelColors.random().array
-                    elif event.event_id == LightEventId.ButtonPower and controller.controller.get_id() == 0:
-                        # pygame.quit()
-                        self.exiting = True
-                        break
-                    elif event.event_id == LightEventId.ButtonStart:
-                        if t - self.pause_time > LightGame.PAUSE_DELAY:
-                            self.pause_time = t
-                            self.pause = not self.pause
-                    elif event.event_id == LightEventId.HatUp and snake.dy == 0:
-                        snake.y_change = controller.H0.y * -snake.speed
-                        snake.x_change = 0
-                    elif event.event_id == LightEventId.HatDown and snake.dy == 0:
-                        snake.y_change = snake.speed
-                        snake.x_change = 0
-                    elif event.event_id == LightEventId.HatLeft and snake.dx == 0:
-                        snake.x_change = controller.H0.x * snake.speed
-                        snake.y_change = 0
-                    elif event.event_id == LightEventId.HatRight and snake.dx == 0:
-                        snake.x_change = snake.speed
-                        snake.y_change = 0
-            # if pygame_quit:
-            #     GameObject.dead_objects.extend(GameObject.objects)
-            #     break
-            # if time.time() - b9_time < 0.1 and time.time() - b10_time < 0.1:
-            #     fake_pause = True
-            #     fake_pause_time = time.time()
+                if event.controller_instance_id not in self.players:
+                    self.players[event.controller_instance_id] = Snake(0, 0)
+                    self.players[event.controller_instance_id].health = 0
+                    self.players[event.controller_instance_id].timestamp_death -= 20
+                else:
+                    snake = self.players[event.controller_instance_id]
+                    controller = cast("XboxController", event.controller)
+                    # print(event)
+                    if not snake.dead:
+                        vector = controller.LS
+                        # if "joy" in event.dict and "axis" in event.dict:
+                        # if event.dict["axis"] == XboxJoystick.JOY_LEFT_X:
+                        snake.x_change = vector.x
+                        # elif event.dict["axis"] == XboxJoystick.JOY_LEFT_Y:
+                        snake.y_change = vector.x
+                        if controller.RT > 0.0:
+                            if t - snake.bullet_time >= EatGame.BULLET_DELAY and not self.pause:
+                                snake.bullet_time = t
+                                Projectile(
+                                    owner=snake,
+                                    name="bullet",
+                                    x=snake.x + (2 * snake.x_direction),
+                                    y=snake.y + (2 * snake.y_direction),
+                                    dx=snake.x_direction * 2,
+                                    dy=snake.y_direction * 2,
+                                    color=PixelColors.BLUE.array,
+                                    size=0,
+                                )
+                        # if "joy" in event.dict and "button" in event.dict:
+                        if event.event_id == LightEventId.ButtonBottom:
+                            if t - snake.bad_apple_time > EatGame.BAD_APPLE_DELAY:
+                                snake.bad_apple_time = t
+                                BadApple(
+                                    x=snake.tail[0][0],
+                                    y=snake.tail[0][1],
+                                    color=snake.color,
+                                    owner=snake,
+                                )
+                        elif event.event_id == LightEventId.ButtonTop:
+                            if t - snake.color_change_time > EatGame.COLOR_CHANGE_DELAY:
+                                snake.color_change_time = t
+                                snake.color = PixelColors.random().array
+                        elif event.event_id == LightEventId.ButtonPower and controller.controller.get_id() == 0:
+                            # pygame.quit()
+                            self.exiting = True
+                            break
+                        elif event.event_id == LightEventId.ButtonStart:
+                            if t - self.pause_time > LightGame.PAUSE_DELAY:
+                                self.pause_time = t
+                                self.pause = not self.pause
+                        elif event.event_id == LightEventId.HatUp and snake.dy == 0:
+                            snake.y_change = -snake.speed
+                            snake.x_change = 0
+                        elif event.event_id == LightEventId.HatDown and snake.dy == 0:
+                            snake.y_change = snake.speed
+                            snake.x_change = 0
+                        elif event.event_id == LightEventId.HatLeft and snake.dx == 0:
+                            snake.x_change = -snake.speed
+                            snake.y_change = 0
+                        elif event.event_id == LightEventId.HatRight and snake.dx == 0:
+                            snake.x_change = snake.speed
+                            snake.y_change = 0
             for snake in self.players.values():
                 if np.abs(snake.x_change) > LightGame.THRESHOLD or np.abs(snake.y_change) > LightGame.THRESHOLD:
                     if np.abs(snake.x_change) > np.abs(snake.y_change):
@@ -477,8 +476,8 @@ class EatGame(LightGame):
             ):
                 self.apple_time = time.time()
                 new_apple = Apple(
-                    random.randint(0, lights.realLEDYaxisRange - 1),
-                    random.randint(0, lights.realLEDXaxisRange - 1),
+                    random.randint(0, self.lights.realLEDYaxisRange - 1),
+                    random.randint(0, self.lights.realLEDXaxisRange - 1),
                     color=PixelColors.RED.array,
                 )
                 while any(
@@ -487,8 +486,8 @@ class EatGame(LightGame):
                         for snake in self.players.values()
                     ]
                 ):
-                    new_apple.x = random.randint(0, lights.realLEDYaxisRange - 1)
-                    new_apple.y = random.randint(0, lights.realLEDXaxisRange - 1)
+                    new_apple.x = random.randint(0, self.lights.realLEDYaxisRange - 1)
+                    new_apple.y = random.randint(0, self.lights.realLEDXaxisRange - 1)
                 # self.apples.append(new_apple)
             self.update_game()
             self.check_end_game()
@@ -501,6 +500,10 @@ class EatGame(LightGame):
             #             pass
             #     lights.copyVirtualLedsToWS281X()
             #     lights.refreshLEDs()
+
+
+def run_eat_game(lights: MatrixController):
+    EatGame(lights=lights).run()
 
 
 if __name__ == "__main__":
@@ -544,6 +547,6 @@ if __name__ == "__main__":
         debug=True,
         matrixShape=MATRIX_SHAPE,
         matrixLayout=MATRIX_LAYOUT,
-        simulate=True,
+        # simulate=True,
     )
-    EatGame(lights).run()
+    run_eat_game(lights)

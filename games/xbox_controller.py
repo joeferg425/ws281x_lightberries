@@ -7,7 +7,7 @@ from lightberries.pixel import PixelColors, Pixel
 from lightberries.array_functions import ArrayFunction
 import os
 import pygame
-from games.game_objects import XboxButton, XboxJoystick, Sprite, GameObject, SpriteShape
+from game_objects import XboxButton, XboxJoystick, Sprite, GameObject, SpriteShape
 
 import time
 
@@ -194,6 +194,9 @@ def run_xbox_controller_test(lights: MatrixController):
                 pass
         lights.copyVirtualLedsToWS281X()
         lights.refreshLEDs()
+    for o in GameObject.objects.values():
+        o.health = 0
+    GameObject.objects.clear()
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ from lightberries.array_controller import ArrayController
 from lightberries.pixel import PixelColors
 
 # the number of pixels in the light string
-PIXEL_COUNT = 100
+PIXEL_COUNT = 256
 # GPIO pin to use for PWM signal
 GPIO_PWM_PIN = 18
 # DMA channel

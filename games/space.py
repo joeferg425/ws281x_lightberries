@@ -341,8 +341,8 @@ class SpaceGame(LightGame):
 
     def get_new_player(self) -> GameObject:
         return SpaceShip(
-            x=random.randint(0, lights.realLEDXaxisRange - 1),
-            y=random.randint(0, lights.realLEDYaxisRange - 1),
+            x=random.randint(0, self.lights.realLEDXaxisRange - 1),
+            y=random.randint(0, self.lights.realLEDYaxisRange - 1),
         )
 
     def add_spaceship(self, event: LightEvent):
@@ -356,73 +356,78 @@ class SpaceGame(LightGame):
             self.show_scores()
             for event in self.get_events():
                 t = time.time()
-                ship = self.players[event.controller_instance_id]
-                controller = event.controller
-                if not ship.dead:
-                    vector = controller.LS
-                    if np.abs(vector.x) > SpaceGame.THRESHOLD:
-                        ship.dx = vector.x
-                    else:
-                        ship.dx = 0
-                    if np.abs(vector.y) > SpaceGame.THRESHOLD:
-                        ship.dy = vector.y
-                    else:
-                        ship.dy = 0
-                    ship.x_aim = controller.RS.x
-                    ship.y_aim = controller.RS.y
-                    if controller.LT > 0.0:
-                        if (
-                            abs(ship.y_aim) >= SpaceGame.MIN_BULLET_SPEED
-                            and abs(ship.x_aim) >= SpaceGame.MIN_BULLET_SPEED
-                            and time.time() - ship.deathray_time > SpaceGame.DEATH_RAY_DELAY
-                        ) and not (self.pause):
-                            if t - ship.deathray_time > SpaceGame.DEATH_RAY_DELAY:
-                                ship.deathray_time = t
-                                ship.timestamp_ready = t
-                                DeathRay(
-                                    owner=ship,
-                                )
-                    elif controller.RT > 0.0:
-                        if (
-                            (t - ship.bullet_time >= SpaceGame.BULLET_DELAY)
-                            and (
+                if event.controller_instance_id not in self.players:
+                    self.players[event.controller_instance_id] = SpaceShip(0, 0)
+                    self.players[event.controller_instance_id].health = 0
+                    self.players[event.controller_instance_id].timestamp_death -= 20
+                else:
+                    ship = self.players[event.controller_instance_id]
+                    controller = event.controller
+                    if not ship.dead:
+                        vector = controller.LS
+                        if np.abs(vector.x) > SpaceGame.THRESHOLD:
+                            ship.dx = vector.x
+                        else:
+                            ship.dx = 0
+                        if np.abs(vector.y) > SpaceGame.THRESHOLD:
+                            ship.dy = vector.y
+                        else:
+                            ship.dy = 0
+                        ship.x_aim = controller.RS.x
+                        ship.y_aim = controller.RS.y
+                        if controller.LT > 0.0:
+                            if (
                                 abs(ship.y_aim) >= SpaceGame.MIN_BULLET_SPEED
                                 and abs(ship.x_aim) >= SpaceGame.MIN_BULLET_SPEED
-                            )
-                            and not (self.pause)
-                        ):
-                            ship.bullet_time = t
-                            Bullet(
-                                x=ship.x + ship.x_aim,
-                                y=ship.y + ship.y_aim,
-                                dx=ship.x_aim * 2,
-                                dy=ship.y_aim * 2,
-                                owner=ship,
-                            )
-                    elif event.event_id == LightEventId.ButtonStart:
-                        if t - self.pause_time > SpaceGame.PAUSE_DELAY:
-                            self.pause_time = t
-                            self.pause = not self.pause
-                    elif event.event_id == LightEventId.ButtonPower:
-                        self.exiting = True
-                        break
-                    elif event.event_id == LightEventId.ButtonTop:
-                        if t - ship.color_time > 0.15:
-                            ship.color_time = t
-                            ship.color = PixelColors.pseudoRandom().array
+                                and time.time() - ship.deathray_time > SpaceGame.DEATH_RAY_DELAY
+                            ) and not (self.pause):
+                                if t - ship.deathray_time > SpaceGame.DEATH_RAY_DELAY:
+                                    ship.deathray_time = t
+                                    ship.timestamp_ready = t
+                                    DeathRay(
+                                        owner=ship,
+                                    )
+                        elif controller.RT > 0.0:
+                            if (
+                                (t - ship.bullet_time >= SpaceGame.BULLET_DELAY)
+                                and (
+                                    abs(ship.y_aim) >= SpaceGame.MIN_BULLET_SPEED
+                                    and abs(ship.x_aim) >= SpaceGame.MIN_BULLET_SPEED
+                                )
+                                and not (self.pause)
+                            ):
+                                ship.bullet_time = t
+                                Bullet(
+                                    x=ship.x + ship.x_aim,
+                                    y=ship.y + ship.y_aim,
+                                    dx=ship.x_aim * 2,
+                                    dy=ship.y_aim * 2,
+                                    owner=ship,
+                                )
+                        elif event.event_id == LightEventId.ButtonStart:
+                            if t - self.pause_time > SpaceGame.PAUSE_DELAY:
+                                self.pause_time = t
+                                self.pause = not self.pause
+                        elif event.event_id == LightEventId.ButtonPower:
+                            self.exiting = True
+                            break
+                        elif event.event_id == LightEventId.ButtonTop:
+                            if t - ship.color_time > 0.15:
+                                ship.color_time = t
+                                ship.color = PixelColors.pseudoRandom().array
             if time.time() - self.enemy_time >= self.enemy_delay and not self.pause:  # and not fake_pause:
                 self.enemy_time = time.time()
                 if random.randint(0, SpaceGame.SHIELD_ENEMY_CHANCE - 1) == SpaceGame.SHIELD_ENEMY_CHANCE - 1:
                     e = ShieldEnemy(
-                        x=random.randint(0, lights.realLEDYaxisRange - 1),
-                        y=random.randint(0, lights.realLEDXaxisRange - 1),
+                        x=random.randint(0, self.lights.realLEDYaxisRange - 1),
+                        y=random.randint(0, self.lights.realLEDXaxisRange - 1),
                         dx=random.uniform(-SpaceGame.MAX_ENEMY_SPEED, SpaceGame.MAX_ENEMY_SPEED),
                         dy=random.uniform(-SpaceGame.MAX_ENEMY_SPEED, SpaceGame.MAX_ENEMY_SPEED),
                     )
                 else:
                     e = SpaceEnemy(
-                        x=random.randint(0, lights.realLEDYaxisRange - 1),
-                        y=random.randint(0, lights.realLEDXaxisRange - 1),
+                        x=random.randint(0, self.lights.realLEDYaxisRange - 1),
+                        y=random.randint(0, self.lights.realLEDXaxisRange - 1),
                         dx=random.uniform(-SpaceGame.MAX_ENEMY_SPEED, SpaceGame.MAX_ENEMY_SPEED),
                         dy=random.uniform(-SpaceGame.MAX_ENEMY_SPEED, SpaceGame.MAX_ENEMY_SPEED),
                     )
@@ -432,10 +437,14 @@ class SpaceGame(LightGame):
                     for ship in self.players.values():
                         if abs(e.x - ship.x) < 5 and abs(e.y - ship.y) < 5:
                             failing = True
-                            e.x = random.randint(0, lights.realLEDYaxisRange - 1)
-                            e.y = random.randint(0, lights.realLEDXaxisRange - 1)
+                            e.x = random.randint(0, self.lights.realLEDYaxisRange - 1)
+                            e.y = random.randint(0, self.lights.realLEDXaxisRange - 1)
             self.check_end_game()
             self.update_game()
+
+
+def run_space_game(lights: MatrixController):
+    SpaceGame(lights=lights).run()
 
 
 if __name__ == "__main__":
@@ -480,7 +489,6 @@ if __name__ == "__main__":
         debug=True,
         matrixLayout=MATRIX_LAYOUT,
         matrixShape=MATRIX_SHAPE,
-        simulate=True,
-        testing=True,
     )
-    SpaceGame(lights=lights).run()
+
+    run_space_game(lights)
