@@ -267,6 +267,17 @@
 					"sudo": true
 				},
 				"justMyCode": false
+			},
+			{
+				"name": "game: picker",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/games/picker.py",
+				"console": "integratedTerminal",
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false
 			}
 		],
 		"compounds": []

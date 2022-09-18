@@ -277,6 +277,7 @@ class EatGame(LightGame):
         # pygame.init()
         # pygame_quit = False
         self.add_callback(event_id=LightEventId.ControllerAdded, callback=self.add_spaceship)
+        self.splash_screen("eat", 20)
 
     def get_new_player(self) -> GameObject:
         return Snake(
@@ -289,7 +290,10 @@ class EatGame(LightGame):
 
     def run(self):
         while not self.exiting:
-            self.apple_delay = 1.5 / len(self.get_controllers())
+            divisor = 1
+            if len(self.get_controllers()):
+                divisor = len(self.get_controllers())
+            self.apple_delay = 1.5 / divisor
             # self.g
             # if joystick_count != pygame.joystick.get_count():
             #     if pygame.joystick.get_count() > joystick_count:
@@ -469,10 +473,9 @@ class EatGame(LightGame):
                         else:
                             snake.dy = -snake.speed
                         snake.dx = 0
-            if (
-                time.time() - self.apple_time >= self.apple_delay
-                and not all([player.dead for player in self.players.values()])
-                and not self.pause
+            if time.time() - self.apple_time >= self.apple_delay and (
+                self.first_render is False
+                or (not all([player.dead for player in self.players.values()]) and not self.pause)
             ):
                 self.apple_time = time.time()
                 new_apple = Apple(
@@ -503,7 +506,12 @@ class EatGame(LightGame):
 
 
 def run_eat_game(lights: MatrixController):
-    EatGame(lights=lights).run()
+    g = EatGame(lights=lights)
+    try:
+        g.run()
+    except:  # noqa
+        pass
+    g.__del__()
 
 
 if __name__ == "__main__":

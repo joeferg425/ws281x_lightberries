@@ -5,14 +5,14 @@ import numpy as np
 from eat import run_eat_game
 from jump import run_jump_game
 from space import run_space_game
-from xbox_controller import run_xbox_controller_test
+from dots import run_dots_game
 import logging
 
 games = [
     run_eat_game,
     run_jump_game,
     run_space_game,
-    run_xbox_controller_test,
+    run_dots_game,
 ]
 
 LOGGER = logging.getLogger(__name__)

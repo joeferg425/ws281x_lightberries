@@ -15,7 +15,7 @@ def _init_letter(temp_array):
     return np.dstack([temp_array, temp_array, temp_array])
 
 
-class letters:
+class BigLetters:
     A = _init_letter(
         np.array(
             [
@@ -923,36 +923,36 @@ class letters:
 def letters_to_matrices(text: str) -> list[numpy.typing.NDArray]:
     retval = []
     for letter in text.upper():
-        if letter in dir(letters):
-            retval.append(getattr(letters, letter))
+        if letter in dir(BigLetters):
+            retval.append(getattr(BigLetters, letter))
         elif letter == " ":
-            retval.append(getattr(letters, "SPACE"))
+            retval.append(getattr(BigLetters, "SPACE"))
         elif letter == "'":
-            retval.append(getattr(letters, "APOSTROPHE"))
+            retval.append(getattr(BigLetters, "APOSTROPHE"))
         elif letter == ",":
-            retval.append(getattr(letters, "COMMA"))
+            retval.append(getattr(BigLetters, "COMMA"))
         elif letter == "!":
-            retval.append(getattr(letters, "EXCLAMATION"))
+            retval.append(getattr(BigLetters, "EXCLAMATION"))
         elif letter == "0":
-            retval.append(getattr(letters, "ZERO"))
+            retval.append(getattr(BigLetters, "ZERO"))
         elif letter == "1":
-            retval.append(getattr(letters, "ONE"))
+            retval.append(getattr(BigLetters, "ONE"))
         elif letter == "2":
-            retval.append(getattr(letters, "TWO"))
+            retval.append(getattr(BigLetters, "TWO"))
         elif letter == "3":
-            retval.append(getattr(letters, "THREE"))
+            retval.append(getattr(BigLetters, "THREE"))
         elif letter == "4":
-            retval.append(getattr(letters, "FOUR"))
+            retval.append(getattr(BigLetters, "FOUR"))
         elif letter == "5":
-            retval.append(getattr(letters, "FIVE"))
+            retval.append(getattr(BigLetters, "FIVE"))
         elif letter == "6":
-            retval.append(getattr(letters, "SIX"))
+            retval.append(getattr(BigLetters, "SIX"))
         elif letter == "7":
-            retval.append(getattr(letters, "SEVEN"))
+            retval.append(getattr(BigLetters, "SEVEN"))
         elif letter == "8":
-            retval.append(getattr(letters, "EIGHT"))
+            retval.append(getattr(BigLetters, "EIGHT"))
         elif letter == "9":
-            retval.append(getattr(letters, "NINE"))
+            retval.append(getattr(BigLetters, "NINE"))
         elif letter == "=":
-            retval.append(getattr(letters, "EQUALS"))
+            retval.append(getattr(BigLetters, "EQUALS"))
     return retval

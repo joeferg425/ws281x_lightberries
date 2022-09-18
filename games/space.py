@@ -339,6 +339,8 @@ class SpaceGame(LightGame):
         self.players: dict[int, SpaceShip] = {}
         self.add_callback(event_id=LightEventId.ControllerAdded, callback=self.add_spaceship)
 
+        self.splash_screen("space", 20)
+
     def get_new_player(self) -> GameObject:
         return SpaceShip(
             x=random.randint(0, self.lights.realLEDXaxisRange - 1),
@@ -415,7 +417,9 @@ class SpaceGame(LightGame):
                             if t - ship.color_time > 0.15:
                                 ship.color_time = t
                                 ship.color = PixelColors.pseudoRandom().array
-            if time.time() - self.enemy_time >= self.enemy_delay and not self.pause:  # and not fake_pause:
+            if time.time() - self.enemy_time >= self.enemy_delay and (
+                self.first_render is True or self.pause is False
+            ):  # and not fake_pause:
                 self.enemy_time = time.time()
                 if random.randint(0, SpaceGame.SHIELD_ENEMY_CHANCE - 1) == SpaceGame.SHIELD_ENEMY_CHANCE - 1:
                     e = ShieldEnemy(
@@ -444,7 +448,12 @@ class SpaceGame(LightGame):
 
 
 def run_space_game(lights: MatrixController):
-    SpaceGame(lights=lights).run()
+    g = SpaceGame(lights=lights)
+    try:
+        g.run()
+    except:  # noqa
+        pass
+    g.__del__()
 
 
 if __name__ == "__main__":

@@ -12,6 +12,7 @@ from lightberries.array_patterns import ArrayPattern
 from lightberries.pixel import Pixel, PixelColors
 import time
 from game_objects import GameObject, Player, Sprite, check_for_collisions
+from lightberries.matrix_patterns import TextMatrix
 
 
 class ButtonState(IntEnum):
@@ -274,6 +275,7 @@ class LightGame:
         self.display = None
         self.exiting = False
         self.pause = True
+        self.first_render = True
         if lights.simulate:
             self.display = pygame.display.set_mode(
                 (
@@ -321,6 +323,23 @@ class LightGame:
         self._controller_index_dict: dict[int, XboxController] = {}
         self._instance_to_index_dict: dict[int, int] = {}
         self._callbacks: dict[LightEventId, Callable[[LightEvent], None]] = {}
+
+    def splash_screen(self, message: str, duration: int):
+        splash = TextMatrix(self.lights.realLEDYaxisRange, " " + message + "  ", PixelColors.YELLOW.rgb_array)
+        self.lights.virtualLEDBuffer = splash
+        if not self.lights.simulate:
+            self.lights.copyVirtualLedsToWS281X()
+            self.lights.refreshLEDs()
+        self.lights.privateLightFunctions.clear()
+        self.lights.useFunctionMatrixMarquee(0.1)
+        for _ in range(duration):
+            self.lights._runFunctions()
+            # copy the resulting RGB values to the ws28xx LED buffer
+            self.lights.copyVirtualLedsToWS281X()
+            # tell the ws28xx controller to transmit the new data
+            self.lights.refreshLEDs()
+        self.lights.off()
+        self.timestamp_ready = time.time()
 
     def get_new_player(self) -> GameObject:
         return Player(0, 0)
@@ -769,11 +788,11 @@ class LightGame:
                         )
 
     def update_game(self):
-        if not self.win:
-            self.fade.run()
-        else:
-            self.fade.run()
-        if not self.pause and not self.win and not self.exiting:
+        if self.first_render or (not self.pause and not self.win and not self.exiting):
+            if not self.win:
+                self.fade.run()
+            else:
+                self.fade.run()
             check_for_collisions()
             for obj in GameObject.objects.values():
                 try:
@@ -781,6 +800,8 @@ class LightGame:
                         self.lights.virtualLEDBuffer[obj.xs, obj.ys] = Pixel(obj.color).array
                 except:  # noqa
                     pass
+            if len(GameObject.objects) > 0:
+                self.first_render = False
             if not self.lights.simulate:
                 self.lights.copyVirtualLedsToWS281X()
                 self.lights.refreshLEDs()
@@ -799,6 +820,11 @@ class LightGame:
                 if isinstance(obj, Sprite):
                     obj._dead = True
             GameObject.dead_objects.extend(GameObject.objects)
+
+    def __del__(self):
+        for o in GameObject.objects.values():
+            o.health = 0
+        GameObject.objects.clear()
 
 
 @dataclass

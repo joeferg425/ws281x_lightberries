@@ -166,9 +166,10 @@ class JumpGame(LightGame):
     def __init__(self, lights: MatrixController) -> None:
         super().__init__(lights)
         self.players: dict[int, Jumper] = {}
-        self.add_callback(event_id=LightEventId.ControllerAdded, callback=self.add_player)
         self.all_sprites = pygame.sprite.Group()
         self.platforms = []
+        self.add_callback(event_id=LightEventId.ControllerAdded, callback=self.add_player)
+        self.splash_screen("jump", 20)
 
     def get_new_player(self) -> GameObject:
         j = Jumper(
@@ -226,8 +227,10 @@ class JumpGame(LightGame):
                             self.pause_time = t
                             self.pause = not self.pause
                     elif event.event_id == LightEventId.ButtonPower:
-                        self.exiting = True
-                        break
+                        print("whoops - power button")
+                        if t - self.timestamp_ready > 1:
+                            self.exiting = True
+                            break
                     elif event.event_id == LightEventId.ButtonTop:
                         if t - player.tim0estamp_color > 0.15:
                             player.timestamp_color = t
@@ -247,7 +250,13 @@ class JumpGame(LightGame):
 
 
 def run_jump_game(lights: MatrixController):
-    JumpGame(lights=lights).run()
+    g = JumpGame(lights=lights)
+    try:
+        g.run()
+    except:
+        pass
+    g.__del__()
+
     # pause = True
     # os.environ["SDL_VIDEODRIVER"] = "dummy"
     # GameObject.frame_size_x = lights.realLEDXaxisRange
