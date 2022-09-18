@@ -5,8 +5,8 @@ import numpy as np
 from lightberries.pixel import PixelColors
 import time
 
-GRAVITY = 0.5
-MAX_GRAVITY = 2
+GRAVITY = 0.75
+MAX_GRAVITY = 2.5
 
 
 class SpriteShape(IntEnum):
@@ -298,7 +298,8 @@ class Sprite(GameObject):
         super().collide(obj, xys)
         if self.animate and not obj.owner == self:
             if not self.phased:
-                self._y = obj.y - self.y_direction
+                self._y = int(obj.y - self.y_direction)
+                self.dy = 0
 
     @property
     def x_direction(self):
@@ -444,6 +445,7 @@ class Player(Sprite):
         self,
         x: int,
         y: int,
+        size: int = 0,
         name="player",
         color: np.ndarray[(3), np.int32] = PixelColors.GREEN.array,
         has_gravity: bool = True,
@@ -451,7 +453,7 @@ class Player(Sprite):
         super().__init__(
             x=x,
             y=y,
-            size=0,
+            size=size,
             name=name,
             color=color,
             has_gravity=has_gravity,
@@ -743,7 +745,9 @@ def check_for_collisions():
             for key2 in keys[i + 1 :]:
                 obj2 = GameObject.objects[key2]
                 x = []
-                if obj1.animate and obj2.animate:
+                if hasattr(obj1, "p_sprite") and hasattr(obj2, "p_sprite"):
+                    x = obj1.p_sprite.rect.colliderect(obj2.p_sprite.rect)
+                elif obj1.animate and obj2.animate:
                     x = set(obj1.move_xys).intersection(set(obj2.move_xys))
                 elif obj1.animate:
                     x = set(obj1.move_xys).intersection(set(obj2.xys))

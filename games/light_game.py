@@ -260,6 +260,7 @@ class LightGame:
     WIN_DURATION = 10
     RESPAWN_DELAY = 1
     SPECIAL_WEAPON_DELAY = 3
+    SIMULATED_SIZE = 16
 
     def __init__(self, lights: MatrixController) -> None:
         self.lights = lights
@@ -274,8 +275,12 @@ class LightGame:
         self.exiting = False
         self.pause = True
         if lights.simulate:
-            size = 16
-            self.display = pygame.display.set_mode((lights.realLEDXaxisRange * size, lights.realLEDYaxisRange * size))
+            self.display = pygame.display.set_mode(
+                (
+                    lights.realLEDXaxisRange * LightGame.SIMULATED_SIZE,
+                    lights.realLEDYaxisRange * LightGame.SIMULATED_SIZE,
+                )
+            )
             self.display.fill((127, 127, 127))
             for i in range(32):
                 for j in range(32):
@@ -283,7 +288,10 @@ class LightGame:
                         pygame.draw.rect(
                             self.display,
                             (0, 0, 0),
-                            (((i * size) + 1, (j * size) + 1), (size - 2, size - 2)),
+                            (
+                                ((i * LightGame.SIMULATED_SIZE) + 1, (j * LightGame.SIMULATED_SIZE) + 1),
+                                (LightGame.SIMULATED_SIZE - 2, LightGame.SIMULATED_SIZE - 2),
+                            ),
                         )
                     )
             pygame.display.flip()
@@ -718,12 +726,13 @@ class LightGame:
                     self.players[i]._dead = True
 
     def respawn_dead_players(self):
-        for index, ship in self.players.items():
-            if ship.dead:
-                if time.time() - ship.dead_time > LightGame.RESPAWN_DELAY:
+        for index, player in self.players.items():
+            if player.dead:
+                if time.time() - player.timestamp_death > LightGame.RESPAWN_DELAY:
                     color = self.players[index].color
                     self.players[index].x = random.randint(0, self.lights.realLEDXaxisRange - 1)
                     self.players[index].y = random.randint(0, self.lights.realLEDYaxisRange - 1)
+                    self.players[index].health = 0
                     self.players[index] = self.get_new_player()
                     self.players[index].color = color
 
@@ -768,7 +777,8 @@ class LightGame:
             check_for_collisions()
             for obj in GameObject.objects.values():
                 try:
-                    self.lights.virtualLEDBuffer[obj.xs, obj.ys] = Pixel(obj.color).array
+                    if obj.y >= 0:
+                        self.lights.virtualLEDBuffer[obj.xs, obj.ys] = Pixel(obj.color).array
                 except:  # noqa
                     pass
             if not self.lights.simulate:
