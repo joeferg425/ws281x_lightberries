@@ -225,7 +225,7 @@
 				"justMyCode": false
 			},
 			{
-				"name": "game: xbox controller demo",
+				"name": "game: dots",
 				"type": "python",
 				"request": "launch",
 				"program": "${workspaceFolder}/games/xbox_controller.py",

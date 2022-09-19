@@ -1,5 +1,5 @@
 import pygame
-from typing import Callable, Generator
+from typing import Callable, Generator, Optional
 import random
 from enum import IntEnum
 import numpy as np
@@ -341,7 +341,7 @@ class LightGame:
         self.lights.off()
         self.timestamp_ready = time.time()
 
-    def get_new_player(self) -> GameObject:
+    def get_new_player(self, old_player: Optional[GameObject] = None) -> GameObject:
         return Player(0, 0)
 
     def add_callback(self, event_id: LightEventId, callback: Callable[[LightEvent], None]) -> None:
@@ -748,12 +748,8 @@ class LightGame:
         for index, player in self.players.items():
             if player.dead:
                 if time.time() - player.timestamp_death > LightGame.RESPAWN_DELAY:
-                    color = self.players[index].color
-                    self.players[index].x = random.randint(0, self.lights.realLEDXaxisRange - 1)
-                    self.players[index].y = random.randint(0, self.lights.realLEDYaxisRange - 1)
                     self.players[index].health = 0
-                    self.players[index] = self.get_new_player()
-                    self.players[index].color = color
+                    self.players[index] = self.get_new_player(self.players[index])
 
     def show_scores(self):
         for index, player in self.players.items():

@@ -12,6 +12,7 @@ MAX_GRAVITY = 2.5
 class SpriteShape(IntEnum):
     CROSS = 0
     CIRCLE = 1
+    SQUARE = 2
 
 
 class XboxButton(IntEnum):
@@ -56,10 +57,14 @@ class GameObject:
         y: int,
         size: int,
         name: str,
+        shape: SpriteShape = SpriteShape.CROSS,
         color: np.ndarray[(3), np.int32] = PixelColors.WHITE.array,
         has_gravity: bool = True,
         destructible: bool = True,
     ) -> None:
+        self.shape = shape
+        self.height = size
+        self.width = size
         self.name = name
         self.owner = None
         self.x_last = x
@@ -86,6 +91,7 @@ class GameObject:
         self.id = GameObject.object_counter
         self.children: dict[int, GameObject] = {}
         self.timestamp_ready = self.timestamp_spawn
+        self._dead = False
         GameObject.objects[GameObject.object_counter] = self
         GameObject.object_counter += 1
 
@@ -99,7 +105,11 @@ class GameObject:
 
     @property
     def dead(self) -> bool:
-        return False
+        return self._dead
+
+    @dead.setter
+    def dead(self, value: bool):
+        self._dead = value
 
     @property
     def x(self) -> int:
@@ -121,11 +131,35 @@ class GameObject:
 
     @property
     def xs(self) -> list[int]:
-        return [self.x]
+        if self.shape == SpriteShape.CROSS:
+            xs = [round(self._x + i) for i in range(-self.size, self.size + 1)]
+            xs.extend([round(self._x) for i in range(-self.size, self.size + 1)])
+        elif self.shape == SpriteShape.CIRCLE:
+            xs = (
+                np.round(np.sin(np.linspace(0, 2 * np.pi, 1 + (4 * self.size))) * (self.size)).astype(dtype=np.int32)
+                + self.x
+            )
+        elif self.shape == SpriteShape.SQUARE:
+            xs = []
+            for _ in range(self.height):
+                xs.extend([round(self._x + i) for i in range(self.width)])
+        return xs
 
     @property
     def ys(self) -> list[int]:
-        return [self.y]
+        if self.shape == SpriteShape.CROSS:
+            ys = [round(self._y) for i in range(-self.size, self.size + 1)]
+            ys.extend([round(self._y + i) for i in range(-self.size, self.size + 1)])
+        elif self.shape == SpriteShape.CIRCLE:
+            ys = (
+                np.round(np.cos(np.linspace(0, 2 * np.pi, 1 + (4 * self.size))) * (self.size)).astype(dtype=np.int32)
+                + self.y
+            )
+        elif self.shape == SpriteShape.SQUARE:
+            ys = []
+            for i in range(self.height):
+                ys.extend([round(self._y - i) for _ in range(self.width)])
+        return ys
 
     @property
     def xys(self) -> list[tuple[int, int]]:
@@ -197,27 +231,23 @@ class Floor(GameObject):
         self,
         x: int,
         y: int,
-        size: int = 1,
+        width: int = 1,
+        height: int = 1,
         name: str = "floor",
         color: np.ndarray[(3), np.int32] = PixelColors.ORANGE.array,
     ) -> None:
         super().__init__(
             x=x,
             y=y,
-            size=size,
+            size=width,
+            shape=SpriteShape.SQUARE,
             name=name,
             color=color,
             has_gravity=False,
             destructible=False,
         )
-
-    @property
-    def xs(self) -> list[int]:
-        return [round(self.x + i) for i in range(self.x, self.size + 1)]
-
-    @property
-    def ys(self) -> list[int]:
-        return [round(self.y) for _ in range(self.x, self.size + 1)]
+        self.width = width
+        self.height = height
 
 
 class Wall(GameObject):
@@ -225,27 +255,21 @@ class Wall(GameObject):
         self,
         x: int,
         y: int,
-        size: int = 1,
+        height: int = 1,
+        width: int = 1,
         name: str = "wall",
         color: np.ndarray[(3), np.int32] = PixelColors.WHITE.array,
     ) -> None:
         super().__init__(
             x=x,
             y=y,
-            size=size,
+            shape=SpriteShape.SQUARE,
+            size=height,
             name=name,
             color=color,
             has_gravity=False,
             destructible=False,
         )
-
-    @property
-    def xs(self) -> list[tuple[int, int]]:
-        return [round(self.x) for i in range(self.x, self.size + 1)]
-
-    @property
-    def ys(self) -> list[tuple[int, int]]:
-        return [round(self.y - i) for i in range(self.x, self.size + 1)]
 
 
 class Sprite(GameObject):
@@ -255,6 +279,7 @@ class Sprite(GameObject):
         y: int,
         size: int,
         name: str,
+        shape: SpriteShape = SpriteShape.CROSS,
         color: np.ndarray[(3), np.int32] = PixelColors.WHITE.array,
         has_gravity: bool = True,
         destructible: bool = True,
@@ -266,12 +291,12 @@ class Sprite(GameObject):
         max_health: int = 1,
         damage: int = 1,
         phased: bool = False,
-        shape: SpriteShape = SpriteShape.CROSS,
     ) -> None:
         super().__init__(
             x=x,
             y=y,
             size=size,
+            shape=shape,
             name=name,
             color=color,
             has_gravity=has_gravity,
@@ -289,7 +314,6 @@ class Sprite(GameObject):
         self.bounded = bounded
         self.wrap = wrap
         self.phased = phased
-        self.shape = shape
 
     def __str__(self) -> str:
         return f"{self.name}#{self.id} [{self.x},{self.y}] ({'dead' if self.dead else 'alive'})"
@@ -321,14 +345,7 @@ class Sprite(GameObject):
 
     @property
     def xs(self) -> list[int]:
-        if self.shape == SpriteShape.CROSS:
-            xs = [round(self._x + i) for i in range(-self.size, self.size + 1)]
-            xs.extend([round(self._x) for i in range(-self.size, self.size + 1)])
-        elif self.shape == SpriteShape.CIRCLE:
-            xs = (
-                np.round(np.sin(np.linspace(0, 2 * np.pi, 1 + (4 * self.size))) * (self.size)).astype(dtype=np.int32)
-                + self.x
-            )
+        xs = super().xs
         xs = np.array(xs)
         fix = np.where(xs < 0)
         if fix:
@@ -340,14 +357,7 @@ class Sprite(GameObject):
 
     @property
     def ys(self) -> list[int]:
-        if self.shape == SpriteShape.CROSS:
-            ys = [round(self._y) for i in range(-self.size, self.size + 1)]
-            ys.extend([round(self._y + i) for i in range(-self.size, self.size + 1)])
-        elif self.shape == SpriteShape.CIRCLE:
-            ys = (
-                np.round(np.cos(np.linspace(0, 2 * np.pi, 1 + (4 * self.size))) * (self.size)).astype(dtype=np.int32)
-                + self.y
-            )
+        ys = super().ys
         ys = np.array(ys)
         fix = np.where(ys < 0)
         if fix:
@@ -499,18 +509,6 @@ class Player(Sprite):
     @y_aim.setter
     def y_aim(self, value: float) -> None:
         self._y_aim = value
-
-    @property
-    def xs(self) -> list[int]:
-        xs = [round(self._x + i) for i in range(-self.size, self.size + 1)]
-        xs.extend([round(self._x) for i in range(-self.size, self.size + 1)])
-        return xs
-
-    @property
-    def ys(self) -> list[int]:
-        ys = [round(self._y) for i in range(-self.size, self.size + 1)]
-        ys.extend([round(self._y + i) for i in range(-self.size, self.size + 1)])
-        return ys
 
     @property
     def xy_ray(self) -> tuple[list[int], list[int]]:
@@ -735,7 +733,8 @@ def check_for_collisions():
             GameObject.objects.pop(key)
     GameObject.dead_objects.clear()
     if len(GameObject.objects) > 0:
-        for obj1 in GameObject.objects.values():
+        objs = list(GameObject.objects.values())
+        for obj1 in objs:
             obj1.go()
             obj1.collided.clear()
         keys = list(GameObject.objects.keys())
