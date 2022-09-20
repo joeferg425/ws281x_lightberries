@@ -8,6 +8,9 @@ from lightberries.pixel import PixelColors
 from game_objects import GameObject, Sprite, Projectile
 import numpy as np
 from light_game import LightEvent, LightEventId, LightGame, XboxController
+import logging
+
+LOGGER = logging.getLogger(__name__)
 
 
 class Snake(Sprite):
@@ -279,10 +282,15 @@ class EatGame(LightGame):
         self.add_callback(event_id=LightEventId.ControllerAdded, callback=self.add_spaceship)
         self.splash_screen("eat", 20)
 
-    def get_new_player(self) -> GameObject:
+    def get_new_player(self, old_player: Snake | None) -> GameObject:
+
+        color = PixelColors.WHITE.array
+        if old_player is not None:
+            color = old_player.color
         return Snake(
             x=random.randint(0, self.lights.realLEDXaxisRange - 1),
             y=random.randint(0, self.lights.realLEDYaxisRange - 1),
+            color=color,
         )
 
     def add_spaceship(self, event: LightEvent):
@@ -509,8 +517,8 @@ def run_eat_game(lights: MatrixController):
     g = EatGame(lights=lights)
     try:
         g.run()
-    except:  # noqa
-        pass
+    except Exception as ex:  # noqa
+        LOGGER.exception(EatGame.__name__)
     g.__del__()
 
 

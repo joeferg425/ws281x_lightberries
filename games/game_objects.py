@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 from __future__ import annotations
+from dataclasses import dataclass
 from enum import IntEnum
 import numpy as np
 from lightberries.pixel import PixelColors
@@ -7,6 +8,14 @@ import time
 
 GRAVITY = 0.75
 MAX_GRAVITY = 2.5
+
+
+@dataclass
+class rect:
+    top: int
+    bottom: int
+    left: int
+    right: int
 
 
 class SpriteShape(IntEnum):
@@ -67,10 +76,14 @@ class GameObject:
         self.width = size
         self.name = name
         self.owner = None
-        self.x_last = x
-        self.y_last = y
         self._x = x
         self._y = y
+        self.x_last = x
+        self.y_last = y
+        self._top_last = y
+        self._bottom_last = y + size
+        self._left_last = x
+        self._right_last = x + size
         self._dx = 0.0
         self._dy = 0.0
         self.size = size
@@ -95,13 +108,32 @@ class GameObject:
         GameObject.objects[GameObject.object_counter] = self
         GameObject.object_counter += 1
 
+    @property
+    def collision_surface(self) -> set[tuple[int, int]]:
+        box = self.box
+        s: list[tuple[int, int]] = []
+        for i in range(box.top, box.bottom):
+            xs = range(box.left, box.right)
+            ys = [i] * len(xs)
+            s.extend(zip(xs, ys))
+        return set(s)
+
     def collide(self, obj: "GameObject", xys: list[tuple[int, int]]) -> None:
         if not obj.owner == self:
             self.collided.append(obj)
             self.collision_xys.append(xys)
             self.health -= obj.damage
-            if self.dead and self.id not in GameObject.dead_objects:
-                GameObject.dead_objects.append(self.id)
+        if self.dead and self.id not in GameObject.dead_objects:
+            GameObject.dead_objects.append(self.id)
+
+    @property
+    def box(self) -> rect:
+        return rect(
+            top=min(self.top, self.top_last),
+            bottom=max(self.bottom, self.bottom_last),
+            left=min(self.left, self.left_last),
+            right=max(self.right, self.right_last),
+        )
 
     @property
     def dead(self) -> bool:
@@ -118,6 +150,8 @@ class GameObject:
     @x.setter
     def x(self, value) -> None:
         self.x_last = self._x
+        self._left_last = self.left
+        self._right_last = self.right
         self._x = value
 
     @property
@@ -127,7 +161,41 @@ class GameObject:
     @y.setter
     def y(self, value) -> None:
         self.y_last = self._y
+        self._top_last = self.top
+        self._bottom_last = self.bottom
         self._y = value
+
+    @property
+    def top(self) -> int:
+        return self.y
+
+    @property
+    def top_last(self) -> int:
+        return self._top_last
+
+    @property
+    def bottom(self) -> int:
+        return self.y + self.height
+
+    @property
+    def bottom_last(self) -> int:
+        return self._bottom_last
+
+    @property
+    def left(self) -> int:
+        return self.x
+
+    @property
+    def left_last(self) -> int:
+        return self._left_last
+
+    @property
+    def right(self) -> int:
+        return self.x + self.width
+
+    @property
+    def right_last(self) -> int:
+        return self._right_last
 
     @property
     def xs(self) -> list[int]:
@@ -212,7 +280,7 @@ class GameObject:
         pass
 
     def __str__(self) -> str:
-        return f"{self.name}#{self.id} [{self.x},{self.y}]"
+        return f"{self.name}#{self.id} [{self.x},{self.y}], [{self.dx:.1f},{self.dy:.1f}]"
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__}> {self}"
@@ -316,7 +384,7 @@ class Sprite(GameObject):
         self.phased = phased
 
     def __str__(self) -> str:
-        return f"{self.name}#{self.id} [{self.x},{self.y}] ({'dead' if self.dead else 'alive'})"
+        return super().__str__() + f" ({'dead' if self.dead else 'alive'})"
 
     def collide(self, obj: "GameObject", xys: list[tuple[int, int]]) -> None:
         super().collide(obj, xys)
@@ -535,10 +603,10 @@ class Player(Sprite):
         if self.collided and self.dy > 0:
             self.jump_count = 0
         if not self.dead and not GameObject.pause:
-            if self.has_gravity and self.dy < MAX_GRAVITY:
-                self.dy += GRAVITY
             self.x = self._x + self.dx
             self.y = self._y + self.dy
+            if self.has_gravity and self.dy < MAX_GRAVITY:
+                self.dy += GRAVITY
 
 
 class Enemy(Sprite):
@@ -737,23 +805,23 @@ def check_for_collisions():
         for obj1 in objs:
             obj1.go()
             obj1.collided.clear()
-        keys = list(GameObject.objects.keys())
+    keys = list(GameObject.objects.keys())
     if len(GameObject.objects) > 1:
         for i, key1 in enumerate(keys[:-1]):
-            obj1 = GameObject.objects[key1]
-            for key2 in keys[i + 1 :]:
-                obj2 = GameObject.objects[key2]
-                x = []
-                if hasattr(obj1, "p_sprite") and hasattr(obj2, "p_sprite"):
-                    x = obj1.p_sprite.rect.colliderect(obj2.p_sprite.rect)
-                elif obj1.animate and obj2.animate:
-                    x = set(obj1.move_xys).intersection(set(obj2.move_xys))
-                elif obj1.animate:
-                    x = set(obj1.move_xys).intersection(set(obj2.xys))
-                elif obj2.animate:
-                    x = set(obj1.xys).intersection(set(obj2.move_xys))
-                else:
-                    pass
-                if x:
-                    obj1.collide(obj2, x)
-                    obj2.collide(obj1, x)
+            try:
+                obj1 = GameObject.objects[key1]
+                for key2 in keys[i + 1 :]:
+                    try:
+                        obj2 = GameObject.objects[key2]
+                        x = []
+                        if obj1.animate or obj2.animate:
+                            x = obj1.collision_surface.intersection(obj2.collision_surface)
+                        else:
+                            pass
+                        if x:
+                            obj1.collide(obj2, x)
+                            obj2.collide(obj1, x)
+                    except KeyError:
+                        pass
+            except KeyError:
+                pass

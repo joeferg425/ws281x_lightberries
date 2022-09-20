@@ -9,8 +9,8 @@ from dots import run_dots_game
 import logging
 
 games = [
-    run_eat_game,
     run_jump_game,
+    run_eat_game,
     run_space_game,
     run_dots_game,
 ]
