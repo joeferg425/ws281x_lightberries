@@ -6,13 +6,7 @@ import logging
 from typing import Optional
 from lightberries.matrix_controller import MatrixController
 from lightberries.pixel import PixelColors
-from game_objects import (
-    GameObject,
-    Floor,
-    Player,
-    Projectile,
-    SpriteShape,
-)
+from game_objects import GameObject, Floor, Player, Projectile, SpriteShape, Sprite
 import pygame
 import numpy as np
 from light_game import LightEvent, LightEventId, LightGame
@@ -71,17 +65,40 @@ class Jumper(Player):
         self.width = 1
         self.color = color
         self.real_color = self.color
+        self.platform_above = False
+        self.platform_below = False
 
     def go(self):
-        super().go()
+        if self.collided and self.dy > 0:
+            self.jump_count = 0
+        if not self.dead and not GameObject.pause:
+            self.x = self._x + self.dx
+            if self._x < 0:
+                self._x = 0
+            elif self._x > GameObject.frame_size_x - 1:
+                self._x = GameObject.frame_size_x - 1
+            self.y = self._y + self.dy
+            if self.has_gravity and self.dy < GameObject.MAX_GRAVITY:
+                self.dy += GameObject.GRAVITY
         self.falling = True
-        # self.p_sprite.go(self)
+        self.platform_below = False
+        self.platform_above = False
 
     def collide(self, obj: "GameObject", xys: list[tuple[int, int]]) -> None:
+        if not self.collide:
+            self.platform_below = False
+            self.platform_above = False
         if not obj.owner == self:
             self.collided.append(obj)
             self.collision_xys.append(xys)
             self.health -= obj.damage
+            if isinstance(obj, Platform):
+                if obj.box.top < self.box.top and obj.box.bottom > self.box.top:
+                    self.platform_above = True
+                elif obj.box.bottom > self.box.bottom and obj.box.top < self.box.bottom:
+                    self.platform_below = True
+                if self.platform_above and self.platform_below:
+                    self._dead = True
             if self.dead and self.id not in GameObject.dead_objects:
                 GameObject.dead_objects.append(self.id)
         if self.animate and not obj.owner == self:
@@ -90,13 +107,14 @@ class Jumper(Player):
                     if self.box.bottom > obj.box.top and self.box.top < obj.box.top:
                         self._y = int(obj.y - obj.height)
                         self.dy = 0
+                        self.jump_count = 0
                 elif self.dy < 0:
                     if self.box.top < obj.box.bottom and self.box.bottom > obj.box.bottom:
                         self._y = int(obj.y + self.height)
                         self.dy = 0
-
+        if self.dead:
+            self.color = PixelColors.YELLOW.array
         self.falling = False
-        self.jump_count = 0
 
     @property
     def dead(self) -> bool:
@@ -179,7 +197,6 @@ class Bullet(Projectile):
 
     def collide(self, obj: "GameObject", xys: list[tuple[int, int]]) -> None:
         self.dead = True
-        print(obj)
         super().collide(obj, xys)
 
 
@@ -207,12 +224,12 @@ class Baddy(Player):
 
     def go(self):
         super().go()
-        t = time.time()
-        target = self.jumpgame.players[random.randint(0, len(self.jumpgame.players) - 1)]
-        if self.collided:
+        target = None
+        if self.jumpgame.players:
+            target = self.jumpgame.players[random.randint(0, len(self.jumpgame.players) - 1)]
+        if self.collided and target:
             if not self.dx:
                 if not target.dead:
-                    self.timestamp_bullet = t
                     self.dx = Baddy.SPEED if target.x > self.x else -Baddy.SPEED
                 else:
                     self._dead = True
@@ -253,6 +270,8 @@ class Baddy(Player):
 
 
 class Platform(Floor):
+    PRIZE_RESPAWN = 2.5
+
     def __init__(
         self,
         x: int,
@@ -272,17 +291,66 @@ class Platform(Floor):
             color=color,
         )
         self.damage = 0
-        # self.p_sprite = PygameSprite(x, y, width, height)
         self.dy = dy
+        self.prize: FreePrize | None = None
+        self.timestamp_prize_taken = time.time()
 
     def go(self):
         self.x = self._x + self.dx
         self.y = self._y + self.dy
-        # self.p_sprite.go(self)
-        # self.p_sprite.rect.height = (self.height + self.dy) * LightGame.SIMULATED_SIZE
-        # self.p_sprite.rect.top = self.y * LightGame.SIMULATED_SIZE
         if self.y > GameObject.frame_size_y:
             self.dead = True
+        if (
+            self.prize is not None
+            and time.time() - self.timestamp_prize_taken > Platform.PRIZE_RESPAWN
+            and self.prize.dead
+        ):
+            self.prize = None
+
+
+class FreePrize(Sprite):
+    def __init__(
+        self,
+        owner: Platform,
+        x: int,
+        y: int,
+        size: int = 2,
+        name: str = "projectile",
+        color: np.ndarray[3, np.int32] = PixelColors.CYAN.array,
+        destructible: bool = True,
+        bounded: bool = True,
+        dx: float = 0,
+        dy: float = 0,
+    ) -> None:
+        super().__init__(
+            x=x,
+            y=y,
+            size=size,
+            name=name,
+            color=color,
+            destructible=destructible,
+            bounded=bounded,
+            dx=dx,
+            dy=dy,
+        )
+        self.platform = owner
+        self.damage = 0
+        self.point_value = 1
+        self.has_gravity = True
+        self.shape = SpriteShape.SQUARE
+
+    def collide(self, obj: "GameObject", xys: list[tuple[int, int]]) -> None:
+        super().collide(obj, xys)
+        if isinstance(obj, Jumper):
+            obj.score += self.point_value
+            self.platform.timestamp_prize_taken = time.time()
+
+    @property
+    def dead(self) -> bool:
+        d = super().dead
+        if d:
+            self.platform.timestamp_prize_taken = time.time()
+        return d
 
 
 class JumpGame(LightGame):
@@ -291,23 +359,27 @@ class JumpGame(LightGame):
     RESPAWN_DELAY = 1
     BULLET_DELAY = 0.2
     BADDY_DELAY = 5
+    PRIZE_DELAY = 0.75
 
     def __init__(self, lights: MatrixController) -> None:
         super().__init__(lights)
         self.players: dict[int, Jumper] = {}
         self.all_sprites = pygame.sprite.Group()
-        self.platforms = []
+        self.platforms: list[Platform] = []
         self.add_callback(event_id=LightEventId.ControllerAdded, callback=self.add_player)
         self.splash_screen("jump", 20)
         self.timestamp_baddy = time.time()
+        self.timestamp_prize = time.time()
 
     def get_new_player(self, old_player: Optional[Jumper] = None) -> GameObject:
         color = PixelColors.ORANGE2.array
+        surf = list(self.platforms[-1].collision_surface)
+        x = surf[random.randint(0, len(surf) - 1)][0]
         if old_player is not None:
             color = old_player.real_color
             if time.time() - old_player.timestamp_death > JumpGame.RESPAWN_DELAY:
                 j = Jumper(
-                    x=random.randint(3, int(GameObject.frame_size_x - 3)),
+                    x=x,
                     y=1,
                     color=color,
                 )
@@ -329,12 +401,50 @@ class JumpGame(LightGame):
                 dead_ones.append(i)
         for i in dead_ones:
             self.platforms.pop(i)
-        if not locations or not {0, 1, 2, 3, 4, 5, 6} & locations:
+        a_set = set(range(random.randint(6, 7)))
+        if not locations or not a_set & locations:
             width = random.randint(3, int(GameObject.frame_size_x / 2))
-            location = random.randint(0, GameObject.frame_size_x - width - 3)
-            speed = [0.05, 0.1, 0.15, 0.2][random.randint(0, 3)]
-            p = Platform(x=location, y=0, width=width, height=2, dy=speed)
+            x = random.randint(0, GameObject.frame_size_x - width - 3)
+            # speed = [0.05, 0.1, 0.15, 0.2][random.randint(0, 3)]
+            # speed = [0.1, 0.15][random.randint(0, 1)]
+            speed = 0.15
+            p = Platform(x=x, y=0, width=width, height=2, dy=speed)
             self.platforms.append(p)
+            if width < 8:
+                m = max(p.left, GameObject.frame_size_x - p.right)
+                new_width = random.randint(3, m)
+                try:
+                    if p.left > GameObject.frame_size_x - p.right:
+                        x = random.randint(0, new_width - 3)
+                        # speed = [0.05, 0.1, 0.15, 0.2][random.randint(0, 3)]
+                        speed = 0.15
+                        p = Platform(x=x, y=0, width=new_width, height=2, dy=speed)
+                        self.platforms.append(p)
+                    else:
+                        x = random.randint(p.right, GameObject.frame_size_x - new_width - 3)
+                        speed = 0.15
+                        # speed = [0.05, 0.1, 0.15, 0.2][random.randint(0, 3)]
+                        p = Platform(x=x, y=0, width=new_width, height=2, dy=speed)
+                        self.platforms.append(p)
+                except:  # noqa
+                    pass
+
+    def spawn_prize(self):
+        t = time.time()
+        if t - self.timestamp_prize > JumpGame.PRIZE_DELAY:
+            self.timestamp_prize = t
+            valid_locations = [platform for platform in self.platforms if platform.prize is None]
+            if valid_locations:
+                platform = valid_locations[random.randint(0, len(valid_locations) - 1)]
+                surf = list(platform.collision_surface)
+                x = surf[random.randint(0, len(surf) - 1)][0]
+                y = platform.top - 1
+                p = FreePrize(
+                    owner=platform,
+                    x=x,
+                    y=y,
+                )
+                platform.prize = p
 
     def spawn_baddy(self):
         t = time.time()
@@ -362,6 +472,7 @@ class JumpGame(LightGame):
             self.check_for_winner()
             self.respawn_dead_players()
             self.spawn_baddy()
+            self.spawn_prize()
             self.show_scores()
             for event in self.get_events():
                 t = time.time()
@@ -406,10 +517,10 @@ class JumpGame(LightGame):
                                 if player.jump_count < 2:
                                     player.jump_count += 1
                                     player.timestamp_jump = t
-                                    if player.dy > 0:
-                                        player.dy = -3.2
+                                    if player.dy - 0.5:
+                                        player.dy = -2.5
                                     else:
-                                        player.dy -= 3.2
+                                        player.dy -= 2.5
             self.spawn_platform()
             self.check_end_game()
             self.update_game()

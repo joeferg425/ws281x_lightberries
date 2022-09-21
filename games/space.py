@@ -7,6 +7,9 @@ from lightberries.matrix_controller import MatrixController
 from lightberries.pixel import PixelColors
 from game_objects import GameObject, Player, Projectile, Enemy
 import numpy as np
+import logging
+
+LOGGER = logging.getLogger(__name__)
 
 
 class SpaceShip(Player):
@@ -14,12 +17,15 @@ class SpaceShip(Player):
         self,
         x: int,
         y: int,
+        color: np.ndarray[(3), np.int32] | None = None,
     ) -> None:
+        if color is None:
+            color = PixelColors.pseudoRandom().array
         super().__init__(
             x=x,
             y=y,
             name=SpaceShip.__name__,
-            color=PixelColors.pseudoRandom().array,
+            color=color,
             has_gravity=False,
         )
         self.bullet_time = time.time()
@@ -341,10 +347,14 @@ class SpaceGame(LightGame):
 
         self.splash_screen("space", 20)
 
-    def get_new_player(self) -> GameObject:
+    def get_new_player(self, old_player: SpaceShip) -> GameObject:
+        color = PixelColors.pseudoRandom().array
+        if old_player is not None:
+            color = old_player.color
         return SpaceShip(
             x=random.randint(0, self.lights.realLEDXaxisRange - 1),
             y=random.randint(0, self.lights.realLEDYaxisRange - 1),
+            color=color,
         )
 
     def add_spaceship(self, event: LightEvent):
@@ -451,8 +461,8 @@ def run_space_game(lights: MatrixController):
     g = SpaceGame(lights=lights)
     try:
         g.run()
-    except:  # noqa
-        pass
+    except Exception as ex:  # noqa
+        LOGGER.exception("oops")
     g.__del__()
 
 

@@ -6,9 +6,6 @@ import numpy as np
 from lightberries.pixel import PixelColors
 import time
 
-GRAVITY = 0.75
-MAX_GRAVITY = 2.5
-
 
 @dataclass
 class rect:
@@ -59,6 +56,8 @@ class GameObject:
     frame_size_y: int = 0
     pause: bool = False
     object_counter: int = 0
+    GRAVITY = 0.75
+    MAX_GRAVITY = 2.5
 
     def __init__(
         self,
@@ -503,8 +502,8 @@ class Sprite(GameObject):
 
     def go(self):
         if not self.dead and not GameObject.pause:
-            if self.has_gravity and self.dy < MAX_GRAVITY:
-                self.dy += GRAVITY
+            if self.has_gravity and self.dy < GameObject.MAX_GRAVITY:
+                self.dy += GameObject.GRAVITY
             self.x = self._x + self.dx
             self.y = self._y + self.dy
             if self.wrap:
@@ -605,8 +604,8 @@ class Player(Sprite):
         if not self.dead and not GameObject.pause:
             self.x = self._x + self.dx
             self.y = self._y + self.dy
-            if self.has_gravity and self.dy < MAX_GRAVITY:
-                self.dy += GRAVITY
+            if self.has_gravity and self.dy < GameObject.MAX_GRAVITY:
+                self.dy += GameObject.GRAVITY
 
 
 class Enemy(Sprite):
@@ -639,8 +638,8 @@ class Enemy(Sprite):
 
     def go(self):
         if not self.dead and not GameObject.pause:
-            if self.has_gravity and self.dy < MAX_GRAVITY:
-                self.dy += GRAVITY
+            if self.has_gravity and self.dy < GameObject.MAX_GRAVITY:
+                self.dy += GameObject.GRAVITY
             self._x = self._x + self.dx
             self._y = self._y + self.dy
             if self.wrap:
