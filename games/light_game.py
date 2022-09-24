@@ -736,8 +736,6 @@ class LightGame:
                     firework.color = Pixel(player.color).array
             for firework in self.fireworks:
                 firework.run()
-            self.lights.copyVirtualLedsToWS281X()
-            self.lights.refreshLEDs()
             if t - self.win_time > LightGame.WIN_DURATION:
                 self.win = False
                 for i in self.players.keys():
@@ -784,18 +782,16 @@ class LightGame:
                         )
 
     def update_game(self):
-        if self.first_render or (not self.pause and not self.win and not self.exiting):
+        if self.first_render or not (self.pause or self.exiting):
+            self.fade.run()
             if not self.win:
-                self.fade.run()
-            else:
-                self.fade.run()
-            check_for_collisions()
-            for obj in GameObject.objects.values():
-                try:
-                    if obj.y >= 0:
-                        self.lights.virtualLEDBuffer[obj.xs, obj.ys] = Pixel(obj.color).array
-                except:  # noqa
-                    pass
+                check_for_collisions()
+                for obj in GameObject.objects.values():
+                    try:
+                        if obj.y >= 0:
+                            self.lights.virtualLEDBuffer[obj.xs, obj.ys] = Pixel(obj.color).array
+                    except:  # noqa
+                        pass
             if len(GameObject.objects) > 0:
                 self.first_render = False
             if not self.lights.simulate:

@@ -2,10 +2,10 @@
 from __future__ import annotations
 import random
 import time
-from typing import cast
+from typing import Optional, cast
 from lightberries.matrix_controller import MatrixController
 from lightberries.pixel import PixelColors
-from game_objects import GameObject, Sprite, Projectile
+from game_objects import GameObject, Sprite, Projectile, Player
 import numpy as np
 from light_game import LightEvent, LightEventId, LightGame, XboxController
 import logging
@@ -13,16 +13,15 @@ import logging
 LOGGER = logging.getLogger(__name__)
 
 
-class Snake(Sprite):
-    snakes: dict[int, Snake] = {}
+class Snake(Player):
+    BASE_SPEED = 0.15
+    BASE_GROWTH = 2
 
     def __init__(
         self,
         x: int,
         y: int,
         tail_length: int = 2,
-        speed: float = 0.1,
-        max_speed: float = 1.5,
         color: np.ndarray[(3), np.int32] = PixelColors.WHITE.array,
     ) -> None:
         super().__init__(
@@ -32,21 +31,14 @@ class Snake(Sprite):
             name="snake",
             color=color,
             has_gravity=False,
-            destructible=True,
-            bounded=True,
-            dx=0.0,
-            dy=0.0,
-            phased=True,
         )
-        Snake.snakes[GameObject.object_counter] = self
-        self.speed_increment = 0.1
-        self.speed_max = max_speed
-        self.speed = speed
+        self._speed = 0.1
         self.tail = [(x, y)]
         self.tail_length = tail_length
         self.color_change_time = time.time()
         self.bad_apple_time = time.time()
         self.bullet_time = time.time()
+        self.powerup: Optional[Apple] = None
         self.score = 1
         self.x_change = 0.0
         self.y_change = 0.0
@@ -56,9 +48,24 @@ class Snake(Sprite):
             self.dy = self.speed * [-1, 1][random.randint(0, 1)]
 
     def collide(self, obj: "GameObject", xys: list[tuple[int, int]]) -> None:
-        if obj.name == "apple":
-            self.tail_length += 2
-            self.score += 0.5
+        if isinstance(obj, Apple):
+            if (self.x, self.y) in xys:
+                if isinstance(obj, BadApple):
+                    self.powerup = None
+                    if obj.owner.id != self.id:
+                        self.collided.append(obj)
+                        self.collision_xys.append(xys)
+                        self.health -= obj.damage
+                        if self.dead and self.id not in GameObject.dead_objects:
+                            GameObject.dead_objects.append(self.id)
+                else:
+                    if self.powerup is None or not obj.name == "apple":
+                        self.powerup = obj
+                        self.timestamp_powerup = time.time()
+                    self.tail_length += self.tail_growth
+                    self.score += obj.point_value
+            else:
+                obj._dead = False
         elif obj.name == "snake":
             if (self.x, self.y) in xys:
                 self.collided.append(obj)
@@ -68,19 +75,26 @@ class Snake(Sprite):
                     GameObject.dead_objects.append(self.id)
         elif obj.name == "bullet":
             pass
-        elif obj.name == "bad apple":
-            if obj.owner.id != self.id:
-                self.collided.append(obj)
-                self.collision_xys.append(xys)
-                self.health -= obj.damage
-                if self.dead and self.id not in GameObject.dead_objects:
-                    GameObject.dead_objects.append(self.id)
         else:
             self.collided.append(obj)
             self.collision_xys.append(xys)
             self.health -= obj.damage
             if self.dead and self.id not in GameObject.dead_objects:
                 GameObject.dead_objects.append(self.id)
+
+    @property
+    def speed(self) -> float:
+        if self.powerup is None:
+            return self.BASE_SPEED + self._speed * int(self.tail_length / 5)
+        else:
+            return self.BASE_SPEED + self.powerup.speed * int(self.tail_length / 5)
+
+    @property
+    def tail_growth(self) -> int:
+        if self.powerup is not None:
+            return self.powerup.tail_growth
+        else:
+            return Snake.BASE_GROWTH
 
     @property
     def xs(self) -> list[int]:
@@ -99,6 +113,10 @@ class Snake(Sprite):
         return [y for x, y in self.tail]
 
     def go(self):
+        if self.powerup is not None:
+            if time.time() - self.timestamp_powerup > self.powerup.powerup_duration:
+                self.powerup._dead = True
+                self.powerup = None
         last_x = self.x
         last_y = self.y
         if not self.dead and not GameObject.pause:
@@ -122,19 +140,16 @@ class Snake(Sprite):
 
 
 class Apple(Sprite):
-    apples: dict[int, Apple] = {}
+    EXPIRATION_DELAY = 12
 
     def __init__(
-        self,
-        x: int,
-        y: int,
-        color: np.ndarray[(3), np.int32] = PixelColors.WHITE.array,
+        self, x: int, y: int, color: np.ndarray[(3), np.int32] = PixelColors.RED.array, name: str = "apple"
     ) -> None:
         super().__init__(
             x=x,
             y=y,
             size=1,
-            name="apple",
+            name=name,
             color=color,
             has_gravity=False,
             destructible=True,
@@ -147,8 +162,8 @@ class Apple(Sprite):
         self.airborne = False
         self.bounded = True
         self.creation_time = time.time()
-        self.expiration_delay = 10
-        Apple.apples[GameObject.object_counter] = self
+        self.speed = Snake.BASE_SPEED
+        self.tail_growth = Snake.BASE_GROWTH
 
     @property
     def dead(self) -> bool:
@@ -156,31 +171,62 @@ class Apple(Sprite):
             if self.id not in GameObject.dead_objects:
                 GameObject.dead_objects.append(self.id)
             self._dead = True
+            self.color = PixelColors.YELLOW.array
         return self._dead
 
     def go(self):
         super().go()
-        if time.time() - self.creation_time > self.expiration_delay:
+        if time.time() - self.creation_time > Apple.EXPIRATION_DELAY:
             if self.id not in GameObject.dead_objects:
                 GameObject.dead_objects.append(self.id)
             self._dead = True
 
 
-class BadApple(Sprite):
-    bad_apples: dict[int, BadApple] = {}
+class FastApple(Apple):
+    def __init__(
+        self, x: int, y: int, color: np.ndarray[3, np.int32] = PixelColors.GREEN.array, name: str = "fast apple"
+    ) -> None:
+        super().__init__(
+            x=x,
+            y=y,
+            color=color,
+            name=name,
+        )
+        self.speed = Snake.BASE_SPEED * 2
 
+
+class GrowyApple(Apple):
+    def __init__(
+        self,
+        x: int,
+        y: int,
+        color: np.ndarray[3, np.int32] = PixelColors.CYAN2.array,
+        name: str = "growy apple",
+    ) -> None:
+        super().__init__(
+            x=x,
+            y=y,
+            color=color,
+            name=name,
+        )
+        self.tail_growth = 4
+        self.speed = Snake.BASE_SPEED * 1.5
+
+
+class BadApple(Sprite):
     def __init__(
         self,
         x: int,
         y: int,
         owner: Snake,
         color: np.ndarray[(3), np.int32] = PixelColors.WHITE.array,
+        name: str = "bad apple",
     ) -> None:
         super().__init__(
             x=x,
             y=y,
             size=1,
-            name="bad apple",
+            name=name,
             color=color,
             has_gravity=False,
             destructible=True,
@@ -195,7 +241,9 @@ class BadApple(Sprite):
         self.owner = owner
         self.creation_time = time.time()
         self.expiration_delay = 2.0
-        BadApple.bad_apples[GameObject.object_counter] = self
+        self.powerup_duration = 5.0
+        self.speed = int(Snake.BASE_SPEED / 2)
+        self.tail_growth = 1
 
     @property
     def dead(self) -> bool:
@@ -225,65 +273,18 @@ class EatGame(LightGame):
     COLOR_CHANGE_DELAY = 0.2
     BAD_APPLE_DELAY = 0.5
     BULLET_DELAY = 0.5
-    START_SPEED = 0.4
+    START_SPEED = 0.45
     SNAKE_START_LENGTH = 3
 
     def __init__(self, lights: MatrixController) -> None:
         super().__init__(lights=lights)
-        # os.environ["SDL_VIDEODRIVER"] = "dummy"
-        # GameObject.frame_size_x = lights.realLEDXaxisRange
-        # GameObject.frame_size_y = lights.realLEDYaxisRange
-        # pause = True
-        # PAUSE_DELAY = 0.3
-        # THRESHOLD = 0.05
-        # fade = ArrayFunction(lights, MatrixFunction.functionOff, ArrayPattern.DefaultColorSequenceByMonth())
-        # fade.fadeAmount = 0.3
-        # fade.color = PixelColors.OFF.array
-        # fadeFireworks = ArrayFunction(
-        #     lights, MatrixFunction.functionMatrixFadeOff, ArrayPattern.DefaultColorSequenceByMonth()
-        # )
-        # fadeFireworks.fadeAmount = 0.3
-        # fadeFireworks.color = PixelColors.OFF.array
         self.players: dict[int, Snake] = {}
-        # x_changes: dict[int, float] = {}
-        # y_changes: dict[int, float] = {}
-        # joysticks: dict[int, pygame.joystick.Joystick] = {}
         self.apple_delay = 2.0
         self.apple_time = time.time() - self.apple_delay
-        # fireworks = []
-        # for i in range(10):
-        #     firework = MatrixFunction(lights, MatrixFunction.functionMatrixFireworks, ArrayPattern.RainbowArray(10))
-        #     firework.rowIndex = random.randint(0, lights.realLEDXaxisRange - 1)
-        #     firework.columnIndex = random.randint(0, lights.realLEDYaxisRange - 1)
-        #     firework.size = 1
-        #     firework.step = 1
-        #     firework.sizeMax = min(int(lights.realLEDXaxisRange / 2), int(lights.realLEDYaxisRange / 2))
-        #     firework.colorCycle = True
-        #     for _ in range(i):
-        #         firework.color = firework.colorSequenceNext
-        #     fireworks.append(firework)
-        # win = False
-        # win_time = time.time()
-        # WIN_SCORE = int(lights.realLEDYaxisRange / 2)
-        # WIN_DURATION = 6
-        # pause_time = time.time()
-        # fake_pause_time = time.time() - 5
-        # fake_pause = False
-        # b9_time = time.time()
-        # b10_time = time.time() - 1
-        # FAKE_PAUSE_DELAY = 3
-        # READY = np.array([Pixel(PixelColors.YELLOW.array).array, Pixel(PixelColors.CYAN.array).array])
-        # NOT_READY = np.array([Pixel(PixelColors.YELLOW.array).array, Pixel(PixelColors.ORANGE.array).array])
-        # joystick_count = 0
-        # apples: list[Sprite] = []
-
-        # pygame.init()
-        # pygame_quit = False
         self.add_callback(event_id=LightEventId.ControllerAdded, callback=self.add_spaceship)
         self.splash_screen("eat", 20)
 
     def get_new_player(self, old_player: Snake | None) -> GameObject:
-
         color = PixelColors.WHITE.array
         if old_player is not None:
             color = old_player.color
@@ -294,7 +295,7 @@ class EatGame(LightGame):
         )
 
     def add_spaceship(self, event: LightEvent):
-        self.players[event.controller_instance_id] = self.get_new_player()
+        self.players[event.controller_instance_id] = self.get_new_player(None)
 
     def run(self):
         while not self.exiting:
@@ -302,107 +303,10 @@ class EatGame(LightGame):
             if len(self.get_controllers()):
                 divisor = len(self.get_controllers())
             self.apple_delay = 1.5 / divisor
-            # self.g
-            # if joystick_count != pygame.joystick.get_count():
-            #     if pygame.joystick.get_count() > joystick_count:
-            #         joystick_count = pygame.joystick.get_count()
-            #         for i in range(joystick_count - len(players)):
-            #             joysticks[len(players)] = pygame.joystick.Joystick(len(players))
-            #             joysticks[len(players)].init()
-            #             x_changes[len(players)] = 0.0
-            #             y_changes[len(players)] = 0.0
-            #             players[len(players)] = Snake(
-            #                 x=random.randint(0, lights.realLEDXaxisRange) - 1,
-            #                 y=random.randint(0, lights.realLEDYaxisRange) - 1,
-            #                 tail_length=SNAKE_START_LENGTH,
-            #                 speed=START_SPEED,
-            #                 max_speed=1.5,
-            #                 color=PixelColors.pseudoRandom().array,
-            #             )
-            #     else:
-            #         joystick_count = pygame.joystick.get_count()
-            #         while len(players) > joystick_count:
-            #             players[len(players) - 1]._dead = True
-            #             joysticks[len(players) - 1].quit()
-            #             players.pop(len(players) - 1)
-            #     if joystick_count == 0:
-            #         pause = True
-            #     else:
-            #         pause = False
-            # if fake_pause and time.time() - fake_pause_time > FAKE_PAUSE_DELAY:
-            #     pause = False
-            #     fake_pause = False
             self.check_for_winner()
-            # if any([player.score >= WIN_SCORE for player in players.values()]):
-            #     for player in players.values():
-            #         if player.score >= WIN_SCORE:
-            #             break
-            #     if not win:
-            #         win = True
-            #         win_time = time.time()
-            #         for firework in fireworks:
-            #             firework.color = Pixel(player.color).array
-            #     for firework in fireworks:
-            #         firework.run()
-            #     lights.copyVirtualLedsToWS281X()
-            #     lights.refreshLEDs()
-            #     if time.time() - win_time > WIN_DURATION:
-            #         win = False
-            #         for i in players.keys():
-            #             players[i]._dead = True
-            #             players[i] = Snake(
-            #                 x=random.randint(0, lights.realLEDXaxisRange) * 1,
-            #                 y=random.randint(0, lights.realLEDYaxisRange) * 1,
-            #                 tail_length=SNAKE_START_LENGTH,
-            #                 speed=START_SPEED,
-            #                 max_speed=1.5,
-            #                 color=players[i].color,
-            #             )
-            #     fadeFireworks.run()
-            #     continue
-            # else:
-            #     fade.run()
             self.respawn_dead_players()
-            # for index, player in players.items():
-            # if player.dead:
-            #     delta = time.time() - player.timestamp_death
-            #     if delta > player.respawn_delay:
-            #         color = player.color
-            #         players[index] = Snake(
-            #             x=random.randint(0, lights.realLEDXaxisRange // 2),
-            #             y=random.randint(0, lights.realLEDYaxisRange // 2),
-            #             speed=START_SPEED,
-            #             max_speed=1.5,
-            #             color=color,
-            #             tail_length=SNAKE_START_LENGTH,
-            #         )
-            # if index % 2 == 0:
-            #     if index == 0:
-            #         x = 0
-            #     else:
-            #         x = lights.realLEDYaxisRange - 1
-            #     if time.time() - player.bullet_time >= BULLET_DELAY:
-            #         lights.virtualLEDBuffer[: int(player.score), x, :] = ArrayPattern.ColorTransitionArray(
-            #             int(player.score), READY
-            #         )
-            #     else:
-            #         lights.virtualLEDBuffer[: int(player.score), x, :] = ArrayPattern.ColorTransitionArray(
-            #             int(player.score), NOT_READY
-            #         )
-            # else:
             self.show_scores()
-            # if index == 1:
-            #     x = 0
-            # else:
-            #     x = lights.realLEDYaxisRange - 1
-            # if time.time() - player.bullet_time >= BULLET_DELAY:
-            #     lights.virtualLEDBuffer[-int(player.score) :, x, :] = ArrayPattern.ColorTransitionArray(
-            #         int(player.score), READY
-            #     )
-            # else:
-            # lights.virtualLEDBuffer[-int(player.score) :, x, :] = ArrayPattern.ColorTransitionArray(
-            # int(player.score), NOT_READY
-            # )
+            self.spawn_apple()
             for event in self.get_events():
                 t = time.time()
                 if event.controller_instance_id not in self.players:
@@ -412,13 +316,9 @@ class EatGame(LightGame):
                 else:
                     snake = self.players[event.controller_instance_id]
                     controller = cast("XboxController", event.controller)
-                    # print(event)
                     if not snake.dead:
                         vector = controller.LS
-                        # if "joy" in event.dict and "axis" in event.dict:
-                        # if event.dict["axis"] == XboxJoystick.JOY_LEFT_X:
                         snake.x_change = vector.x
-                        # elif event.dict["axis"] == XboxJoystick.JOY_LEFT_Y:
                         snake.y_change = vector.x
                         if controller.RT > 0.0:
                             if t - snake.bullet_time >= EatGame.BULLET_DELAY and not self.pause:
@@ -433,7 +333,6 @@ class EatGame(LightGame):
                                     color=PixelColors.BLUE.array,
                                     size=0,
                                 )
-                        # if "joy" in event.dict and "button" in event.dict:
                         if event.event_id == LightEventId.ButtonBottom:
                             if t - snake.bad_apple_time > EatGame.BAD_APPLE_DELAY:
                                 snake.bad_apple_time = t
@@ -481,36 +380,39 @@ class EatGame(LightGame):
                         else:
                             snake.dy = -snake.speed
                         snake.dx = 0
-            if time.time() - self.apple_time >= self.apple_delay and (
-                self.first_render is False
-                or (not all([player.dead for player in self.players.values()]) and not self.pause)
-            ):
-                self.apple_time = time.time()
+            self.update_game()
+            self.check_end_game()
+
+    def spawn_apple(self):
+        if time.time() - self.apple_time >= self.apple_delay and (
+            self.first_render or (not all([player.dead for player in self.players.values()]) and not self.pause)
+        ):
+            self.apple_time = time.time()
+            how_many = 2
+            which = random.randint(0, how_many + 5)
+            if which == 0:
+                new_apple = FastApple(
+                    random.randint(0, self.lights.realLEDYaxisRange - 1),
+                    random.randint(0, self.lights.realLEDXaxisRange - 1),
+                )
+            elif which == 1:
+                new_apple = GrowyApple(
+                    random.randint(0, self.lights.realLEDYaxisRange - 1),
+                    random.randint(0, self.lights.realLEDXaxisRange - 1),
+                )
+            else:
                 new_apple = Apple(
                     random.randint(0, self.lights.realLEDYaxisRange - 1),
                     random.randint(0, self.lights.realLEDXaxisRange - 1),
-                    color=PixelColors.RED.array,
                 )
-                while any(
-                    [
-                        (abs(new_apple.x - snake.x) < 5) and (abs(new_apple.y - snake.y) < 5)
-                        for snake in self.players.values()
-                    ]
-                ):
-                    new_apple.x = random.randint(0, self.lights.realLEDYaxisRange - 1)
-                    new_apple.y = random.randint(0, self.lights.realLEDXaxisRange - 1)
-                # self.apples.append(new_apple)
-            self.update_game()
-            self.check_end_game()
-            # if not pause:
-            #     check_for_collisions()
-            #     for obj in GameObject.objects.values():
-            #         try:
-            #             lights.virtualLEDBuffer[obj.xs, obj.ys] = Pixel(obj.color).array
-            #         except:  # noqa
-            #             pass
-            #     lights.copyVirtualLedsToWS281X()
-            #     lights.refreshLEDs()
+            while any(
+                [
+                    (abs(new_apple.x - snake.x) < 5) and (abs(new_apple.y - snake.y) < 5)
+                    for snake in self.players.values()
+                ]
+            ):
+                new_apple.x = random.randint(0, self.lights.realLEDYaxisRange - 1)
+                new_apple.y = random.randint(0, self.lights.realLEDXaxisRange - 1)
 
 
 def run_eat_game(lights: MatrixController):

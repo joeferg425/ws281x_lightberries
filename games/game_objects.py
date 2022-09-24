@@ -5,6 +5,7 @@ from enum import IntEnum
 import numpy as np
 from lightberries.pixel import PixelColors
 import time
+from typing import Optional
 
 
 @dataclass
@@ -104,6 +105,8 @@ class GameObject:
         self.children: dict[int, GameObject] = {}
         self.timestamp_ready = self.timestamp_spawn
         self._dead = False
+        self.powerup_duration = 1.0
+        self.timestamp_powerup = self.timestamp_spawn
         GameObject.objects[GameObject.object_counter] = self
         GameObject.object_counter += 1
 
@@ -111,8 +114,8 @@ class GameObject:
     def collision_surface(self) -> set[tuple[int, int]]:
         box = self.box
         s: list[tuple[int, int]] = []
-        for i in range(box.top, box.bottom):
-            xs = range(box.left, box.right)
+        for i in range(box.top, box.bottom + 1):
+            xs = range(box.left, box.right + 1)
             ys = [i] * len(xs)
             s.extend(zip(xs, ys))
         return set(s)
@@ -166,11 +169,14 @@ class GameObject:
 
     @property
     def top(self) -> int:
-        return self.y
+        if self.shape == SpriteShape.CROSS or self.shape == SpriteShape.CIRCLE:
+            return self.y - self.height
+        else:
+            return self.y
 
     @property
     def top_last(self) -> int:
-        return self._top_last
+        return int(self._top_last)
 
     @property
     def bottom(self) -> int:
@@ -178,15 +184,18 @@ class GameObject:
 
     @property
     def bottom_last(self) -> int:
-        return self._bottom_last
+        return int(self._bottom_last)
 
     @property
     def left(self) -> int:
-        return self.x
+        if self.shape == SpriteShape.CROSS or self.shape == SpriteShape.CIRCLE:
+            return self.x - self.width
+        else:
+            return self.x
 
     @property
     def left_last(self) -> int:
-        return self._left_last
+        return int(self._left_last)
 
     @property
     def right(self) -> int:
@@ -194,7 +203,7 @@ class GameObject:
 
     @property
     def right_last(self) -> int:
-        return self._right_last
+        return int(self._right_last)
 
     @property
     def xs(self) -> list[int]:
@@ -542,6 +551,7 @@ class Player(Sprite):
         self.jump_count = 0
         self._x_aim = 0.0
         self._y_aim = 0.0
+        self.powerup: Optional[GameObject] = None
 
     @property
     def x_aim(self) -> float:
