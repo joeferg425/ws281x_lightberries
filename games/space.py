@@ -2,6 +2,7 @@
 from __future__ import annotations
 import random
 import time
+from typing import Optional
 from light_game import LightEvent, LightEventId, LightGame
 from lightberries.matrix_controller import MatrixController
 from lightberries.pixel import PixelColors
@@ -20,7 +21,7 @@ class SpaceShip(Player):
         color: np.ndarray[(3), np.int32] | None = None,
     ) -> None:
         if color is None:
-            color = PixelColors.pseudoRandom().array
+            color = PixelColors.PSEUDO_RANDOM.array
         super().__init__(
             x=x,
             y=y,
@@ -31,9 +32,7 @@ class SpaceShip(Player):
         self.bullet_time = time.time()
         self.deathray_time = self.bullet_time
         self.color_time = self.bullet_time
-        self.shield = Shield(self)
-        self.shield._dead = True
-        GameObject.dead_objects.append(self.shield.id)
+        self.shield: Optional[Shield] = None
 
 
 class Bullet(Projectile):
@@ -66,7 +65,7 @@ class Bullet(Projectile):
             self.health -= obj.damage
             self.owner.score += obj.point_value
             if isinstance(obj, ShieldEnemy) and isinstance(self.owner, SpaceShip):
-                if self.owner.shield.dead:
+                if self.owner.shield is not None and self.owner.shield.dead:
                     self.owner.shield = Shield(self.owner)
             obj.point_value = 0
             if self.dead and self.id not in GameObject.dead_objects:
@@ -76,8 +75,6 @@ class Bullet(Projectile):
 
 
 class SpaceEnemy(Enemy):
-    SpaceEnemies: dict[int, SpaceEnemy] = {}
-
     def __init__(
         self,
         x: int,
@@ -85,12 +82,13 @@ class SpaceEnemy(Enemy):
         dx: float = 0,
         dy: float = 0,
         color: np.ndarray[3, np.int32] = PixelColors.RED.array,
+        name: str = "space_enemy",
     ) -> None:
         super().__init__(
             x=x,
             y=y,
             size=1,
-            name="space_enemy",
+            name=name,
             color=color,
             destructible=True,
             has_gravity=False,
@@ -98,14 +96,6 @@ class SpaceEnemy(Enemy):
             dx=dx,
             dy=dy,
         )
-        SpaceEnemy.SpaceEnemies[GameObject.object_counter] = self
-
-    @property
-    def dead(self) -> bool:
-        dead = super().dead
-        if dead:
-            self.color = PixelColors.YELLOW.array
-        return dead
 
 
 class ShieldEnemy(SpaceEnemy):
@@ -117,14 +107,7 @@ class ShieldEnemy(SpaceEnemy):
         dy: float = 0,
         color: np.ndarray[3, np.int32] = PixelColors.ORANGE.array,
     ) -> None:
-        super().__init__(
-            x,
-            y,
-            dx,
-            dy,
-            color,
-        )
-        self.name = "ShieldEnemy"
+        super().__init__(x, y, dx, dy, color, name="ShieldEnemy")
 
 
 class Shield(Projectile):
@@ -344,11 +327,10 @@ class SpaceGame(LightGame):
         self.enemy_time = time.time()
         self.players: dict[int, SpaceShip] = {}
         self.add_callback(event_id=LightEventId.ControllerAdded, callback=self.add_spaceship)
-
         self.splash_screen("space", 20)
 
-    def get_new_player(self, old_player: SpaceShip) -> GameObject:
-        color = PixelColors.pseudoRandom().array
+    def get_new_player(self, old_player: Optional[SpaceShip] = None) -> GameObject:
+        color = PixelColors.PSEUDO_RANDOM.array
         if old_player is not None:
             color = old_player.color
         return SpaceShip(
@@ -426,10 +408,8 @@ class SpaceGame(LightGame):
                         elif event.event_id == LightEventId.ButtonTop:
                             if t - ship.color_time > 0.15:
                                 ship.color_time = t
-                                ship.color = PixelColors.pseudoRandom().array
-            if time.time() - self.enemy_time >= self.enemy_delay and (
-                self.first_render is True or self.pause is False
-            ):  # and not fake_pause:
+                                ship.color = PixelColors.PSEUDO_RANDOM.array
+            if time.time() - self.enemy_time >= self.enemy_delay and (self.first_render is True or self.pause is False):
                 self.enemy_time = time.time()
                 if random.randint(0, SpaceGame.SHIELD_ENEMY_CHANCE - 1) == SpaceGame.SHIELD_ENEMY_CHANCE - 1:
                     e = ShieldEnemy(

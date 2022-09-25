@@ -345,7 +345,7 @@ class EatGame(LightGame):
                         elif event.event_id == LightEventId.ButtonTop:
                             if t - snake.color_change_time > EatGame.COLOR_CHANGE_DELAY:
                                 snake.color_change_time = t
-                                snake.color = PixelColors.random().array
+                                snake.color = PixelColors.RANDOM.array
                         elif event.event_id == LightEventId.ButtonPower and controller.controller.get_id() == 0:
                             # pygame.quit()
                             self.exiting = True

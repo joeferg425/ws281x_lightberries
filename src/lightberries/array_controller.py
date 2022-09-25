@@ -879,7 +879,7 @@ class ArrayController:
 
             self.backgroundColor = _backgroundColor
             # set the color sequence
-            self.colorSequence = ConvertPixelArrayToNumpyArray([PixelColors.pseudoRandom()])
+            self.colorSequence = ConvertPixelArrayToNumpyArray([PixelColors.PSEUDO_RANDOM])
         except SystemExit:  # pragma: no cover
             raise
         except KeyboardInterrupt:  # pragma: no cover
@@ -913,7 +913,7 @@ class ArrayController:
 
             self.backgroundColor = _backgroundColor
             # set the color sequence to a single random value
-            self.colorSequence = ConvertPixelArrayToNumpyArray([PixelColors.random()])
+            self.colorSequence = ConvertPixelArrayToNumpyArray([PixelColors.RANDOM])
         except SystemExit:  # pragma: no cover
             raise
         except KeyboardInterrupt:  # pragma: no cover
@@ -992,7 +992,7 @@ class ArrayController:
             # assign the color sequence
             self.backgroundColor = _backgroundColor
             self.colorSequence = ConvertPixelArrayToNumpyArray(
-                [PixelColors.pseudoRandom() for i in range(_sequenceLength)]
+                [PixelColors.PSEUDO_RANDOM for i in range(_sequenceLength)]
             )
         except SystemExit:  # pragma: no cover
             raise
@@ -1032,7 +1032,7 @@ class ArrayController:
                 _sequenceLength = int(sequenceLength)
             # create color sequence
             self.backgroundColor = _backgroundColor
-            self.colorSequence = ConvertPixelArrayToNumpyArray([PixelColors.random() for i in range(_sequenceLength)])
+            self.colorSequence = ConvertPixelArrayToNumpyArray([PixelColors.RANDOM for i in range(_sequenceLength)])
         except SystemExit:  # pragma: no cover
             raise
         except KeyboardInterrupt:  # pragma: no cover

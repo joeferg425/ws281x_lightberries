@@ -20,6 +20,7 @@ class SpriteShape(IntEnum):
     CROSS = 0
     CIRCLE = 1
     SQUARE = 2
+    RECTANGLE = 3
 
 
 class XboxButton(IntEnum):
@@ -59,6 +60,7 @@ class GameObject:
     object_counter: int = 0
     GRAVITY = 0.75
     MAX_GRAVITY = 2.5
+    BUTTON_DEBOUNCE = 0.15
 
     def __init__(
         self,
@@ -71,9 +73,9 @@ class GameObject:
         has_gravity: bool = True,
         destructible: bool = True,
     ) -> None:
-        self.shape = shape
-        self.height = size
-        self.width = size
+        self._shape = shape
+        # self.height = size
+        # self.width = size
         self.name = name
         self.owner = None
         self._x = x
@@ -86,8 +88,8 @@ class GameObject:
         self._right_last = x + size
         self._dx = 0.0
         self._dy = 0.0
-        self.size = size
-        self.color = color
+        self._size = size
+        self._color = color
         self.has_gravity = has_gravity
         self.collided: list["GameObject"] = []
         self.collision_xys: list[tuple[int, int]] = []
@@ -109,6 +111,46 @@ class GameObject:
         self.timestamp_powerup = self.timestamp_spawn
         GameObject.objects[GameObject.object_counter] = self
         GameObject.object_counter += 1
+
+    @property
+    def color(self) -> np.ndarray[(3), np.int32]:
+        return self._color
+
+    @color.setter
+    def color(self, val: np.ndarray[(3), np.int32]) -> None:
+        self._color = val
+
+    @property
+    def shape(self) -> SpriteShape:
+        return self._shape
+
+    @shape.setter
+    def shape(self, val: SpriteShape) -> None:
+        self._shape = val
+
+    @property
+    def size(self) -> int:
+        return self._size
+
+    @size.setter
+    def size(self, val: int) -> None:
+        self._size = val
+
+    @property
+    def height(self) -> int:
+        return self._size
+
+    @height.setter
+    def height(self, val: int) -> None:
+        self._size = val
+
+    @property
+    def width(self) -> int:
+        return self._size
+
+    @width.setter
+    def width(self, val: int) -> None:
+        self._size = val
 
     @property
     def collision_surface(self) -> set[tuple[int, int]]:
@@ -170,9 +212,15 @@ class GameObject:
     @property
     def top(self) -> int:
         if self.shape == SpriteShape.CROSS or self.shape == SpriteShape.CIRCLE:
-            return self.y - self.height
+            y = self.y - self.height
         else:
-            return self.y
+            y = self.y
+        if y > (GameObject.frame_size_y - 1):
+            return GameObject.frame_size_y - 1
+        elif y < 0:
+            return 0
+        else:
+            return y
 
     @property
     def top_last(self) -> int:
@@ -180,7 +228,16 @@ class GameObject:
 
     @property
     def bottom(self) -> int:
-        return self.y + self.height
+        if self.shape == SpriteShape.CROSS or self.shape == SpriteShape.CIRCLE:
+            y = self.y + self.height
+        else:
+            y = self.y
+        if y > (GameObject.frame_size_y - 1):
+            return GameObject.frame_size_y - 1
+        elif y < 0:
+            return 0
+        else:
+            return y
 
     @property
     def bottom_last(self) -> int:
@@ -189,9 +246,15 @@ class GameObject:
     @property
     def left(self) -> int:
         if self.shape == SpriteShape.CROSS or self.shape == SpriteShape.CIRCLE:
-            return self.x - self.width
+            x = self.x - self.width
         else:
-            return self.x
+            x = self.x
+        if x > (GameObject.frame_size_x - 1):
+            return GameObject.frame_size_x - 1
+        elif x < 0:
+            return 0
+        else:
+            return x
 
     @property
     def left_last(self) -> int:
@@ -199,7 +262,16 @@ class GameObject:
 
     @property
     def right(self) -> int:
-        return self.x + self.width
+        if self.shape == SpriteShape.CROSS or self.shape == SpriteShape.CIRCLE:
+            x = self.x + self.width
+        else:
+            x = self.x
+        if x > (GameObject.frame_size_x - 1):
+            return GameObject.frame_size_x - 1
+        elif x < 0:
+            return 0
+        else:
+            return x
 
     @property
     def right_last(self) -> int:
@@ -217,6 +289,17 @@ class GameObject:
             )
         elif self.shape == SpriteShape.SQUARE:
             xs = []
+            _xs = [round(self._x + i) for i in range(-self.size, 0)]
+            _xs.extend([round(self._x + i) for i in range(self.size + 1)])
+            xs.extend(_xs)
+            for _ in range(self.size - 1):
+                xs.extend([_xs[0], _xs[-1]])
+            xs.extend([_xs[0], _xs[-1]])
+            for _ in range(self.size - 1):
+                xs.extend([_xs[0], _xs[-1]])
+            xs.extend(_xs)
+        elif self.shape == SpriteShape.RECTANGLE:
+            xs = []
             for _ in range(self.height):
                 xs.extend([round(self._x + i) for i in range(self.width)])
         return xs
@@ -232,6 +315,22 @@ class GameObject:
                 + self.y
             )
         elif self.shape == SpriteShape.SQUARE:
+            ys = []
+            _ys = [round(self._y + i) for i in range(-self.size, 0)]
+            _ys.extend([round(self._y + i) for i in range(self.size + 1)])
+            counter = 0
+            ys.extend([_ys[counter]] * ((self.size * 2) + 1))
+            counter += 1
+            for _ in range(-self.size + 1, 0):
+                ys.extend([_ys[counter], _ys[counter]])
+                counter += 1
+            ys.extend([_ys[counter], _ys[counter]])
+            counter += 1
+            for _ in range(self.size - 1):
+                ys.extend([_ys[counter], _ys[counter]])
+                counter += 1
+            ys.extend([_ys[counter]] * ((self.size * 2) + 1))
+        elif self.shape == SpriteShape.RECTANGLE:
             ys = []
             for i in range(self.height):
                 ys.extend([round(self._y - i) for _ in range(self.width)])
@@ -316,7 +415,7 @@ class Floor(GameObject):
             x=x,
             y=y,
             size=width,
-            shape=SpriteShape.SQUARE,
+            shape=SpriteShape.RECTANGLE,
             name=name,
             color=color,
             has_gravity=False,
@@ -339,7 +438,7 @@ class Wall(GameObject):
         super().__init__(
             x=x,
             y=y,
-            shape=SpriteShape.SQUARE,
+            shape=SpriteShape.RECTANGLE,
             size=height,
             name=name,
             color=color,
@@ -396,7 +495,7 @@ class Sprite(GameObject):
 
     def collide(self, obj: "GameObject", xys: list[tuple[int, int]]) -> None:
         super().collide(obj, xys)
-        if self.animate and not obj.owner == self:
+        if self.animate and not obj.owner == self and not obj.phased:
             if not self.phased:
                 self._y = int(obj.y - self.y_direction)
                 self.dy = 0
@@ -478,6 +577,8 @@ class Sprite(GameObject):
                 if not self._dead:
                     self.dead_time = time.time()
                     self._dead = True
+        if self._dead:
+            self.color = PixelColors.YELLOW.array
         return self._dead
 
     @dead.setter
@@ -616,6 +717,15 @@ class Player(Sprite):
             self.y = self._y + self.dy
             if self.has_gravity and self.dy < GameObject.MAX_GRAVITY:
                 self.dy += GameObject.GRAVITY
+            if self.wrap:
+                if self.x >= GameObject.frame_size_x:
+                    self.x -= GameObject.frame_size_x
+                elif self.x < 0:
+                    self.x += GameObject.frame_size_x
+                if self.wrap and self.y >= GameObject.frame_size_y:
+                    self.y -= GameObject.frame_size_y
+                elif self.y < 0:
+                    self.y += GameObject.frame_size_y
 
 
 class Enemy(Sprite):
@@ -691,28 +801,29 @@ class Projectile(Sprite):
         )
         self.owner = owner
         self.owner.children[self.id] = self
+        self.phased = True
 
-    @property
-    def xs(self) -> list[int]:
-        x_change = int(self.x_last - self.x)
-        if x_change != 0:
-            if x_change > 0:
-                return [round(self.x_last + i) for i in range(x_change)]
-            else:
-                return [round(self.x_last + i) for i in range(0, x_change, -1)]
-        else:
-            return [self.x] * (self.move_max)
+    # @property
+    # def xs(self) -> list[int]:
+    #     x_change = int(self.x_last - self.x)
+    #     if x_change != 0:
+    #         if x_change > 0:
+    #             return [round(self.x_last + i) for i in range(x_change)]
+    #         else:
+    #             return [round(self.x_last + i) for i in range(0, x_change, -1)]
+    #     else:
+    #         return [self.x] * (self.move_max)
 
-    @property
-    def ys(self) -> list[int]:
-        y_change = int(self.y_last - self.y)
-        if y_change != 0:
-            if y_change > 0:
-                return [round(self.y_last + i) for i in range(y_change)]
-            else:
-                return [round(self.y_last + i) for i in range(0, y_change, -1)]
-        else:
-            return [self.y] * (self.move_max)
+    # @property
+    # def ys(self) -> list[int]:
+    #     y_change = int(self.y_last - self.y)
+    #     if y_change != 0:
+    #         if y_change > 0:
+    #             return [round(self.y_last + i) for i in range(y_change)]
+    #         else:
+    #             return [round(self.y_last + i) for i in range(0, y_change, -1)]
+    #     else:
+    #         return [self.y] * (self.move_max)
 
     @property
     def move_xs(self) -> list[tuple[int, int]]:

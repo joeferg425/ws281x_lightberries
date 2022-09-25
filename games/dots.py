@@ -3,12 +3,12 @@ import random
 import numpy as np
 from lightberries.matrix_controller import MatrixController
 from lightberries.pixel import PixelColors
-from game_objects import Player, Sprite, GameObject, SpriteShape
+from game_objects import Player, GameObject, SpriteShape, Projectile
 import time
 from light_game import LightEvent, LightEventId, LightGame
 
 
-class Dot(Sprite):
+class Dot(Player):
     def __init__(
         self,
         x: int,
@@ -19,18 +19,52 @@ class Dot(Sprite):
             y=y,
             size=0,
             name="",
-            color=PixelColors.pseudoRandom().array,
+            color=PixelColors.PSEUDO_RANDOM.array,
             has_gravity=False,
-            destructible=False,
-            bounded=False,
-            wrap=True,
+        )
+        self.bounded = False
+        self.wrap = True
+        self.destructible = False
+        self.timestamp_shoot = self.timestamp_spawn
+        self.timestamp_shape = self.timestamp_spawn
+        self.timestamp_size = self.timestamp_spawn
+        self.splash_color = PixelColors.PSEUDO_RANDOM.array
+        self._shape: SpriteShape = SpriteShape.CROSS
+        self._size = 0
+
+    @property
+    def shape(self) -> SpriteShape:
+        return SpriteShape.CROSS
+
+    @shape.setter
+    def shape(self, val: SpriteShape) -> None:
+        self._shape = val
+
+    @property
+    def size(self) -> int:
+        return 0
+
+    @size.setter
+    def size(self, val: int) -> None:
+        self._size = val
+
+
+class Splash(Projectile):
+    def __init__(
+        self,
+        x: int,
+        y: int,
+        owner: Dot,
+    ) -> None:
+        super().__init__(
+            x=x,
+            y=y,
+            size=0,
+            name="splash",
+            destructible=True,
             dx=0,
             dy=0,
-            health=1,
-            max_health=1,
-            damage=0,
-            phased=True,
-            shape=SpriteShape.CROSS,
+            owner=owner,
         )
         self.button_delay = 0.25
         self.timestamp_shape = time.time()
@@ -41,57 +75,79 @@ class Dot(Sprite):
         self.timestamp_size = time.time()
         self.timestamp_size = time.time()
         self.right_time = time.time()
+        self.dot = owner
+        self._shape: SpriteShape = SpriteShape.CROSS
+        self._size = 0
 
+    @property
+    def color(self) -> np.ndarray[(3), np.int32]:
+        return self.dot.splash_color
 
-class Dots(Player):
-    def __init__(
-        self,
-        left_dot: Dot,
-        right_dot: Dot,
-    ) -> None:
-        super().__init__(
-            x=0,
-            y=0,
-            size=0,
-            name="",
-            color=PixelColors.OFF.array,
-            has_gravity=False,
-        )
-        self.destructible = False
-        self.left_dot = left_dot
-        self.right_dot = right_dot
+    @color.setter
+    def color(self, val: np.ndarray[(3), np.int32]) -> None:
+        pass
+
+    @property
+    def shape(self) -> SpriteShape:
+        return self.dot._shape
+
+    @shape.setter
+    def shape(self, val: SpriteShape) -> None:
+        pass
+
+    @property
+    def size(self) -> int:
+        return self.dot._size
+
+    @size.setter
+    def size(self, val: int) -> None:
+        pass
+
+    @property
+    def height(self) -> int:
+        return self.dot._size
+
+    @height.setter
+    def height(self, val: int) -> None:
+        pass
+
+    @property
+    def width(self) -> int:
+        return self.dot._size
+
+    @width.setter
+    def width(self, val: int) -> None:
+        pass
+
+    @property
+    def dx(self) -> float:
+        return self.dot.x_aim
+
+    @property
+    def dy(self) -> float:
+        return self.dot.y_aim * 2
+
+    def collide(self, obj: "GameObject", xys: list[tuple[int, int]]) -> None:
+        pass
 
 
 class DotsGame(LightGame):
     THRESHOLD = 0.05
     SPEED = 2
+    MIN_BULLET_SPEED = 0.05
+    MAX_SIZE = 10
 
     def __init__(self, lights: MatrixController) -> None:
         super().__init__(lights)
-        self.left_sticks: dict[int, Dot] = {}
-        self.right_sticks: dict[int, Dot] = {}
-        self.players: dict[int, Dots] = {}
+        self.players: dict[int, Dot] = {}
         self.add_callback(event_id=LightEventId.ControllerAdded, callback=self.add_player)
         self.splash_screen("dots", 20)
 
     def add_player(self, event: LightEvent):
         if event.controller_instance_id not in self.players:
-            if event.controller_instance_id in self.left_sticks:
-                self.left_sticks[event.controller_instance_id].health = 0
-            if event.controller_instance_id in self.right_sticks:
-                self.right_sticks[event.controller_instance_id].health = 0
-            if event.controller_instance_id in self.players:
-                self.players[event.controller_instance_id].health = 0
-            self.left_sticks[event.controller_instance_id] = Dot(
-                x=random.randint(0, self.lights.realLEDXaxisRange),
-                y=random.randint(0, self.lights.realLEDYaxisRange),
-            )
-            self.right_sticks[event.controller_instance_id] = Dot(
-                x=random.randint(0, self.lights.realLEDXaxisRange),
-                y=random.randint(0, self.lights.realLEDYaxisRange),
-            )
-            self.players[event.controller_instance_id] = Dots(
-                self.left_sticks[event.controller_instance_id], self.right_sticks[event.controller_instance_id]
+            self.players[event.controller_instance_id] = Dot(
+                x=random.randint(0, GameObject.frame_size_x - 1),
+                y=random.randint(0, GameObject.frame_size_y - 1),
             )
 
     def run(self):
@@ -103,55 +159,45 @@ class DotsGame(LightGame):
                     self.add_player(event=event)
                 player = self.players[event.controller_instance_id]
                 controller = event.controller
-                left_dot = player.left_dot
-                right_dot = player.right_dot
-
-                left_dot.dx = controller.LS.x * DotsGame.SPEED
-                left_dot.dy = controller.LS.y * DotsGame.SPEED
-                right_dot.dx = controller.RS.x * DotsGame.SPEED
-                right_dot.dy = controller.RS.y * DotsGame.SPEED
+                dx = controller.LS.x * DotsGame.SPEED
+                dy = controller.LS.y * DotsGame.SPEED
+                player.dx = dx if abs(dx) > DotsGame.MIN_BULLET_SPEED else 0.0
+                player.dy = dy if abs(dy) > DotsGame.MIN_BULLET_SPEED else 0.0
+                x_aim = controller.RS.x * DotsGame.SPEED
+                y_aim = controller.RS.y * DotsGame.SPEED
+                player.x_aim = x_aim if abs(x_aim) > DotsGame.MIN_BULLET_SPEED else 0.0
+                player.y_aim = y_aim if abs(y_aim) > DotsGame.MIN_BULLET_SPEED else 0.0
                 if event.event_id == LightEventId.TriggerLeft:
-                    if np.abs(event.z) > DotsGame.THRESHOLD:
-                        left_dot.color = PixelColors.random().array
+                    player.splash_color = PixelColors.RANDOM.array
+                elif event.event_id == LightEventId.ButtonTop:
+                    player.color = PixelColors.RANDOM.array
                 elif event.event_id == LightEventId.TriggerRight:
-                    if np.abs(event.z) > DotsGame.THRESHOLD:
-                        right_dot.color = PixelColors.random().array
-                elif event.event_id == LightEventId.ButtonLeft:
-                    if t - right_dot.timestamp_shape > right_dot.button_delay:
-                        right_dot.timestamp_shape = t
-                        if right_dot.shape == SpriteShape.CROSS:
-                            right_dot.shape = SpriteShape.CIRCLE
-                        else:
-                            right_dot.shape = SpriteShape.CROSS
-                elif event.event_id == LightEventId.ButtonBottom:
-                    if t - left_dot.timestamp_shape > left_dot.button_delay:
-                        left_dot.timestamp_shape = t
-                        if left_dot.shape == SpriteShape.CROSS:
-                            left_dot.shape = SpriteShape.CIRCLE
-                        else:
-                            left_dot.shape = SpriteShape.CROSS
-                elif event.event_id == LightEventId.ButtonRight:
-                    lights.virtualLEDBuffer *= 0
+                    if (t - player.timestamp_shoot >= GameObject.BUTTON_DEBOUNCE) and not (self.pause):
+                        player.timestamp_shoot = t
+                        Splash(
+                            x=player.x + player.x_aim,
+                            y=player.y + player.y_aim,
+                            owner=player,
+                        )
                 elif event.event_id == LightEventId.HatUp:
-                    if t - right_dot.timestamp_size > right_dot.button_delay:
-                        right_dot.timestamp_size = t
-                        if right_dot.size < 5:
-                            right_dot.size += 1
+                    if t - player.timestamp_size > GameObject.BUTTON_DEBOUNCE:
+                        player.timestamp_size = t
+                        if player._size < DotsGame.MAX_SIZE:
+                            player._size += 1
                 elif event.event_id == LightEventId.HatDown:
-                    if t - right_dot.timestamp_size > right_dot.button_delay:
-                        right_dot.timestamp_size = t
-                        if right_dot.size > 0:
-                            right_dot.size -= 1
+                    if t - player.timestamp_size > GameObject.BUTTON_DEBOUNCE:
+                        player.timestamp_size = t
+                        if player._size > 0:
+                            player._size -= 1
                 elif event.event_id == LightEventId.HatRight:
-                    if t - left_dot.timestamp_size > left_dot.button_delay:
-                        left_dot.right_time = t
-                        if left_dot.size < 5:
-                            left_dot.size += 1
-                elif event.event_id == LightEventId.HatLeft:
-                    if t - left_dot.timestamp_size > left_dot.button_delay:
-                        left_dot.timestamp_size = t
-                        if left_dot.size > 0:
-                            left_dot.size -= 1
+                    if t - player.timestamp_shape > GameObject.BUTTON_DEBOUNCE:
+                        player.timestamp_shape = t
+                        if player._shape == SpriteShape.CROSS:
+                            player._shape = SpriteShape.CIRCLE
+                        elif player._shape == SpriteShape.CIRCLE:
+                            player._shape = SpriteShape.SQUARE
+                        else:
+                            player._shape = SpriteShape.CROSS
                 elif event.event_id == LightEventId.ButtonPower:
                     self.exiting = True
                     GameObject.dead_objects.extend(GameObject.objects)

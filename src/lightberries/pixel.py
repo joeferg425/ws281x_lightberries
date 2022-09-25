@@ -11,6 +11,16 @@ from lightberries.exceptions import PixelException
 LOGGER = logging.getLogger("lightBerries")
 
 
+class static_pixel_property:
+    """Works like @property and @staticmethod combined"""
+
+    def __init__(self, func):
+        self.func = func
+
+    def __get__(self, inst, owner) -> Pixel:
+        return self.func()
+
+
 class LEDOrder(enum.Enum):
     """This enum is for LED order in the physical pixels.
 
@@ -275,41 +285,15 @@ class PixelColors:
     GRAY = Pixel((127, 118, 108), order=LEDOrder.RGB)
     DARKGRAY = Pixel((64, 55, 50), order=LEDOrder.RGB)
 
-    @classmethod
-    def pseudoRandom(
-        cls,
-    ) -> Pixel:
-        """Get a random color from the list of defined colors.
+    @static_pixel_property
+    def PSEUDO_RANDOM() -> Pixel:
+        clrs = [
+            getattr(PixelColors, p)
+            for p in dir(PixelColors)
+            if "__" not in p and "random" not in p.lower() and "off" not in p.lower()
+        ]
+        return clrs[random.randint(0, len(clrs) - 1)]
 
-        Returns:
-            a single random color from the list of defined colors
-        """
-        colors = list(dir(PixelColors))
-        colors = [p for p in colors if "__" not in p and "random" not in p.lower() and "off" not in p.lower()]
-        randomColor = colors[random.randint(0, len(colors) - 1)]
-        return getattr(PixelColors, randomColor)
-
-    @classmethod
-    def random(
-        cls,
-    ) -> Pixel:
-        """Get a randomly generated pixel value.
-
-        Returns:
-            a truly random RGB values int the range ([0,255], [0,255], [0,255])
-        """
-        colorOne = random.randint(0, 2)
-        colorTwo = random.randint(0, 3)
-        if colorOne != 0 or colorTwo == 0:
-            redLED = random.randint(0, 255)
-        else:
-            redLED = 0
-        if colorOne != 1 or colorTwo == 0:
-            greenLED = random.randint(0, 255)
-        else:
-            greenLED = 0
-        if colorOne != 2 or colorTwo == 0:
-            blueLED = random.randint(0, 255)
-        else:
-            blueLED = 0
-        return Pixel([redLED, greenLED, blueLED])
+    @static_pixel_property
+    def RANDOM() -> Pixel:
+        return Pixel([random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)])
