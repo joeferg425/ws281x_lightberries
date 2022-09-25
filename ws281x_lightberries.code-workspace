@@ -228,7 +228,7 @@
 				"name": "game: dots",
 				"type": "python",
 				"request": "launch",
-				"program": "${workspaceFolder}/games/xbox_controller.py",
+				"program": "${workspaceFolder}/games/dots.py",
 				"console": "integratedTerminal",
 				"linux": {
 					"sudo": true

@@ -93,7 +93,7 @@ def test_single_assignment():
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
         ws281x = WS281xString(ledCount=led_count, simulate=True)
         for i in range(len(ws281x)):
-            random_color = PixelColors.random().array
+            random_color = PixelColors.RANDOM.array
             ws281x[i] = random_color
             assigned_color = ws281x[i]
             assert_array_equal(assigned_color, random_color)
@@ -105,7 +105,7 @@ def test_single_assignment_indexerror():
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
         ws281x = WS281xString(ledCount=led_count, simulate=True)
         with pytest.raises(IndexError):
-            random_color = PixelColors.random().array
+            random_color = PixelColors.RANDOM.array
             ws281x[led_count + 1] = random_color
 
 
@@ -116,7 +116,7 @@ def test_single_assignment_indexerror_numpy():
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
         ws281x = WS281xString(ledCount=led_count, simulate=True)
         with pytest.raises(IndexError):
-            random_color = PixelColors.random().array
+            random_color = PixelColors.RANDOM.array
             ws281x[led_count_np] = random_color
 
 
@@ -145,7 +145,7 @@ def test_single_assignment_numpy_int():
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
         ws281x = WS281xString(ledCount=led_count, simulate=True)
         for i in np.arange(len(ws281x)):
-            random_color = PixelColors.random().array
+            random_color = PixelColors.RANDOM.array
             ws281x[i] = random_color
             assigned_color = ws281x[i]
             assert_array_equal(assigned_color, random_color)
@@ -159,38 +159,38 @@ def test_multiple_assignment():
 
         # one
         assign_count = 1
-        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.random() for i in range(assign_count)])
+        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.RANDOM for i in range(assign_count)])
         ws281x[0] = random_colors[0]
         assigned_colors = ws281x[0]
         assert_array_equal(assigned_colors, random_colors[0])
 
         # stop only
         assign_count = 2
-        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.random() for i in range(assign_count)])
+        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.RANDOM for i in range(assign_count)])
         ws281x[:assign_count] = random_colors
         assigned_colors = ws281x[:assign_count]
         assert_array_equal(assigned_colors, random_colors)
 
         # start only
-        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.random() for i in range(assign_count)])
+        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.RANDOM for i in range(assign_count)])
         ws281x[-assign_count:] = random_colors
         assigned_colors = ws281x[-assign_count:]
         assert_array_equal(assigned_colors, random_colors)
 
         # step only
-        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.random() for i in range(assign_count)])
+        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.RANDOM for i in range(assign_count)])
         ws281x[:: int(led_count // 2)] = random_colors
         assigned_colors = ws281x[:: int(led_count // 2)]
         assert_array_equal(assigned_colors, random_colors)
 
         # all
-        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.random() for i in range(assign_count)])
+        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.RANDOM for i in range(assign_count)])
         ws281x[0 : led_count : int(led_count // 2)] = random_colors
         assigned_colors = ws281x[:: int(led_count // 2)]
         assert_array_equal(assigned_colors, random_colors)
 
         # nones
-        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.random() for i in range(led_count)])
+        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.RANDOM for i in range(led_count)])
         ws281x[:] = random_colors
         assigned_colors = ws281x[:]
         assert_array_equal(assigned_colors, random_colors)
@@ -204,38 +204,38 @@ def test_multiple_assignment_simulated():
 
         # one
         assign_count = 1
-        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.random() for i in range(assign_count)])
+        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.RANDOM for i in range(assign_count)])
         ws281x[0] = random_colors[0]
         assigned_colors = ws281x[0]
         assert_array_equal(assigned_colors, random_colors[0])
 
         # stop only
         assign_count = 2
-        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.random() for i in range(assign_count)])
+        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.RANDOM for i in range(assign_count)])
         ws281x[:assign_count] = random_colors
         assigned_colors = ws281x[:assign_count]
         assert_array_equal(assigned_colors, random_colors)
 
         # start only
-        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.random() for i in range(assign_count)])
+        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.RANDOM for i in range(assign_count)])
         ws281x[-assign_count:] = random_colors
         assigned_colors = ws281x[-assign_count:]
         assert_array_equal(assigned_colors, random_colors)
 
         # step only
-        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.random() for i in range(assign_count)])
+        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.RANDOM for i in range(assign_count)])
         ws281x[:: int(led_count // 2)] = random_colors
         assigned_colors = ws281x[:: int(led_count // 2)]
         assert_array_equal(assigned_colors, random_colors)
 
         # all
-        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.random() for i in range(assign_count)])
+        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.RANDOM for i in range(assign_count)])
         ws281x[0 : led_count : int(led_count // 2)] = random_colors
         assigned_colors = ws281x[:: int(led_count // 2)]
         assert_array_equal(assigned_colors, random_colors)
 
         # nones
-        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.random() for i in range(led_count)])
+        random_colors = ConvertPixelArrayToNumpyArray([PixelColors.RANDOM for i in range(led_count)])
         ws281x[:] = random_colors
         assigned_colors = ws281x[:]
         assert_array_equal(assigned_colors, random_colors)
@@ -246,7 +246,7 @@ def test_context_manager():
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
         with WS281xString(ledCount=led_count, simulate=True) as ws281x:
             # all
-            random_colors = ConvertPixelArrayToNumpyArray([PixelColors.random() for i in range(led_count)])
+            random_colors = ConvertPixelArrayToNumpyArray([PixelColors.RANDOM for i in range(led_count)])
             ws281x[:] = random_colors
             assigned_colors = ws281x[:]
             assert_array_equal(assigned_colors, random_colors)

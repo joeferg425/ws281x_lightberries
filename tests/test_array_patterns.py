@@ -33,7 +33,7 @@ def test_pixel_array_off():
 
 def test_convert_pixel_array_to_numpy_array():
     for i in range(0, 5):
-        ary1 = [Pixel(PixelColors.random()) for _ in range(i)]
+        ary1 = [Pixel(PixelColors.RANDOM) for _ in range(i)]
         ary2 = ConvertPixelArrayToNumpyArray(ary1)
         assert ary1 is not None
         assert ary2 is not None
@@ -47,7 +47,7 @@ def test_convert_pixel_array_to_numpy_array():
 
 def test_solid_color_array():
     for i in range(0, 101, 20):
-        color = PixelColors.random().array
+        color = PixelColors.RANDOM.array
         ary = ArrayPattern.SolidColorArray(i, color)
         assert ary is not None
         assert len(ary.shape) == 2
@@ -74,7 +74,7 @@ def test_color_transition_array():
     assert ary1.shape[0] == i
     assert ary1.shape[1] == 3
     for i in range(0, 101, 20):
-        colors = np.array([PixelColors.random().array for _ in range(int(i / 10))])
+        colors = np.array([PixelColors.RANDOM.array for _ in range(int(i / 10))])
         ary1 = ArrayPattern.ColorTransitionArray(i, colors)
         assert ary1 is not None
         assert len(ary1.shape) == 2
@@ -105,7 +105,7 @@ def test_repeating_color_sequence_array():
     assert ary.shape[0] == i
     assert ary.shape[1] == 3
     for i in range(0, 101, 20):
-        colors = np.array([PixelColors.random().array for _ in range(int(i / 10))])
+        colors = np.array([PixelColors.RANDOM.array for _ in range(int(i / 10))])
         ary = ArrayPattern.RepeatingColorSequenceArray(i, colors)
         assert ary is not None
         assert len(ary.shape) == 2
@@ -143,7 +143,7 @@ def test_reflect_array():
     for i in range(0, 101, 20):
         for j in range(1, 5):
             for k in range(1, 5):
-                colors = np.array([PixelColors.random().array for _ in range(int(i * j))])
+                colors = np.array([PixelColors.RANDOM.array for _ in range(int(i * j))])
                 ary = ArrayPattern.ReflectArray(i, colors, k)
                 assert ary is not None
                 assert len(ary.shape) == 2
@@ -175,7 +175,7 @@ def test_pseudorandom_array():
             if j == 0:
                 colors = np.zeros((0, 3))
             else:
-                colors = np.array([PixelColors.random().array for _ in range(int(j))])
+                colors = np.array([PixelColors.RANDOM.array for _ in range(int(j))])
             ary = ArrayPattern.PseudoRandomArray(i, colors)
             assert ary is not None
             assert len(ary.shape) == 2
@@ -193,7 +193,7 @@ def test_colorstretch_array():
     assert ary.shape[1] == 3
     for i in range(0, 101, 20):
         for j in range(1, i + 1):
-            colors = np.array([PixelColors.random() for _ in range(int(i / j))])
+            colors = np.array([PixelColors.RANDOM for _ in range(int(i / j))])
             ary = ArrayPattern.ColorStretchArray(i, colors)
             assert ary is not None
             assert len(ary.shape) == 2
