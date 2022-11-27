@@ -6,34 +6,12 @@ import logging
 from typing import Optional
 from lightberries.matrix_controller import MatrixController
 from lightberries.pixel import PixelColors
-from game_objects import GameObject, Floor, Player, Projectile, SpriteShape, Sprite
+from game_objects import CollideEnum, GameObject, Floor, Player, Projectile, SpriteShape, Sprite
 import pygame
 import numpy as np
 from light_game import LightEvent, LightEventId, LightGame
 
 LOGGER = logging.getLogger(__name__)
-
-
-# class PygameSprite(pygame.sprite.Sprite):
-#     def __init__(self, top: int, left: int, width: int, height: int) -> None:
-#         super().__init__()
-#         self.surf = pygame.Surface((LightGame.SIMULATED_SIZE * width, LightGame.SIMULATED_SIZE * height))
-#         self.surf.fill((128, 255, 40))
-#         self.rect = self.surf.get_rect(topleft=((left * LightGame.SIMULATED_SIZE), top * LightGame.SIMULATED_SIZE))
-#         self.rect.left = left * LightGame.SIMULATED_SIZE
-#         self.rect.height = height * LightGame.SIMULATED_SIZE
-#         self.rect.top = top * LightGame.SIMULATED_SIZE
-#         self.rect.width = width * LightGame.SIMULATED_SIZE
-
-#     def go(self, o: GameObject):
-#         width = o.width + abs(o.left - o.left_last)
-#         height = o.height + abs(o.top - o.top_last)
-#         left = min(o.left, o.left_last)
-#         top = min(o.top, o.top_last)
-#         self.rect.width = width * LightGame.SIMULATED_SIZE
-#         self.rect.left = left * LightGame.SIMULATED_SIZE
-#         self.rect.height = height * LightGame.SIMULATED_SIZE
-#         self.rect.top = top * LightGame.SIMULATED_SIZE
 
 
 class Jumper(Player):
@@ -54,19 +32,34 @@ class Jumper(Player):
             color=color,
             has_gravity=has_gravity,
         )
-        # self.p_sprite = PygameSprite(x, y, height=size, width=1)
         self.timestamp_color = time.time()
         self.timestamp_jump = time.time()
         self.timestamp_bullet = time.time()
         self.timestamp_color = time.time()
         self.falling = True
-        self.shape = SpriteShape.SQUARE
-        self.height = size
-        self.width = 1
+        self.shape = SpriteShape.RECTANGLE
+        self._height = size
+        self._width = 0
         self.color = color
         self.real_color = self.color
         self.platform_above = False
         self.platform_below = False
+
+    @property
+    def height(self) -> int:
+        return self._height
+
+    @height.setter
+    def height(self, val: int) -> None:
+        self._height = val
+
+    @property
+    def width(self) -> int:
+        return self._width
+
+    @width.setter
+    def width(self, val: int) -> None:
+        self._width = val
 
     def go(self):
         if self.collided and self.dy > 0:
@@ -84,32 +77,44 @@ class Jumper(Player):
         self.platform_below = False
         self.platform_above = False
 
-    def collide(self, obj: "GameObject", xys: list[tuple[int, int]]) -> None:
-        if not self.collide:
+    def collide(self, obj: "GameObject", collision: CollideEnum) -> None:
+        super().collide(obj, collision)
+        if not self.collided:
             self.platform_below = False
             self.platform_above = False
         if not obj.owner == self:
             self.collided.append(obj)
-            self.collision_xys.append(xys)
             self.health -= obj.damage
             if isinstance(obj, Platform):
-                if obj.box.top < self.box.top and obj.box.bottom > self.box.top:
+                if (
+                    obj.extended_collision_box.top < self.extended_collision_box.top
+                    and obj.extended_collision_box.bottom > self.extended_collision_box.top
+                ):
                     self.platform_above = True
-                elif obj.box.bottom > self.box.bottom and obj.box.top < self.box.bottom:
+                elif (
+                    obj.extended_collision_box.bottom > self.extended_collision_box.bottom
+                    and obj.extended_collision_box.top < self.extended_collision_box.bottom
+                ):
                     self.platform_below = True
                 if self.platform_above and self.platform_below:
                     self._dead = True
             if self.dead and self.id not in GameObject.dead_objects:
                 GameObject.dead_objects.append(self.id)
-        if self.animate and not obj.owner == self:
+            # if self.animate and not obj.owner == self:
             if not self.phased:
                 if self.dy > 0:
-                    if self.box.bottom > obj.box.top and self.box.top < obj.box.top:
+                    if (
+                        self.extended_collision_box.bottom > obj.extended_collision_box.top
+                        and self.extended_collision_box.top < obj.extended_collision_box.top
+                    ):
                         self._y = int(obj.y - obj.height)
                         self.dy = 0
                         self.jump_count = 0
                 elif self.dy < 0:
-                    if self.box.top < obj.box.bottom and self.box.bottom > obj.box.bottom:
+                    if (
+                        self.extended_collision_box.top < obj.extended_collision_box.bottom
+                        and self.extended_collision_box.bottom > obj.extended_collision_box.bottom
+                    ):
                         self._y = int(obj.y + self.height)
                         self.dy = 0
         if self.dead:
@@ -174,7 +179,7 @@ class Bullet(Projectile):
         owner: GameObject,
         x: int,
         y: int,
-        size: int = 1,
+        size: int = 0,
         name: str = "bullet",
         color: np.ndarray[3, np.int32] = PixelColors.BLUE.array,
         destructible: bool = True,
@@ -219,14 +224,17 @@ class Baddy(Player):
         )
         self.height = self.size
         self.width = self.size
-        self.shape = SpriteShape.SQUARE
+        self.shape = SpriteShape.RECTANGLE
         self.jumpgame = jumpgame
 
     def go(self):
         super().go()
         target = None
         if self.jumpgame.players:
-            target = self.jumpgame.players[random.randint(0, len(self.jumpgame.players) - 1)]
+            try:
+                target = self.jumpgame.players[random.randint(0, len(self.jumpgame.players) - 1)]
+            except:  # noqa
+                pass
         if self.collided and target:
             if not self.dx:
                 if not target.dead:
@@ -315,7 +323,7 @@ class FreePrize(Sprite):
         x: int,
         y: int,
         size: int = 2,
-        name: str = "projectile",
+        name: str = "free prize!",
         color: np.ndarray[3, np.int32] = PixelColors.CYAN.array,
         destructible: bool = True,
         bounded: bool = True,
@@ -337,7 +345,23 @@ class FreePrize(Sprite):
         self.damage = 0
         self.point_value = 1
         self.has_gravity = True
-        self.shape = SpriteShape.SQUARE
+        self.shape = SpriteShape.RECTANGLE
+
+    @property
+    def height(self) -> int:
+        return 2
+
+    @height.setter
+    def height(self, val: int) -> None:
+        self._size = val
+
+    @property
+    def width(self) -> int:
+        return self._size
+
+    @width.setter
+    def width(self, val: int) -> None:
+        self._size = val
 
     def collide(self, obj: "GameObject", xys: list[tuple[int, int]]) -> None:
         super().collide(obj, xys)
@@ -370,11 +394,12 @@ class JumpGame(LightGame):
         self.splash_screen("jump", 20)
         self.timestamp_baddy = time.time()
         self.timestamp_prize = time.time()
+        self.platform_type = 0
 
     def get_new_player(self, old_player: Optional[Jumper] = None) -> GameObject:
         color = PixelColors.ORANGE2.array
-        surf = list(self.platforms[-1].collision_surface)
-        x = surf[random.randint(0, len(surf) - 1)][0]
+        platform = self.platforms[-1]
+        x = random.randint(platform.left, platform.right)
         if old_player is not None:
             color = old_player.real_color
             if time.time() - old_player.timestamp_death > JumpGame.RESPAWN_DELAY:
@@ -394,40 +419,44 @@ class JumpGame(LightGame):
         return j
 
     def spawn_platform(self):
-        locations = {platform.y for platform in self.platforms}
+        platforms = [o for o in GameObject.objects.values() if isinstance(o, Platform)]
         dead_ones = []
-        for i in range(len(self.platforms)):
-            if self.platforms[i].dead:
+        for i in range(len(platforms)):
+            if platforms[i].dead:
                 dead_ones.append(i)
         for i in dead_ones:
-            self.platforms.pop(i)
-        a_set = set(range(random.randint(6, 7)))
+            try:
+                platforms.pop(i)
+            except:  # noqa
+                pass
+        locations = {platform.y for platform in platforms}
+        a_set = set(range(random.randint(8, 9)))
+        speed = 0.15
         if not locations or not a_set & locations:
-            width = random.randint(3, int(GameObject.frame_size_x / 2))
-            x = random.randint(0, GameObject.frame_size_x - width - 3)
-            # speed = [0.05, 0.1, 0.15, 0.2][random.randint(0, 3)]
-            # speed = [0.1, 0.15][random.randint(0, 1)]
-            speed = 0.15
-            p = Platform(x=x, y=0, width=width, height=2, dy=speed)
-            self.platforms.append(p)
-            if width < 8:
-                m = max(p.left, GameObject.frame_size_x - p.right)
-                new_width = random.randint(3, m)
-                try:
-                    if p.left > GameObject.frame_size_x - p.right:
-                        x = random.randint(0, new_width - 3)
-                        # speed = [0.05, 0.1, 0.15, 0.2][random.randint(0, 3)]
-                        speed = 0.15
-                        p = Platform(x=x, y=0, width=new_width, height=2, dy=speed)
-                        self.platforms.append(p)
-                    else:
-                        x = random.randint(p.right, GameObject.frame_size_x - new_width - 3)
-                        speed = 0.15
-                        # speed = [0.05, 0.1, 0.15, 0.2][random.randint(0, 3)]
-                        p = Platform(x=x, y=0, width=new_width, height=2, dy=speed)
-                        self.platforms.append(p)
-                except:  # noqa
-                    pass
+            if self.platform_type == 0:
+                x = random.randint(0, int(GameObject.frame_size_x / 4))
+                _max = GameObject.frame_size_x - x - 5
+                _min = x + int(GameObject.frame_size_x / 3)
+                width = random.randint(_min, _max)
+                p = Platform(x=x, y=0, width=width, height=2, dy=speed)
+                self.platforms.append(p)
+                self.platform_type = 1
+            else:
+                x = random.randint(3, 7)
+                _max = int(GameObject.frame_size_x / 4)
+                _min = 3
+                width = random.randint(_min, _max)
+                p = Platform(x=x, y=0, width=width, height=2, dy=speed)
+                self.platforms.append(p)
+                _max = p.right + int(GameObject.frame_size_x / 4)
+                _min = p.right + 5
+                new_x = random.randint(_min, _max)
+                _max = GameObject.frame_size_x - 2
+                _min = new_x + 3
+                new_width = random.randint(_min, _max)
+                p = Platform(x=new_x, y=0, width=new_width, height=2, dy=speed)
+                self.platforms.append(p)
+                self.platform_type = 0
 
     def spawn_prize(self):
         t = time.time()
@@ -436,9 +465,8 @@ class JumpGame(LightGame):
             valid_locations = [platform for platform in self.platforms if platform.prize is None]
             if valid_locations:
                 platform = valid_locations[random.randint(0, len(valid_locations) - 1)]
-                surf = list(platform.collision_surface)
-                x = surf[random.randint(0, len(surf) - 1)][0]
-                y = platform.top - 1
+                x = random.randint(platform.left, platform.right)
+                y = platform.top - 2
                 p = FreePrize(
                     owner=platform,
                     x=x,
@@ -461,18 +489,13 @@ class JumpGame(LightGame):
         if event.controller_instance_id not in self.players:
             self.players[event.controller_instance_id] = self.get_new_player()
 
-    def create_level(self):
-        p = Platform(x=0, y=9, width=18, height=2, dy=0.1)
-        self.platforms.append(p)
-
     def run(self):
-        self.create_level()
         while not self.exiting:
             self.get_controllers()
             self.check_for_winner()
             self.respawn_dead_players()
-            self.spawn_baddy()
-            self.spawn_prize()
+            # self.spawn_baddy()
+            # self.spawn_prize()
             self.show_scores()
             for event in self.get_events():
                 t = time.time()

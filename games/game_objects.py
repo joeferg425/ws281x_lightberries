@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import IntEnum
 import numpy as np
-from lightberries.pixel import PixelColors
+from lightberries.pixel import PixelColors, Pixel
+from lightberries.matrix_controller import MatrixController
 import time
 from typing import Optional
 
@@ -51,6 +52,31 @@ class XboxJoystick(IntEnum):
     TRIGGER_RIGHT = 5
 
 
+TOP = 1
+BOTTOM = 2
+LEFT = 4
+RIGHT = 8
+
+
+class CollideEnum(IntEnum):
+    NONE = 0  # 0
+    TOP = TOP  # 1
+    BOTTOM = BOTTOM  # 2
+    NOTHING1 = TOP + BOTTOM  # 3
+    LEFT = LEFT  # 4
+    TOP_LEFT = TOP + LEFT  # 5
+    BOTTOM_LEFT = BOTTOM + LEFT  # 6
+    MOSTLY_LEFT = TOP + BOTTOM + LEFT  # 7
+    RIGHT = RIGHT  # 8
+    TOP_RIGHT = TOP + RIGHT  # 9
+    BOTTOM_RIGHT = BOTTOM + RIGHT  # 10
+    MOSTLY_RIGHT = BOTTOM + TOP + RIGHT  # 11
+    NOTHING6 = LEFT + RIGHT  # 12
+    MOSTLY_TOP = LEFT + RIGHT + TOP  # 13
+    MOSTLY_BOTTOM = LEFT + RIGHT + BOTTOM  # 14
+    COLLIDE = LEFT + RIGHT + BOTTOM + TOP  # 15
+
+
 class GameObject:
     objects: dict[int, GameObject] = {}
     dead_objects: list[GameObject] = []
@@ -92,12 +118,12 @@ class GameObject:
         self._color = color
         self.has_gravity = has_gravity
         self.collided: list["GameObject"] = []
-        self.collision_xys: list[tuple[int, int]] = []
         self.destructible = destructible
         self.animate = False
         self.health = 1
         self.max_health = 1
         self.damage = 0
+        self.phased = False
         self.timestamp_death: float = time.time()
         self.timestamp_spawn = self.timestamp_death
         self.respawn_delay: float = 1.0
@@ -111,6 +137,24 @@ class GameObject:
         self.timestamp_powerup = self.timestamp_spawn
         GameObject.objects[GameObject.object_counter] = self
         GameObject.object_counter += 1
+
+    @property
+    def x_direction(self):
+        if self.dx > 0:
+            return 1
+        elif self.dx < 0:
+            return -1
+        else:
+            return 0
+
+    @property
+    def y_direction(self):
+        if self.dy > 0:
+            return 1
+        elif self.dy < 0:
+            return -1
+        else:
+            return 0
 
     @property
     def color(self) -> np.ndarray[(3), np.int32]:
@@ -153,25 +197,94 @@ class GameObject:
         self._size = val
 
     @property
-    def collision_surface(self) -> set[tuple[int, int]]:
-        box = self.box
-        s: list[tuple[int, int]] = []
-        for i in range(box.top, box.bottom + 1):
-            xs = range(box.left, box.right + 1)
-            ys = [i] * len(xs)
-            s.extend(zip(xs, ys))
-        return set(s)
+    def mass2d(self) -> int:
+        return self.area2d
 
-    def collide(self, obj: "GameObject", xys: list[tuple[int, int]]) -> None:
+    @property
+    def area2d(self) -> int:
+        if self.shape == SpriteShape.SQUARE:
+            return self.width * 2 * self.height * 2
+        elif self.shape == SpriteShape.RECTANGLE:
+            return self.width * self.height
+        elif self.shape == SpriteShape.CROSS:
+            return self.width * 2 + self.height * 2
+        elif self.shape == SpriteShape.CIRCLE:
+            return int(np.pi * self.size * 2)
+
+    def collides_with(self, obj: GameObject) -> CollideEnum:
+        o = obj.extended_collision_box
+        s = self.extended_collision_box
+        c = 0
+        c2 = CollideEnum.NONE
+        # figure out if we collided at all
+        if o.top <= self.bottom:
+            c += CollideEnum.BOTTOM
+        if o.bottom >= s.top:
+            c += CollideEnum.TOP
+        if o.right >= s.left:
+            c += CollideEnum.LEFT
+        if o.left <= s.right:
+            c += CollideEnum.RIGHT
+        c = CollideEnum(c)
+        # figure out where we collided
+        if c == CollideEnum.COLLIDE:
+            if obj.top <= self.bottom and obj.top >= self.top:
+                c2 += CollideEnum.BOTTOM
+            if obj.bottom >= self.top and obj.bottom <= self.bottom:
+                c2 += CollideEnum.TOP
+            if obj.left <= self.right and obj.left >= self.left:
+                c2 += CollideEnum.RIGHT
+            if obj.right >= self.left and obj.right <= self.right:
+                c2 += CollideEnum.LEFT
+
+            # make the return value easier to use
+            c2 = CollideEnum(c2)
+            if c2 == CollideEnum.MOSTLY_BOTTOM:
+                c2 = CollideEnum.BOTTOM
+            elif c2 == CollideEnum.MOSTLY_TOP:
+                c2 = CollideEnum.TOP
+            elif c2 == CollideEnum.MOSTLY_LEFT:
+                c2 = CollideEnum.LEFT
+            elif c2 == CollideEnum.MOSTLY_RIGHT:
+                c2 = CollideEnum.RIGHT
+        return c2
+
+    def collide(self, obj: "GameObject", collision: CollideEnum) -> None:
         if not obj.owner == self:
             self.collided.append(obj)
-            self.collision_xys.append(xys)
             self.health -= obj.damage
         if self.dead and self.id not in GameObject.dead_objects:
             GameObject.dead_objects.append(self.id)
+        if self.animate and not obj.owner == self and not obj.phased:
+            if not self.phased:
+                if not obj.phased:
+                    if self.mass2d < obj.mass2d:
+                        if collision & CollideEnum.TOP and self.y_direction > 0:
+                            self.bottom = obj.top
+                            self.dy = 0
+                        elif collision & CollideEnum.BOTTOM and self.y_direction < 0:
+                            self.top = obj.bottom + 1
+                            self.dy = 0
+                        if collision & CollideEnum.LEFT and self.x_direction > 0:
+                            self.left = obj.right + 1
+                            self.dx = 0
+                        elif collision & CollideEnum.RIGHT and self.x_direction < 0:
+                            self.right = obj.left
+                            self.dx = 0
+                    else:
+                        pass
 
     @property
-    def box(self) -> rect:
+    def collision_box(self) -> rect:
+        return rect(
+            top=self.top,
+            bottom=self.bottom,
+            left=self.left,
+            right=self.right,
+        )
+
+    @property
+    def extended_collision_box(self) -> rect:
         return rect(
             top=min(self.top, self.top_last),
             bottom=max(self.bottom, self.bottom_last),
@@ -212,15 +325,22 @@ class GameObject:
     @property
     def top(self) -> int:
         if self.shape == SpriteShape.CROSS or self.shape == SpriteShape.CIRCLE:
-            y = self.y - self.height
+            y = self.y - self.height - 1
         else:
-            y = self.y
+            y = self.y - 1
         if y > (GameObject.frame_size_y - 1):
             return GameObject.frame_size_y - 1
         elif y < 0:
             return 0
         else:
             return y
+
+    @top.setter
+    def top(self, val: int) -> None:
+        if self.shape == SpriteShape.CROSS or self.shape == SpriteShape.CIRCLE:
+            self.y = val + self.height + 1
+        else:
+            self.y = val + 1
 
     @property
     def top_last(self) -> int:
@@ -228,16 +348,23 @@ class GameObject:
 
     @property
     def bottom(self) -> int:
-        if self.shape == SpriteShape.CROSS or self.shape == SpriteShape.CIRCLE:
-            y = self.y + self.height
+        if self.shape == SpriteShape.CROSS or self.shape == SpriteShape.CIRCLE or self.shape == SpriteShape.RECTANGLE:
+            y = self.y + self.height - 1
         else:
-            y = self.y
+            y = self.y - 1
         if y > (GameObject.frame_size_y - 1):
             return GameObject.frame_size_y - 1
         elif y < 0:
             return 0
         else:
             return y
+
+    @bottom.setter
+    def bottom(self, val: int) -> None:
+        if self.shape == SpriteShape.CROSS or self.shape == SpriteShape.CIRCLE or self.shape == SpriteShape.RECTANGLE:
+            self.y = val - self.height + 1
+        else:
+            self.y = val + 1
 
     @property
     def bottom_last(self) -> int:
@@ -246,15 +373,22 @@ class GameObject:
     @property
     def left(self) -> int:
         if self.shape == SpriteShape.CROSS or self.shape == SpriteShape.CIRCLE:
-            x = self.x - self.width
+            x = self.x - self.width - 1
         else:
-            x = self.x
+            x = self.x - 1
         if x > (GameObject.frame_size_x - 1):
             return GameObject.frame_size_x - 1
         elif x < 0:
             return 0
         else:
             return x
+
+    @left.setter
+    def left(self, val: int) -> None:
+        if self.shape == SpriteShape.CROSS or self.shape == SpriteShape.CIRCLE:
+            self.x = val + self.width + 1
+        else:
+            self.x = val + 1
 
     @property
     def left_last(self) -> int:
@@ -262,16 +396,23 @@ class GameObject:
 
     @property
     def right(self) -> int:
-        if self.shape == SpriteShape.CROSS or self.shape == SpriteShape.CIRCLE:
-            x = self.x + self.width
+        if self.shape == SpriteShape.CROSS or self.shape == SpriteShape.CIRCLE or self.shape == SpriteShape.RECTANGLE:
+            x = self.x + self.width - 1
         else:
-            x = self.x
+            x = self.x - 1
         if x > (GameObject.frame_size_x - 1):
             return GameObject.frame_size_x - 1
         elif x < 0:
             return 0
         else:
             return x
+
+    @right.setter
+    def right(self, val: int) -> None:
+        if self.shape == SpriteShape.CROSS or self.shape == SpriteShape.CIRCLE or self.shape == SpriteShape.RECTANGLE:
+            self.x = val - self.width + 1
+        else:
+            self.x = val + 1
 
     @property
     def right_last(self) -> int:
@@ -301,7 +442,7 @@ class GameObject:
         elif self.shape == SpriteShape.RECTANGLE:
             xs = []
             for _ in range(self.height):
-                xs.extend([round(self._x + i) for i in range(self.width)])
+                xs.extend([round(self._x + i) for i in range(self.width + 1)])
         return xs
 
     @property
@@ -333,7 +474,7 @@ class GameObject:
         elif self.shape == SpriteShape.RECTANGLE:
             ys = []
             for i in range(self.height):
-                ys.extend([round(self._y - i) for _ in range(self.width)])
+                ys.extend([round(self._y + i) for _ in range(self.width + 1)])
         return ys
 
     @property
@@ -387,7 +528,10 @@ class GameObject:
         pass
 
     def __str__(self) -> str:
-        return f"{self.name}#{self.id} [{self.x},{self.y}], [{self.dx:.1f},{self.dy:.1f}]"
+        return (
+            f"{self.name}#{self.id} xy:[{self.x},{self.y}], dxdy:[{self.dx:.1f},{self.dy:.1f}],"
+            + f"xxyy:[{self.left},{self.right},{self.top},{self.bottom}] ({'dead' if self.dead else 'alive'})"
+        )
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__}> {self}"
@@ -421,8 +565,24 @@ class Floor(GameObject):
             has_gravity=False,
             destructible=False,
         )
-        self.width = width
-        self.height = height
+        self._width = width
+        self._height = height
+
+    @property
+    def height(self) -> int:
+        return self._height
+
+    @height.setter
+    def height(self, val: int) -> None:
+        self._height = val
+
+    @property
+    def width(self) -> int:
+        return self._width
+
+    @width.setter
+    def width(self, val: int) -> None:
+        self._width = val
 
 
 class Wall(GameObject):
@@ -489,34 +649,6 @@ class Sprite(GameObject):
         self.bounded = bounded
         self.wrap = wrap
         self.phased = phased
-
-    def __str__(self) -> str:
-        return super().__str__() + f" ({'dead' if self.dead else 'alive'})"
-
-    def collide(self, obj: "GameObject", xys: list[tuple[int, int]]) -> None:
-        super().collide(obj, xys)
-        if self.animate and not obj.owner == self and not obj.phased:
-            if not self.phased:
-                self._y = int(obj.y - self.y_direction)
-                self.dy = 0
-
-    @property
-    def x_direction(self):
-        if self.dx > 0:
-            return 1
-        elif self.dx < 0:
-            return -1
-        else:
-            return 0
-
-    @property
-    def y_direction(self):
-        if self.dy > 0:
-            return 1
-        elif self.dy < 0:
-            return -1
-        else:
-            return 0
 
     @property
     def xs(self) -> list[int]:
@@ -893,10 +1025,9 @@ class Projectile(Sprite):
             self.x = self._x + self.dx
             self.y = self._y + self.dy
 
-    def collide(self, obj: "GameObject", xys: list[tuple[int, int]]) -> None:
+    def collide(self, obj: "GameObject", collision: CollideEnum) -> None:
         if obj.id != self.owner.id:
             self.collided.append(obj)
-            self.collision_xys.append(xys)
             self.health -= obj.damage
             self.owner.score += obj.point_value
             obj.point_value = 0
@@ -904,7 +1035,7 @@ class Projectile(Sprite):
                 GameObject.dead_objects.append(self.id)
 
 
-def check_for_collisions():
+def check_for_collisions(lights: Optional[MatrixController] = None):
     t = time.time()
     for key in GameObject.dead_objects:
         if key in GameObject.objects:
@@ -933,14 +1064,20 @@ def check_for_collisions():
                 for key2 in keys[i + 1 :]:
                     try:
                         obj2 = GameObject.objects[key2]
-                        x = []
+                        x = CollideEnum.NONE
+                        if lights is not None:
+                            lights.virtualLEDBuffer[obj1.xs, obj1.ys] = Pixel(obj1.color).array
+                            lights.virtualLEDBuffer[obj2.xs, obj2.ys] = Pixel(obj2.color).array
+                            lights.copyVirtualLedsToWS281X()
+                            lights.refreshLEDs()
                         if obj1.animate or obj2.animate:
-                            x = obj1.collision_surface.intersection(obj2.collision_surface)
+                            x = obj1.collides_with(obj2)
                         else:
                             pass
-                        if x:
+                        if x != CollideEnum.NONE:
+                            x2 = obj2.collides_with(obj1)
                             obj1.collide(obj2, x)
-                            obj2.collide(obj1, x)
+                            obj2.collide(obj1, x2)
                     except KeyError:
                         pass
             except KeyError:
