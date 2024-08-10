@@ -108,18 +108,18 @@ class MatrixController(ArrayController):
         testing: bool = False,
     ) -> None:
         self.ws281xString: Optional[WS281xString] = WS281xString(
-            ledCount=ledCount,
-            pwmGPIOpin=pwmGPIOpin,
-            channelDMA=channelDMA,
-            frequencyPWM=frequencyPWM,
-            invertSignalPWM=invertSignalPWM,
-            ledBrightnessFloat=ledBrightnessFloat,
-            channelPWM=channelPWM,
-            stripTypeLED=stripTypeLED,
-            gamma=gamma,
+            led_count=ledCount,
+            pwm_gpio_pin=pwmGPIOpin,
+            dma_channel=channelDMA,
+            pwm_frequency=frequencyPWM,
+            pwm_invert_signal=invertSignalPWM,
+            led_brightness=ledBrightnessFloat,
+            pwm_channel=channelPWM,
+            led_strip_type=stripTypeLED,
+            led_gamma=gamma,
             simulate=simulate,
-            matrixShape=self.matrixShape,
-            matrixLayout=self.matrixLayout,
+            matrix_shape=self.matrixShape,
+            matrix_layout=self.matrixLayout,
         )
 
     def useColorMatrix(
@@ -343,9 +343,9 @@ class MatrixController(ArrayController):
             # create the tracking object
             flux: MatrixFunction = MatrixFunction(self, MatrixFunction.functionMatrixColorFlux, self.colorSequence)
             # set refresh counter
-            flux.delayCounter = _delayCount
+            flux._delay_counter = _delayCount
             # set refresh limit (after which this function will execute)
-            flux.delayCountMax = _delayCount
+            flux._delay_count_max = _delayCount
             # add this function to our function list
             self.privateLightFunctions.append(flux)
             # clear LEDs, assign first color in sequence to all LEDs
@@ -382,9 +382,9 @@ class MatrixController(ArrayController):
             # create the tracking object
             marquee: MatrixFunction = MatrixFunction(self, MatrixFunction.functionMatrixMarquee, self.colorSequence)
             # set refresh counter
-            marquee.delayCounter = _delayCount
+            marquee._delay_counter = _delayCount
             # set refresh limit (after which this function will execute)
-            marquee.delayCountMax = _delayCount
+            marquee._delay_count_max = _delayCount
             # add this function to our function list
             self.privateLightFunctions.append(marquee)
             self.virtualLEDBuffer[0, 0, :] += self.colorSequence[0, :]
@@ -425,9 +425,9 @@ class MatrixController(ArrayController):
             # create the tracking object
             marquee: MatrixFunction = MatrixFunction(self, MatrixFunction.functionMatrixMarquee, self.colorSequence)
             # set refresh counter
-            marquee.delayCounter = _delayCount
+            marquee._delay_counter = _delayCount
             # set refresh limit (after which this function will execute)
-            marquee.delayCountMax = _delayCount
+            marquee._delay_count_max = _delayCount
             # add this function to our function list
             self.privateLightFunctions.append(marquee)
             self.setvirtualLEDBuffer(
@@ -470,9 +470,9 @@ class MatrixController(ArrayController):
             eye.rowIndex = int(self.realLEDXaxisRange / 2)
             eye.columnIndex = int(self.realLEDYaxisRange / 2)
             # set refresh counter
-            eye.delayCounter = _delayCount
+            eye._delay_counter = _delayCount
             # set refresh limit (after which this function will execute)
-            eye.delayCountMax = _delayCount
+            eye._delay_count_max = _delayCount
             # add this function to our function list
             self.privateLightFunctions.append(eye)
         except SystemExit:
@@ -530,7 +530,7 @@ class MatrixController(ArrayController):
                 # fade the whole LED strand
                 fade: ArrayFunction = ArrayFunction(self, ArrayFunction.functionFadeOff, self.colorSequence)
                 # by this amount
-                fade.fadeAmount = _fadeAmount
+                fade._fade_amount = _fadeAmount
                 # add function to list
                 self.privateLightFunctions.append(fade)
             # create the tracking object
@@ -543,12 +543,12 @@ class MatrixController(ArrayController):
                 bounce.rowStep = random.randint(1, 2)
                 bounce.columnStep = random.randint(1, 2)
                 # set refresh counter
-                bounce.delayCounter = _delayCount
+                bounce._delay_counter = _delayCount
                 # set refresh limit (after which this function will execute)
-                bounce.delayCountMax = _delayCount
+                bounce._delay_count_max = _delayCount
                 # add this function to our function list
-                bounce.color = self.colorSequenceNext
-                bounce.colorCycle = bool(colorChange)
+                bounce._color = self.colorSequenceNext
+                bounce._color_cycle = bool(colorChange)
                 self.privateLightFunctions.append(bounce)
         except SystemExit:
             raise
@@ -609,7 +609,7 @@ class MatrixController(ArrayController):
                 # fade the whole LED strand
                 fade: ArrayFunction = ArrayFunction(self, ArrayFunction.functionFadeOff, self.colorSequence)
                 # by this amount
-                fade.fadeAmount = _fadeAmount
+                fade._fade_amount = _fadeAmount
                 # add function to list
                 self.privateLightFunctions.append(fade)
             # create the tracking object
@@ -619,15 +619,15 @@ class MatrixController(ArrayController):
                 )
                 firework.rowIndex = random.randint(0, self.realLEDXaxisRange - 1)
                 firework.columnIndex = random.randint(0, self.realLEDYaxisRange - 1)
-                firework.size = 1
-                firework.step = 1
-                firework.sizeMax = min(self.realLEDXaxisRange, self.realLEDYaxisRange)
-                firework.delayCounter = 0
+                firework._size = 1
+                firework._step = 1
+                firework._size_max = min(self.realLEDXaxisRange, self.realLEDYaxisRange)
+                firework._delay_counter = 0
                 # set refresh limit (after which this function will execute)
-                firework.delayCountMax = _delayCount
+                firework._delay_count_max = _delayCount
                 # add this function to our function list
-                firework.color = self.colorSequenceNext
-                firework.colorCycle = bool(colorChange)
+                firework._color = self.colorSequenceNext
+                firework._color_cycle = bool(colorChange)
                 self.privateLightFunctions.append(firework)
         except SystemExit:
             raise
@@ -677,7 +677,7 @@ class MatrixController(ArrayController):
             # fade the whole LED strand
             fade: ArrayFunction = ArrayFunction(self, ArrayFunction.functionFadeOff, self.colorSequence)
             # by this amount
-            fade.fadeAmount = _fadeAmount
+            fade._fade_amount = _fadeAmount
             # add function to list
             self.privateLightFunctions.append(fade)
             # create the tracking object
@@ -685,21 +685,21 @@ class MatrixController(ArrayController):
             max_radius = max(int(self.realLEDXaxisRange / 2), int(self.realLEDYaxisRange / 2))
             radar.rowIndex = random.randint(0, self.realLEDXaxisRange - 1)
             radar.columnIndex = random.randint(0, self.realLEDYaxisRange - 1)
-            radar.delayCounter = 0
+            radar._delay_counter = 0
             radar.radius = max_radius
-            radar.stepCountMax = 200
-            radar.t = np.linspace(-np.pi, np.pi, radar.stepCountMax)
-            radar.x = np.linspace(-max_radius, max_radius - 1, radar.stepCountMax)
+            radar._step_count_max = 200
+            radar.t = np.linspace(-np.pi, np.pi, radar._step_count_max)
+            radar.x = np.linspace(-max_radius, max_radius - 1, radar._step_count_max)
             # radar.sinx = np.sin(radar.t)
             # radar.cosx = np.cos(radar.t)
             # radar.thetas = np.arctan2(radar.sinx, radar.cosx)
             radar.thetas = np.tan(radar.t)
             radar.x = radar.x.astype(np.int32)
             # set refresh limit (after which this function will execute)
-            radar.delayCountMax = _delayCount
+            radar._delay_count_max = _delayCount
             # add this function to our function list
-            radar.color = self.colorSequenceNext
-            radar.activeChance = 0.01
+            radar._color = self.colorSequenceNext
+            radar._active_chance = 0.01
             radar.enemy = []
             self.privateLightFunctions.append(radar)
         except SystemExit:
@@ -750,24 +750,24 @@ class MatrixController(ArrayController):
             # create the tracking objects
             for _ in range(_snakeCount):
                 snake = MatrixFunction(self, MatrixFunction.functionsMatrixSnake, self.colorSequence)
-                snake.sizeMax = _snakeLength
-                snake.size = random.randint(int(snake.sizeMax / 2), snake.sizeMax)
-                snake.rowIndex = np.ones((snake.size), dtype=np.int32) * random.randint(0, self.realLEDXaxisRange - 1)
-                snake.columnIndex = np.ones((snake.size), dtype=np.int32) * random.randint(
+                snake._size_max = _snakeLength
+                snake._size = random.randint(int(snake._size_max / 2), snake._size_max)
+                snake.rowIndex = np.ones((snake._size), dtype=np.int32) * random.randint(0, self.realLEDXaxisRange - 1)
+                snake.columnIndex = np.ones((snake._size), dtype=np.int32) * random.randint(
                     0, self.realLEDYaxisRange - 1
                 )
-                snake.stepCountMax = snake.size
-                snake.delayCounter = 0
+                snake._step_count_max = snake._size
+                snake._delay_counter = 0
                 snake.rowDirection = [-1, 0, 1][random.randint(0, 2)]
                 if snake.rowDirection == 0:
                     snake.columnDirection = [-1, 1][random.randint(0, 1)]
                 else:
                     snake.columnDirection = 0
                 # set refresh limit (after which this function will execute)
-                snake.delayCountMax = _delayCount
+                snake._delay_count_max = _delayCount
                 # add this function to our function list
-                snake.color = self.colorSequenceNext
-                snake.collision = collision
+                snake._color = self.colorSequenceNext
+                snake._collision = collision
                 self.privateLightFunctions.append(snake)
         except SystemExit:
             raise

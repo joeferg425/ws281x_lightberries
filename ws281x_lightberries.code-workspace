@@ -5,10 +5,16 @@
 		}
 	],
 	"settings": {
-		"python.linting.flake8Enabled": true,
 		"python.terminal.activateEnvInCurrentTerminal": true,
+		"[python]": {
+			"editor.formatOnSave": true,
+			"editor.defaultFormatter": "charliermarsh.ruff",
+			"editor.codeActionsOnSave": {
+				"source.fixAll": "explicit",
+				"source.organizeImports": "explicit"
+			}
+		},
 		"autoDocstring.guessTypes": false,
-		"python.formatting.provider": "black",
 		"cSpell.words": [
 			"arange",
 			"asarray",
@@ -16,6 +22,7 @@
 			"colr",
 			"cosx",
 			"Cylon",
+			"debugpy",
 			"detrend",
 			"DONT",
 			"dstack",
@@ -61,13 +68,13 @@
 		"configurations": [
 			{
 				"name": "Python: main",
-				"type": "python",
+				"type": "debugpy",
 				"request": "launch",
 				"program": "${workspaceFolder}/src/lightberries/__main__.py",
 				"console": "integratedTerminal",
-				// "linux": {
-				// "sudo": true
-				// },
+				"linux": {
+					"sudo": true
+				},
 				"justMyCode": false,
 				"args": [
 					"-b",
@@ -80,7 +87,7 @@
 			},
 			{
 				"name": "example: basic array",
-				"type": "python",
+				"type": "debugpy",
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/basic_array.py",
 				"console": "integratedTerminal",
@@ -91,7 +98,7 @@
 			},
 			{
 				"name": "example: basic matrix",
-				"type": "python",
+				"type": "debugpy",
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/basic_matrix.py",
 				"console": "integratedTerminal",
@@ -102,7 +109,7 @@
 			},
 			{
 				"name": "example: basic multi matrix",
-				"type": "python",
+				"type": "debugpy",
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/basic_multi_matrix.py",
 				"console": "integratedTerminal",
@@ -113,7 +120,7 @@
 			},
 			{
 				"name": "example: demo array",
-				"type": "python",
+				"type": "debugpy",
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/demo_array.py",
 				"console": "integratedTerminal",
@@ -124,7 +131,7 @@
 			},
 			{
 				"name": "example: demo matrix",
-				"type": "python",
+				"type": "debugpy",
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/demo_matrix.py",
 				"console": "integratedTerminal",
@@ -135,7 +142,7 @@
 			},
 			{
 				"name": "example: audio",
-				"type": "python",
+				"type": "debugpy",
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/audio.py",
 				"console": "integratedTerminal",
@@ -146,7 +153,7 @@
 			},
 			{
 				"name": "example: GUI functions",
-				"type": "python",
+				"type": "debugpy",
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/gui_functions.py",
 				"console": "integratedTerminal",
@@ -157,7 +164,7 @@
 			},
 			{
 				"name": "example: GUI pixels",
-				"type": "python",
+				"type": "debugpy",
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/gui_pixels.py",
 				"console": "integratedTerminal",
@@ -168,7 +175,7 @@
 			},
 			{
 				"name": "example: simulate",
-				"type": "python",
+				"type": "debugpy",
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/simulate.py",
 				"console": "integratedTerminal",
@@ -179,7 +186,7 @@
 			},
 			{
 				"name": "example: image",
-				"type": "python",
+				"type": "debugpy",
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/image.py",
 				"console": "integratedTerminal",
@@ -193,7 +200,7 @@
 			},
 			{
 				"name": "example: dot matrix",
-				"type": "python",
+				"type": "debugpy",
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/dot_matrix.py",
 				"console": "integratedTerminal",
@@ -204,7 +211,7 @@
 			},
 			{
 				"name": "example: dot array",
-				"type": "python",
+				"type": "debugpy",
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/dot_array.py",
 				"console": "integratedTerminal",
@@ -215,7 +222,7 @@
 			},
 			{
 				"name": "example: multi matrix",
-				"type": "python",
+				"type": "debugpy",
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/multi_matrix.py",
 				"console": "integratedTerminal",
@@ -226,7 +233,7 @@
 			},
 			{
 				"name": "game: dots",
-				"type": "python",
+				"type": "debugpy",
 				"request": "launch",
 				"program": "${workspaceFolder}/games/dots.py",
 				"console": "integratedTerminal",
@@ -237,7 +244,7 @@
 			},
 			{
 				"name": "game: space",
-				"type": "python",
+				"type": "debugpy",
 				"request": "launch",
 				"program": "${workspaceFolder}/games/space.py",
 				"console": "integratedTerminal",
@@ -248,7 +255,7 @@
 			},
 			{
 				"name": "game: jump",
-				"type": "python",
+				"type": "debugpy",
 				"request": "launch",
 				"program": "${workspaceFolder}/games/jump.py",
 				"console": "integratedTerminal",
@@ -259,7 +266,7 @@
 			},
 			{
 				"name": "game: eat",
-				"type": "python",
+				"type": "debugpy",
 				"request": "launch",
 				"program": "${workspaceFolder}/games/eat.py",
 				"console": "integratedTerminal",
@@ -270,7 +277,7 @@
 			},
 			{
 				"name": "game: picker",
-				"type": "python",
+				"type": "debugpy",
 				"request": "launch",
 				"program": "${workspaceFolder}/games/picker.py",
 				"console": "integratedTerminal",
@@ -339,6 +346,16 @@
 					"coverage"
 				],
 			}
+		]
+	},
+	"extensions": {
+		"recommendations": [
+			"charliermarsh.ruff",
+			"njpwerner.autodocstring",
+			"streetsidesoftware.code-spell-checker",
+			"ms-python.vscode-pylance",
+			"ms-python.python",
+			"ms-python.debugpy"
 		]
 	}
 }

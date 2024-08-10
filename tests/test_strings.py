@@ -57,7 +57,7 @@ def test_creation():
     """Test creation of light string with simple args."""
     led_count = 10
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
-        s = WS281xString(ledCount=led_count, simulate=True)
+        s = WS281xString(led_count=led_count, simulate=True)
         assert s is not None
         assert len(s) == led_count
 
@@ -66,7 +66,7 @@ def test_deletion():
     """Test creation of light string with simple args."""
     led_count = 10
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
-        s = WS281xString(ledCount=led_count, simulate=True)
+        s = WS281xString(led_count=led_count, simulate=True)
         s.__del__()
         assert True
 
@@ -76,7 +76,7 @@ def test_creation_led_count_none():
     led_count = None
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
         with pytest.raises(WS281xStringError):
-            WS281xString(ledCount=led_count, simulate=True)
+            WS281xString(led_count=led_count, simulate=True)
 
 
 def test_creation_led_count_invalid():
@@ -84,14 +84,14 @@ def test_creation_led_count_invalid():
     led_count = "invalid"
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
         with pytest.raises(WS281xStringError):
-            WS281xString(ledCount=led_count, simulate=True)
+            WS281xString(led_count=led_count, simulate=True)
 
 
 def test_single_assignment():
     """Test creation of light string with simple args."""
     led_count = 10
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
-        ws281x = WS281xString(ledCount=led_count, simulate=True)
+        ws281x = WS281xString(led_count=led_count, simulate=True)
         for i in range(len(ws281x)):
             random_color = PixelColors.RANDOM.array
             ws281x[i] = random_color
@@ -103,7 +103,7 @@ def test_single_assignment_indexerror():
     """Test creation of light string with simple args."""
     led_count = 10
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
-        ws281x = WS281xString(ledCount=led_count, simulate=True)
+        ws281x = WS281xString(led_count=led_count, simulate=True)
         with pytest.raises(IndexError):
             random_color = PixelColors.RANDOM.array
             ws281x[led_count + 1] = random_color
@@ -114,7 +114,7 @@ def test_single_assignment_indexerror_numpy():
     led_count = 10
     led_count_np = np.array(np.arange(11), dtype=np.int32)[-1]
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
-        ws281x = WS281xString(ledCount=led_count, simulate=True)
+        ws281x = WS281xString(led_count=led_count, simulate=True)
         with pytest.raises(IndexError):
             random_color = PixelColors.RANDOM.array
             ws281x[led_count_np] = random_color
@@ -124,7 +124,7 @@ def test_single_access_indexerror():
     """Test creation of light string with simple args."""
     led_count = 11
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
-        ws281x = WS281xString(ledCount=led_count, simulate=True)
+        ws281x = WS281xString(led_count=led_count, simulate=True)
         with pytest.raises(IndexError):
             ws281x[led_count + 1]
 
@@ -134,7 +134,7 @@ def test_single_access_indexerror_numpy():
     led_count = 11
     led_count_np = np.array(np.arange(12), dtype=np.int32)[-1]
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
-        ws281x = WS281xString(ledCount=led_count, simulate=True)
+        ws281x = WS281xString(led_count=led_count, simulate=True)
         with pytest.raises(IndexError):
             ws281x[led_count_np]
 
@@ -143,7 +143,7 @@ def test_single_assignment_numpy_int():
     """Test creation of light string with simple args."""
     led_count = 10
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
-        ws281x = WS281xString(ledCount=led_count, simulate=True)
+        ws281x = WS281xString(led_count=led_count, simulate=True)
         for i in np.arange(len(ws281x)):
             random_color = PixelColors.RANDOM.array
             ws281x[i] = random_color
@@ -155,7 +155,7 @@ def test_multiple_assignment():
     """Test creation of light string with simple args."""
     led_count = 10
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
-        ws281x = WS281xString(ledCount=led_count, simulate=True)
+        ws281x = WS281xString(led_count=led_count, simulate=True)
 
         # one
         assign_count = 1
@@ -200,7 +200,7 @@ def test_multiple_assignment_simulated():
     """Test creation of light string with simple args."""
     led_count = 10
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
-        ws281x = WS281xString(ledCount=led_count, simulate=True)
+        ws281x = WS281xString(led_count=led_count, simulate=True)
 
         # one
         assign_count = 1
@@ -244,7 +244,7 @@ def test_multiple_assignment_simulated():
 def test_context_manager():
     led_count = 10
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
-        with WS281xString(ledCount=led_count, simulate=True) as ws281x:
+        with WS281xString(led_count=led_count, simulate=True) as ws281x:
             # all
             random_colors = ConvertPixelArrayToNumpyArray([PixelColors.RANDOM for i in range(led_count)])
             ws281x[:] = random_colors

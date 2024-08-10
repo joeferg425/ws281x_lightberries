@@ -68,19 +68,19 @@ def new_instantiate_WS281xString(
 ) -> None:
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
         self.ws281xString = WS281xString(
-            ledCount=ledCount,
-            pwmGPIOpin=pwmGPIOpin,
-            channelDMA=channelDMA,
-            frequencyPWM=frequencyPWM,
-            invertSignalPWM=invertSignalPWM,
-            ledBrightnessFloat=ledBrightnessFloat,
-            channelPWM=channelPWM,
-            stripTypeLED=stripTypeLED,
-            gamma=gamma,
+            led_count=ledCount,
+            pwm_gpio_pin=pwmGPIOpin,
+            dma_channel=channelDMA,
+            pwm_frequency=frequencyPWM,
+            pwm_invert_signal=invertSignalPWM,
+            led_brightness=ledBrightnessFloat,
+            pwm_channel=channelPWM,
+            led_strip_type=stripTypeLED,
+            led_gamma=gamma,
             simulate=simulate,
             testing=testing,
-            matrixLayout=matrixLayout,
-            matrixShape=matrixShape,
+            matrix_layout=matrixLayout,
+            matrix_shape=matrixShape,
         )
 
 

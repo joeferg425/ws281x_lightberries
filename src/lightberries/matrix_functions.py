@@ -67,8 +67,8 @@ class MatrixFunction(ArrayFunction):
             LightFunctionException: if something bad happens
         """
         try:
-            ArrayFunction.Controller.virtualLEDBuffer[:, :] = ArrayFunction.Controller.virtualLEDBuffer * (
-                1 - fade.fadeAmount
+            ArrayFunction.Controller.virtualLEDBuffer[:, :] = (
+                ArrayFunction.Controller.virtualLEDBuffer * (1 - fade._fade_amount)
             )
         except KeyboardInterrupt:  # pragma: no cover
             raise
@@ -94,27 +94,42 @@ class MatrixFunction(ArrayFunction):
             LightFunctionException: if something bad happens
         """
         try:
-            _fadeAmount = ceil(fade.fadeAmount * 256)
+            _fadeAmount = ceil(fade._fade_amount * 256)
             if _fadeAmount < 0:
                 _fadeAmount = 1
             elif _fadeAmount > 255:
                 _fadeAmount = 255
             for x in range(ArrayFunction.Controller.realLEDYaxisRange):
                 for y in range(ArrayFunction.Controller.realLEDXaxisRange):
-                    for rgbIndex in range(len(fade.color)):
-                        if ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] != fade.color[rgbIndex]:
+                    for rgbIndex in range(len(fade._color)):
+                        if (
+                            ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex]
+                            != fade._color[rgbIndex]
+                        ):
                             if (
-                                ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] - _fadeAmount
-                                > fade.color[rgbIndex]
+                                ArrayFunction.Controller.virtualLEDBuffer[
+                                    x, y, rgbIndex
+                                ]
+                                - _fadeAmount
+                                > fade._color[rgbIndex]
                             ):
-                                ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] -= _fadeAmount
+                                ArrayFunction.Controller.virtualLEDBuffer[
+                                    x, y, rgbIndex
+                                ] -= _fadeAmount
                             elif (
-                                ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] + _fadeAmount
-                                < fade.color[rgbIndex]
+                                ArrayFunction.Controller.virtualLEDBuffer[
+                                    x, y, rgbIndex
+                                ]
+                                + _fadeAmount
+                                < fade._color[rgbIndex]
                             ):
-                                ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] += _fadeAmount
+                                ArrayFunction.Controller.virtualLEDBuffer[
+                                    x, y, rgbIndex
+                                ] += _fadeAmount
                             else:
-                                ArrayFunction.Controller.virtualLEDBuffer[x, y, rgbIndex] = fade.colorNext[rgbIndex]
+                                ArrayFunction.Controller.virtualLEDBuffer[
+                                    x, y, rgbIndex
+                                ] = fade._color_next[rgbIndex]
         except KeyboardInterrupt:
             raise
         except SystemExit:
@@ -140,7 +155,7 @@ class MatrixFunction(ArrayFunction):
         """
         try:
             roll_index = 1
-            if flux.delayCounter >= flux.delayCountMax:
+            if flux._delay_counter >= flux._delay_count_max:
                 MatrixFunction.Controller.virtualLEDBuffer[:, :, 0] = np.roll(
                     MatrixFunction.Controller.virtualLEDBuffer[:, :, 0],
                     random.randint(-1, 0),
@@ -156,8 +171,8 @@ class MatrixFunction(ArrayFunction):
                     random.randint(-1, 0),
                     roll_index,
                 )
-                flux.delayCounter = 0
-            flux.delayCounter += 1
+                flux._delay_counter = 0
+            flux._delay_counter += 1
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -183,14 +198,14 @@ class MatrixFunction(ArrayFunction):
         """
         try:
             roll_index = 0
-            if marquee.delayCounter >= marquee.delayCountMax:
+            if marquee._delay_counter >= marquee._delay_count_max:
                 MatrixFunction.Controller.virtualLEDBuffer = np.roll(
                     MatrixFunction.Controller.virtualLEDBuffer,
                     -1,
                     roll_index,
                 )
-                marquee.delayCounter = 0
-            marquee.delayCounter += 1
+                marquee._delay_counter = 0
+            marquee._delay_counter += 1
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -217,15 +232,17 @@ class MatrixFunction(ArrayFunction):
         try:
             _min = 1
             _max = 1
-            if eye.delayCounter >= eye.delayCountMax:
-                if eye.state == EyeMoveType.MOVE.value:
+            if eye._delay_counter >= eye._delay_count_max:
+                if eye._state == EyeMoveType.MOVE.value:
                     eye.rowIndexLast = eye.rowIndex
                     eye.rowIndex += random.randint(
-                        -int(eye.Controller.realLEDXaxisRange / 2), int(eye.Controller.realLEDXaxisRange / 2)
+                        -int(eye.Controller.realLEDXaxisRange / 2),
+                        int(eye.Controller.realLEDXaxisRange / 2),
                     )
                     eye.columnIndexLast = eye.columnIndex
                     eye.columnIndex += random.randint(
-                        -int(eye.Controller.realLEDYaxisRange / 2), int(eye.Controller.realLEDYaxisRange / 2)
+                        -int(eye.Controller.realLEDYaxisRange / 2),
+                        int(eye.Controller.realLEDYaxisRange / 2),
                     )
                     if eye.rowIndex < _min:
                         eye.rowIndex = _min
@@ -236,64 +253,66 @@ class MatrixFunction(ArrayFunction):
                     elif eye.columnIndex >= eye.Controller.realLEDYaxisRange - _max:
                         eye.columnIndex = eye.Controller.realLEDYaxisRange - _max - 1
 
-                    eye.delayCountMax = random.randint(0, 9)
-                    if eye.delayCountMax >= 3:
-                        eye.delayCountMax = random.randint(5, 20)
-                    elif eye.delayCountMax >= 8:
-                        eye.delayCountMax = random.randint(50, 100)
-                    eye.delayCountMax = random.randint(0, 30)
+                    eye._delay_count_max = random.randint(0, 9)
+                    if eye._delay_count_max >= 3:
+                        eye._delay_count_max = random.randint(5, 20)
+                    elif eye._delay_count_max >= 8:
+                        eye._delay_count_max = random.randint(50, 100)
+                    eye._delay_count_max = random.randint(0, 30)
                     r = random.randint(0, 4)
                     if r == 3:
-                        eye.state = EyeMoveType.TWITCH.value
+                        eye._state = EyeMoveType.TWITCH.value
                     elif r == 4:
-                        eye.state = EyeMoveType.BLINK.value
-                elif eye.state == EyeMoveType.TWITCH.value:
+                        eye._state = EyeMoveType.BLINK.value
+                elif eye._state == EyeMoveType.TWITCH.value:
                     r = eye.rowIndex
                     eye.rowIndex = eye.rowIndexLast
                     eye.rowIndexLast = r
                     r = eye.columnIndex
                     eye.columnIndex = eye.columnIndexLast
                     eye.columnIndexLast = r
-                    eye.delayCountMax = random.randint(0, 5)
+                    eye._delay_count_max = random.randint(0, 5)
                     r = random.randint(0, 4)
                     if r == 3:
-                        eye.state = EyeMoveType.MOVE.value
+                        eye._state = EyeMoveType.MOVE.value
                     elif r == 4:
-                        eye.state = EyeMoveType.BLINK.value
-                elif eye.state == EyeMoveType.BLINK.value:
-                    eye.delayCountMax = 2
-                    if eye.stepCounter > 1:
+                        eye._state = EyeMoveType.BLINK.value
+                elif eye._state == EyeMoveType.BLINK.value:
+                    eye._delay_count_max = 2
+                    if eye._step_counter > 1:
                         r = random.randint(0, 1)
                         if r == 0:
-                            eye.state = EyeMoveType.MOVE.value
-                            eye.stepCounter = 0
+                            eye._state = EyeMoveType.MOVE.value
+                            eye._step_counter = 0
                         elif r == 1:
-                            eye.state = EyeMoveType.TWITCH.value
-                            eye.stepCounter = 0
+                            eye._state = EyeMoveType.TWITCH.value
+                            eye._step_counter = 0
                     else:
-                        eye.state = EyeMoveType.BLINKED.value
-                    eye.stepCounter += 1
-                elif eye.state == EyeMoveType.BLINKED.value:
-                    eye.state = EyeMoveType.BLINK.value
+                        eye._state = EyeMoveType.BLINKED.value
+                    eye._step_counter += 1
+                elif eye._state == EyeMoveType.BLINKED.value:
+                    eye._state = EyeMoveType.BLINK.value
 
                 eye.Controller.virtualLEDBuffer *= 0
 
-                if eye.state == EyeMoveType.BLINK.value:
+                if eye._state == EyeMoveType.BLINK.value:
                     xy = (tuple(eye.rowRange), tuple(eye.columnRange))
                     eye.Controller.virtualLEDBuffer[xy] = PixelColors.RED.array
-                elif eye.state != EyeMoveType.BLINKED.value:
-                    eye.size = 3
+                elif eye._state != EyeMoveType.BLINKED.value:
+                    eye._size = 3
                     x = (
-                        np.round(np.sin(np.linspace(0, 2 * np.pi, 1 + (4 * eye.size))) * (eye.size)).astype(
-                            dtype=np.int32
-                        )
+                        np.round(
+                            np.sin(np.linspace(0, 2 * np.pi, 1 + (4 * eye._size)))
+                            * (eye._size)
+                        ).astype(dtype=np.int32)
                         + eye.rowIndex
                     )
                     xi = np.where((x >= eye.Controller.realLEDYaxisRange) | (x < 0))[0]
                     y = (
-                        np.round(np.cos(np.linspace(0, 2 * np.pi, 1 + (4 * eye.size))) * (eye.size)).astype(
-                            dtype=np.int32
-                        )
+                        np.round(
+                            np.cos(np.linspace(0, 2 * np.pi, 1 + (4 * eye._size)))
+                            * (eye._size)
+                        ).astype(dtype=np.int32)
                         + eye.columnIndex
                     )
                     yi = np.where((y >= eye.Controller.realLEDXaxisRange) | (y < 0))[0]
@@ -311,18 +330,20 @@ class MatrixFunction(ArrayFunction):
                     eye.rowRange = list(x)
                     eye.columnRange = list(y)
 
-                    eye.size = 4
+                    eye._size = 4
                     x = (
-                        np.round(np.sin(np.linspace(0, 2 * np.pi, 1 + (4 * eye.size))) * (eye.size)).astype(
-                            dtype=np.int32
-                        )
+                        np.round(
+                            np.sin(np.linspace(0, 2 * np.pi, 1 + (4 * eye._size)))
+                            * (eye._size)
+                        ).astype(dtype=np.int32)
                         + eye.rowIndex
                     )
                     xi = np.where((x >= eye.Controller.realLEDYaxisRange) | (x < 0))[0]
                     y = (
-                        np.round(np.cos(np.linspace(0, 2 * np.pi, 1 + (4 * eye.size))) * (eye.size)).astype(
-                            dtype=np.int32
-                        )
+                        np.round(
+                            np.cos(np.linspace(0, 2 * np.pi, 1 + (4 * eye._size)))
+                            * (eye._size)
+                        ).astype(dtype=np.int32)
                         + eye.columnIndex
                     )
                     yi = np.where((y >= eye.Controller.realLEDXaxisRange) | (y < 0))[0]
@@ -375,8 +396,8 @@ class MatrixFunction(ArrayFunction):
                     xy = (tuple(eye.rowRange), tuple(eye.columnRange))
                     eye.Controller.virtualLEDBuffer[xy] = PixelColors.RED.array
 
-                eye.delayCounter = 0
-            eye.delayCounter += 1
+                eye._delay_counter = 0
+            eye._delay_counter += 1
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -403,44 +424,44 @@ class MatrixFunction(ArrayFunction):
         try:
             _min = 1
             _max = 1
-            if bounce.delayCounter >= bounce.delayCountMax:
+            if bounce._delay_counter >= bounce._delay_count_max:
                 bounce.rowIndex += bounce.rowDirection * bounce.rowStep
                 bounce.columnIndex += bounce.columnDirection * bounce.columnStep
                 if bounce.rowIndex < _min:
                     bounce.rowIndex = _min
                     bounce.rowDirection *= -1
                     bounce.rowStep = random.randint(1, 2)
-                    bounce.delayCountMax = random.randint(1, 5)
-                    if bounce.colorCycle and random.randint(0, 10) >= 7:
-                        bounce.color = bounce.colorSequenceNext
+                    bounce._delay_count_max = random.randint(1, 5)
+                    if bounce._color_cycle and random.randint(0, 10) >= 7:
+                        bounce._color = bounce.color_sequence_next
                 elif bounce.rowIndex >= bounce.Controller.realLEDXaxisRange - _max:
                     bounce.rowIndex = bounce.Controller.realLEDXaxisRange - _max - 1
                     bounce.rowDirection *= -1
                     bounce.rowStep = random.randint(1, 2)
-                    bounce.delayCountMax = random.randint(1, 5)
-                    if bounce.colorCycle and random.randint(0, 10) >= 7:
-                        bounce.color = bounce.colorSequenceNext
+                    bounce._delay_count_max = random.randint(1, 5)
+                    if bounce._color_cycle and random.randint(0, 10) >= 7:
+                        bounce._color = bounce.color_sequence_next
                 if bounce.columnIndex < _min:
                     bounce.columnIndex = _min
                     bounce.columnDirection *= -1
                     bounce.columnStep = random.randint(1, 2)
-                    bounce.delayCountMax = random.randint(1, 5)
-                    if bounce.colorCycle and random.randint(0, 10) >= 7:
-                        bounce.color = bounce.colorSequenceNext
+                    bounce._delay_count_max = random.randint(1, 5)
+                    if bounce._color_cycle and random.randint(0, 10) >= 7:
+                        bounce._color = bounce.color_sequence_next
                 elif bounce.columnIndex >= bounce.Controller.realLEDYaxisRange - _max:
                     bounce.columnIndex = bounce.Controller.realLEDYaxisRange - _max - 1
                     bounce.columnDirection *= -1
                     bounce.columnStep = random.randint(1, 2)
-                    bounce.delayCountMax = random.randint(1, 5)
-                    if bounce.colorCycle and random.randint(0, 10) >= 7:
-                        bounce.color = bounce.colorSequenceNext
-                bounce.delayCounter = 0
+                    bounce._delay_count_max = random.randint(1, 5)
+                    if bounce._color_cycle and random.randint(0, 10) >= 7:
+                        bounce._color = bounce.color_sequence_next
+                bounce._delay_counter = 0
             bounceRange = ((bounce.columnIndex), (bounce.rowIndex))
             if len(ArrayFunction.Controller.virtualLEDBuffer.shape) == 2:
-                ArrayFunction.Controller.virtualLEDBuffer[bounceRange] = bounce.color
+                ArrayFunction.Controller.virtualLEDBuffer[bounceRange] = bounce._color
             else:
-                ArrayFunction.Controller.virtualLEDBuffer[bounceRange] = bounce.color
-            bounce.delayCounter += 1
+                ArrayFunction.Controller.virtualLEDBuffer[bounceRange] = bounce._color
+            bounce._delay_counter += 1
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -464,32 +485,39 @@ class MatrixFunction(ArrayFunction):
             LightFunctionException: if something bad happens
         """
         try:
-            if firework.delayCounter >= firework.delayCountMax:
-                if firework.size < firework.sizeMax:
-                    firework.size += firework.step
+            if firework._delay_counter >= firework._delay_count_max:
+                if firework._size < firework._size_max:
+                    firework._size += firework._step
                 else:
-                    firework.size = 1
-                    firework.rowIndex = random.randint(0, firework.Controller.realLEDYaxisRange - 1)
-                    firework.columnIndex = random.randint(0, firework.Controller.realLEDXaxisRange - 1)
-                    firework.delayCountMax = random.randint(1, 5)
-                    _sizeMax = min(
-                        MatrixFunction.Controller.realLEDXaxisRange, MatrixFunction.Controller.realLEDYaxisRange
+                    firework._size = 1
+                    firework.rowIndex = random.randint(
+                        0, firework.Controller.realLEDYaxisRange - 1
                     )
-                    firework.sizeMax = random.randint(int(_sizeMax // 2), _sizeMax)
-                    if firework.colorCycle:
-                        firework.color = firework.colorSequenceNext
-                firework.delayCounter = 0
+                    firework.columnIndex = random.randint(
+                        0, firework.Controller.realLEDXaxisRange - 1
+                    )
+                    firework._delay_count_max = random.randint(1, 5)
+                    _sizeMax = min(
+                        MatrixFunction.Controller.realLEDXaxisRange,
+                        MatrixFunction.Controller.realLEDYaxisRange,
+                    )
+                    firework._size_max = random.randint(int(_sizeMax // 2), _sizeMax)
+                    if firework._color_cycle:
+                        firework._color = firework.color_sequence_next
+                firework._delay_counter = 0
             x = (
-                np.round(np.sin(np.linspace(0, 2 * np.pi, 1 + (4 * firework.size))) * (firework.size)).astype(
-                    dtype=np.int32
-                )
+                np.round(
+                    np.sin(np.linspace(0, 2 * np.pi, 1 + (4 * firework._size)))
+                    * (firework._size)
+                ).astype(dtype=np.int32)
                 + firework.rowIndex
             )
             i1 = np.where((x >= firework.Controller.realLEDYaxisRange) | (x < 0))[0]
             y = (
-                np.round(np.cos(np.linspace(0, 2 * np.pi, 1 + (4 * firework.size))) * (firework.size)).astype(
-                    dtype=np.int32
-                )
+                np.round(
+                    np.cos(np.linspace(0, 2 * np.pi, 1 + (4 * firework._size)))
+                    * (firework._size)
+                ).astype(dtype=np.int32)
                 + firework.columnIndex
             )
             i2 = np.where((y >= firework.Controller.realLEDXaxisRange) | (y < 0))[0]
@@ -504,9 +532,9 @@ class MatrixFunction(ArrayFunction):
                 y = np.delete(y, i)
             xy = (tuple(x), tuple(y))
 
-            firework.Controller.virtualLEDBuffer[xy] = firework.color
+            firework.Controller.virtualLEDBuffer[xy] = firework._color
 
-            firework.delayCounter += 1
+            firework._delay_counter += 1
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -531,7 +559,7 @@ class MatrixFunction(ArrayFunction):
         """
         try:
             x = radar.x + radar.radius
-            y = radar.thetas[radar.stepCounter] * radar.x + radar.radius
+            y = radar.thetas[radar._step_counter] * radar.x + radar.radius
             # y = radar.thetas[radar.stepCounter] * radar.x + radar.stepCounter
             # y = radar.thetas[radar.stepCounter] * radar.x + (radar.stepCountMax - 1 - radar.stepCounter)
             y = y.astype(np.int32)
@@ -550,7 +578,7 @@ class MatrixFunction(ArrayFunction):
 
             radar.Controller.virtualLEDBuffer[xy] = PixelColors.RED.array * 0.5
 
-            if random.random() < radar.activeChance:
+            if random.random() < radar._active_chance:
                 duration = 20
                 i = random.randint(0, len(x) - 1)
                 if x[i] != radar.radius and y[i] != radar.radius:
@@ -585,12 +613,12 @@ class MatrixFunction(ArrayFunction):
             for enemy in gone_enemies:
                 radar.enemy.remove(enemy)
 
-            radar.delayCounter += 1
-            if radar.delayCounter >= radar.delayCountMax:
-                radar.stepCounter += 1
-                if radar.stepCounter >= radar.stepCountMax:
-                    radar.stepCounter = 0
-                radar.delayCounter = 0
+            radar._delay_counter += 1
+            if radar._delay_counter >= radar._delay_count_max:
+                radar._step_counter += 1
+                if radar._step_counter >= radar._step_count_max:
+                    radar._step_counter = 0
+                radar._delay_counter = 0
         except SystemExit:
             raise
         except KeyboardInterrupt:
@@ -614,9 +642,9 @@ class MatrixFunction(ArrayFunction):
             LightFunctionException: if something bad happens
         """
         try:
-            if snake.delayCounter >= snake.delayCountMax:
-                if snake.stepCounter < snake.stepCountMax:
-                    snake.stepCounter += 1
+            if snake._delay_counter >= snake._delay_count_max:
+                if snake._step_counter < snake._step_count_max:
+                    snake._step_counter += 1
                 snake.rowIndex = np.roll(snake.rowIndex, 1)
                 snake.rowIndex[0] = snake.rowIndex[1] + snake.rowDirection
                 snake.columnIndex = np.roll(snake.columnIndex, 1)
@@ -627,8 +655,11 @@ class MatrixFunction(ArrayFunction):
                 while not ready and attempts < 3:
                     d = {}
                     collision = False
-                    if snake.collision:
-                        for ii in zip(snake.rowIndex[: snake.stepCounter], snake.columnIndex[: snake.stepCounter]):
+                    if snake._collision:
+                        for ii in zip(
+                            snake.rowIndex[: snake._step_counter],
+                            snake.columnIndex[: snake._step_counter],
+                        ):
                             if ii in d:
                                 collision = True
                                 break
@@ -640,7 +671,9 @@ class MatrixFunction(ArrayFunction):
                             snake.rowIndex[0] -= 1
                             snake.rowDirection -= 1
                             snake.columnDirection = [-1, 1][random.randint(0, 1)]
-                            snake.columnIndex[0] = snake.columnIndex[1] + snake.columnDirection
+                            snake.columnIndex[0] = (
+                                snake.columnIndex[1] + snake.columnDirection
+                            )
                         else:
                             snake.rowDirection *= -1
                             snake.rowIndex[0] = snake.rowIndex[1] + snake.rowDirection
@@ -649,7 +682,9 @@ class MatrixFunction(ArrayFunction):
                             snake.rowIndex[0] += 1
                             snake.rowDirection += 1
                             snake.columnDirection = [-1, 1][random.randint(0, 1)]
-                            snake.columnIndex[0] = snake.columnIndex[1] + snake.columnDirection
+                            snake.columnIndex[0] = (
+                                snake.columnIndex[1] + snake.columnDirection
+                            )
                         else:
                             snake.rowDirection *= -1
                             snake.rowIndex[0] = snake.rowIndex[1] + snake.rowDirection
@@ -661,7 +696,9 @@ class MatrixFunction(ArrayFunction):
                             snake.rowIndex[0] = snake.rowIndex[1] + snake.rowDirection
                         else:
                             snake.columnDirection *= -1
-                            snake.columnIndex[0] = snake.columnIndex[1] + snake.columnDirection
+                            snake.columnIndex[0] = (
+                                snake.columnIndex[1] + snake.columnDirection
+                            )
                     elif snake.columnIndex[0] < 0:
                         if attempts == 0:
                             snake.columnIndex[0] += 1
@@ -670,22 +707,29 @@ class MatrixFunction(ArrayFunction):
                             snake.rowIndex[0] = snake.rowIndex[1] + snake.rowDirection
                         else:
                             snake.columnDirection *= -1
-                            snake.columnIndex[0] = snake.columnIndex[1] + snake.columnDirection
+                            snake.columnIndex[0] = (
+                                snake.columnIndex[1] + snake.columnDirection
+                            )
                     elif collision:
                         if snake.rowDirection != 0:
                             snake.rowDirection *= -1
                             snake.rowIndex[0] = snake.rowIndex[1] + snake.rowDirection
                         elif snake.columnDirection != 0:
                             snake.columnDirection *= -1
-                            snake.columnIndex[0] = snake.columnIndex[1] + snake.columnDirection
+                            snake.columnIndex[0] = (
+                                snake.columnIndex[1] + snake.columnDirection
+                            )
                     else:
                         ready = True
                     attempts += 1
 
                 d = {}
                 collision = False
-                if snake.collision:
-                    for ii in zip(snake.rowIndex[: snake.stepCounter], snake.columnIndex[: snake.stepCounter]):
+                if snake._collision:
+                    for ii in zip(
+                        snake.rowIndex[: snake._step_counter],
+                        snake.columnIndex[: snake._step_counter],
+                    ):
                         if ii in d:
                             collision = True
                             break
@@ -693,20 +737,24 @@ class MatrixFunction(ArrayFunction):
                             d[ii] = ii
 
                 if collision or not ready:
-                    snake.size = random.randint(int(snake.sizeMax / 2), snake.sizeMax)
-                    snake.stepCountMax = snake.size
-                    snake.rowIndex = np.ones((snake.size), dtype=np.int32) * random.randint(
-                        0, snake.Controller.realLEDXaxisRange - 1
+                    snake._size = random.randint(
+                        int(snake._size_max / 2), snake._size_max
                     )
-                    snake.columnIndex = np.ones((snake.size), dtype=np.int32) * random.randint(
-                        0, snake.Controller.realLEDYaxisRange - 1
-                    )
-                    snake.stepCounter = 1
-                    snake.delayCounter = 0
-                    snake.color = snake.colorSequenceNext
+                    snake._step_count_max = snake._size
+                    snake.rowIndex = np.ones(
+                        (snake._size), dtype=np.int32
+                    ) * random.randint(0, snake.Controller.realLEDXaxisRange - 1)
+                    snake.columnIndex = np.ones(
+                        (snake._size), dtype=np.int32
+                    ) * random.randint(0, snake.Controller.realLEDYaxisRange - 1)
+                    snake._step_counter = 1
+                    snake._delay_counter = 0
+                    snake._color = snake.color_sequence_next
 
-            for i in range(snake.stepCounter):
-                snake.Controller.virtualLEDBuffer[snake.rowIndex[i], snake.columnIndex[i]] = snake.color
+            for i in range(snake._step_counter):
+                snake.Controller.virtualLEDBuffer[
+                    snake.rowIndex[i], snake.columnIndex[i]
+                ] = snake._color
 
             if random.random() > 0.9:
                 if snake.rowDirection != 0:
@@ -716,9 +764,9 @@ class MatrixFunction(ArrayFunction):
                     snake.rowDirection = [-1, 1][random.randint(0, 1)]
                     snake.columnDirection = 0
 
-            snake.delayCounter += 1
-            if snake.delayCounter > snake.delayCountMax:
-                snake.delayCounter = 0
+            snake._delay_counter += 1
+            if snake._delay_counter > snake._delay_count_max:
+                snake._delay_counter = 0
         except SystemExit:
             raise
         except KeyboardInterrupt:

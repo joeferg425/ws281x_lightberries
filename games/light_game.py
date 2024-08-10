@@ -291,8 +291,14 @@ class LightGame:
                             self.display,
                             (0, 0, 0),
                             (
-                                ((i * LightGame.SIMULATED_SIZE) + 1, (j * LightGame.SIMULATED_SIZE) + 1),
-                                (LightGame.SIMULATED_SIZE - 2, LightGame.SIMULATED_SIZE - 2),
+                                (
+                                    (i * LightGame.SIMULATED_SIZE) + 1,
+                                    (j * LightGame.SIMULATED_SIZE) + 1,
+                                ),
+                                (
+                                    LightGame.SIMULATED_SIZE - 2,
+                                    LightGame.SIMULATED_SIZE - 2,
+                                ),
                             ),
                         )
                     )
@@ -301,21 +307,29 @@ class LightGame:
             os.environ["SDL_VIDEODRIVER"] = "dummy"
         pygame.init()
         self.fade = ArrayFunction(
-            lights, MatrixFunction.functionMatrixFadeOff, ArrayPattern.DefaultColorSequenceByMonth()
+            lights,
+            MatrixFunction.functionMatrixFadeOff,
+            ArrayPattern.DefaultColorSequenceByMonth(),
         )
-        self.fade.fadeAmount = 0.5
-        self.fade.color = PixelColors.OFF.array
+        self.fade._fade_amount = 0.5
+        self.fade._color = PixelColors.OFF.array
         self.fireworks = []
         for i in range(10):
-            firework = MatrixFunction(lights, MatrixFunction.functionMatrixFireworks, ArrayPattern.RainbowArray(10))
+            firework = MatrixFunction(
+                lights,
+                MatrixFunction.functionMatrixFireworks,
+                ArrayPattern.RainbowArray(10),
+            )
             firework.rowIndex = random.randint(0, lights.realLEDXaxisRange - 1)
             firework.columnIndex = random.randint(0, lights.realLEDYaxisRange - 1)
-            firework.size = 1
-            firework.step = 1
-            firework.sizeMax = min(int(lights.realLEDXaxisRange / 2), int(lights.realLEDYaxisRange / 2))
-            firework.colorCycle = True
+            firework._size = 1
+            firework._step = 1
+            firework._size_max = min(
+                int(lights.realLEDXaxisRange / 2), int(lights.realLEDYaxisRange / 2)
+            )
+            firework._color_cycle = True
             for _ in range(i):
-                firework.color = firework.colorSequenceNext
+                firework._color = firework.color_sequence_next
             self.fireworks.append(firework)
         self.pause_time = time.time()
         self.timestamp_ready = time.time()
@@ -325,7 +339,11 @@ class LightGame:
         self._callbacks: dict[LightEventId, Callable[[LightEvent], None]] = {}
 
     def splash_screen(self, message: str, duration: int):
-        splash = TextMatrix(self.lights.realLEDYaxisRange, " " + message + "  ", PixelColors.YELLOW.rgb_array)
+        splash = TextMatrix(
+            self.lights.realLEDYaxisRange,
+            " " + message + "  ",
+            PixelColors.YELLOW.rgb_array,
+        )
         self.lights.virtualLEDBuffer = splash
         if not self.lights.simulate:
             self.lights.copyVirtualLedsToWS281X()
@@ -344,7 +362,9 @@ class LightGame:
     def get_new_player(self, old_player: Optional[GameObject] = None) -> GameObject:
         return Player(0, 0)
 
-    def add_callback(self, event_id: LightEventId, callback: Callable[[LightEvent], None]) -> None:
+    def add_callback(
+        self, event_id: LightEventId, callback: Callable[[LightEvent], None]
+    ) -> None:
         self._callbacks[event_id] = callback
 
     def get_controllers(self) -> dict[int, XboxController]:
@@ -379,7 +399,11 @@ class LightGame:
                     continue
                 if pygame_event.type == 256 or pygame_event.type == 32787:
                     self.exiting = True
-                elif pygame_event.type == 1024 or pygame_event.type == 1025 or pygame_event.type == 1026:
+                elif (
+                    pygame_event.type == 1024
+                    or pygame_event.type == 1025
+                    or pygame_event.type == 1026
+                ):
                     # mouse events
                     pass
                 elif (
@@ -415,7 +439,9 @@ class LightGame:
                                     controller_index=controller_index,
                                     controller=controller,
                                     controller_instance_id=controller_instance_id,
-                                    state=ButtonState.Down if pygame_event.type == 1539 else ButtonState.Up,
+                                    state=ButtonState.Down
+                                    if pygame_event.type == 1539
+                                    else ButtonState.Up,
                                 )
                             )
                         elif button_id == XboxButton.B:
@@ -425,7 +451,9 @@ class LightGame:
                                     controller_index=controller_index,
                                     controller=controller,
                                     controller_instance_id=controller_instance_id,
-                                    state=ButtonState.Down if pygame_event.type == 1539 else ButtonState.Up,
+                                    state=ButtonState.Down
+                                    if pygame_event.type == 1539
+                                    else ButtonState.Up,
                                 )
                             )
                         elif button_id == XboxButton.X:
@@ -435,7 +463,9 @@ class LightGame:
                                     controller_index=controller_index,
                                     controller=controller,
                                     controller_instance_id=controller_instance_id,
-                                    state=ButtonState.Down if pygame_event.type == 1539 else ButtonState.Up,
+                                    state=ButtonState.Down
+                                    if pygame_event.type == 1539
+                                    else ButtonState.Up,
                                 )
                             )
                         elif button_id == XboxButton.Y:
@@ -445,7 +475,9 @@ class LightGame:
                                     controller_index=controller_index,
                                     controller=controller,
                                     controller_instance_id=controller_instance_id,
-                                    state=ButtonState.Down if pygame_event.type == 1539 else ButtonState.Up,
+                                    state=ButtonState.Down
+                                    if pygame_event.type == 1539
+                                    else ButtonState.Up,
                                 )
                             )
                         elif button_id == XboxButton.BUMPER_LEFT:
@@ -455,7 +487,9 @@ class LightGame:
                                     controller_index=controller_index,
                                     controller=controller,
                                     controller_instance_id=controller_instance_id,
-                                    state=ButtonState.Down if pygame_event.type == 1539 else ButtonState.Up,
+                                    state=ButtonState.Down
+                                    if pygame_event.type == 1539
+                                    else ButtonState.Up,
                                 )
                             )
                         elif button_id == XboxButton.BUMPER_RIGHT:
@@ -465,7 +499,9 @@ class LightGame:
                                     controller_index=controller_index,
                                     controller=controller,
                                     controller_instance_id=controller_instance_id,
-                                    state=ButtonState.Down if pygame_event.type == 1539 else ButtonState.Up,
+                                    state=ButtonState.Down
+                                    if pygame_event.type == 1539
+                                    else ButtonState.Up,
                                 )
                             )
                         elif button_id == XboxButton.START:
@@ -475,7 +511,9 @@ class LightGame:
                                     controller_index=controller_index,
                                     controller=controller,
                                     controller_instance_id=controller_instance_id,
-                                    state=ButtonState.Down if pygame_event.type == 1539 else ButtonState.Up,
+                                    state=ButtonState.Down
+                                    if pygame_event.type == 1539
+                                    else ButtonState.Up,
                                 )
                             )
                         elif button_id == XboxButton.OPTIONS:
@@ -485,7 +523,9 @@ class LightGame:
                                     controller_index=controller_index,
                                     controller=controller,
                                     controller_instance_id=controller_instance_id,
-                                    state=ButtonState.Down if pygame_event.type == 1539 else ButtonState.Up,
+                                    state=ButtonState.Down
+                                    if pygame_event.type == 1539
+                                    else ButtonState.Up,
                                 )
                             )
                         elif button_id == XboxButton.XBOX:
@@ -495,7 +535,9 @@ class LightGame:
                                     controller_index=controller_index,
                                     controller=controller,
                                     controller_instance_id=controller_instance_id,
-                                    state=ButtonState.Down if pygame_event.type == 1539 else ButtonState.Up,
+                                    state=ButtonState.Down
+                                    if pygame_event.type == 1539
+                                    else ButtonState.Up,
                                 )
                             )
                         elif button_id == XboxButton.SHARE:
@@ -505,7 +547,9 @@ class LightGame:
                                     controller_index=controller_index,
                                     controller=controller,
                                     controller_instance_id=controller_instance_id,
-                                    state=ButtonState.Down if pygame_event.type == 1539 else ButtonState.Up,
+                                    state=ButtonState.Down
+                                    if pygame_event.type == 1539
+                                    else ButtonState.Up,
                                 )
                             )
                         elif button_id == XboxButton.UP:
@@ -515,7 +559,9 @@ class LightGame:
                                     controller_index=controller_index,
                                     controller=controller,
                                     controller_instance_id=controller_instance_id,
-                                    state=ButtonState.Down if pygame_event.type == 1539 else ButtonState.Up,
+                                    state=ButtonState.Down
+                                    if pygame_event.type == 1539
+                                    else ButtonState.Up,
                                 )
                             )
                         elif button_id == XboxButton.DOWN:
@@ -525,7 +571,9 @@ class LightGame:
                                     controller_index=controller_index,
                                     controller=controller,
                                     controller_instance_id=controller_instance_id,
-                                    state=ButtonState.Down if pygame_event.type == 1539 else ButtonState.Up,
+                                    state=ButtonState.Down
+                                    if pygame_event.type == 1539
+                                    else ButtonState.Up,
                                 )
                             )
                         elif button_id == XboxButton.LEFT:
@@ -535,7 +583,9 @@ class LightGame:
                                     controller_index=controller_index,
                                     controller=controller,
                                     controller_instance_id=controller_instance_id,
-                                    state=ButtonState.Down if pygame_event.type == 1539 else ButtonState.Up,
+                                    state=ButtonState.Down
+                                    if pygame_event.type == 1539
+                                    else ButtonState.Up,
                                 )
                             )
                         elif button_id == XboxButton.RIGHT:
@@ -545,7 +595,9 @@ class LightGame:
                                     controller_index=controller_index,
                                     controller=controller,
                                     controller_instance_id=controller_instance_id,
-                                    state=ButtonState.Down if pygame_event.type == 1539 else ButtonState.Up,
+                                    state=ButtonState.Down
+                                    if pygame_event.type == 1539
+                                    else ButtonState.Up,
                                 )
                             )
                         elif button_id == XboxButton.JOY_LEFT:
@@ -555,7 +607,9 @@ class LightGame:
                                     controller_index=controller_index,
                                     controller=controller,
                                     controller_instance_id=controller_instance_id,
-                                    state=ButtonState.Down if pygame_event.type == 1539 else ButtonState.Up,
+                                    state=ButtonState.Down
+                                    if pygame_event.type == 1539
+                                    else ButtonState.Up,
                                 )
                             )
                         elif button_id == XboxButton.JOY_RIGHT:
@@ -565,7 +619,9 @@ class LightGame:
                                     controller_index=controller_index,
                                     controller=controller,
                                     controller_instance_id=controller_instance_id,
-                                    state=ButtonState.Down if pygame_event.type == 1539 else ButtonState.Up,
+                                    state=ButtonState.Down
+                                    if pygame_event.type == 1539
+                                    else ButtonState.Up,
                                 )
                             )
                         else:
@@ -582,7 +638,9 @@ class LightGame:
                                 )
                                 right_joysticks.append(light_event)
                                 light_events.append(light_event)
-                            right_joysticks[right_joystick_x_count].x = pygame_event.dict["value"]
+                            right_joysticks[
+                                right_joystick_x_count
+                            ].x = pygame_event.dict["value"]
                             right_joystick_x_count += 1
                         elif axis == XboxJoystick.JOY_RIGHT_Y:
                             if right_joystick_y_count >= len(right_joysticks):
@@ -594,7 +652,9 @@ class LightGame:
                                 )
                                 right_joysticks.append(light_event)
                                 light_events.append(light_event)
-                            right_joysticks[right_joystick_y_count].y = pygame_event.dict["value"]
+                            right_joysticks[
+                                right_joystick_y_count
+                            ].y = pygame_event.dict["value"]
                             right_joystick_y_count += 1
                         elif axis == XboxJoystick.JOY_LEFT_X:
                             if left_joystick_x_count >= len(left_joysticks):
@@ -606,7 +666,9 @@ class LightGame:
                                 )
                                 left_joysticks.append(light_event)
                                 light_events.append(light_event)
-                            left_joysticks[left_joystick_x_count].x = pygame_event.dict["value"]
+                            left_joysticks[left_joystick_x_count].x = pygame_event.dict[
+                                "value"
+                            ]
                             left_joystick_x_count += 1
                         elif axis == XboxJoystick.JOY_LEFT_Y:
                             if left_joystick_y_count >= len(left_joysticks):
@@ -618,7 +680,9 @@ class LightGame:
                                 )
                                 left_joysticks.append(light_event)
                                 light_events.append(light_event)
-                            left_joysticks[left_joystick_y_count].y = pygame_event.dict["value"]
+                            left_joysticks[left_joystick_y_count].y = pygame_event.dict[
+                                "value"
+                            ]
                             left_joystick_y_count += 1
                         elif axis == XboxJoystick.TRIGGER_RIGHT:
                             light_events.append(
@@ -696,7 +760,9 @@ class LightGame:
                     controller = self._controller_index_dict[controller_index]
                     controller_instance_id = controller.controller.get_instance_id()
                     self._controller_instance_dict[controller_instance_id] = controller
-                    self._instance_to_index_dict[controller_instance_id] = controller_index
+                    self._instance_to_index_dict[controller_instance_id] = (
+                        controller_index
+                    )
                     light_events.append(
                         ControllerAdded(
                             id=-1,
@@ -708,7 +774,9 @@ class LightGame:
                 elif pygame_event.type == 1542:
                     controller_instance_id = pygame_event.dict["instance_id"]
                     controller = self._controller_instance_dict[controller_instance_id]
-                    controller_index = self._instance_to_index_dict[controller_instance_id]
+                    controller_index = self._instance_to_index_dict[
+                        controller_instance_id
+                    ]
                     light_events.append(
                         ControllerRemoved(
                             id=-2,
@@ -754,20 +822,27 @@ class LightGame:
 
     def show_scores(self):
         for index, player in self.players.items():
-            ready = np.array([Pixel(PixelColors.GRAY.array).array, Pixel(player.color).array])
-            not_ready = np.array([Pixel(PixelColors.OFF.array).array, Pixel(player.color).array])
+            ready = np.array(
+                [Pixel(PixelColors.GRAY.array).array, Pixel(player.color).array]
+            )
+            not_ready = np.array(
+                [Pixel(PixelColors.OFF.array).array, Pixel(player.color).array]
+            )
             if index % 2 == 0:
                 if index == 0:
                     x = 0
                 else:
                     x = self.lights.realLEDYaxisRange - 1
-                if time.time() - player.timestamp_ready >= LightGame.SPECIAL_WEAPON_DELAY:
-                    self.lights.virtualLEDBuffer[: int(player.score), x, :] = ArrayPattern.ColorTransitionArray(
-                        int(player.score), ready
+                if (
+                    time.time() - player.timestamp_ready
+                    >= LightGame.SPECIAL_WEAPON_DELAY
+                ):
+                    self.lights.virtualLEDBuffer[: int(player.score), x, :] = (
+                        ArrayPattern.ColorTransitionArray(int(player.score), ready)
                     )
                 else:
-                    self.lights.virtualLEDBuffer[: int(player.score), x, :] = ArrayPattern.ColorTransitionArray(
-                        int(player.score), not_ready
+                    self.lights.virtualLEDBuffer[: int(player.score), x, :] = (
+                        ArrayPattern.ColorTransitionArray(int(player.score), not_ready)
                     )
             else:
                 if index == 1:
@@ -775,13 +850,18 @@ class LightGame:
                 else:
                     x = self.lights.realLEDYaxisRange - 1
                 if player.score > 0:
-                    if time.time() - player.timestamp_ready >= LightGame.SPECIAL_WEAPON_DELAY:
-                        self.lights.virtualLEDBuffer[-int(player.score) :, x, :] = ArrayPattern.ColorTransitionArray(
-                            int(player.score), ready
+                    if (
+                        time.time() - player.timestamp_ready
+                        >= LightGame.SPECIAL_WEAPON_DELAY
+                    ):
+                        self.lights.virtualLEDBuffer[-int(player.score) :, x, :] = (
+                            ArrayPattern.ColorTransitionArray(int(player.score), ready)
                         )
                     else:
-                        self.lights.virtualLEDBuffer[-int(player.score) :, x, :] = ArrayPattern.ColorTransitionArray(
-                            int(player.score), not_ready
+                        self.lights.virtualLEDBuffer[-int(player.score) :, x, :] = (
+                            ArrayPattern.ColorTransitionArray(
+                                int(player.score), not_ready
+                            )
                         )
 
     def update_game(self):
@@ -793,7 +873,9 @@ class LightGame:
                 for obj in GameObject.objects.values():
                     try:
                         if obj.y >= 0:
-                            self.lights.virtualLEDBuffer[obj.xs, obj.ys] = Pixel(obj.color).array
+                            self.lights.virtualLEDBuffer[obj.xs, obj.ys] = Pixel(
+                                obj.color
+                            ).array
                     except:  # noqa
                         pass
             if len(GameObject.objects) > 0:
@@ -805,7 +887,9 @@ class LightGame:
                 counter = 0
                 for row in self.lights.virtualLEDBuffer:
                     for column in row:
-                        pygame.draw.rect(self.display, [int(x) for x in column], self.rs[counter])
+                        pygame.draw.rect(
+                            self.display, [int(x) for x in column], self.rs[counter]
+                        )
                         counter += 1
                 pygame.display.update()
                 time.sleep(0.10)

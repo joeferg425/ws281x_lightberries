@@ -108,9 +108,9 @@ pygame.init()
 keepPlaying = True
 THRESHOLD = 0.05
 fade = ArrayFunction(lightControl, ArrayFunction.functionFadeOff, ArrayPattern.DefaultColorSequenceByMonth())
-fade.fadeAmount = 0.3
+fade._fade_amount = 0.3
 fade.colorFade = int(0.3 * 256)
-fade.color = PixelColors.OFF.array
+fade._color = PixelColors.OFF.array
 player = sprite(
     "player",
     stop=True,

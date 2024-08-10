@@ -203,13 +203,13 @@ class DotsGame(LightGame):
                     GameObject.dead_objects.extend(GameObject.objects)
                     break
                 elif event.event_id == LightEventId.BumperRight:
-                    self.fade.fadeAmount -= 0.05
-                    if self.fade.fadeAmount < 0.0:
-                        self.fade.fadeAmount = 0.0
+                    self.fade._fade_amount -= 0.05
+                    if self.fade._fade_amount < 0.0:
+                        self.fade._fade_amount = 0.0
                 elif event.event_id == LightEventId.BumperLeft:
-                    self.fade.fadeAmount += 0.05
-                    if self.fade.fadeAmount > 1.0:
-                        self.fade.fadeAmount = 1.0
+                    self.fade._fade_amount += 0.05
+                    if self.fade._fade_amount > 1.0:
+                        self.fade._fade_amount = 1.0
             self.check_end_game()
             self.update_game()
 

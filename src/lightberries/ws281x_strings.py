@@ -21,18 +21,18 @@ class WS281xString(Sequence[np.int_]):
 
     def __init__(
         self,
-        ledCount: int,
-        pwmGPIOpin: int = 18,
-        channelDMA: int = 10,
-        frequencyPWM: int = 800000,
-        invertSignalPWM: bool = False,
-        ledBrightnessFloat: float = 0.75,
-        channelPWM: int = 0,
-        stripTypeLED: Any = None,
-        gamma: Any = None,
+        led_count: int,
+        pwm_gpio_pin: int = 18,
+        dma_channel: int = 10,
+        pwm_frequency: int = 800000,
+        pwm_invert_signal: bool = False,
+        pwm_channel: int = 0,
+        led_brightness: float = 0.75,
+        led_strip_type: Any = None,
+        led_gamma: Any = None,
+        matrix_shape: tuple[int, int] = None,
+        matrix_layout: NDArray[np.int32] | None = None,
         simulate: bool = False,
-        matrixShape: tuple[int, int] = None,
-        matrixLayout: NDArray[np.int32] | None = None,
         testing: bool = False,
     ) -> None:
         """Creates a pixel array using the rpi_ws281x library.
@@ -57,74 +57,74 @@ class WS281xString(Sequence[np.int_]):
             LightBerryException: if propagating an exception
             LightStringException: if something bad happens
         """
-        self.ws281xPixelStrip = None
-        self.simulate = simulate
-        self.testing = testing
+        self._ws281x_pixel_strip = None
+        self._simulate = simulate
+        self._testing = testing
         # catch error cases first
-        if ledCount is None or not isinstance(ledCount, int):
-            raise WS281xStringError(f"Cannot create LightString with ledCount: {ledCount}.")
+        if led_count is None or not isinstance(led_count, int):
+            raise WS281xStringError(f"Cannot create LightString with ledCount: {led_count}.")
         # use passed led count if it is valid
-        self._ledCount = ledCount
-        if self.testing:
+        self._ledCount = led_count
+        if self._testing:
             global rpi_ws281x
             # import lightberries.rpiws281x_patch as rpiws281x  # noqa
             import lightberries.rpiws281x_patch as rpi_ws281x  # noqa
 
             # cant run GPIO stuff without root, tell the user if they forgot
             # linux check is just for debugging with fake GPIO on windows
-        if not self.simulate and not self.testing:
+        if not self._simulate and not self._testing:
             if sys.platform == "linux" and not os.getuid() == 0:  # pylint: disable = no-member  # pragma: no cover
                 raise PermissionsError(
                     "GPIO functionality requires root privilege. Please run command again as root"
                 )
         self._instantiate_pixelstrip(
-            pwmGPIOpin=pwmGPIOpin,
-            channelDMA=channelDMA,
-            ledCount=ledCount,
-            frequencyPWM=frequencyPWM,
-            channelPWM=channelPWM,
-            invertSignalPWM=invertSignalPWM,
-            gamma=gamma,
-            stripTypeLED=stripTypeLED,
-            ledBrightnessFloat=ledBrightnessFloat,
-            matrixShape=matrixShape,
-            matrixLayout=matrixLayout,
+            pwm_gpio_pin=pwm_gpio_pin,
+            dma_channel=dma_channel,
+            led_count=led_count,
+            pwm_frequency=pwm_frequency,
+            pwm_channel=pwm_channel,
+            pwm_invert_signal=pwm_invert_signal,
+            led_gamma=led_gamma,
+            led_strip_type=led_strip_type,
+            led_brightness=led_brightness,
+            matrix_shape=matrix_shape,
+            matrix_layout=matrix_layout,
             testing=testing,
         )
 
     def _instantiate_pixelstrip(
         self,
-        pwmGPIOpin: int,
-        channelDMA: int,
-        ledCount: int,
-        frequencyPWM: int,
-        channelPWM: int,
-        invertSignalPWM: bool,
-        gamma: float,
-        stripTypeLED: Any,
-        ledBrightnessFloat: Any,
-        matrixShape: tuple[int, int] = None,
-        matrixLayout: NDArray[np.int32] | None = None,
+        led_count: int,
+        pwm_gpio_pin: int,
+        pwm_channel: int,
+        pwm_invert_signal: bool,
+        pwm_frequency: int,
+        dma_channel: int,
+        led_gamma: float,
+        led_strip_type: Any,
+        led_brightness: Any,
+        matrix_shape: tuple[int, int] = None,
+        matrix_layout: NDArray[np.int32] | None = None,
         testing: bool = False,
     ) -> None:
         try:  # pragma: no cover
             # create ws281x pixel strip
-            self.ws281xPixelStrip = rpi_ws281x.PixelStrip(  # pragma: no cover
-                pin=pwmGPIOpin,
-                dma=channelDMA,
-                num=ledCount,
-                freq_hz=frequencyPWM,
-                channel=channelPWM,
-                invert=invertSignalPWM,
-                gamma=gamma,
-                strip_type=stripTypeLED,
-                brightness=int(255 * ledBrightnessFloat),
+            self._ws281x_pixel_strip = rpi_ws281x.PixelStrip(  # pragma: no cover
+                pin=pwm_gpio_pin,
+                dma=dma_channel,
+                num=led_count,
+                freq_hz=pwm_frequency,
+                channel=pwm_channel,
+                invert=pwm_invert_signal,
+                gamma=led_gamma,
+                strip_type=led_strip_type,
+                brightness=int(255 * led_brightness),
             )
             # try to force cleanup of underlying c objects when user exits
             atexit.register(self.__del__)
 
-            self.ws281xPixelStrip.begin()
-            self._ledCount = int(self.ws281xPixelStrip.numPixels())
+            self._ws281x_pixel_strip.begin()
+            self._ledCount = int(self._ws281x_pixel_strip.numPixels())
             LOGGER.debug(
                 "%s Created WS281X object",
                 self.__class__.__name__,
@@ -152,12 +152,12 @@ class WS281xString(Sequence[np.int_]):
             LightStringException: if something bad happens
         """
         # check if pixel strip has been created
-        if isinstance(self.ws281xPixelStrip, rpi_ws281x.PixelStrip):
+        if isinstance(self._ws281x_pixel_strip, rpi_ws281x.PixelStrip):
             # turn off LEDs
             self.off()
             # cleanup c memory usage
             try:
-                self.ws281xPixelStrip._cleanup()
+                self._ws281x_pixel_strip._cleanup()
             except SystemExit:  # pylint:disable=try-except-raise  # pragma: no cover
                 raise
             except KeyboardInterrupt:  # pylint:disable=try-except-raise  # pragma: no cover
@@ -209,12 +209,12 @@ class WS281xString(Sequence[np.int_]):
             LightStringException: if something bad happens
         """
         if isinstance(key, int):
-            return Pixel(self.ws281xPixelStrip.getPixelColor(key)).array
+            return Pixel(self._ws281x_pixel_strip.getPixelColor(key)).array
         elif isinstance(key, (np.int_, np.int32)):
-            return Pixel(self.ws281xPixelStrip.getPixelColor(int(key))).array
+            return Pixel(self._ws281x_pixel_strip.getPixelColor(int(key))).array
         else:
             return ConvertPixelArrayToNumpyArray(
-                [Pixel(self.ws281xPixelStrip.getPixelColor(k)) for k in range(self._ledCount)[key]]
+                [Pixel(self._ws281x_pixel_strip.getPixelColor(k)) for k in range(self._ledCount)[key]]
             )
 
     def __setitem__(
@@ -237,17 +237,17 @@ class WS281xString(Sequence[np.int_]):
         if isinstance(key, slice):
             for i, j in enumerate(range(self._ledCount)[key]):
                 p = Pixel(value[i, :])
-                self.ws281xPixelStrip.setPixelColor(j, p.int_value)
+                self._ws281x_pixel_strip.setPixelColor(j, p.int_value)
         elif isinstance(key, (np.int_, np.int32)):
             if int(key) >= self._ledCount:
                 raise IndexError()
             p = Pixel(value)
-            self.ws281xPixelStrip.setPixelColor(int(key), p.int_value)
+            self._ws281x_pixel_strip.setPixelColor(int(key), p.int_value)
         else:
             if key >= self._ledCount:
                 raise IndexError()
             p = Pixel(value)
-            self.ws281xPixelStrip.setPixelColor(key, p.int_value)
+            self._ws281x_pixel_strip.setPixelColor(key, p.int_value)
 
     def __enter__(
         self,
@@ -271,8 +271,8 @@ class WS281xString(Sequence[np.int_]):
         self.__del__()
 
     def refresh(self):
-        if self.ws281xPixelStrip:
-            self.ws281xPixelStrip.show()
+        if self._ws281x_pixel_strip:
+            self._ws281x_pixel_strip.show()
 
     def off(
         self,
