@@ -10,11 +10,21 @@ from typing import (
     Optional,
     Any,
 )
+# from numpy.typing import NDArray
+
+
+# try:
+#     from numba import jit  # pylint: disable = unused-import # noqa F401
+# except ImportError:
+#     print("install numba for possible speed boost")
+
 import numpy as np
 from lightberries.array_patterns import ArrayPattern, ConvertPixelArrayToNumpyArray
 from lightberries.exceptions import (
-    LightBerryException,
-    ControllerException,
+    LightBerryError,
+    ControllerError,
+    PermissionsError,
+    WS281xStringError,
 )
 from lightberries.pixel import Pixel, PixelColors
 from lightberries.ws281x_strings import WS281xString
@@ -103,12 +113,12 @@ class ArrayController:
                     streamHandler = logging.StreamHandler()
                     LOGGER.addHandler(streamHandler)
                 LOGGER.setLevel(logging.INFO)
-                if sys.platform != "linux":
-                    fh = logging.FileHandler(__name__ + ".log")
-                else:
-                    fh = logging.FileHandler("/home/pi/" + __name__ + ".log")  # pragma: no cover
-                fh.setLevel(logging.DEBUG)
-                LOGGER.addHandler(fh)
+                # if sys.platform != "linux":
+                #     fh = logging.FileHandler(__name__ + ".log")
+                # else:
+                #     fh = logging.FileHandler("/home/pi/" + __name__ + ".log")  # pragma: no cover
+                # fh.setLevel(logging.DEBUG)
+                # LOGGER.addHandler(fh)
                 LOGGER.setLevel(logging.DEBUG)
             if verbose is True:
                 LOGGER.setLevel(5)
@@ -160,10 +170,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def _instantiate_WS281xString(
         self,
@@ -205,7 +215,7 @@ class ArrayController:
             LightControlException: if something bad happens
         """
         try:
-            if self.ws281xString is not None:
+            if hasattr(self,'ws281xString') and self.ws281xString is not None:
                 self.off()
                 self.copyVirtualLedsToWS281X()
                 self.refreshLEDs()
@@ -215,10 +225,14 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except PermissionsError:
+            raise
+        except WS281xStringError:
+            raise
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError("Failed to clean up LightBerries ArrayController") from ex
 
     @property
     def virtualLEDCount(self) -> int:
@@ -457,10 +471,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def setvirtualLEDBuffer(
         self,
@@ -508,10 +522,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def copyVirtualLedsToWS281X(
         self,
@@ -561,10 +575,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def off(
         self,
@@ -586,10 +600,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def _runFunctions(
         self,
@@ -610,10 +624,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def _copyOverlays(
         self,
@@ -638,10 +652,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def getRandomIndex(
         self,
@@ -663,10 +677,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def getRandomIndices(
         self,
@@ -695,10 +709,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def getRandomDirection(self) -> int:
         """Get a random one or negative one to determine direction for light functions.
@@ -786,10 +800,10 @@ class ArrayController:
                     raise
                 except SystemExit:  # pragma: no cover
                     raise
-                except LightBerryException:  # pragma: no cover
+                except LightBerryError:  # pragma: no cover
                     raise
                 except Exception as ex:  # pragma: no cover
-                    raise ControllerException from ex
+                    raise ControllerError from ex
             self.privateLastModeChange = time.time()
             if self.secondsPerMode is None:
                 self.privateNextModeChange = self.privateLastModeChange + (random.random(30, 120))
@@ -799,7 +813,7 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
             LOGGER.exception(
@@ -808,7 +822,7 @@ class ArrayController:
                 self.run.__name__,
                 ex,
             )
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useColorSingle(
         self,
@@ -850,10 +864,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useColorSinglePseudoRandom(
         self,
@@ -884,10 +898,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useColorSingleRandom(
         self,
@@ -918,10 +932,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useColorSequence(
         self,
@@ -957,10 +971,10 @@ class ArrayController:
             raise
         except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useColorSequencePseudoRandom(
         self,
@@ -998,10 +1012,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useColorSequenceRandom(
         self,
@@ -1037,10 +1051,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useColorSequenceRepeating(
         self,
@@ -1083,10 +1097,10 @@ class ArrayController:
             raise
         except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useColorTransition(
         self,
@@ -1138,10 +1152,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useColorTransitionRepeating(
         self,
@@ -1194,10 +1208,10 @@ class ArrayController:
             raise
         except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useColorRainbow(
         self,
@@ -1231,10 +1245,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useColorRainbowRepeating(
         self,
@@ -1271,10 +1285,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useFunctionNone(
         self,
@@ -1296,10 +1310,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useFunctionSolidColorCycle(
         self,
@@ -1336,10 +1350,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useFunctionMarquee(
         self,
@@ -1401,10 +1415,10 @@ class ArrayController:
             raise
         except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useFunctionCylon(
         self,
@@ -1467,10 +1481,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useFunctionMerge(
         self,
@@ -1531,10 +1545,10 @@ class ArrayController:
             raise
         except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useFunctionAccelerate(
         self,
@@ -1603,10 +1617,10 @@ class ArrayController:
             raise
         except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useFunctionRandomChange(
         self,
@@ -1700,10 +1714,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useFunctionMeteors(
         self,
@@ -1815,10 +1829,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useFunctionSprites(
         self,
@@ -1880,10 +1894,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useFunctionRaindrops(
         self,
@@ -1965,10 +1979,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useFunctionAlive(
         self,
@@ -2050,10 +2064,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useOverlayTwinkle(
         self,
@@ -2087,10 +2101,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useOverlayBlink(
         self,
@@ -2120,10 +2134,10 @@ class ArrayController:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def demo(
         self,
@@ -2200,9 +2214,9 @@ class ArrayController:
                             colors.remove(color)
 
             if len(functions) == 0:
-                raise ControllerException("No functions selected in demo")
+                raise ControllerError("No functions selected in demo")
             elif len(colors) == 0:
-                raise ControllerException("No colors selected in demo")
+                raise ControllerError("No colors selected in demo")
             else:
                 while True:
                     try:
@@ -2249,4 +2263,4 @@ class ArrayController:
                 self.demo.__name__,
                 ex,
             )
-            raise ControllerException from ex
+            raise ControllerError from ex

@@ -6,8 +6,8 @@ import datetime
 from typing import Any, Sequence
 import numpy as np
 from lightberries.exceptions import (
-    LightBerryException,
-    PatternException,
+    LightBerryError,
+    PatternError,
 )
 from lightberries.pixel import Pixel, PixelColors
 
@@ -40,10 +40,10 @@ def ConvertPixelArrayToNumpyArray(
         raise
     except KeyboardInterrupt:  # pragma: no cover
         raise
-    except LightBerryException:  # pragma: no cover
+    except LightBerryError:  # pragma: no cover
         raise
     except Exception as ex:  # pragma: no cover
-        raise PatternException from ex
+        raise PatternError from ex
 
 
 class ArrayPattern:
@@ -153,11 +153,11 @@ class ArrayPattern:
             elif month == 9:
                 cls.DEFAULT_COLOR_SEQUENCE = ConvertPixelArrayToNumpyArray(
                     [
+                        PixelColors.RED,
                         PixelColors.ORANGE,
                         PixelColors.WHITE,
                         PixelColors.YELLOW,
                         PixelColors.ORANGE2,
-                        PixelColors.RED,
                         PixelColors.RED2,
                     ]
                 )
@@ -190,10 +190,10 @@ class ArrayPattern:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise PatternException from ex
+            raise PatternError from ex
         return ArrayPattern.DEFAULT_COLOR_SEQUENCE
 
     def PixelArrayOff(
@@ -222,10 +222,10 @@ class ArrayPattern:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise PatternException from ex
+            raise PatternError from ex
 
     @classmethod
     def SolidColorArray(
@@ -259,10 +259,10 @@ class ArrayPattern:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise PatternException from ex
+            raise PatternError from ex
 
     def ColorTransitionArray(
         arrayLength: int,
@@ -337,10 +337,10 @@ class ArrayPattern:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise PatternException from ex
+            raise PatternError from ex
 
     def RainbowArray(
         arrayLength: int,
@@ -378,10 +378,10 @@ class ArrayPattern:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise PatternException from ex
+            raise PatternError from ex
 
     def RepeatingColorSequenceArray(
         arrayLength: int,
@@ -427,10 +427,10 @@ class ArrayPattern:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise PatternException from ex
+            raise PatternError from ex
 
     def RepeatingRainbowArray(
         arrayLength: int,
@@ -462,10 +462,10 @@ class ArrayPattern:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise PatternException from ex
+            raise PatternError from ex
 
     def ReflectArray(
         arrayLength: int,
@@ -531,10 +531,10 @@ class ArrayPattern:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise PatternException from ex
+            raise PatternError from ex
 
     def RandomArray(
         arrayLength: int,
@@ -576,10 +576,10 @@ class ArrayPattern:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise PatternException from ex
+            raise PatternError from ex
 
     def PseudoRandomArray(
         arrayLength: int,
@@ -619,10 +619,10 @@ class ArrayPattern:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise PatternException from ex
+            raise PatternError from ex
 
     def ColorStretchArray(
         arrayLength: int,
@@ -658,10 +658,10 @@ class ArrayPattern:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise PatternException from ex
+            raise PatternError from ex
 
 
 ArrayPattern.DefaultColorSequenceByMonth()

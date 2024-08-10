@@ -6,7 +6,7 @@ import random
 from typing import Any
 import numpy as np
 
-from lightberries.exceptions import PixelException
+from lightberries.exceptions import PixelError
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -63,7 +63,7 @@ class Pixel:
         elif isinstance(order, list):
             self._order = order
         else:
-            raise PixelException(f"Unknown RGB order: {order}")
+            raise PixelError(f"Unknown RGB order: {order}")
 
         # none gets a zero
         if rgb is None:
@@ -89,7 +89,7 @@ class Pixel:
             # and has length three
         ) and len(rgb) == 3:
             if rgb[0] > 255 or rgb[1] > 255 or rgb[2] > 255:
-                raise PixelException(f"Invalid Pixel values: {rgb}")
+                raise PixelError(f"Invalid Pixel values: {rgb}")
             # create a 3-byte int from the three bytes
             self.int_value = (
                 # this is where the rgb order comes into play
@@ -100,7 +100,7 @@ class Pixel:
 
         # we've got an error boys!
         else:
-            raise PixelException(f"Cannot assign pixel using value: {str(rgb)} ({type(rgb)})")
+            raise PixelError(f"Cannot assign pixel using value: {str(rgb)} ({type(rgb)})")
 
     def __len__(
         self,

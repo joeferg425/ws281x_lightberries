@@ -2,7 +2,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 import numpy as np
-from lightberries.exceptions import LightBerryException, PatternException
+from lightberries.exceptions import LightBerryError, PatternError
 from lightberries.pixel import Pixel
 from lightberries.array_patterns import ArrayPattern
 from enum import IntEnum
@@ -80,10 +80,10 @@ def SolidColorMatrix(
         raise
     except KeyboardInterrupt:
         raise
-    except LightBerryException:
+    except LightBerryError:
         raise
     except Exception as ex:
-        raise PatternException from ex
+        raise PatternError from ex
 
 
 def TextMatrix(yRange: int, text: str, color: np.ndarray[(Any, 3), np.int32]) -> np.ndarray[(Any, Any, 3), np.int32]:

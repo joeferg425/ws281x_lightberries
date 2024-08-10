@@ -65,9 +65,9 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/src/lightberries/__main__.py",
 				"console": "integratedTerminal",
-				"linux": {
-					"sudo": true
-				},
+				// "linux": {
+				// "sudo": true
+				// },
 				"justMyCode": false,
 				"args": [
 					"-b",

@@ -3,25 +3,28 @@
 from __future__ import annotations
 
 
-class LightBerryException(Exception):
+class LightBerryError(Exception):
     """Custom exception for the LightBerries module."""
 
 
-class FunctionException(LightBerryException):
+class FunctionError(LightBerryError):
+    """Exception for LightFunctions to raise."""
+
+class PermissionsError(LightBerryError,PermissionError):
     """Exception for LightFunctions to raise."""
 
 
-class WS281xStringException(LightBerryException):
+class WS281xStringError(LightBerryError):
     """Exception for LightString to raise."""
 
 
-class ControllerException(LightBerryException):
+class ControllerError(LightBerryError):
     """Exception for LightControls to raise."""
 
 
-class PatternException(LightBerryException):
+class PatternError(LightBerryError):
     """Exception for LightPatterns to raise."""
 
 
-class PixelException(LightBerryException):
+class PixelError(LightBerryError):
     """Exception for LightPixel to raise."""

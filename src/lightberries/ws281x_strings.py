@@ -9,7 +9,7 @@ from typing import Any, Sequence, overload
 import numpy as np
 from numpy.typing import NDArray
 from lightberries.array_patterns import ConvertPixelArrayToNumpyArray
-from lightberries.exceptions import WS281xStringException, LightBerryException
+from lightberries.exceptions import PermissionsError, WS281xStringError, LightBerryError
 from lightberries.rpiws281x import rpi_ws281x
 from lightberries.pixel import Pixel, PixelColors
 
@@ -62,7 +62,7 @@ class WS281xString(Sequence[np.int_]):
         self.testing = testing
         # catch error cases first
         if ledCount is None or not isinstance(ledCount, int):
-            raise WS281xStringException(f"Cannot create LightString with ledCount: {ledCount}.")
+            raise WS281xStringError(f"Cannot create LightString with ledCount: {ledCount}.")
         # use passed led count if it is valid
         self._ledCount = ledCount
         if self.testing:
@@ -74,7 +74,7 @@ class WS281xString(Sequence[np.int_]):
             # linux check is just for debugging with fake GPIO on windows
         if not self.simulate and not self.testing:
             if sys.platform == "linux" and not os.getuid() == 0:  # pylint: disable = no-member  # pragma: no cover
-                raise WS281xStringException(
+                raise PermissionsError(
                     "GPIO functionality requires root privilege. Please run command again as root"
                 )
         self._instantiate_pixelstrip(
@@ -133,10 +133,10 @@ class WS281xString(Sequence[np.int_]):
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise WS281xStringException from ex
+            raise WS281xStringError from ex
 
     def __del__(
         self,
@@ -162,10 +162,10 @@ class WS281xString(Sequence[np.int_]):
                 raise
             except KeyboardInterrupt:  # pylint:disable=try-except-raise  # pragma: no cover
                 raise
-            except LightBerryException:  # pragma: no cover
+            except LightBerryError:  # pragma: no cover
                 raise
             except Exception as ex:  # pragma: no cover
-                raise WS281xStringException from ex
+                raise WS281xStringError from ex
 
     def __len__(
         self,
@@ -292,8 +292,8 @@ class WS281xString(Sequence[np.int_]):
                 raise
             except KeyboardInterrupt:  # pragma: no cover
                 raise
-            except LightBerryException:  # pragma: no cover
+            except LightBerryError:  # pragma: no cover
                 raise
             except Exception as ex:  # pragma: no cover
-                raise WS281xStringException from ex
+                raise WS281xStringError from ex
         self.refresh()

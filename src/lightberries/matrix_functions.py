@@ -5,7 +5,7 @@ import numpy as np
 import logging
 from lightberries.array_functions import ArrayFunction
 import lightberries.matrix_controller
-from lightberries.exceptions import LightBerryException, FunctionException
+from lightberries.exceptions import LightBerryError, FunctionError
 from lightberries.pixel import PixelColors
 from math import ceil
 from enum import IntEnum
@@ -74,10 +74,10 @@ class MatrixFunction(ArrayFunction):
             raise
         except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionMatrixFade(
@@ -119,10 +119,10 @@ class MatrixFunction(ArrayFunction):
             raise
         except SystemExit:
             raise
-        except LightBerryException:
+        except LightBerryError:
             raise
         except Exception as ex:
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionMatrixColorFlux(
@@ -162,10 +162,10 @@ class MatrixFunction(ArrayFunction):
             raise
         except KeyboardInterrupt:
             raise
-        except LightBerryException:
+        except LightBerryError:
             raise
         except Exception as ex:
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionMatrixMarquee(
@@ -195,10 +195,10 @@ class MatrixFunction(ArrayFunction):
             raise
         except KeyboardInterrupt:
             raise
-        except LightBerryException:
+        except LightBerryError:
             raise
         except Exception as ex:
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionMatrixEye(
@@ -381,10 +381,10 @@ class MatrixFunction(ArrayFunction):
             raise
         except KeyboardInterrupt:
             raise
-        except LightBerryException:
+        except LightBerryError:
             raise
         except Exception as ex:
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionMatrixBounce(
@@ -445,10 +445,10 @@ class MatrixFunction(ArrayFunction):
             raise
         except KeyboardInterrupt:
             raise
-        except LightBerryException:
+        except LightBerryError:
             raise
         except Exception as ex:
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionMatrixFireworks(
@@ -511,10 +511,10 @@ class MatrixFunction(ArrayFunction):
             raise
         except KeyboardInterrupt:
             raise
-        except LightBerryException:
+        except LightBerryError:
             raise
         except Exception as ex:
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionsMatrixRadar(
@@ -595,10 +595,10 @@ class MatrixFunction(ArrayFunction):
             raise
         except KeyboardInterrupt:
             raise
-        except LightBerryException:
+        except LightBerryError:
             raise
         except Exception as ex:
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionsMatrixSnake(
@@ -723,7 +723,7 @@ class MatrixFunction(ArrayFunction):
             raise
         except KeyboardInterrupt:
             raise
-        except LightBerryException:
+        except LightBerryError:
             raise
         except Exception as ex:
-            raise FunctionException from ex
+            raise FunctionError from ex

@@ -2,8 +2,10 @@
 from __future__ import annotations
 import argparse
 import logging
+import sys
 import lightberries
 from lightberries.array_controller import ArrayController
+from lightberries.exceptions import ControllerError, LightBerryError, PermissionsError
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -77,7 +79,8 @@ if __name__ == "__main__":  # pylint: disable=invalid-name
         BRIGHTNESS = float(args.brightness)
 
     # create the light-function object
-    lightControl = ArrayController(
+    try:
+        lightControl = ArrayController(
         ledCount=PIXEL_COUNT,
         pwmGPIOpin=GPIO_PWM_PIN,
         channelDMA=DMA_CHANNEL,
@@ -89,6 +92,12 @@ if __name__ == "__main__":  # pylint: disable=invalid-name
         debug=True,
         ledBrightnessFloat=BRIGHTNESS,
     )
+    except PermissionsError as ex:
+        LOGGER.error("%s",ex)
+        sys.exit(1)
+    except LightBerryError:
+        LOGGER.exception("Failed to launch LightBerries Controller")
+        sys.exit(1)
     # run the demo!
     try:
         lightControl.demo(DURATION, functionNames=FUNCTIONS, colorNames=COLORS)

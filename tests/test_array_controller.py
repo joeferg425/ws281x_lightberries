@@ -6,7 +6,7 @@ from lightberries.pixel import PixelColors
 from lightberries.array_patterns import ConvertPixelArrayToNumpyArray
 from lightberries.ws281x_strings import WS281xString
 import mock
-from lightberries.exceptions import WS281xStringException
+from lightberries.exceptions import WS281xStringError
 import lightberries.rpiws281x_patch
 from numpy.typing import NDArray
 
@@ -47,7 +47,7 @@ def new_instantiate_pixelstrip(
     except KeyboardInterrupt:  # pragma: no cover
         raise
     except Exception as ex:  # pragma: no cover
-        raise WS281xStringException from ex
+        raise WS281xStringError from ex
 
 
 def new_instantiate_WS281xString(

@@ -7,7 +7,7 @@ import numpy as np
 from lightberries.array_controller import ArrayController
 import logging
 from lightberries.array_functions import ArrayFunction
-from lightberries.exceptions import LightBerryException, ControllerException
+from lightberries.exceptions import LightBerryError, ControllerError
 from lightberries.matrix_functions import MatrixFunction
 from lightberries.matrix_patterns import (
     SolidColorMatrix,
@@ -163,10 +163,10 @@ class MatrixController(ArrayController):
             raise
         except SystemExit:
             raise
-        except LightBerryException:
+        except LightBerryError:
             raise
         except Exception as ex:
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def setvirtualLEDBuffer(self, ledMatrix: np.ndarray[(3, Any, Any), np.int32]) -> None:
         self.virtualLEDXaxisRange = ledMatrix.shape[0]
@@ -251,10 +251,10 @@ class MatrixController(ArrayController):
             raise
         except KeyboardInterrupt:
             raise
-        except LightBerryException:
+        except LightBerryError:
             raise
         except Exception as ex:
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def copyVirtualLedsToWS281X(
         self,
@@ -316,10 +316,10 @@ class MatrixController(ArrayController):
             raise
         except KeyboardInterrupt:
             raise
-        except LightBerryException:
+        except LightBerryError:
             raise
         except Exception as ex:
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useFunctionMatrixColorFlux(
         self,
@@ -355,10 +355,10 @@ class MatrixController(ArrayController):
             raise
         except KeyboardInterrupt:
             raise
-        except LightBerryException:
+        except LightBerryError:
             raise
         except Exception as ex:
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useFunctionMatrixMarquee(
         self,
@@ -392,10 +392,10 @@ class MatrixController(ArrayController):
             raise
         except KeyboardInterrupt:
             raise
-        except LightBerryException:
+        except LightBerryError:
             raise
         except Exception as ex:
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useFunctionMatrixMarqueeText(
         self,
@@ -441,10 +441,10 @@ class MatrixController(ArrayController):
             raise
         except KeyboardInterrupt:
             raise
-        except LightBerryException:
+        except LightBerryError:
             raise
         except Exception as ex:
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useFunctionMatrixEye(
         self,
@@ -479,10 +479,10 @@ class MatrixController(ArrayController):
             raise
         except KeyboardInterrupt:
             raise
-        except LightBerryException:
+        except LightBerryError:
             raise
         except Exception as ex:
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useFunctionMatrixBounce(
         self,
@@ -554,10 +554,10 @@ class MatrixController(ArrayController):
             raise
         except KeyboardInterrupt:
             raise
-        except LightBerryException:
+        except LightBerryError:
             raise
         except Exception as ex:
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useFunctionMatrixFireworks(
         self,
@@ -633,10 +633,10 @@ class MatrixController(ArrayController):
             raise
         except KeyboardInterrupt:
             raise
-        except LightBerryException:
+        except LightBerryError:
             raise
         except Exception as ex:
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useFunctionMatrixRadar(
         self,
@@ -706,10 +706,10 @@ class MatrixController(ArrayController):
             raise
         except KeyboardInterrupt:
             raise
-        except LightBerryException:
+        except LightBerryError:
             raise
         except Exception as ex:
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def useFunctionMatrixSnake(
         self,
@@ -773,10 +773,10 @@ class MatrixController(ArrayController):
             raise
         except KeyboardInterrupt:
             raise
-        except LightBerryException:
+        except LightBerryError:
             raise
         except Exception as ex:
-            raise ControllerException from ex
+            raise ControllerError from ex
 
     def getFunctionMatrixMethodsList(self) -> list[str]:
         """Get the list of methods in this class (by name) that set the color functions.
@@ -869,9 +869,9 @@ class MatrixController(ArrayController):
                             colors.remove(color)
 
             if len(functions) == 0:
-                raise ControllerException("No functions selected in demo")
+                raise ControllerError("No functions selected in demo")
             elif len(colors) == 0:
-                raise ControllerException("No colors selected in demo")
+                raise ControllerError("No colors selected in demo")
             else:
                 while True:
                     try:
@@ -918,4 +918,4 @@ class MatrixController(ArrayController):
                 self.demo.__name__,
                 ex,
             )
-            raise ControllerException from ex
+            raise ControllerError from ex

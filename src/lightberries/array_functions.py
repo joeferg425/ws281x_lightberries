@@ -7,7 +7,7 @@ import random
 from enum import IntEnum
 import numpy as np
 import lightberries.array_controller  # noqa : used in typing
-from lightberries.exceptions import FunctionException, LightBerryException
+from lightberries.exceptions import FunctionError, LightBerryError
 from lightberries.pixel import Pixel, PixelColors, LEDOrder
 from lightberries.array_patterns import ArrayPattern, ConvertPixelArrayToNumpyArray
 
@@ -297,10 +297,10 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     def updateArrayIndex(
         self,
@@ -460,10 +460,10 @@ class ArrayFunction:
             raise
         except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionOff(
@@ -485,10 +485,10 @@ class ArrayFunction:
             raise
         except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionFadeOff(
@@ -512,10 +512,10 @@ class ArrayFunction:
             raise
         except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionFade(
@@ -552,10 +552,10 @@ class ArrayFunction:
             raise
         except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionNone(
@@ -577,10 +577,10 @@ class ArrayFunction:
             raise
         except SystemExit:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionSolidColorCycle(
@@ -611,10 +611,10 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionMarquee(
@@ -676,10 +676,10 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionCylon(
@@ -757,10 +757,10 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionMerge(
@@ -815,10 +815,10 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionAccelerate(
@@ -927,10 +927,10 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionRandomChange(
@@ -1024,10 +1024,10 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionMeteors(
@@ -1066,10 +1066,10 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionSprites(
@@ -1156,10 +1156,10 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionRaindrops(
@@ -1247,10 +1247,10 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def functionAlive(
@@ -1397,7 +1397,7 @@ class ArrayFunction:
                     if thing.state & ThingMoves.METEOR.value:
                         thing.delayCountMax = random.randint(1, 3)
                     elif thing.state & ThingMoves.TURTLE.value:
-                        thing.delayCountMax = random.randint(10, 15)
+                        thing.delayCountMax = random.randint(15, 45)
                     elif thing.state & ThingMoves.LIGHTSPEED.value:
                         thing.delayCountMax = random.randint(0, 3)
                     else:
@@ -1423,10 +1423,10 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def overlayTwinkle(
@@ -1450,10 +1450,10 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise FunctionException from ex
+            raise FunctionError from ex
 
     @staticmethod
     def overlayBlink(
@@ -1478,7 +1478,7 @@ class ArrayFunction:
             raise
         except KeyboardInterrupt:  # pragma: no cover
             raise
-        except LightBerryException:  # pragma: no cover
+        except LightBerryError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
-            raise FunctionException from ex
+            raise FunctionError from ex

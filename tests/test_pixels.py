@@ -7,7 +7,7 @@ from numpy.testing import assert_array_equal
 
 # import lightberries.pixel
 from lightberries.pixel import LEDOrder, Pixel, PixelColors
-from lightberries.exceptions import PixelException
+from lightberries.exceptions import PixelError
 
 
 def test_pixel_creation_default():
@@ -62,13 +62,13 @@ def test_pixel_creation_None():
 
 def test_pixel_creation_invalid_rgb_value():
     """Test default pixel creation and attributes."""
-    with pytest.raises(PixelException):
+    with pytest.raises(PixelError):
         Pixel((0, 255, 9001))
 
 
 def test_pixel_creation_invalid_rgb_type():
     """Test default pixel creation and attributes."""
-    with pytest.raises(PixelException):
+    with pytest.raises(PixelError):
         Pixel({"a": 0, "b": 255, "c": 9001.5})
 
 
@@ -190,7 +190,7 @@ def test_pixel_creation_pixel_order_invalid():
     Args:
         arg: initial pixel value
     """
-    with pytest.raises(PixelException):
+    with pytest.raises(PixelError):
         Pixel(rgb=1, order=(1, 12, 34))
 
 

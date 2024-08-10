@@ -5,7 +5,7 @@ from lightberries.pixel import PixelColors
 from numpy.testing import assert_array_equal
 from lightberries.array_patterns import ConvertPixelArrayToNumpyArray
 import pytest
-from lightberries.exceptions import WS281xStringException
+from lightberries.exceptions import WS281xStringError
 import numpy as np
 import lightberries.rpiws281x
 import lightberries.rpiws281x_patch
@@ -50,7 +50,7 @@ def new_instantiate_pixelstrip(
     except KeyboardInterrupt:  # pragma: no cover
         raise
     except Exception as ex:  # pragma: no cover
-        raise WS281xStringException from ex
+        raise WS281xStringError from ex
 
 
 def test_creation():
@@ -75,7 +75,7 @@ def test_creation_led_count_none():
     """Test creation of light string with simple args."""
     led_count = None
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
-        with pytest.raises(WS281xStringException):
+        with pytest.raises(WS281xStringError):
             WS281xString(ledCount=led_count, simulate=True)
 
 
@@ -83,7 +83,7 @@ def test_creation_led_count_invalid():
     """Test creation of light string with simple args."""
     led_count = "invalid"
     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
-        with pytest.raises(WS281xStringException):
+        with pytest.raises(WS281xStringError):
             WS281xString(ledCount=led_count, simulate=True)
 
 
