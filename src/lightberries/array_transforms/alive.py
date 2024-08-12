@@ -3,16 +3,11 @@ from random import random
 import numpy as np
 
 import lightberries.array_controller
-from lightberries.array_functions.base import (
-    ArrayFunction,
-    ThingColors,
-    ThingMoves,
-    ThingSizes,
-)
+from lightberries.array_transforms.base import ArrayTransform, ThingColors, ThingMoves, ThingSizes
 from lightberries.exceptions import FunctionError, LightBerryError
 
 
-class ArrayFunctionAlive(ArrayFunction):
+class ArrayFunctionAlive(ArrayTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
@@ -21,12 +16,15 @@ class ArrayFunctionAlive(ArrayFunction):
         """Do alive function things.
 
         Args:
+        ----
             thing: tracking object
 
         Raises:
+        ------
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
             LightFunctionException: if something bad happens
+
         """
         super().__init__(
             name=ArrayFunctionAlive.__class__.__name__,
@@ -34,7 +32,7 @@ class ArrayFunctionAlive(ArrayFunction):
             color_sequence=color_sequence,
         )
 
-    def run(self):
+    def _transform(self):
         try:
             # track last index
             self.state.index_previous = self.state.index
@@ -90,7 +88,8 @@ class ArrayFunctionAlive(ArrayFunction):
                             # randomly grow
                             if random.randint(0, 99) > 80:
                                 self.state.size += random.randint(
-                                    1, 5
+                                    1,
+                                    5,
                                 )  # pragma: no cover
                             # also randomly shrink a bit
                             if self.state.size > 2:
@@ -129,7 +128,7 @@ class ArrayFunctionAlive(ArrayFunction):
                             self.state.step_count_max = self.state.period_short
                         # randomly cycle through assign colors
                         if random.randint(0, 99) > 90:
-                            for _ in range(0, random.randint(1, 3)):
+                            for _ in range(random.randint(1, 3)):
                                 self.state.color = self.color_sequence_next
                     # calculate range of affected indices
                     # index1 = thing.indexPrevious - (thing.size * thing.direction)
@@ -145,22 +144,16 @@ class ArrayFunctionAlive(ArrayFunction):
                     # states are mutually exclusive bits, can just add one of each
                     for _ in range(random.randint(1, 3)):
                         self.state.state = (
-                            list(ThingMoves)[
-                                random.randint(0, len(ThingMoves) - 1)
-                            ].value
-                            + list(ThingSizes)[
-                                random.randint(0, len(ThingSizes) - 1)
-                            ].value
-                            + list(ThingColors)[
-                                random.randint(0, len(ThingColors) - 1)
-                            ].value
+                            list(ThingMoves)[random.randint(0, len(ThingMoves) - 1)].value
+                            + list(ThingSizes)[random.randint(0, len(ThingSizes) - 1)].value
+                            + list(ThingColors)[random.randint(0, len(ThingColors) - 1)].value
                         )
                     # reset step counter
                     self.state.step_counter = 0
                     # set step count to random value
                     self.state.step_count_max = random.randint(
-                        self.controller.virtualLEDCount // 10,
-                        self.controller.virtualLEDCount,
+                        self.controller.virtual_led_count // 10,
+                        self.controller.virtual_led_count,
                     )
                     # set delay count randomly
                     self.state.delay_count_max = random.randint(6, 15)
@@ -189,13 +182,11 @@ class ArrayFunctionAlive(ArrayFunction):
             # assign colors to indices
             # self.controller.virtualLEDBuffer[thing.indexRange] = thing.color
             if len(self.controller.virtualLEDBuffer.shape) == 2:
-                self.controller.virtualLEDBuffer[self.state.index_range] = (
-                    self.state.color
-                )
+                self.controller.virtualLEDBuffer[self.state.index_range] = self.state.color
             else:
                 self.controller.virtualLEDBuffer[
                     np.where(
-                        self.controller.virtualLEDIndexBuffer == self.state.index_range
+                        self.controller.virtualLEDIndexBuffer == self.state.index_range,
                     )
                 ] = self.state.color
         except SystemExit:  # pragma: no cover

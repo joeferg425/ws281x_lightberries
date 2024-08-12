@@ -3,11 +3,11 @@ import random
 import numpy as np
 
 import lightberries.array_controller
-from lightberries.array_functions.base import ArrayFunction, RaindropStates
+from lightberries.array_transforms.base import ArrayTransform, RaindropStates
 from lightberries.exceptions import FunctionError, LightBerryError
 
 
-class ArrayFunctionRaindrops(ArrayFunction):
+class ArrayFunctionRaindrops(ArrayTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
@@ -16,12 +16,15 @@ class ArrayFunctionRaindrops(ArrayFunction):
         """Do raindrop function things.
 
         Args:
+        ----
             raindrop: tracking object
 
         Raises:
+        ------
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
             LightFunctionException: if something bad happens
+
         """
         super().__init__(
             name=ArrayFunctionRaindrops.__class__.__name__,
@@ -29,7 +32,7 @@ class ArrayFunctionRaindrops(ArrayFunction):
             color_sequence=color_sequence,
         )
 
-    def run(self):
+    def _transform(self):
         try:
             # if raindrop is off
             if self.state.state == RaindropStates.OFF.value:
@@ -39,12 +42,11 @@ class ArrayFunctionRaindrops(ArrayFunction):
                     self.state.state = RaindropStates.SPLASH.value
                     # set max width of this raindrop
                     self.state.step_count_max = random.randint(
-                        1, max(self.state.size_max, 2)
+                        1,
+                        max(self.state.size_max, 2),
                     )
                     # set fade amount
-                    self.state.fade_amount = (
-                        (255 / self.state.step_count_max) / 255
-                    ) * 2
+                    self.state.fade_amount = ((255 / self.state.step_count_max) / 255) * 2
                     self.state.color_scaler = (
                         self.state.step_count_max - self.state.step_counter
                     ) / self.state.step_count_max
@@ -54,36 +56,33 @@ class ArrayFunctionRaindrops(ArrayFunction):
                 if self.state.step_counter <= self.state.step_count_max:
                     # lower valued side of "splash"
                     indexLowerMin = max(
-                        self.state.index - self.state.step * self.state.step_counter, 0
+                        self.state.index - self.state.step * self.state.step_counter,
+                        0,
                     )
                     indexLowerMax = max(
-                        self.state.index
-                        + 1
-                        - self.state.step * self.state.step_counter,
+                        self.state.index + 1 - self.state.step * self.state.step_counter,
                         0,
                     )
                     # higher valued side of "splash"
                     indexHigherMin = min(
                         self.state.index + self.state.step_counter,
-                        self.controller.virtualLEDCount,
+                        self.controller.virtual_led_count,
                     )
                     indexHigherMax = min(
                         self.state.index + self.state.step_counter + self.state.step,
-                        self.controller.virtualLEDCount,
+                        self.controller.virtual_led_count,
                     )
                     if (indexLowerMax - indexLowerMin) > 0:
                         indexRange = list(range(indexLowerMin, indexLowerMax))
-                        self.controller.virtualLEDBuffer[
-                            indexLowerMin:indexLowerMax
-                        ] = [self.state.color] * (indexLowerMax - indexLowerMin)
+                        self.controller.virtualLEDBuffer[indexLowerMin:indexLowerMax] = [self.state.color] * (
+                            indexLowerMax - indexLowerMin
+                        )
                         if len(self.controller.virtualLEDBuffer.shape) == 2:
-                            self.controller.virtualLEDBuffer[indexRange] = (
-                                self.state.color
-                            )
+                            self.controller.virtualLEDBuffer[indexRange] = self.state.color
                         else:
                             self.controller.virtualLEDBuffer[
                                 np.where(
-                                    self.controller.virtualLEDIndexBuffer == indexRange
+                                    self.controller.virtualLEDIndexBuffer == indexRange,
                                 )
                             ] = self.state.color
                     if (indexHigherMax - indexHigherMin) > 0:
@@ -93,13 +92,11 @@ class ArrayFunctionRaindrops(ArrayFunction):
                         # indexHigherMax - indexHigherMin
                         # )
                         if len(self.controller.virtualLEDBuffer.shape) == 2:
-                            self.controller.virtualLEDBuffer[indexRange] = (
-                                self.state.color
-                            )
+                            self.controller.virtualLEDBuffer[indexRange] = self.state.color
                         else:
                             self.controller.virtualLEDBuffer[
                                 np.where(
-                                    self.controller.virtualLEDIndexBuffer == indexRange
+                                    self.controller.virtualLEDIndexBuffer == indexRange,
                                 )
                             ] = self.state.color
                     # scaled fading as splash grows
@@ -110,7 +107,8 @@ class ArrayFunctionRaindrops(ArrayFunction):
                 else:
                     # randomize next splash start index
                     self.state.index = random.randint(
-                        0, self.controller.virtualLEDCount - 1
+                        0,
+                        self.controller.virtual_led_count - 1,
                     )
                     # reset growth counter
                     self.state.step_counter = 0

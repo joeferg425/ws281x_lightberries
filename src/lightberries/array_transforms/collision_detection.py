@@ -4,12 +4,12 @@ from typing import Any
 import numpy as np
 
 import lightberries.array_controller
-from lightberries.array_functions.base import ArrayFunction
+from lightberries.array_transforms.base import ArrayTransform
 from lightberries.exceptions import FunctionError, LightBerryError
 from lightberries.pixel import PixelColors
 
 
-class ArrayFunctionCollisionDetection(ArrayFunction):
+class ArrayFunctionCollisionDetection(ArrayTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
@@ -18,12 +18,15 @@ class ArrayFunctionCollisionDetection(ArrayFunction):
         """Perform collision detection on the list of light function objects.
 
         Args:
+        ----
             collision: tracking object
 
         Raises:
+        ------
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
             LightFunctionException: if something bad happens
+
         """
         super().__init__(
             name=ArrayFunctionCollisionDetection.__class__.__name__,
@@ -31,10 +34,10 @@ class ArrayFunctionCollisionDetection(ArrayFunction):
             color_sequence=color_sequence,
         )
 
-    def run(self):
+    def _transform(self):
         try:
             found_collision = False
-            light_functions = self.controller.functionList
+            light_functions = self.controller.function_list
             if len(light_functions) > 1:
                 for object1 in light_functions:
                     object1.state.collision = False
@@ -46,9 +49,11 @@ class ArrayFunctionCollisionDetection(ArrayFunction):
                             for object2 in light_functions[index1 + 1 :]:
                                 if object2.state.collision_enabled:
                                     if isinstance(
-                                        object1.state.index_range, np.ndarray
+                                        object1.state.index_range,
+                                        np.ndarray,
                                     ) and isinstance(
-                                        object2.state.index_range, np.ndarray
+                                        object2.state.index_range,
+                                        np.ndarray,
                                     ):
                                         # this detects the intersection of two self._LightDataObjects'
                                         # movements across LEDs
@@ -57,23 +62,18 @@ class ArrayFunctionCollisionDetection(ArrayFunction):
                                             object2.state.index_range,
                                         )
                                         if len(intersection) > 0 and (
-                                            object1.state.collision_randomizer is False
-                                            or random.randint(0, 4) != 0
+                                            object1.state.collision_randomizer is False or random.randint(0, 4) != 0
                                         ):
                                             object1.state.collision = True
                                             object1.state.collision_private = True
                                             object1.state.collision_with = object2
                                             object1.state.step_last = object1.state.step
-                                            object1.state.collision_intersection = (
-                                                intersection
-                                            )
+                                            object1.state.collision_intersection = intersection
                                             object2.state.collision_private = True
                                             object2.state.collision = True
                                             object2.state.collision_with = object1
                                             object2.state.step_last = object2.state.step
-                                            object2.state.collision_intersection = (
-                                                intersection.copy()
-                                            )
+                                            object2.state.collision_intersection = intersection.copy()
                                             found_collision = True
             explosionIndices = []
             explosionColors = []
@@ -81,56 +81,42 @@ class ArrayFunctionCollisionDetection(ArrayFunction):
                 for object1 in light_functions:
                     if object1.state.collision_enabled:
                         if object1.state.collision_private is True:
-                            if isinstance(object1.state.collision_with, ArrayFunction):
+                            if isinstance(object1.state.collision_with, ArrayTransform):
                                 object2 = object1.state.collision_with
                                 # previous = int(meteor.step)
-                                if (
-                                    object1.state.direction * object2.state.direction
-                                ) < 0:
+                                if (object1.state.direction * object2.state.direction) < 0:
                                     object1.state.direction *= -1
                                     object2.state.direction *= -1
                                     object1.state.index = int(
                                         int(
-                                            object1.state.collision_intersection[0]
-                                            + object1.state.direction
+                                            object1.state.collision_intersection[0] + object1.state.direction,
                                         )
-                                        % self.controller.virtualLEDCount
+                                        % self.controller.virtual_led_count,
                                     )
                                     object2.state.index = int(
                                         int(
-                                            object2.state.collision_intersection[0]
-                                            + object2.state.direction
+                                            object2.state.collision_intersection[0] + object2.state.direction,
                                         )
-                                        % self.controller.virtualLEDCount
+                                        % self.controller.virtual_led_count,
                                     )
                                 else:
                                     temp = object2.state.step
                                     object2.state.step = object1.state.step
                                     object1.state.step = temp
-                                    object1_delta = (
-                                        object1.state.step - object2.state.step
-                                    )
-                                    object2_delta = (
-                                        object2.state.step - object1.state.step
-                                    )
+                                    object1_delta = object1.state.step - object2.state.step
+                                    object2_delta = object2.state.step - object1.state.step
                                     if object1.state.step > object2.state.step:
                                         object2_delta += object2.state.direction
                                     else:
                                         object1_delta += object1.state.direction
                                     object1.state.index = (
-                                        int(object1.state.index + object1_delta)
-                                        % self.controller.virtualLEDCount
+                                        int(object1.state.index + object1_delta) % self.controller.virtual_led_count
                                     )
                                     object2.state.index = (
-                                        int(object2.state.index + object2_delta)
-                                        % self.controller.virtualLEDCount
+                                        int(object2.state.index + object2_delta) % self.controller.virtual_led_count
                                     )
-                                object1.state.index_previous = (
-                                    object1.state.collision_intersection
-                                )
-                                object2.state.index_previous = (
-                                    object2.state.collision_intersection
-                                )
+                                object1.state.index_previous = object1.state.collision_intersection
+                                object2.state.index_previous = object2.state.collision_intersection
                                 object1.state.collision_private = False
                                 object2.state.collision_private = False
                                 if self.state.explode:
@@ -139,35 +125,28 @@ class ArrayFunctionCollisionDetection(ArrayFunction):
                                         np.ndarray,
                                     ):
                                         middle = object1.state.collision_intersection[
-                                            len(object1.state.collision_intersection)
-                                            // 2
+                                            len(object1.state.collision_intersection) // 2
                                         ]
-                                    radius = self.controller.realLEDCount // 20
+                                    radius = self.controller.real_led_count // 20
                                     if radius == 0:
                                         radius = 1
                                     explosionIndices.append(middle)
                                     explosionColors.append(PixelColors.YELLOW.array)
                                     for i in range(1, radius + 1):
                                         explosionIndices.append(
-                                            (middle - i)
-                                            % self.controller.virtualLEDCount,
+                                            (middle - i) % self.controller.virtual_led_count,
                                         )
                                         explosionColors.append(
-                                            PixelColors.YELLOW.array
-                                            * ((radius - i) / radius),
+                                            PixelColors.YELLOW.array * ((radius - i) / radius),
                                         )
 
                                         explosionIndices.append(
-                                            (middle + i)
-                                            % self.controller.virtualLEDCount,
+                                            (middle + i) % self.controller.virtual_led_count,
                                         )
                                         explosionColors.append(
-                                            PixelColors.YELLOW.array
-                                            * ((radius - i) / radius),
+                                            PixelColors.YELLOW.array * ((radius - i) / radius),
                                         )
-                                    self.controller.virtualLEDBuffer[
-                                        explosionIndices
-                                    ] = np.array((explosionColors))
+                                    self.controller.virtualLEDBuffer[explosionIndices] = np.array(explosionColors)
         except KeyboardInterrupt:  # pragma: no cover
             raise
         except SystemExit:  # pragma: no cover

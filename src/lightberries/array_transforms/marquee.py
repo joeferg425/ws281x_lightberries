@@ -1,11 +1,11 @@
 import numpy as np
 
 import lightberries.array_controller
-from lightberries.array_functions.base import ArrayFunction
+from lightberries.array_transforms.base import ArrayTransform
 from lightberries.exceptions import FunctionError, LightBerryError
 
 
-class ArrayFunctionMarquee(ArrayFunction):
+class ArrayFunctionMarquee(ArrayTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
@@ -27,7 +27,7 @@ class ArrayFunctionMarquee(ArrayFunction):
             LightFunctionException: if something bad happens
         """
 
-    def run(self):
+    def _transform(self):
         try:
             # increment delay counter
             self.state.delay_counter += 1
@@ -36,20 +36,18 @@ class ArrayFunctionMarquee(ArrayFunction):
                 # reset delay counter
                 self.state.delay_counter = 0
                 # calculate possible next index
-                self.state.index_next = self.state.index + (
-                    self.state.step * self.state.direction
-                )
+                self.state.index_next = self.state.index + (self.state.step * self.state.direction)
                 # calculate max index we will update
                 self.state.index_max = self.state.index_next + self.state.size
                 # if we are going to overshoot
-                if self.state.index_max >= self.controller.virtualLEDCount:
+                if self.state.index_max >= self.controller.virtual_led_count:
                     # switch direction
                     self.state.direction *= -1
                     # set index to either the next step or the max possible
                     # (accounts for step sizes > 1)
                     self.state.index = max(
                         self.state.index + (self.state.step * self.state.direction),
-                        self.controller.virtualLEDCount - self.state.size,
+                        self.controller.virtual_led_count - self.state.size,
                     )
                 # if we will undershoot
                 elif self.state.index_max < self.state.size:
@@ -71,9 +69,7 @@ class ArrayFunctionMarquee(ArrayFunction):
                 self.state.index + self.state.size,
             )
             # update LEDs with new values
-            self.controller.virtualLEDBuffer[np.sort(self.state.index_range)] = (
-                self.color_sequence
-            )
+            self.controller.virtualLEDBuffer[np.sort(self.state.index_range)] = self.color_sequence
         except SystemExit:  # pragma: no cover
             raise
         except KeyboardInterrupt:  # pragma: no cover

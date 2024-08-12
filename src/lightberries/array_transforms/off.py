@@ -1,43 +1,43 @@
-import random
+from typing import Any
 
 import numpy as np
 
 import lightberries.array_controller
-from lightberries.array_functions.base import ArrayFunction
+from lightberries.array_transforms.base import ArrayTransform
 from lightberries.exceptions import FunctionError, LightBerryError
 
 
-class ArrayFunctionBlink(ArrayFunction):
+class ArrayFunctionOff(ArrayTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        color_sequence: np.ndarray = None,
+        color_sequence: np.ndarray[Any, np.signedinteger[np._32Bit]] = None,
     ) -> None:
-        """Randomly sets some lights to 'twinkleColor' without changing the virtual LED buffer.
+        """Turn all Pixels OFF.
 
         Args:
-            blink: object for tracking blinking
+        ----
+            off: tracking object
 
         Raises:
+        ------
             SystemExit: if exiting
             KeyboardInterrupt: if user quits
             LightFunctionException: if something bad happens
+
         """
         super().__init__(
-            name=ArrayFunctionBlink.__class__.__name__,
+            name=ArrayFunctionOff.__class__.__name__,
             controller=controller,
             color_sequence=color_sequence,
         )
 
-    def run(self):
+    def _transform(self) -> None:
         try:
-            if random.random() > self.state.random:
-                color = self.color_sequence_next
-                for index in range(self.controller.realLEDCount):
-                    self.controller.overlayDictionary[index] = color
-        except SystemExit:  # pragma: no cover
-            raise
+            self.controller.virtualLEDBuffer[:] *= 0
         except KeyboardInterrupt:  # pragma: no cover
+            raise
+        except SystemExit:  # pragma: no cover
             raise
         except LightBerryError:  # pragma: no cover
             raise

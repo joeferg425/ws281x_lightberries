@@ -1,11 +1,11 @@
 import numpy as np
 
 import lightberries.array_controller
-from lightberries.array_functions.base import ArrayFunction
+from lightberries.array_transforms.base import ArrayTransform
 from lightberries.exceptions import FunctionError, LightBerryError
 
 
-class ArrayFunctionMeteors(ArrayFunction):
+class ArrayFunctionMeteors(ArrayTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
@@ -27,7 +27,7 @@ class ArrayFunctionMeteors(ArrayFunction):
             LightFunctionException: if something bad happens
         """
 
-    def run(self):
+    def _transform(self):
         try:
             # update delay counter
             self.state.delay_counter += 1
@@ -42,14 +42,11 @@ class ArrayFunctionMeteors(ArrayFunction):
                     self.state.color = self.color_sequence_next
                 # assign LEDs to LED string
                 if len(self.controller.virtualLEDBuffer.shape) == 2:
-                    self.controller.virtualLEDBuffer[self.state.index_range] = (
-                        self.state.color
-                    )
+                    self.controller.virtualLEDBuffer[self.state.index_range] = self.state.color
                 else:
                     self.controller.virtualLEDBuffer[
                         np.where(
-                            self.controller.virtualLEDIndexBuffer
-                            == self.state.index_range
+                            self.controller.virtualLEDIndexBuffer == self.state.index_range,
                         )
                     ] = self.state.color
         except SystemExit:  # pragma: no cover

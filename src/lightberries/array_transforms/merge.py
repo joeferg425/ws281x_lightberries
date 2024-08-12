@@ -1,11 +1,11 @@
 import numpy as np
 
 import lightberries.array_controller
-from lightberries.array_functions.base import ArrayFunction
+from lightberries.array_transforms.base import ArrayTransform
 from lightberries.exceptions import FunctionError, LightBerryError
 
 
-class ArrayFunctionMerge(ArrayFunction):
+class ArrayFunctionMerge(ArrayTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
@@ -28,7 +28,7 @@ class ArrayFunctionMerge(ArrayFunction):
         LightFunctionException: if something bad happens
     """
 
-    def run(self):
+    def _transform(self):
         try:
             self.state.delay_counter += 1
             # check delay counter
@@ -36,7 +36,7 @@ class ArrayFunctionMerge(ArrayFunction):
                 # reset delay counter
                 self.state.delay_counter = 0
                 # figure out how many segments there are
-                segmentCount = int(self.controller.virtualLEDCount // self.state.size)
+                segmentCount = int(self.controller.virtual_led_count // self.state.size)
                 # this takes the 1-dimensional array
                 # [0,1,2,3,4,5]
                 # and creates a 2-dimensional matrix like
@@ -50,19 +50,20 @@ class ArrayFunctionMerge(ArrayFunction):
                 # the matrixification of the array
                 if temp[0][0] != temp[1][-1]:
                     temp[1] = np.flip(temp[0])
-                    self.controller.virtualLEDBuffer[range(self.state.size)] = (
-                        self.state.color_sequence[range(self.state.size)]
-                    )
+                    self.controller.virtualLEDBuffer[range(self.state.size)] = self.state.color_sequence[
+                        range(self.state.size)
+                    ]
                 temp[0] = np.roll(temp[0], self.state.step, 0)
                 temp[1] = np.roll(temp[1], -self.state.step, 0)
-                for i in range(self.controller.virtualLEDCount // self.state.size):
+                for i in range(self.controller.virtual_led_count // self.state.size):
                     if i % 2 == 0:
                         temp[i] = temp[0]
                     else:
                         temp[i] = temp[1]
                 # turn the matrix back into an array
                 self.controller.virtualLEDIndexBuffer = np.reshape(
-                    temp, (self.controller.virtualLEDCount)
+                    temp,
+                    (self.controller.virtual_led_count),
                 )
         except SystemExit:  # pragma: no cover
             raise
