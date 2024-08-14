@@ -1,13 +1,15 @@
 #!/usr/bin/python3
 """Example of syncing lights to audio."""
-import time
+
 import multiprocessing
 import multiprocessing.queues
+import time
 import tkinter as tk
+
 import matplotlib.pyplot as plt
-from numpy import double
 from lightberries.array_controller import ArrayController
 from lightberries.pixel import Pixel
+from numpy import double
 
 
 class LightOutput:
@@ -23,10 +25,12 @@ class LightOutput:
         """Outputs audio FFT to light controller object.
 
         Args:
+        ----
             lightQ: multiprocessing queue for receiving data
             plotQ: multiprocessing queue for sending data
             tkQ: multiprocessing queue for sending data
             exitQ: multiprocessing queue for sending data
+
         """
         self.lightQ = lightQ
         self.plotQ = plotQ
@@ -42,7 +46,7 @@ class LightOutput:
     def update(self):
         """Update the gui."""
         # print("led refresh")
-        self.plotQ.put(self.lightController.virtualLEDBuffer)
+        self.plotQ.put(self.lightController.virtual_led_buffer)
         time.sleep(self.delay)
 
     def run(self):
@@ -60,7 +64,7 @@ class LightOutput:
                 10,
                 800000,
                 simulate=True,
-                refreshCallback=lambda: self.update(),
+                refresh_callback=lambda: self.update(),
             )
             # print("started lights")
             while True:
@@ -68,7 +72,7 @@ class LightOutput:
                     msg = self.lightQ.get_nowait()
                     # print(msg)
                     if isinstance(msg, int):
-                        self.lightController.secondsPerMode = msg
+                        self.lightController.seconds_per_mode = msg
                     if isinstance(msg, (float, double)):
                         self.delay = msg
                     elif isinstance(msg, str):
@@ -82,7 +86,7 @@ class LightOutput:
                             # print("run it")
                             self.lightController.reset()
                             self.lightController.off()
-                            self.lightController.refreshLEDs()
+                            self.lightController.refresh_leds()
                             getattr(self.lightController, self.colr)()
                             getattr(self.lightController, self.func)()
                             self.tkQ.put("running")
@@ -93,12 +97,12 @@ class LightOutput:
         except KeyboardInterrupt:
             pass
         except Exception as ex:
-            print(f"Error in {LightOutput.__name__}: {str(ex)}")
+            print(f"Error in {LightOutput.__name__}: {ex!s}")
         finally:
             # clean up the LightBerry object
             self.lightController.off()
-            self.lightController.copyVirtualLedsToWS281X()
-            self.lightController.refreshLEDs()
+            self.lightController.copy_virtual_leds_to_ws281x()
+            self.lightController.refresh_leds()
             # pause for object destruction
             time.sleep(0.2)
             # put any data in queue, this will signify "exit" status
@@ -119,9 +123,11 @@ class PlotOutput:
         """Plots audio FFT to matplotlib's pyplot graphic.
 
         Args:
+        ----
             plotQ: multiprocessing queue for receiving data
             tkQ: multiprocessing queue for sending data
             exitQ: multiprocessing queue for sending data
+
         """
         self.plotQ = plotQ
         self.tkQ = tkQ
@@ -137,13 +143,13 @@ class PlotOutput:
                 try:
                     # try to get new data
                     array = self.plotQ.get_nowait()
-                    self.tkQ.put([Pixel(rgb).hexstr for rgb in array])
+                    self.tkQ.put([Pixel(rgb).hex_str for rgb in array])
                 except multiprocessing.queues.Empty:
                     pass
         except KeyboardInterrupt:
             pass
         except Exception as ex:
-            print(f"Error in {PlotOutput.__name__}: {str(ex)}")
+            print(f"Error in {PlotOutput.__name__}: {ex!s}")
         finally:
             self.exitQ.put("quit")
 
@@ -190,11 +196,15 @@ class App:
         self.canvas.pack(side=tk.RIGHT, fill="both", expand=True)
 
         self.scrollbarY = tk.Scrollbar(
-            self.canvas, command=self.canvas.yview, orient=tk.VERTICAL
+            self.canvas,
+            command=self.canvas.yview,
+            orient=tk.VERTICAL,
         )
         self.scrollbarY.pack(side=tk.RIGHT, fill="y")
         self.scrollbarX = tk.Scrollbar(
-            self.canvas, command=self.canvas.xview, orient=tk.HORIZONTAL
+            self.canvas,
+            command=self.canvas.xview,
+            orient=tk.HORIZONTAL,
         )
         self.scrollbarX.pack(side=tk.BOTTOM, fill="y")
 
@@ -233,9 +243,7 @@ class App:
         self.ledCountInt.set(100)
 
         self.functionString = tk.StringVar()
-        self.functionChoices = [
-            f for f in dir(ArrayController) if f[:11] == "useFunction"
-        ]
+        self.functionChoices = [f for f in dir(ArrayController) if f[:11] == "useFunction"]
         self.functionChoices.sort()
         self.functionString.set(self.functionChoices[0])
         self.functionDropdown = tk.OptionMenu(
@@ -327,7 +335,7 @@ class App:
         self.root.protocol("WM_DELETE_WINDOW", self.destroy)
 
         self.root.title(
-            "LightBerries LED GUI Simulator (function parameters not included)"
+            "LightBerries LED GUI Simulator (function parameters not included)",
         )
         self.root.after(1, self.checkQ)
 
@@ -368,7 +376,11 @@ class App:
             for column in range(ledCount):
                 self.buttonFrame.columnconfigure(column, weight=1)
                 btn = tk.Button(
-                    self.buttonFrame, bg="black", fg="white", width=1, height=1
+                    self.buttonFrame,
+                    bg="black",
+                    fg="white",
+                    width=1,
+                    height=1,
                 )
                 btn.grid(
                     row=1,
@@ -393,7 +405,6 @@ class App:
 
     def __del__(self) -> None:
         """Destroy the object cleanly."""
-        pass
 
 
 if __name__ == "__main__":

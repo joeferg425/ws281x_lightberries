@@ -5,11 +5,11 @@ from __future__ import annotations
 import random
 from typing import Any
 
-from lightberries.array_patterns.base import ArrayPattern
 from lightberries.exceptions import LightBerryError, PatternError
+from lightberries.light_sequences.base import ArraySequence
 
 
-class RandomArray(ArrayPattern):
+class RandomSequence(ArraySequence):
     """Creates an array of random colors."""
 
     def __init__(self, led_count: int, name: str | None = None, **kwargs: dict[str, Any]) -> None:
@@ -34,10 +34,10 @@ class RandomArray(ArrayPattern):
 
         """
         if name is None:
-            name = RandomArray.__name__
+            name = RandomSequence.__name__
         super().__init__(led_count=led_count, name=name, kwargs=kwargs)
         try:
-            temp_array = ArrayPattern.PixelArrayOff(led_count)
+            temp_array = ArraySequence.PixelArrayOff(led_count)
             for i in range(led_count):
                 # prevent 255, 255, 255
                 exclusion = random.randint(0, 2)

@@ -1,11 +1,14 @@
 """Defines callable behaviors for this module."""
+
 from __future__ import annotations
+
 import argparse
 import logging
 import sys
+
 import lightberries
 from lightberries.array_controller import ArrayController
-from lightberries.exceptions import ControllerError, LightBerryError, PermissionsError
+from lightberries.exceptions import LightBerryError, PermissionsError
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -81,19 +84,19 @@ if __name__ == "__main__":  # pylint: disable=invalid-name
     # create the light-function object
     try:
         lightControl = ArrayController(
-        ledCount=PIXEL_COUNT,
-        pwmGPIOpin=GPIO_PWM_PIN,
-        channelDMA=DMA_CHANNEL,
-        frequencyPWM=PWM_FREQUENCY,
-        channelPWM=PWM_CHANNEL,
-        invertSignalPWM=INVERT,
-        gamma=GAMMA,
-        stripTypeLED=LED_STRIP_TYPE,
-        debug=True,
-        ledBrightnessFloat=BRIGHTNESS,
-    )
+            led_count=PIXEL_COUNT,
+            pwm_gpio_pin=GPIO_PWM_PIN,
+            dma_channel=DMA_CHANNEL,
+            pwm_frequency=PWM_FREQUENCY,
+            pwm_channel=PWM_CHANNEL,
+            pwm_invert_signal=INVERT,
+            gamma=GAMMA,
+            led_strip_type=LED_STRIP_TYPE,
+            debug=True,
+            led_brightness=BRIGHTNESS,
+        )
     except PermissionsError as ex:
-        LOGGER.error("%s",ex)
+        LOGGER.error("%s", ex)
         sys.exit(1)
     except LightBerryError:
         LOGGER.exception("Failed to launch LightBerries Controller")

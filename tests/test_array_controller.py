@@ -1,13 +1,15 @@
 from __future__ import annotations
+
 from typing import Any
-from lightberries.array_controller import ArrayController
-import numpy as np
-from lightberries.pixel import PixelColors
-from lightberries.array_patterns import ConvertPixelArrayToNumpyArray
-from lightberries.ws281x_strings import WS281xString
-import mock
-from lightberries.exceptions import WS281xStringError
+from unittest import mock
+
 import lightberries.rpiws281x_patch
+import numpy as np
+from lightberries.array_controller import ArrayController
+from lightberries.exceptions import WS281xStringError
+from lightberries.light_sequences.base import pixel_array_to_numpy_array
+from lightberries.pixel import PixelColors
+from lightberries.ws281x_strings import WS281xString
 from numpy.typing import NDArray
 
 
@@ -99,24 +101,24 @@ def test_create():
 def test_properties():
     with mock.patch.object(ArrayController, "_instantiate_WS281xString", new_instantiate_WS281xString):
         ac = ArrayController(testing=True)
-        assert isinstance(ac.refreshDelay, float)
-        ac.refreshDelay = 0.1
-        assert isinstance(ac.backgroundColor, np.ndarray)
-        ac.backgroundColor = PixelColors.OFF.array
-        assert isinstance(ac.secondsPerMode, float)
-        ac.secondsPerMode = 1.0
-        assert isinstance(ac.colorSequence, np.ndarray)
-        ac.colorSequence = ConvertPixelArrayToNumpyArray([PixelColors.OFF])
-        assert isinstance(ac.colorSequenceCount, int)
-        ac.colorSequenceCount = 1
-        assert isinstance(ac.colorSequenceIndex, int)
-        ac.colorSequenceIndex = 1
-        assert isinstance(ac.colorSequenceNext, np.ndarray)
-        assert isinstance(ac.getFunctionMethodsList(), list)
-        for f in ac.getFunctionMethodsList():
+        assert isinstance(ac.refresh_delay, float)
+        ac.refresh_delay = 0.1
+        assert isinstance(ac.background_color, np.ndarray)
+        ac.background_color = PixelColors.OFF.array
+        assert isinstance(ac.seconds_per_mode, float)
+        ac.seconds_per_mode = 1.0
+        assert isinstance(ac.color_sequence, np.ndarray)
+        ac.color_sequence = pixel_array_to_numpy_array([PixelColors.OFF])
+        assert isinstance(ac.color_sequence_count, int)
+        ac.color_sequence_count = 1
+        assert isinstance(ac.color_sequence_index, int)
+        ac.color_sequence_index = 1
+        assert isinstance(ac.color_sequence_next, np.ndarray)
+        assert isinstance(ac.get_function_methods_list(), list)
+        for f in ac.get_function_methods_list():
             assert isinstance(f, str)
-        assert isinstance(ac.getColorMethodsList(), list)
-        for f in ac.getColorMethodsList():
+        assert isinstance(ac.get_color_methods_list(), list)
+        for f in ac.get_color_methods_list():
             assert isinstance(f, str)
 
 
@@ -131,23 +133,23 @@ def test_delete():
 def test_reset():
     with mock.patch.object(ArrayController, "_instantiate_WS281xString", new_instantiate_WS281xString):
         ac = ArrayController(testing=True)
-        ac.setvirtualLEDBuffer(ConvertPixelArrayToNumpyArray([PixelColors.OFF]))
+        ac.set_virtual_led_buffer(pixel_array_to_numpy_array([PixelColors.OFF]))
         ac.reset()
-        assert len(ac.virtualLEDBuffer) == ac.realLEDCount
+        assert len(ac.virtual_led_buffer) == ac.real_led_count
 
 
 def test_refresh_callback():
     with mock.patch.object(ArrayController, "_instantiate_WS281xString", new_instantiate_WS281xString):
         ac = ArrayController(testing=True)
         ac.refreshCallback = print
-        ac.refreshLEDs()
+        ac.refresh_leds()
 
 
 def test_getRandomIndices():
     with mock.patch.object(ArrayController, "_instantiate_WS281xString", new_instantiate_WS281xString):
         ac = ArrayController(testing=True)
         for i in range(3):
-            temp = ac.getRandomIndices(i)
+            temp = ac.get_random_indices(i)
             assert len(temp) == i
             for x in temp:
                 assert isinstance(x, np.int32)
@@ -156,4 +158,4 @@ def test_getRandomIndices():
 def test_getRandomBoolean():
     with mock.patch.object(ArrayController, "_instantiate_WS281xString", new_instantiate_WS281xString):
         ac = ArrayController(testing=True)
-        assert isinstance(ac.getRandomBoolean(), bool)
+        assert isinstance(ac.get_random_boolean(), bool)

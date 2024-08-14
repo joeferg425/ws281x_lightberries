@@ -6,19 +6,33 @@
 	],
 	"settings": {
 		"python.terminal.activateEnvInCurrentTerminal": true,
+		"autoDocstring.docstringFormat": "google-notypes",
 		"[python]": {
 			"editor.formatOnSave": true,
-			"editor.defaultFormatter": "charliermarsh.ruff",
+			"editor.defaultFormatter": "ms-python.black-formatter",
 			"editor.codeActionsOnSave": {
-				"source.fixAll": "explicit",
 				"source.organizeImports": "explicit"
 			}
 		},
+		"isort.args": [
+			"--profile",
+			"black"
+		],
 		"autoDocstring.guessTypes": false,
+		"cSpell.ignorePaths": [
+			"package-lock.json",
+			"node_modules",
+			"vscode-extension",
+			".git/objects",
+			".vscode",
+			".vscode-insiders",
+			"*.code-workspace"
+		],
 		"cSpell.words": [
 			"arange",
 			"asarray",
 			"astype",
+			"charliermarsh",
 			"colr",
 			"cosx",
 			"Cylon",
@@ -44,6 +58,7 @@
 			"relim",
 			"respawn",
 			"ROYGBIV",
+			"rpiws",
 			"scipy",
 			"sinx",
 			"testpaths",
@@ -72,9 +87,9 @@
 				"request": "launch",
 				"program": "${workspaceFolder}/src/lightberries/__main__.py",
 				"console": "integratedTerminal",
-				"linux": {
-					"sudo": true
-				},
+				// "linux": {
+				// "sudo": true
+				// },
 				"justMyCode": false,
 				"args": [
 					"-b",
@@ -355,7 +370,8 @@
 			"streetsidesoftware.code-spell-checker",
 			"ms-python.vscode-pylance",
 			"ms-python.python",
-			"ms-python.debugpy"
+			"ms-python.debugpy",
+			"tamasfe.even-better-toml"
 		]
 	}
 }

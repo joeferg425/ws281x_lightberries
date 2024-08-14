@@ -1,12 +1,14 @@
 #!/usr/bin/python3
 from __future__ import annotations
-from lightberries.array_patterns import ArrayPattern
-from lightberries.array_controller import ArrayController
-from lightberries.pixel import Pixel, PixelColors
-from lightberries.array_functions import ArrayFunction
+
 import os
-import pygame
+
 import numpy as np
+import pygame
+from lightberries.array_controller import ArrayController
+from lightberries.array_transforms.base import ArrayTransform
+from lightberries.light_sequences.base import ArraySequence
+from lightberries.pixel import Pixel, PixelColors
 
 COUNT = 1024
 # COUNT = 512
@@ -29,15 +31,15 @@ PWM_CHANNEL = 0
 
 # create the lightberries Controller object
 lightControl = ArrayController(
-    ledCount=COUNT,
-    pwmGPIOpin=GPIO_PWM_PIN,
-    channelDMA=DMA_CHANNEL,
-    frequencyPWM=PWM_FREQUENCY,
-    channelPWM=PWM_CHANNEL,
-    invertSignalPWM=INVERT,
+    led_count=COUNT,
+    pwm_gpio_pin=GPIO_PWM_PIN,
+    dma_channel=DMA_CHANNEL,
+    pwm_frequency=PWM_FREQUENCY,
+    pwm_channel=PWM_CHANNEL,
+    pwm_invert_signal=INVERT,
     gamma=GAMMA,
-    stripTypeLED=LED_STRIP_TYPE,
-    ledBrightnessFloat=BRIGHTNESS,
+    led_strip_type=LED_STRIP_TYPE,
+    led_brightness=BRIGHTNESS,
     debug=True,
 )
 
@@ -63,13 +65,15 @@ class sprite:
 
     @property
     def x(self) -> int:
-        self._x = self._x % lightControl.realLEDCount
+        self._x = self._x % lightControl.real_led_count
         return round(self._x)
 
     @property
     def xs(self) -> list[int]:
-        xs = [round(self._x + i) % (lightControl.realLEDCount) for i in range(-self.size, self.size + 1)]
-        xs.extend([round(self._x) % (lightControl.realLEDCount) for i in range(-self.size, self.size + 1)])
+        xs = [round(self._x + i) % (lightControl.real_led_count) for i in range(-self.size, self.size + 1)]
+        xs.extend(
+            [round(self._x) % (lightControl.real_led_count) for i in range(-self.size, self.size + 1)],
+        )
         return xs
 
     @x.setter
@@ -78,12 +82,12 @@ class sprite:
 
     def go(self):
         self._x = self._x + self.dx
-        if self._x >= (lightControl.realLEDCount - 1) or self._x <= 0:
+        if self._x >= (lightControl.real_led_count - 1) or self._x <= 0:
             if self.bounded:
                 self.dead = True
             elif self.stop:
-                if self._x >= (lightControl.realLEDCount - 1):
-                    self._x = lightControl.realLEDCount - 1
+                if self._x >= (lightControl.real_led_count - 1):
+                    self._x = lightControl.real_led_count - 1
                 elif self._x <= 0:
                     self._x = 0
 
@@ -107,7 +111,11 @@ PAUSE_DELAY = 0.3
 pygame.init()
 keepPlaying = True
 THRESHOLD = 0.05
-fade = ArrayFunction(lightControl, ArrayFunction.functionFadeOff, ArrayPattern.DefaultColorSequenceByMonth())
+fade = ArrayTransform(
+    lightControl,
+    ArrayTransform.functionFadeOff,
+    ArraySequence.default_color_sequence_by_month(),
+)
 fade._fade_amount = 0.3
 fade.colorFade = int(0.3 * 256)
 fade._color = PixelColors.OFF.array
@@ -131,7 +139,7 @@ while True:
             pause = True
         else:
             pause = False
-    fade.run()
+    fade._transform()
     for event in events:
         if "joy" in event.dict and "axis" in event.dict:
             if event.dict["axis"] == 0:
@@ -140,6 +148,6 @@ while True:
                 else:
                     player.dx = 0
     player.go()
-    lightControl.virtualLEDBuffer[player.x] = Pixel(player.color).array
-    lightControl.copyVirtualLedsToWS281X()
-    lightControl.refreshLEDs()
+    lightControl.virtual_led_buffer[player.x] = Pixel(player.color).array
+    lightControl.copy_virtual_leds_to_ws281x()
+    lightControl.refresh_leds()

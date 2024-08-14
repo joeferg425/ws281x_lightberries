@@ -1,8 +1,9 @@
 #!/usr/bin/python3
+import sys
+
+import numpy as np
 from lightberries import MatrixController
 from PIL import Image
-import numpy as np
-import sys
 
 # the number of pixels in the light string
 PIXEL_ROW_COUNT = 16
@@ -25,7 +26,7 @@ MATRIX_LAYOUT = np.array(
     [
         [1, 2],
         [0, 3],
-    ]
+    ],
 )
 MATRIX_SHAPE = (PIXEL_ROW_COUNT, PIXEL_COLUMN_COUNT)
 
@@ -59,8 +60,8 @@ data[:, :, 2] = data[:, :, 2] * 0.8
 data = np.rot90(data)
 light_data = np.zeros((32, 32, 3), dtype=np.int32)
 light_data[: data.shape[0], : data.shape[1]] = data
-lightControl.virtualLEDBuffer = light_data
-lightControl.copyVirtualLedsToWS281X()
-lightControl.refreshLEDs()
+lightControl.virtual_led_buffer = light_data
+lightControl.copy_virtual_leds_to_ws281x()
+lightControl.refresh_leds()
 input("hit enter to exit")
 lightControl.off()

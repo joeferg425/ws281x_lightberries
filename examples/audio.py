@@ -1,17 +1,17 @@
 #!/usr/bin/python3
 """Example of syncing lights to audio."""
-from enum import IntEnum
-import time
-import multiprocessing
-import pyaudio
 
-import numpy as np
+import multiprocessing
+import time
+from enum import IntEnum
+
 import matplotlib
 import matplotlib.pyplot as plt
-from lightberries.array_patterns import ArrayPattern
+import numpy as np
+import pyaudio
 from lightberries.array_controller import ArrayController
+from lightberries.light_sequences.base import ArraySequence
 from lightberries.pixel import Pixel
-
 
 matplotlib.use("Qt5Agg")
 
@@ -37,16 +37,18 @@ class RollingDataFromQueue:
         """Parent class for rolling data frames.
 
         Args:
+        ----
             inQ: multiprocessing queue for receiving data
             outQ: multiprocessing queue for sending data
+
         """
         self.inQ = inQ
         self.outQ = outQ
-        self.newDataChunk = np.zeros((RollingDataFromQueue.SAMPLE_COUNT_PER_CHUNK))
-        self.fftData = np.zeros((RollingDataFromQueue.SAMPLE_COUNT_TOTAL // 2))
-        self.fftChunks = np.zeros((RollingDataFromQueue.EQUALIZER_SECTION_COUNT))
-        self.dataFrame = np.zeros((RollingDataFromQueue.SAMPLE_COUNT_TOTAL))
-        self.plotData = np.zeros((RollingDataFromQueue.EQUALIZER_SECTION_COUNT))
+        self.newDataChunk = np.zeros(RollingDataFromQueue.SAMPLE_COUNT_PER_CHUNK)
+        self.fftData = np.zeros(RollingDataFromQueue.SAMPLE_COUNT_TOTAL // 2)
+        self.fftChunks = np.zeros(RollingDataFromQueue.EQUALIZER_SECTION_COUNT)
+        self.dataFrame = np.zeros(RollingDataFromQueue.SAMPLE_COUNT_TOTAL)
+        self.plotData = np.zeros(RollingDataFromQueue.EQUALIZER_SECTION_COUNT)
 
         # self.window = np.hamming(RollingDataFromQueue.SAMPLE_COUNT_TOTAL)
         self.window = np.hamming(RollingDataFromQueue.SAMPLE_COUNT_PER_CHUNK)
@@ -54,8 +56,10 @@ class RollingDataFromQueue:
     def getNewData(self) -> bool:
         """Gets data from multiprocess queue and processes it.
 
-        Returns:
+        Returns
+        -------
             success boolean
+
         """
         try:
             # check the queue - throws an exception if empty
@@ -78,7 +82,7 @@ class RollingDataFromQueue:
             # chunk the data up for display in fewer segments
             chunkLength = lenFFTData // LightOutput.EQUALIZER_SECTION_COUNT
             self.fftChunks = np.array(
-                [np.sum(self.fftData[i : i + chunkLength]) / chunkLength for i in range(0, lenFFTData, chunkLength)]
+                [np.sum(self.fftData[i : i + chunkLength]) / chunkLength for i in range(0, lenFFTData, chunkLength)],
             )
             # mask any artifacts at the ends
             self.fftChunks[-1] = np.mean(self.fftChunks)
@@ -122,14 +126,16 @@ class LightOutput(RollingDataFromQueue):
         """Outputs audio FFT to light controller object.
 
         Args:
+        ----
             inQ: multiprocessing queue for receiving data
             outQ: multiprocessing queue for sending data
+
         """
         super().__init__(inQ, outQ)
         # create light controller object
         self.lightController = ArrayController(LightOutput.LED_COUNT, 18, 10, 800000)
         self.lightController.off()
-        self.lightController.refreshLEDs()
+        self.lightController.refresh_leds()
 
         # run routine
         self.run()
@@ -141,11 +147,11 @@ class LightOutput(RollingDataFromQueue):
                 # see if we got data
                 if self.getNewData():
                     self.lightController.setVirtualLEDArray(
-                        ArrayPattern.ColorTransitionArray(
+                        ArraySequence.ColorTransitionArray(
                             LightOutput.LED_COUNT,
                             [Pixel(int(p)) for p in self.plotData],
                             False,
-                        )
+                        ),
                     )
 
                     # define callback function
@@ -173,18 +179,18 @@ class LightOutput(RollingDataFromQueue):
 
                     # self.vi
                     # call ws281x update method to display modified LED values
-                    self.lightController.copyVirtualLedsToWS281X()
-                    self.lightController.refreshLEDs()
+                    self.lightController.copy_virtual_leds_to_ws281x()
+                    self.lightController.refresh_leds()
                     # self.lightController.ws28xxLightString.pixelStrip.show()
         except KeyboardInterrupt:
             pass
         except Exception as ex:
-            print(f"Error in {LightOutput.__name__}: {str(ex)}")
+            print(f"Error in {LightOutput.__name__}: {ex!s}")
         finally:
             # clean up the LightBerry object
             self.lightController.off()
-            self.lightController.copyVirtualLedsToWS281X()
-            self.lightController.refreshLEDs()
+            self.lightController.copy_virtual_leds_to_ws281x()
+            self.lightController.refresh_leds()
             # pause for object destruction
             time.sleep(0.2)
             # put any data in queue, this will signify "exit" status
@@ -197,7 +203,9 @@ class PlotChoice(IntEnum):
     """Enumeration of plot types.
 
     Args:
+    ----
         IntEnum: integer enumeration
+
     """
 
     TIME_DOMAIN = 0
@@ -211,7 +219,9 @@ class PlotAxisChoice(IntEnum):
     """Enumeration of plot axis scaling.
 
     Args:
+    ----
         IntEnum: integer enumeration
+
     """
 
     STANDARD = 0
@@ -230,9 +240,11 @@ class PlotOutput(RollingDataFromQueue):
         """Plots audio FFT to matplotlib's pyplot graphic.
 
         Args:
+        ----
             inQ: multiprocessing queue for receiving data
             outQ: multiprocessing queue for sending data
             plotChoice: choice of what to plot
+
         """
         super().__init__(inQ, outQ)
         # set pyplot to use live updating plots
@@ -293,23 +305,22 @@ class PlotOutput(RollingDataFromQueue):
                             else:
                                 (line,) = axis.semilogy(self.dataFrame)
                         # do standard plot scaling
+                        elif self.plotChoice == PlotChoice.CHUNK_FFT:
+                            (line,) = axis.plot(self.fftChunks)
+                        elif self.plotChoice == PlotChoice.AVERAGED_FFT:
+                            (line,) = axis.plot(self.plotData)
+                        elif self.plotChoice == PlotChoice.LARGE_FFT:
+                            (line,) = axis.plot(self.fftData)
+                        elif self.plotChoice == PlotChoice.TIME_DOMAIN_CHUNK:
+                            (line,) = axis.plot(self.newDataChunk)
                         else:
-                            if self.plotChoice == PlotChoice.CHUNK_FFT:
-                                (line,) = axis.plot(self.fftChunks)
-                            elif self.plotChoice == PlotChoice.AVERAGED_FFT:
-                                (line,) = axis.plot(self.plotData)
-                            elif self.plotChoice == PlotChoice.LARGE_FFT:
-                                (line,) = axis.plot(self.fftData)
-                            elif self.plotChoice == PlotChoice.TIME_DOMAIN_CHUNK:
-                                (line,) = axis.plot(self.newDataChunk)
-                            else:
-                                (line,) = axis.plot(self.dataFrame)
+                            (line,) = axis.plot(self.dataFrame)
                         # draw/show the figure
                         plt.show()
         except KeyboardInterrupt:
             pass
         except Exception as ex:
-            print(f"Error in {PlotOutput.__name__}: {str(ex)}")
+            print(f"Error in {PlotOutput.__name__}: {ex!s}")
         finally:
             self.outQ.put("quit")
 
@@ -318,7 +329,9 @@ class ProcessChoice(IntEnum):
     """Enumeration of process function (plot or lights).
 
     Args:
+    ----
         IntEnum: integer enumeration
+
     """
 
     PLOT = 0
@@ -326,7 +339,6 @@ class ProcessChoice(IntEnum):
 
 
 if __name__ == "__main__":
-
     PY_AUDIO = None
     AUDIO_STREAM = None
     PROCESS_CHOICE = ProcessChoice.LIGHTS

@@ -22,15 +22,15 @@ PWM_CHANNEL = 0
 
 # create the LightBerries Controller object
 lightControl = ArrayController(
-    ledCount=PIXEL_COUNT,
-    pwmGPIOpin=GPIO_PWM_PIN,
-    channelDMA=DMA_CHANNEL,
-    frequencyPWM=PWM_FREQUENCY,
-    channelPWM=PWM_CHANNEL,
-    invertSignalPWM=INVERT,
+    led_count=PIXEL_COUNT,
+    pwm_gpio_pin=GPIO_PWM_PIN,
+    dma_channel=DMA_CHANNEL,
+    pwm_frequency=PWM_FREQUENCY,
+    pwm_channel=PWM_CHANNEL,
+    pwm_invert_signal=INVERT,
     gamma=GAMMA,
-    stripTypeLED=LED_STRIP_TYPE,
-    ledBrightnessFloat=BRIGHTNESS,
+    led_strip_type=LED_STRIP_TYPE,
+    led_brightness=BRIGHTNESS,
     debug=True,
 )
 # run the configuration until killed

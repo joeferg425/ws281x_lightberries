@@ -1,3 +1,4 @@
+import logging
 import random
 
 import numpy as np
@@ -5,6 +6,8 @@ import numpy as np
 import lightberries
 from lightberries.array_transforms.base import ArrayTransform, ChangeStates, LEDFadeType
 from lightberries.exceptions import FunctionError, LightBerryError
+
+LOGGER = logging.getLogger("lightBerries")
 
 
 class ArrayFunctionRandomChange(ArrayTransform):
@@ -81,12 +84,12 @@ class ArrayFunctionRandomChange(ArrayTransform):
                         self.state.index = self.controller.get_random_index()
                         # get color of current LED index
                         # change.color = np.copy(self.controller.virtualLEDBuffer[change.index])
-                        if len(self.controller.virtualLEDBuffer.shape) == 2:
-                            self.state.color = self.controller.virtualLEDBuffer[self.state.index]
+                        if len(self.controller.virtual_led_buffer.shape) == 2:
+                            self.state.color = self.controller.virtual_led_buffer[self.state.index]
                         else:
-                            self.state.color = self.controller.virtualLEDBuffer[
+                            self.state.color = self.controller.virtual_led_buffer[
                                 np.where(
-                                    self.controller.virtualLEDIndexBuffer == self.state.index,
+                                    self.controller.virtual_led_index_buffer == self.state.index,
                                 )
                             ]
                         # get next color
@@ -113,11 +116,11 @@ class ArrayFunctionRandomChange(ArrayTransform):
                 self.state.color = self.state.color_next
             # assign LED color to LED string
             # self.controller.virtualLEDBuffer[change.index] = change.color
-            if len(self.controller.virtualLEDBuffer.shape) == 2:
-                self.controller.virtualLEDBuffer[self.state.index] = self.state.color
+            if len(self.controller.virtual_led_buffer.shape) == 2:
+                self.controller.virtual_led_buffer[self.state.index] = self.state.color
             else:
-                self.controller.virtualLEDBuffer[
-                    np.where(self.controller.virtualLEDIndexBuffer == self.state.index)
+                self.controller.virtual_led_buffer[
+                    np.where(self.controller.virtual_led_index_buffer == self.state.index)
                 ] = self.state.color
         except SystemExit:  # pragma: no cover
             raise

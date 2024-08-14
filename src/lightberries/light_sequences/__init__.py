@@ -1,12 +1,12 @@
 """Color patterns and sequences."""
 
-from lightberries.array_patterns.off import ArrayPatternOff as ArrayPatternOff
-from lightberries.array_patterns.pseudo_random import PseudoRandomArray as PseudoRandomArray
-from lightberries.array_patterns.rainbow import RainbowArray as RainbowArray
-from lightberries.array_patterns.rainbow_repeating import RepeatingRainbowArray as RepeatingRainbowArray
-from lightberries.array_patterns.random import RandomArray as RandomArray
-from lightberries.array_patterns.reflect import ReflectArray as ReflectArray
-from lightberries.array_patterns.sequence_repeating import RepeatingColorSequenceArray as RepeatingColorSequenceArray
-from lightberries.array_patterns.solid import SolidColorArray as SolidColorArray
-from lightberries.array_patterns.stretch import ColorStretchArray as ColorStretchArray
-from lightberries.array_patterns.transition import ColorTransitionArray as ColorTransitionArray
+from lightberries.light_sequences.off import OffSequence as OffSequence
+from lightberries.light_sequences.pseudo_random import PseudoRandomSequence as PseudoRandomSequence
+from lightberries.light_sequences.rainbow import RainbowSequence as RainbowSequence
+from lightberries.light_sequences.rainbow_repeating import RainbowSequenceRepeating as RainbowSequenceRepeating
+from lightberries.light_sequences.random import RandomSequence as RandomSequence
+from lightberries.light_sequences.reflect import RepeatedSequenceReflected as RepeatedSequenceReflected
+from lightberries.light_sequences.sequence_repeating import RepeatingSequence as RepeatingSequence
+from lightberries.light_sequences.solid import SolidSequence as SolidSequence
+from lightberries.light_sequences.stretch import StretchedSequence as StretchedSequence
+from lightberries.light_sequences.transition import ColorTransitionSequence as ColorTransitionSequence

@@ -1,3 +1,4 @@
+import logging
 import random
 
 import numpy as np
@@ -5,6 +6,8 @@ import numpy as np
 import lightberries.array_controller
 from lightberries.array_transforms.base import ArrayTransform
 from lightberries.exceptions import FunctionError, LightBerryError
+
+LOGGER = logging.getLogger("lightBerries")
 
 
 class ArrayFunctionTwinkle(ArrayTransform):

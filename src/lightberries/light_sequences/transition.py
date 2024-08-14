@@ -6,12 +6,12 @@ from typing import Any
 
 import numpy as np
 
-from lightberries.array_patterns.base import ArrayPattern
-from lightberries.array_patterns.off import ArrayPatternOff
 from lightberries.exceptions import LightBerryError, PatternError
+from lightberries.light_sequences.base import ArraySequence
+from lightberries.light_sequences.off import OffSequence
 
 
-class ColorTransitionArray(ArrayPattern):
+class ColorTransitionSequence(ArraySequence):
     """A more versatile version of CreateRainbow."""
 
     def __init__(self, led_count: int, name: str | None = None, **kwargs: dict[str, Any]) -> None:
@@ -38,10 +38,10 @@ class ColorTransitionArray(ArrayPattern):
 
         """
         if name is None:
-            name = ColorTransitionArray.__name__
+            name = ColorTransitionSequence.__name__
         super().__init__(name=name, led_count=led_count, kwargs=kwargs)
         try:
-            input_sequence = ArrayPattern.DEFAULT_COLOR_SEQUENCE
+            input_sequence = ArraySequence.DEFAULT_COLOR_SEQUENCE
             if "color_sequence" in kwargs:
                 input_sequence = kwargs[" color_sequence"].copy()
             # get length of sequence
@@ -63,7 +63,7 @@ class ColorTransitionArray(ArrayPattern):
                 step_count = led_count // (sequence_length - wrap_offset)
                 previous_step_count = step_count
             # create temporary array
-            temp_array = ArrayPatternOff(led_count)
+            temp_array = OffSequence(led_count)
             # step through color sequence
             for color_index in range(sequence_length - wrap_offset):
                 if color_index == sequence_length - 1 or color_index == sequence_length - 2:

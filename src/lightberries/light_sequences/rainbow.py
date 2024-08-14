@@ -6,13 +6,13 @@ from typing import Any
 
 import numpy as np
 
-from lightberries.array_patterns.base import ArrayPattern
-from lightberries.array_patterns.transition import ColorTransitionArray
 from lightberries.exceptions import LightBerryError, PatternError
+from lightberries.light_sequences.base import ArraySequence
+from lightberries.light_sequences.transition import ColorTransitionSequence
 from lightberries.pixel import PixelColors
 
 
-class RainbowArray(ArrayPattern):
+class RainbowSequence(ArraySequence):
     """Create a color gradient array."""
 
     def __init__(self, led_count: int, name: str | None = None, **kwargs: dict[str, Any]) -> None:
@@ -38,13 +38,13 @@ class RainbowArray(ArrayPattern):
 
         """
         if name is None:
-            name = RainbowArray.__name__
+            name = RainbowSequence.__name__
         super().__init__(name=name, led_count=led_count, kwargs=kwargs)
         wrap = False
         if "wrap" in kwargs:
             wrap = kwargs["wrap"]
         try:
-            self._sequence = ColorTransitionArray(
+            self._sequence = ColorTransitionSequence(
                 led_count=led_count,
                 color_sequence=np.array(
                     [

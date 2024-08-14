@@ -1,13 +1,15 @@
 #!/usr/bin/python3
 from __future__ import annotations
-from lightberries.array_patterns import ArrayPattern
+
+import os
+
+import numpy as np
+import pygame
+from lightberries.array_transforms.base import ArrayTransform
+from lightberries.light_sequences.base import ArraySequence
 from lightberries.matrix_controller import MatrixController
 from lightberries.matrix_functions import MatrixFunction
 from lightberries.pixel import Pixel, PixelColors
-from lightberries.array_functions import ArrayFunction
-import os
-import pygame
-import numpy as np
 
 # COUNT = 1
 # COUNT = 2
@@ -40,21 +42,21 @@ if COUNT == 1:
     MATRIX_LAYOUT = np.array(
         [
             [0],
-        ]
+        ],
     )
 elif COUNT == 2:
     MATRIX_LAYOUT = np.array(
         [
             [1],
             [0],
-        ]
+        ],
     )
 elif COUNT == 4:
     MATRIX_LAYOUT = np.array(
         [
             [1, 2],
             [0, 3],
-        ]
+        ],
     )
 MATRIX_SHAPE = (16, 16)
 
@@ -108,7 +110,9 @@ class sprite:
     @property
     def xs(self) -> list[int]:
         xs = [round(self._x + i) % (lightControl.realLEDYaxisRange) for i in range(-self.size, self.size + 1)]
-        xs.extend([round(self._x) % (lightControl.realLEDYaxisRange) for i in range(-self.size, self.size + 1)])
+        xs.extend(
+            [round(self._x) % (lightControl.realLEDYaxisRange) for i in range(-self.size, self.size + 1)],
+        )
         return xs
 
     @x.setter
@@ -123,7 +127,9 @@ class sprite:
     @property
     def ys(self) -> list[int]:
         ys = [round(self._y) % (lightControl.realLEDXaxisRange) for i in range(-self.size, self.size + 1)]
-        ys.extend([round(self._y + i) % (lightControl.realLEDXaxisRange) for i in range(-self.size, self.size + 1)])
+        ys.extend(
+            [round(self._y + i) % (lightControl.realLEDXaxisRange) for i in range(-self.size, self.size + 1)],
+        )
         return ys
 
     @y.setter
@@ -145,10 +151,18 @@ class sprite:
             rx += self.dx
             ry += self.dy
             if round(rx) not in xs or round(ry) not in ys:
-                xs.extend([(round(rx) + i) % (lightControl.realLEDYaxisRange) for i in range(-1, 2)])
-                xs.extend([round(rx) % (lightControl.realLEDYaxisRange) for i in range(-1, 2)])
-                ys.extend([round(ry) % (lightControl.realLEDXaxisRange) for i in range(-1, 2)])
-                ys.extend([(round(ry) + i) % (lightControl.realLEDXaxisRange) for i in range(-1, 2)])
+                xs.extend(
+                    [(round(rx) + i) % (lightControl.realLEDYaxisRange) for i in range(-1, 2)],
+                )
+                xs.extend(
+                    [round(rx) % (lightControl.realLEDYaxisRange) for i in range(-1, 2)],
+                )
+                ys.extend(
+                    [round(ry) % (lightControl.realLEDXaxisRange) for i in range(-1, 2)],
+                )
+                ys.extend(
+                    [(round(ry) + i) % (lightControl.realLEDXaxisRange) for i in range(-1, 2)],
+                )
         return xs, ys
 
     def go(self):
@@ -191,7 +205,11 @@ PAUSE_DELAY = 0.3
 pygame.init()
 keepPlaying = True
 THRESHOLD = 0.05
-fade = ArrayFunction(lightControl, MatrixFunction.functionFadeOff, ArrayPattern.DefaultColorSequenceByMonth())
+fade = ArrayTransform(
+    lightControl,
+    MatrixFunction.functionFadeOff,
+    ArraySequence.default_color_sequence_by_month(),
+)
 fade._fade_amount = 0.3
 fade.colorFade = int(0.3 * 256)
 fade._color = PixelColors.OFF.array
@@ -217,7 +235,7 @@ while True:
             pause = True
         else:
             pause = False
-    fade.run()
+    fade._transform()
     for event in events:
         if "joy" in event.dict and "axis" in event.dict:
             # print(event.dict)
@@ -232,6 +250,6 @@ while True:
                 else:
                     player.dy = 0.0
     player.go()
-    lightControl.virtualLEDBuffer[player.x, player.y] = Pixel(player.color).array
-    lightControl.copyVirtualLedsToWS281X()
-    lightControl.refreshLEDs()
+    lightControl.virtual_led_buffer[player.x, player.y] = Pixel(player.color).array
+    lightControl.copy_virtual_leds_to_ws281x()
+    lightControl.refresh_leds()

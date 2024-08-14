@@ -1,13 +1,16 @@
 """Test Pixel."""
+
 from __future__ import annotations
+
+from typing import Callable
+
 import numpy as np
 import pytest
-from typing import Callable
-from numpy.testing import assert_array_equal
+from lightberries.exceptions import PixelError
 
 # import lightberries.pixel
 from lightberries.pixel import LEDOrder, Pixel, PixelColors
-from lightberries.exceptions import PixelError
+from numpy.testing import assert_array_equal
 
 
 def test_pixel_creation_default():
@@ -20,9 +23,9 @@ def test_pixel_creation_default():
     exp = 3
     assert len(p.array) == exp, f"Pixel.array: {p.array} != expected value: {exp}"
     exp = "000000"
-    assert p.hexstr == exp, f"Pixel.hexstr: {p.hexstr} != expected value: {exp}"
+    assert p.hex_str == exp, f"Pixel.hexstr: {p.hex_str} != expected value: {exp}"
     exp = "PX #000000"
-    assert str(p) == exp, f"str(Pixel): {str(p)} != expected value: {exp}"
+    assert str(p) == exp, f"str(Pixel): {p!s} != expected value: {exp}"
     exp = Pixel(0x000000)
     assert p.pixel == exp, f"Pixel.pixel: {p.pixel} != expected value: {exp}"
     exp = (0, 0, 0)
@@ -45,9 +48,9 @@ def test_pixel_creation_None():
     exp = 3
     assert len(p.array) == exp, f"Pixel.array: {p.array} != expected value: {exp}"
     exp = "000000"
-    assert p.hexstr == exp, f"Pixel.hexstr: {p.hexstr} != expected value: {exp}"
+    assert p.hex_str == exp, f"Pixel.hexstr: {p.hex_str} != expected value: {exp}"
     exp = "PX #000000"
-    assert str(p) == exp, f"str(Pixel): {str(p)} != expected value: {exp}"
+    assert str(p) == exp, f"str(Pixel): {p!s} != expected value: {exp}"
     exp = Pixel(0x000000)
     assert p.pixel == exp, f"Pixel.pixel: {p.pixel} != expected value: {exp}"
     exp = (0, 0, 0)
@@ -122,11 +125,13 @@ def test_pixel_equality_not_equal():
     "arg",
     [0x010000, np.array((1, 0, 0), dtype=np.int32), Pixel(0x010000, LEDOrder.RGB), Pixel(0x000100, LEDOrder.GRB)],
 )
-def test_pixel_creationint_args(arg: int | np.ndarray[(3), np.float32] | "Pixel"):
+def test_pixel_creationint_args(arg: int | np.ndarray[(3), np.float32] | Pixel):
     """Test the valid creation methods.
 
     Args:
+    ----
         arg: initial pixel value
+
     """
     Pixel.DEFAULT_PIXEL_ORDER = LEDOrder.RGB.value
     p = Pixel(arg)
@@ -136,9 +141,9 @@ def test_pixel_creationint_args(arg: int | np.ndarray[(3), np.float32] | "Pixel"
     exp = 3
     assert len(p.array) == exp, f"Pixel.array: {p.array} != expected value: {exp}"
     exp = "010000"
-    assert p.hexstr == exp, f"Pixel.hexstr: {p.hexstr} != expected value: {exp}"
+    assert p.hex_str == exp, f"Pixel.hexstr: {p.hex_str} != expected value: {exp}"
     exp = "PX #010000"
-    assert str(p) == exp, f"str(Pixel): {str(p)} != expected value: {exp}"
+    assert str(p) == exp, f"str(Pixel): {p!s} != expected value: {exp}"
     exp = Pixel(0x010000)
     assert p.pixel == exp, f"Pixel.pixel: {p.pixel} != expected value: {exp}"
     exp = (1, 0, 0)
@@ -155,11 +160,13 @@ def test_pixel_creationint_args(arg: int | np.ndarray[(3), np.float32] | "Pixel"
     "arg",
     [0x010000, np.array((1, 0, 0), dtype=np.int32), Pixel(0x010000, LEDOrder.GRB), Pixel(0x000100, LEDOrder.RGB)],
 )
-def test_pixel_creation_pixel_order(arg: int | np.ndarray[(3), np.float32] | "Pixel"):
+def test_pixel_creation_pixel_order(arg: int | np.ndarray[(3), np.float32] | Pixel):
     """Test the valid creation methods.
 
     Args:
+    ----
         arg: initial pixel value
+
     """
     Pixel.DEFAULT_PIXEL_ORDER = LEDOrder.GRB.value
     p = Pixel(arg)
@@ -169,9 +176,9 @@ def test_pixel_creation_pixel_order(arg: int | np.ndarray[(3), np.float32] | "Pi
     exp = 3
     assert len(p.array) == exp, f"Pixel.array: {p.array} != expected value: {exp}"
     exp = "000100"
-    assert p.hexstr == exp, f"Pixel.hexstr: {p.hexstr} != expected value: {exp}"
+    assert p.hex_str == exp, f"Pixel.hexstr: {p.hex_str} != expected value: {exp}"
     exp = "PX #000100"
-    assert str(p) == exp, f"str(Pixel): {str(p)} != expected value: {exp}"
+    assert str(p) == exp, f"str(Pixel): {p!s} != expected value: {exp}"
     exp = Pixel(0x000100)
     assert p.pixel == exp, f"Pixel.pixel: {p.pixel} != expected value: {exp}"
     exp = (0, 1, 0)
@@ -188,7 +195,9 @@ def test_pixel_creation_pixel_order_invalid():
     """Test the valid creation methods.
 
     Args:
+    ----
         arg: initial pixel value
+
     """
     with pytest.raises(PixelError):
         Pixel(rgb=1, order=(1, 12, 34))

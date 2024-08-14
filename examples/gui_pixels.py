@@ -3,16 +3,17 @@
 
 Use GUI to interact with individual LEDs.
 """
-import time
+
 import multiprocessing
 import multiprocessing.queues
-from tkinter.colorchooser import askcolor
+import time
 import tkinter as tk
+from tkinter.colorchooser import askcolor
+
 import lightberries.pixel
 from lightberries.array_controller import ArrayController
+from lightberries.light_sequences.base import ArraySequence
 from lightberries.pixel import Pixel
-from lightberries.array_patterns import ArrayPattern
-
 
 # the number of pixels in the light string
 PIXEL_COUNT = 196
@@ -43,7 +44,9 @@ class LightsProcess:
         """Handles LightBerries functions in a separate process.
 
         Args:
+        ----
             app: the tkinter app
+
         """
         LightsProcess.selfObject = self
         LightsProcess.appObject = app
@@ -61,31 +64,33 @@ class LightsProcess:
         """The main loop.
 
         Args:
+        ----
             inQ: multiprocess queue for getting input
             _ : [description]
+
         """
         try:
             # create LightBerry controller
             lightControl = ArrayController(
-                ledCount=PIXEL_COUNT,
-                pwmGPIOpin=GPIO_PWM_PIN,
-                channelDMA=DMA_CHANNEL,
-                frequencyPWM=PWM_FREQUENCY,
-                channelPWM=PWM_CHANNEL,
-                invertSignalPWM=INVERT,
+                led_count=PIXEL_COUNT,
+                pwm_gpio_pin=GPIO_PWM_PIN,
+                dma_channel=DMA_CHANNEL,
+                pwm_frequency=PWM_FREQUENCY,
+                pwm_channel=PWM_CHANNEL,
+                pwm_invert_signal=INVERT,
                 gamma=GAMMA,
-                stripTypeLED=LED_STRIP_TYPE,
-                ledBrightnessFloat=BRIGHTNESS,
+                led_strip_type=LED_STRIP_TYPE,
+                led_brightness=BRIGHTNESS,
                 debug=True,
             )
             lightControl.setVirtualLEDBuffer(
-                ArrayPattern.SolidColorArray(
+                ArraySequence.SolidSequence(
                     arrayLength=PIXEL_COUNT,
                     color=lightberries.pixel.PixelColors.OFF,
-                )
+                ),
             )
-            lightControl.copyVirtualLedsToWS281X()
-            lightControl.refreshLEDs()
+            lightControl.copy_virtual_leds_to_ws281x()
+            lightControl.refresh_leds()
 
             # run loop forever
             while True:
@@ -101,11 +106,12 @@ class LightsProcess:
                         try:
                             index, color = msg[1:]
                             print("setting color")
-                            lightControl.virtualLEDBuffer[index] = Pixel(
-                                color, order=lightberries.pixel.LEDOrder.RGB
+                            lightControl.virtual_led_buffer[index] = Pixel(
+                                color,
+                                order=lightberries.pixel.LEDOrder.RGB,
                             ).array
-                            lightControl.copyVirtualLedsToWS281X()
-                            lightControl.refreshLEDs()
+                            lightControl.copy_virtual_leds_to_ws281x()
+                            lightControl.refresh_leds()
                             time.sleep(0.05)
                         except Exception as ex:
                             print(ex)
@@ -308,7 +314,9 @@ class App:
         """Get a color from user, pass it to LightBerries.
 
         Args:
+        ----
             event: tkinter widget event object
+
         """
         if event.widget.ledIndex is None:
             color = askcolor(event.widget["background"])
@@ -334,7 +342,9 @@ class App:
         """Get a color from user, pass it to LightBerries.
 
         Args:
+        ----
             event: tkinter widget event object
+
         """
         color = self.rightClickColorBtn["background"]
         event.widget.configure(bg=color)

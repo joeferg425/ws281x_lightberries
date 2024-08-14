@@ -4,10 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from lightberries.array_patterns.base import ArrayPattern
+import numpy as np
+
+from lightberries.exceptions import LightBerryError, PatternError
+from lightberries.light_sequences.base import ArraySequence
+from lightberries.pixel import PixelColors
 
 
-class ArrayPatternOff(ArrayPattern):
+class OffSequence(ArraySequence):
     """Creates array of RGB tuples that are all off."""
 
     def __init__(self, led_count: int, name: str | None = None, **kwargs: dict[str, Any]) -> None:
@@ -28,7 +32,7 @@ class ArrayPatternOff(ArrayPattern):
 
         """
         if name is None:
-            name = ArrayPatternOff.__name__
+            name = OffSequence.__name__
         super().__init__(name=name, led_count=led_count, kwargs=kwargs)
         try:
             if led_count > 0:

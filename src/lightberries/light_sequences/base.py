@@ -9,23 +9,23 @@ from typing import Any, ClassVar
 import numpy as np
 
 from lightberries.exceptions import LightBerryError, PatternError
-from lightberries.light_pattern import LightPattern
 from lightberries.pixel import PixelColors
+from lightberries.sequence import PixelSequence
 
 LOGGER = logging.getLogger("lightBerries")
 
 
-class ArrayPattern(LightPattern):
+class ArraySequence(PixelSequence):
     """A pattern of lights."""
 
-    DEFAULT_COLOR_SEQUENCE = LightPattern.pixel_array_to_numpy_array(
+    DEFAULT_COLOR_SEQUENCE = PixelSequence.pixel_array_to_numpy_array(
         [
             PixelColors.RED,
             PixelColors.GREEN,
             PixelColors.BLUE,
         ],
     )
-    ARRAY_PATTERNS: ClassVar[dict[str, ArrayPattern]] = {}
+    ARRAY_PATTERNS: ClassVar[dict[str, ArraySequence]] = {}
 
     def __init__(self, led_count: int, name: str | None = None, **kwargs: dict[str, Any]) -> None:
         """Create a pattern of lights.
@@ -38,7 +38,7 @@ class ArrayPattern(LightPattern):
 
         """
         if name is None:
-            name = ArrayPattern.__name__
+            name = ArraySequence.__name__
         super().__init__(led_count=led_count, name=name, kwargs=kwargs)
         self.ARRAY_PATTERNS[name] = self
         self._sequence: np.ndarray[(3, Any), np.int32] = np.array(
@@ -77,11 +77,14 @@ class ArrayPattern(LightPattern):
             raise
         except Exception as ex:  # pragma: no cover
             raise PatternError from ex
-        return ArrayPattern.DEFAULT_COLOR_SEQUENCE
+        return ArraySequence.DEFAULT_COLOR_SEQUENCE
 
 
-MONTHLY_COLOR_SEQUENCE: dict[int, np.ndarray[(3, Any), np.int32]] = {
-    1: ArrayPattern.pixel_array_to_numpy_array(
+MONTHLY_COLOR_SEQUENCE: dict[
+    int,
+    np.ndarray[(3, Any), np.int32],
+] = {
+    1: ArraySequence.pixel_array_to_numpy_array(
         [
             PixelColors.CYAN2,
             PixelColors.WHITE,
@@ -90,7 +93,7 @@ MONTHLY_COLOR_SEQUENCE: dict[int, np.ndarray[(3, Any), np.int32]] = {
             PixelColors.BLUE,
         ],
     ),
-    2: ArrayPattern.pixel_array_to_numpy_array(
+    2: ArraySequence.pixel_array_to_numpy_array(
         [
             PixelColors.PINK,
             PixelColors.WHITE,
@@ -98,7 +101,7 @@ MONTHLY_COLOR_SEQUENCE: dict[int, np.ndarray[(3, Any), np.int32]] = {
             PixelColors.WHITE,
         ],
     ),
-    3: ArrayPattern.pixel_array_to_numpy_array(
+    3: ArraySequence.pixel_array_to_numpy_array(
         [
             PixelColors.GREEN,
             PixelColors.WHITE,
@@ -107,7 +110,7 @@ MONTHLY_COLOR_SEQUENCE: dict[int, np.ndarray[(3, Any), np.int32]] = {
             PixelColors.YELLOW,
         ],
     ),
-    4: ArrayPattern.pixel_array_to_numpy_array(
+    4: ArraySequence.pixel_array_to_numpy_array(
         [
             PixelColors.PINK,
             PixelColors.CYAN,
@@ -116,7 +119,7 @@ MONTHLY_COLOR_SEQUENCE: dict[int, np.ndarray[(3, Any), np.int32]] = {
             PixelColors.WHITE,
         ],
     ),
-    5: ArrayPattern.pixel_array_to_numpy_array(
+    5: ArraySequence.pixel_array_to_numpy_array(
         [
             PixelColors.PINK,
             PixelColors.YELLOW,
@@ -124,7 +127,7 @@ MONTHLY_COLOR_SEQUENCE: dict[int, np.ndarray[(3, Any), np.int32]] = {
             PixelColors.WHITE,
         ],
     ),
-    6: ArrayPattern.pixel_array_to_numpy_array(
+    6: ArraySequence.pixel_array_to_numpy_array(
         [
             PixelColors.RED,
             PixelColors.WHITE,
@@ -132,14 +135,14 @@ MONTHLY_COLOR_SEQUENCE: dict[int, np.ndarray[(3, Any), np.int32]] = {
             PixelColors.GREEN,
         ],
     ),
-    7: ArrayPattern.pixel_array_to_numpy_array(
+    7: ArraySequence.pixel_array_to_numpy_array(
         [
             PixelColors.RED,
             PixelColors.WHITE,
             PixelColors.BLUE,
         ],
     ),
-    8: ArrayPattern.pixel_array_to_numpy_array(
+    8: ArraySequence.pixel_array_to_numpy_array(
         [
             PixelColors.ORANGE,
             PixelColors.WHITE,
@@ -147,7 +150,7 @@ MONTHLY_COLOR_SEQUENCE: dict[int, np.ndarray[(3, Any), np.int32]] = {
             PixelColors.ORANGE2,
         ],
     ),
-    9: ArrayPattern.pixel_array_to_numpy_array(
+    9: ArraySequence.pixel_array_to_numpy_array(
         [
             PixelColors.RED,
             PixelColors.ORANGE,
@@ -157,7 +160,7 @@ MONTHLY_COLOR_SEQUENCE: dict[int, np.ndarray[(3, Any), np.int32]] = {
             PixelColors.RED2,
         ],
     ),
-    10: ArrayPattern.pixel_array_to_numpy_array(
+    10: ArraySequence.pixel_array_to_numpy_array(
         [
             PixelColors.MIDNIGHT,
             PixelColors.RED,
@@ -165,14 +168,14 @@ MONTHLY_COLOR_SEQUENCE: dict[int, np.ndarray[(3, Any), np.int32]] = {
             PixelColors.OFF,
         ],
     ),
-    11: ArrayPattern.pixel_array_to_numpy_array(
+    11: ArraySequence.pixel_array_to_numpy_array(
         [
             PixelColors.RED,
             PixelColors.MIDNIGHT,
             PixelColors.GRAY,
         ],
     ),
-    12: ArrayPattern.pixel_array_to_numpy_array(
+    12: ArraySequence.pixel_array_to_numpy_array(
         [
             PixelColors.RED,
             PixelColors.WHITE,

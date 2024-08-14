@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from lightberries.array_patterns.base import ArrayPattern
-from lightberries.array_patterns.off import ArrayPatternOff
 from lightberries.exceptions import LightBerryError, PatternError
+from lightberries.light_sequences.base import ArraySequence
+from lightberries.light_sequences.off import OffSequence
 
 
-class ColorStretchArray(ArrayPattern):
+class StretchedSequence(ArraySequence):
     """Takes a sequence of input colors and repeats each element the requested number of times."""
 
     def __init__(self, led_count: int, name: str | None = None, **kwargs: dict[str, Any]) -> None:
@@ -33,17 +33,17 @@ class ColorStretchArray(ArrayPattern):
 
         """
         if name is None:
-            name = ColorStretchArray.__name__
+            name = StretchedSequence.__name__
         super().__init__(led_count=led_count, name=name, kwargs=kwargs)
         try:
-            input_sequence = ArrayPattern.DEFAULT_COLOR_SEQUENCE
+            input_sequence = ArraySequence.DEFAULT_COLOR_SEQUENCE
             if "input_sequence" in kwargs:
                 input_sequence = kwargs["input_sequence"].copy()
             color_sequence_length = input_sequence.shape[0]
             repeats = int(led_count / color_sequence_length)
             if led_count % color_sequence_length > 0:
                 repeats += 1
-            temp_array = ArrayPatternOff(color_sequence_length * repeats)
+            temp_array = OffSequence(color_sequence_length * repeats)
             for i in range(color_sequence_length):
                 temp_array[i * repeats : (i + 1) * repeats] = input_sequence[i]
             self._sequence = temp_array[:led_count]

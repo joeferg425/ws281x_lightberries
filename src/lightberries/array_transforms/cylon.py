@@ -1,8 +1,12 @@
+import logging
+
 import numpy as np
 
 import lightberries.array_controller
 from lightberries.array_transforms.base import ArrayTransform
 from lightberries.exceptions import FunctionError, LightBerryError
+
+LOGGER = logging.getLogger("lightBerries")
 
 
 class ArrayFunctionCylon(ArrayTransform):
@@ -92,12 +96,12 @@ class ArrayFunctionCylon(ArrayTransform):
             # self.controller.virtualLEDBuffer[cylon.indexRange] = cylon.colorSequence[
             #     : self.controller.virtualLEDCount
             # ]
-            if len(self.controller.virtualLEDBuffer.shape) == 2:
-                self.controller.virtualLEDBuffer[self.state.index_range] = self.state.color
+            if len(self.controller.virtual_led_buffer.shape) == 2:
+                self.controller.virtual_led_buffer[self.state.index_range] = self.state.color
             else:
-                self.controller.virtualLEDBuffer[
+                self.controller.virtual_led_buffer[
                     np.where(
-                        self.controller.virtualLEDIndexBuffer == self.state.index_range,
+                        self.controller.virtual_led_index_buffer == self.state.index_range,
                     )
                 ] = self.state.color
         except SystemExit:  # pragma: no cover

@@ -1,8 +1,12 @@
+import logging
+
 import numpy as np
 
 import lightberries.array_controller
 from lightberries.array_transforms.base import ArrayTransform
 from lightberries.exceptions import FunctionError, LightBerryError
+
+LOGGER = logging.getLogger("lightBerries")
 
 
 class ArrayFunctionMerge(ArrayTransform):
@@ -43,14 +47,14 @@ class ArrayFunctionMerge(ArrayTransform):
                 # [[0,1,2],
                 #  [3,4,5]]
                 temp = np.reshape(
-                    self.controller.virtualLEDIndexBuffer,
+                    self.controller.virtual_led_index_buffer,
                     (segmentCount, self.state.size),
                 )
                 # now roll each row in a different direction and then undo
                 # the matrixification of the array
                 if temp[0][0] != temp[1][-1]:
                     temp[1] = np.flip(temp[0])
-                    self.controller.virtualLEDBuffer[range(self.state.size)] = self.state.color_sequence[
+                    self.controller.virtual_led_buffer[range(self.state.size)] = self.state.color_sequence[
                         range(self.state.size)
                     ]
                 temp[0] = np.roll(temp[0], self.state.step, 0)
@@ -61,7 +65,7 @@ class ArrayFunctionMerge(ArrayTransform):
                     else:
                         temp[i] = temp[1]
                 # turn the matrix back into an array
-                self.controller.virtualLEDIndexBuffer = np.reshape(
+                self.controller.virtual_led_index_buffer = np.reshape(
                     temp,
                     (self.controller.virtual_led_count),
                 )

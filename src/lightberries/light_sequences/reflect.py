@@ -6,12 +6,12 @@ from typing import Any
 
 import numpy as np
 
-from lightberries.array_patterns.base import ArrayPattern
-from lightberries.array_patterns.off import ArrayPatternOff
 from lightberries.exceptions import LightBerryError, PatternError
+from lightberries.light_sequences.base import ArraySequence
+from lightberries.light_sequences.off import OffSequence
 
 
-class ReflectArray(ArrayPattern):
+class RepeatedSequenceReflected(ArraySequence):
     """Generates an array where each repetition of the input. Sequence is reversed from the previous one."""
 
     def __init__(self, led_count: int, name: str | None = None, **kwargs: dict[str, Any]) -> None:
@@ -38,11 +38,11 @@ class ReflectArray(ArrayPattern):
 
         """
         if name is None:
-            name = ReflectArray.__name__
+            name = RepeatedSequenceReflected.__name__
         super().__init__(led_count=led_count, name=name, kwargs=kwargs)
         # if user didn't specify otherwise, fold in middle
         try:
-            input_sequence = ArrayPattern.DEFAULT_COLOR_SEQUENCE
+            input_sequence = ArraySequence.DEFAULT_COLOR_SEQUENCE
             if "color_sequence" in kwargs:
                 input_sequence = kwargs["color_sequence"].copy()
             color_sequence_length = input_sequence.shape[0]
@@ -53,12 +53,12 @@ class ReflectArray(ArrayPattern):
                 self.sequence = np.zeros((0, 3))
             else:
                 if fold_length > color_sequence_length:
-                    temp = ArrayPatternOff(fold_length).sequence
+                    temp = OffSequence(fold_length).sequence
                     temp[fold_length - color_sequence_length :] = input_sequence
                     input_sequence = temp
                     color_sequence_length = len(input_sequence)
                 flip = False
-                temp_array = ArrayPatternOff(led_count).sequence
+                temp_array = OffSequence(led_count).sequence
                 for seg_begin in range(0, led_count, fold_length):
                     overflow = 0
                     seg_end = 0

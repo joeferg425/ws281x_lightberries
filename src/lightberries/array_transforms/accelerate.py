@@ -104,7 +104,7 @@ class ArrayFunctionAccelerate(ArrayTransform):
                     kwargs={"fade_amount": self.state.fade_amount},
                 ),
             )
-            self.controller.privateLightFunctions.append(self)
+            self.controller._transforms.append(self)
         except KeyboardInterrupt:  # pragma: no cover
             raise
         except SystemExit:  # pragma: no cover
@@ -208,16 +208,16 @@ class ArrayFunctionAccelerate(ArrayTransform):
                     self.state.index_previous,
                     self.state.index + 1,
                 )
-            if len(self.controller.virtualLEDBuffer.shape) == 2:
-                self.controller.virtualLEDBuffer[self.state.index_range] = self.state.color
+            if len(self.controller.virtual_led_buffer.shape) == 2:
+                self.controller.virtual_led_buffer[self.state.index_range] = self.state.color
             else:
-                self.controller.virtualLEDBuffer[
+                self.controller.virtual_led_buffer[
                     np.where(
-                        self.controller.virtualLEDIndexBuffer == self.state.index_range,
+                        self.controller.virtual_led_index_buffer == self.state.index_range,
                     )
                 ] = self.state.color
             if splash is True:
-                self.controller.virtualLEDBuffer[splash_range, :] = self.controller.fade_color(
+                self.controller.virtual_led_buffer[splash_range, :] = self.controller.fade_color(
                     self.state.color,
                     self.controller.background_color,
                     50,

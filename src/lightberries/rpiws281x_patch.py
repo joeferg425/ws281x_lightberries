@@ -2,8 +2,11 @@
 
 This allows easier interaction from the rest of LightBerries
 """
+
 from __future__ import annotations
+
 import logging
+
 import numpy as np
 
 LOGGER = logging.getLogger("LightBerries")
@@ -31,14 +34,16 @@ class PixelStrip:
 
     def begin(self):
         """Fake method."""
-        pass  # pylint: disable = unnecessary-pass # pragma: no cover
+        # pylint: disable = unnecessary-pass # pragma: no cover
 
     def setPixelColor(self, index: int, color: int):
         """Fake method.
 
         Args:
+        ----
             index: ignored
             color: ignored
+
         """
         self.fake[index] = color
 
@@ -46,26 +51,29 @@ class PixelStrip:
         """Fake method.
 
         Args:
+        ----
             index: ignored
 
         Returns:
+        -------
             ignored
+
         """
         return self.fake[index]
 
     def show(self):
         """Fake method."""
-        pass  # pylint: disable = unnecessary-pass
 
     def _cleanup(self):
         """Fake method."""
-        pass  # pylint: disable = unnecessary-pass
 
     def numPixels(self) -> int:
         """Fake method.
 
-        Returns:
+        Returns
+        -------
             count
+
         """
         return self.count
 
@@ -75,11 +83,14 @@ def ws2811_led_set(channel, index, value):
     """Fake method.
 
     Args:
+    ----
         channel: ignored
         index: ignored
         value: ignored
 
     Returns:
+    -------
         garbage
+
     """
     return (channel, index, value)  # pragma: no cover

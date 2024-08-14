@@ -2,7 +2,9 @@
 
 This allows easier interaction from the rest of LightBerries
 """
+
 from __future__ import annotations
+
 import logging
 import sys
 
@@ -20,12 +22,15 @@ else:
             third argument forced to int type
 
         Args:
+        ----
             self: the self object
             pos: LED position (index)
             value: LED value (color)
 
         Returns:
+        -------
             patch
+
         """
         # Handle if a slice of positions are passed in by setting the
         # appropriate LED data values to the provided values.

@@ -1,3 +1,4 @@
+import logging
 import random
 
 import numpy as np
@@ -5,6 +6,8 @@ import numpy as np
 import lightberries.array_controller
 from lightberries.array_transforms.base import ArrayTransform, RaindropStates
 from lightberries.exceptions import FunctionError, LightBerryError
+
+LOGGER = logging.getLogger("lightBerries")
 
 
 class ArrayFunctionRaindrops(ArrayTransform):
@@ -74,15 +77,15 @@ class ArrayFunctionRaindrops(ArrayTransform):
                     )
                     if (indexLowerMax - indexLowerMin) > 0:
                         indexRange = list(range(indexLowerMin, indexLowerMax))
-                        self.controller.virtualLEDBuffer[indexLowerMin:indexLowerMax] = [self.state.color] * (
+                        self.controller.virtual_led_buffer[indexLowerMin:indexLowerMax] = [self.state.color] * (
                             indexLowerMax - indexLowerMin
                         )
-                        if len(self.controller.virtualLEDBuffer.shape) == 2:
-                            self.controller.virtualLEDBuffer[indexRange] = self.state.color
+                        if len(self.controller.virtual_led_buffer.shape) == 2:
+                            self.controller.virtual_led_buffer[indexRange] = self.state.color
                         else:
-                            self.controller.virtualLEDBuffer[
+                            self.controller.virtual_led_buffer[
                                 np.where(
-                                    self.controller.virtualLEDIndexBuffer == indexRange,
+                                    self.controller.virtual_led_index_buffer == indexRange,
                                 )
                             ] = self.state.color
                     if (indexHigherMax - indexHigherMin) > 0:
@@ -91,12 +94,12 @@ class ArrayFunctionRaindrops(ArrayTransform):
                         # = [raindrop.color] * (
                         # indexHigherMax - indexHigherMin
                         # )
-                        if len(self.controller.virtualLEDBuffer.shape) == 2:
-                            self.controller.virtualLEDBuffer[indexRange] = self.state.color
+                        if len(self.controller.virtual_led_buffer.shape) == 2:
+                            self.controller.virtual_led_buffer[indexRange] = self.state.color
                         else:
-                            self.controller.virtualLEDBuffer[
+                            self.controller.virtual_led_buffer[
                                 np.where(
-                                    self.controller.virtualLEDIndexBuffer == indexRange,
+                                    self.controller.virtual_led_index_buffer == indexRange,
                                 )
                             ] = self.state.color
                     # scaled fading as splash grows

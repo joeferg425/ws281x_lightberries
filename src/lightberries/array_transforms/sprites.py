@@ -1,3 +1,4 @@
+import logging
 from random import random
 
 import numpy as np
@@ -6,6 +7,8 @@ import lightberries.array_controller
 from lightberries.array_transforms.base import ArrayTransform, SpriteState
 from lightberries.exceptions import FunctionError, LightBerryError
 from lightberries.pixel import PixelColors
+
+LOGGER = logging.getLogger("lightBerries")
 
 
 class ArrayFunctionSprites(ArrayTransform):
@@ -104,12 +107,12 @@ class ArrayFunctionSprites(ArrayTransform):
                 self.state.index_updated = False
                 # assign LEDs to LED string
                 # self.controller.virtualLEDBuffer[sprite.indexRange] = [sprite.color] * len(sprite.indexRange)
-                if len(self.controller.virtualLEDBuffer.shape) == 2:
-                    self.controller.virtualLEDBuffer[self.state.index_range] = self.state.color
+                if len(self.controller.virtual_led_buffer.shape) == 2:
+                    self.controller.virtual_led_buffer[self.state.index_range] = self.state.color
                 else:
-                    self.controller.virtualLEDBuffer[
+                    self.controller.virtual_led_buffer[
                         np.where(
-                            self.controller.virtualLEDIndexBuffer == self.state.index_range,
+                            self.controller.virtual_led_index_buffer == self.state.index_range,
                         )
                     ] = self.state.color
         except SystemExit:  # pragma: no cover

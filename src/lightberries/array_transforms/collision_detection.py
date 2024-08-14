@@ -1,3 +1,4 @@
+import logging
 import random
 from typing import Any
 
@@ -7,6 +8,8 @@ import lightberries.array_controller
 from lightberries.array_transforms.base import ArrayTransform
 from lightberries.exceptions import FunctionError, LightBerryError
 from lightberries.pixel import PixelColors
+
+LOGGER = logging.getLogger("lightBerries")
 
 
 class ArrayFunctionCollisionDetection(ArrayTransform):
@@ -146,7 +149,7 @@ class ArrayFunctionCollisionDetection(ArrayTransform):
                                         explosionColors.append(
                                             PixelColors.YELLOW.array * ((radius - i) / radius),
                                         )
-                                    self.controller.virtualLEDBuffer[explosionIndices] = np.array(explosionColors)
+                                    self.controller.virtual_led_buffer[explosionIndices] = np.array(explosionColors)
         except KeyboardInterrupt:  # pragma: no cover
             raise
         except SystemExit:  # pragma: no cover

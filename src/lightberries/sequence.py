@@ -16,12 +16,12 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("lightBerries")
 
 
-class LightPattern:
+class PixelSequence:
     """A pattern of lights."""
 
     DEFAULT_TWINKLE_COLOR = PixelColors.GRAY
     DEFAULT_BACKGROUND_COLOR = PixelColors.OFF
-    ALL_PATTERNS: ClassVar[dict[str, LightPattern]] = {}
+    ALL_PATTERNS: ClassVar[dict[str, PixelSequence]] = {}
 
     def __init__(self, led_count: int, name: str | None = None, **kwargs: dict[str, Any]) -> None:  # noqa: ARG002
         """Create a pattern of lights.
@@ -34,7 +34,7 @@ class LightPattern:
 
         """
         if name is None:
-            name = LightPattern.__name__
+            name = PixelSequence.__name__
         self.ALL_PATTERNS[name] = self
         self._sequence: np.ndarray[(3, Any), np.int32] = np.array(
             [PixelColors.OFF.array for i in range(int(led_count))],

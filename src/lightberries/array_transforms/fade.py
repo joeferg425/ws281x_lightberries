@@ -1,3 +1,4 @@
+import logging
 from math import ceil
 from typing import Any
 
@@ -6,6 +7,8 @@ import numpy as np
 import lightberries.array_controller
 from lightberries.array_transforms.base import ArrayTransform
 from lightberries.exceptions import FunctionError, LightBerryError
+
+LOGGER = logging.getLogger("lightBerries")
 
 
 class ArrayFunctionFade(ArrayTransform):
@@ -44,15 +47,19 @@ class ArrayFunctionFade(ArrayTransform):
                     _fadeAmount = 255
                 for i in range(self.controller.real_led_count):
                     for rgbIndex in range(len(self.state.color)):
-                        if self.controller.virtualLEDBuffer[i, rgbIndex] != self.state.color[rgbIndex]:
-                            if self.controller.virtualLEDBuffer[i, rgbIndex] - _fadeAmount > self.state.color[rgbIndex]:
-                                self.controller.virtualLEDBuffer[i, rgbIndex] -= _fadeAmount
-                            elif (
-                                self.controller.virtualLEDBuffer[i, rgbIndex] + _fadeAmount < self.state.color[rgbIndex]
+                        if self.controller.virtual_led_buffer[i, rgbIndex] != self.state.color[rgbIndex]:
+                            if (
+                                self.controller.virtual_led_buffer[i, rgbIndex] - _fadeAmount
+                                > self.state.color[rgbIndex]
                             ):
-                                self.controller.virtualLEDBuffer[i, rgbIndex] += _fadeAmount
+                                self.controller.virtual_led_buffer[i, rgbIndex] -= _fadeAmount
+                            elif (
+                                self.controller.virtual_led_buffer[i, rgbIndex] + _fadeAmount
+                                < self.state.color[rgbIndex]
+                            ):
+                                self.controller.virtual_led_buffer[i, rgbIndex] += _fadeAmount
                             else:
-                                self.controller.virtualLEDBuffer[i, rgbIndex] = self.state.color[rgbIndex]
+                                self.controller.virtual_led_buffer[i, rgbIndex] = self.state.color[rgbIndex]
         except KeyboardInterrupt:  # pragma: no cover
             raise
         except SystemExit:  # pragma: no cover

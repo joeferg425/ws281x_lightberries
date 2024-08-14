@@ -85,9 +85,9 @@ class ArrayFunctionSolidColorCycle(ArrayTransform):
                 # reset delay counter
                 self.state.delay_counter = 0
                 # remove any current color
-                self.controller.virtualLEDBuffer *= 0
+                self.controller.virtual_led_buffer *= 0
                 # add new color
-                self.controller.virtualLEDBuffer += self.color_sequence_next
+                self.controller.virtual_led_buffer += self.color_sequence_next
             # increment delay counter
             self.state.delay_counter += 1
         except SystemExit:  # pragma: no cover

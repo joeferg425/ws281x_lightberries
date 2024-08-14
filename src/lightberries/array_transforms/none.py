@@ -1,12 +1,18 @@
 """Basic function. It does nothing."""
 
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING, Any
 
-import numpy as np
-
-import lightberries.array_controller
 from lightberries.array_transforms.base import ArrayTransform
-from lightberries.exceptions import ControllerError, FunctionError, LightBerryError
+
+if TYPE_CHECKING:
+    import numpy as np
+
+    import lightberries.array_controller
+    from lightberries.state import TransformState
+    from lightberries.transform import LightTransform
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -14,73 +20,42 @@ LOGGER = logging.getLogger("lightBerries")
 class ArrayFunctionNone(ArrayTransform):
     """Basic function. It does nothing."""
 
-    def __init__(
-        self,
-        controller: lightberries.array_controller.ArrayController,
-        color_sequence: np.ndarray = None,
-    ) -> None:
+    def __init__(self, controller: lightberries.array_controller.ArrayController) -> None:
         """Do nothing.
 
         Args:
         ----
             controller: array controller instance
-            color_sequence: optional; color sequence. Defaults to None.
-
-        Raises:
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightBerryException: if propagating an exception
-            LightControlException: if something bad happens
 
         """
         super().__init__(
             name=ArrayFunctionNone.__class__.__name__,
             controller=controller,
-            color_sequence=color_sequence,
-            state=state,
-            kwargs=kwargs,
         )
-        LOGGER.debug("%s.%s:", self.__class__.__name__, self.useFunctionNone.__name__)
-        try:
-            # create an object to put in the light data list so we don't just abort the run
-            controller.privateLightFunctions.append(
-                ArrayTransform(
-                    self,
-                    ArrayTransform.functionNone,
-                    self.color_sequence,
-                ),
-            )
-        except SystemExit:  # pragma: no cover
-            raise
-        except KeyboardInterrupt:  # pragma: no cover
-            raise
-        except LightBerryError:  # pragma: no cover
-            raise
-        except Exception as ex:  # pragma: no cover
-            raise ControllerError from ex
 
-    def _transform(self) -> None:
-        """Do nothing.
+    def setup(
+        self,
+        color_sequence: np.ndarray[Any, np.int32] | None = None,
+        state: TransformState | None = None,
+    ) -> list[LightTransform]:
+        """Configure the transformation.
 
         Args:
         ----
-            nothing: tracking object
+            color_sequence: color sequence. Defaults to None.
+            state: initial state. Defaults to None.
 
-        Raises:
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightFunctionException: if something bad happens
+        Returns:
+        -------
+            list of transforms
 
         """
-        try:  # pragma: no cover
-            pass  # pragma: no cover
-        except KeyboardInterrupt:  # pragma: no cover
-            raise
-        except SystemExit:  # pragma: no cover
-            raise
-        except LightBerryError:  # pragma: no cover
-            raise
-        except Exception as ex:  # pragma: no cover
-            raise FunctionError from ex
+        # create an object to put in the light data list so we don't just abort the run
+        super().setup(
+            color_sequence=color_sequence,
+            state=state,
+        )
+        return [self]
+
+    def transform(self) -> None:
+        """Do nothing."""

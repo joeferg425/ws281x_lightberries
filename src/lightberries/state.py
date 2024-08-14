@@ -2,18 +2,21 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from enum import IntEnum
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from lightberries.array_patterns.array_patterns import ArrayPattern
+from lightberries.light_sequences.base import ArraySequence
 from lightberries.pixel import PixelColors
 
 if TYPE_CHECKING:
     import lightberries.array_controller
     from lightberries.transform import LightTransform
+
+LOGGER = logging.getLogger("lightBerries")
 
 
 class LEDFadeType(IntEnum):
@@ -141,7 +144,7 @@ class TransformState:
     period_short: int = 10
 
     def __post_init__(self) -> None:
-        self.color_sequence = ArrayPattern.default_color_sequence_by_month()
+        self.color_sequence = ArraySequence.default_color_sequence_by_month()
         self.color_sequence_count = len(self.color_sequence)
 
         self.index_next: int = self.index

@@ -4,15 +4,13 @@ version = "1.0.2"
 description = "A wrapper for rpi_ws281x that does all the heavy lifting for you."
 authors = ["joeferg425"]
 license = "MIT"
-packages = [
-    { include = "lightberries", from = "src" },
-]
+packages = [{ include = "lightberries", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
 numpy = "^2.0"
-rpi-ws281x = {version = "^4.3", optional = true}
-pygame = {version = "^2.1.2", extras = ["examples"]}
+rpi-ws281x = { version = "^4.3", optional = true }
+pygame = { version = "^2.1.2", extras = ["examples"] }
 
 [tool.poetry.dev-dependencies]
 black = "^22.1"
@@ -32,20 +30,18 @@ build-backend = "poetry.core.masonry.api"
 name = "lightberries"
 version = "1.0.1dev"
 dependencies = [
-        "Adafruit-Blinka>=3.0.0",
-        "adafruit-circuitpython-neopixel==3.4.0",
-        "numpy>=1.15.1",
-        "rpi_ws281x==4.2.2",
-        "RPi.GPIO>=0.7.0",
+    "Adafruit-Blinka>=3.0.0",
+    "adafruit-circuitpython-neopixel==3.4.0",
+    "numpy>=1.15.1",
+    "rpi_ws281x==4.2.2",
+    "RPi.GPIO>=0.7.0",
 ]
 requires-python = ">=3.9"
 description = "A wrapper for rpi_ws281x that does all the heavy lifting for you."
 keywords = ["raspberry", "pi", "rpi", "rpi_ws281x", "adafruit", "neopixel"]
-authors = [
-    {name = "JoeFerg425"}
-]
+authors = [{ name = "JoeFerg425" }]
 readme = "README.md"
-license = {file = "LICENSE"}
+license = { file = "LICENSE" }
 
 [project.urls]
 Repository = "https://github.com/joeferg425/ws281x_lightberries"
@@ -59,3 +55,16 @@ line-length = 120
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["tests/test_*.py"]
+
+[tool.ruff]
+line-length = 120
+
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "PLC0414",
+    "D105",
+    "S311",    # stop warning me about cryptographic security in my lights library
+    "SIM108",  # I'll use a ternary operator if I want to
+]

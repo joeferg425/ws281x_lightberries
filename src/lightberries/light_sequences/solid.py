@@ -6,11 +6,11 @@ from typing import Any
 
 import numpy as np
 
-from lightberries.array_patterns.base import ArrayPattern
 from lightberries.exceptions import LightBerryError, PatternError
+from lightberries.light_sequences.base import ArraySequence
 
 
-class SolidColorArray(ArrayPattern):
+class SolidSequence(ArraySequence):
     """Creates array of RGB tuples that are all one color."""
 
     def __init__(self, led_count: int, name: str | None = None, **kwargs: dict[str, Any]) -> None:
@@ -33,7 +33,7 @@ class SolidColorArray(ArrayPattern):
 
         """
         if name is None:
-            name = SolidColorArray.__name__
+            name = SolidSequence.__name__
         super().__init__(name=name, led_count=led_count, kwargs=kwargs)
         try:
             color = self.DEFAULT_COLOR_SEQUENCE[0]

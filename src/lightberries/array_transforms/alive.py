@@ -1,10 +1,18 @@
+import logging
 from random import random
 
 import numpy as np
 
 import lightberries.array_controller
-from lightberries.array_transforms.base import ArrayTransform, ThingColors, ThingMoves, ThingSizes
+from lightberries.array_transforms.base import (
+    ArrayTransform,
+    ThingColors,
+    ThingMoves,
+    ThingSizes,
+)
 from lightberries.exceptions import FunctionError, LightBerryError
+
+LOGGER = logging.getLogger("lightBerries")
 
 
 class ArrayFunctionAlive(ArrayTransform):
@@ -181,12 +189,12 @@ class ArrayFunctionAlive(ArrayTransform):
             self.state.delay_counter += 1
             # assign colors to indices
             # self.controller.virtualLEDBuffer[thing.indexRange] = thing.color
-            if len(self.controller.virtualLEDBuffer.shape) == 2:
-                self.controller.virtualLEDBuffer[self.state.index_range] = self.state.color
+            if len(self.controller.virtual_led_buffer.shape) == 2:
+                self.controller.virtual_led_buffer[self.state.index_range] = self.state.color
             else:
-                self.controller.virtualLEDBuffer[
+                self.controller.virtual_led_buffer[
                     np.where(
-                        self.controller.virtualLEDIndexBuffer == self.state.index_range,
+                        self.controller.virtual_led_index_buffer == self.state.index_range,
                     )
                 ] = self.state.color
         except SystemExit:  # pragma: no cover

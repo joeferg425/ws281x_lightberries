@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import random
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -15,6 +16,8 @@ from lightberries.state import TransformState
 if TYPE_CHECKING:
     import lightberries.array_controller
 
+LOGGER = logging.getLogger("lightBerries")
+
 
 class LightTransform(ABC):
     """Modify LED strings in interesting ways."""
@@ -25,8 +28,6 @@ class LightTransform(ABC):
         self,
         name: str,
         controller: lightberries.array_controller.ArrayController,
-        state: TransformState | None = None,
-        **kwargs: dict[str, Any],
     ) -> None:
         """Initialize the Light Function tracking object.
 
@@ -38,15 +39,13 @@ class LightTransform(ABC):
             kwargs: extra args to the state object
 
         """
-        self.controller = controller
-        self.ALL_FUNCTIONS[name] = self
+        self.ALL_TRANSFORMS[name] = self
 
-        self._name: str = name
-        if state is None:
-            self.state = TransformState(controller=self.controller, **kwargs)
-        else:
-            self.state = state
-            self.state.controller = controller
+        self.controller = controller
+        self._name = name
+        self.state = TransformState(controller=self.controller)
+
+        LOGGER.debug("Transform: %s", name)
 
     def __str__(
         self,
@@ -64,6 +63,21 @@ class LightTransform(ABC):
 
         """
         return f"<{self.__class__.__name__}> {self!s}"
+
+    @abstractmethod
+    def setup(
+        self,
+        color_sequence: np.ndarray[(3, Any), np.int32] | None = None,
+        state: TransformState | None = None,
+        **kwargs: dict[str, Any],
+    ) -> list[LightTransform]:
+        """Create one or more transform instances.
+
+        Returns
+        -------
+            one or more transform instances
+
+        """
 
     @abstractmethod
     def transform(self) -> None:
