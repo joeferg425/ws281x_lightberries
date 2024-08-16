@@ -28,6 +28,7 @@ class LightTransform(ABC):
         self,
         name: str,
         controller: lightberries.array_controller.ArrayController,
+        state: TransformState | None = None,
     ) -> None:
         """Initialize the Light Function tracking object.
 
@@ -35,15 +36,17 @@ class LightTransform(ABC):
         ----
             name: name of the function
             controller: Array controller instance
-            state: the initial or previous state of the light string
-            kwargs: extra args to the state object
+            state: initial state. Defaults to None.
 
         """
         self.ALL_TRANSFORMS[name] = self
 
         self.controller = controller
         self._name = name
-        self.state = TransformState(controller=self.controller)
+        if state is None:
+            self.state = TransformState(controller=self.controller)
+        else:
+            self.state = state
 
         LOGGER.debug("Transform: %s", name)
 
@@ -73,7 +76,13 @@ class LightTransform(ABC):
     ) -> list[LightTransform]:
         """Create one or more transform instances.
 
-        Returns
+        Args:
+        ----
+            color_sequence: color sequence. Defaults to None.
+            state: initial state. Defaults to None.
+            kwargs: extra args to the state object
+
+        Returns:
         -------
             one or more transform instances
 

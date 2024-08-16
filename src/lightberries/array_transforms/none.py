@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("lightBerries")
 
 
-class ArrayFunctionNone(ArrayTransform):
+class TransformNone(ArrayTransform):
     """Basic function. It does nothing."""
 
     def __init__(self, controller: lightberries.array_controller.ArrayController) -> None:
@@ -29,7 +29,7 @@ class ArrayFunctionNone(ArrayTransform):
 
         """
         super().__init__(
-            name=ArrayFunctionNone.__class__.__name__,
+            name=TransformNone.__class__.__name__,
             controller=controller,
         )
 

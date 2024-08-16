@@ -7,7 +7,7 @@ import logging
 import os
 import sys
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any, Self, overload
+from typing import TYPE_CHECKING, Any, overload
 
 import numpy as np
 
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("lightBerries")
 
 
-class WS281xString(Sequence[np.int_]):
+class WS281xString(Sequence[np.int32]):
     """Defines basic LED array data and functions."""
 
     def __init__(  # noqa: PLR0913
@@ -234,7 +234,7 @@ class WS281xString(Sequence[np.int_]):
         pixel: np.ndarray[np.int32]
         if isinstance(key, int):
             pixel = Pixel(self._ws281x_pixel_strip.getPixelColor(key)).array
-        elif isinstance(key, (np.int_, np.int32)):
+        elif isinstance(key, (np.int32, np.int32)):
             pixel = Pixel(self._ws281x_pixel_strip.getPixelColor(int(key))).array
         else:
             pixel = ArraySequence.pixel_array_to_numpy_array(
@@ -265,21 +265,21 @@ class WS281xString(Sequence[np.int_]):
         if isinstance(key, slice):
             for i, j in enumerate(range(self._ledCount)[key]):
                 p = Pixel(value[i, :])
-                self._ws281x_pixel_strip.setPixelColor(j, p.int_value)
-        elif isinstance(key, (np.int_, np.int32)):
+                self._ws281x_pixel_strip.setPixelColor(j, p.int32value)
+        elif isinstance(key, (np.int32, np.int32)):
             if int(key) >= self._ledCount:
                 raise IndexError
             p = Pixel(value)
-            self._ws281x_pixel_strip.setPixelColor(int(key), p.int_value)
+            self._ws281x_pixel_strip.setPixelColor(int(key), p.int32value)
         else:
             if key >= self._ledCount:
                 raise IndexError
             p = Pixel(value)
-            self._ws281x_pixel_strip.setPixelColor(key, p.int_value)
+            self._ws281x_pixel_strip.setPixelColor(key, p.int32value)
 
-    def __enter__(
+    def __enter__(  # noqa: PYI034
         self,
-    ) -> Self:
+    ) -> WS281xString:
         """Get an instance of this object object.
 
         Returns

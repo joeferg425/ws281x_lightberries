@@ -1,38 +1,30 @@
 """Light array functions."""
 
 from lightberries.array_transforms.accelerate import (
-    ArrayFunctionAccelerate as ArrayFunctionAccelerate,
+    TransformAccelerate as TransformAccelerate,
 )
-from lightberries.array_transforms.alive import ArrayFunctionAlive as ArrayFunctionAlive
+from lightberries.array_transforms.alive import TransformAlive as TransformAlive
 from lightberries.array_transforms.collision_detection import (
-    ArrayFunctionCollisionDetection as ArrayFunctionCollisionDetection,
+    TransformCollisionDetect as TransformCollisionDetect,
 )
-from lightberries.array_transforms.cylon import ArrayFunctionCylon as ArrayFunctionCylon
-from lightberries.array_transforms.fade import ArrayFunctionFade as ArrayFunctionFade
-from lightberries.array_transforms.fade_off import (
-    ArrayTransformFadeOff as ArrayTransformFadeOff,
-)
-from lightberries.array_transforms.marquee import (
-    ArrayFunctionMarquee as ArrayFunctionMarquee,
-)
-from lightberries.array_transforms.merge import ArrayFunctionMerge as ArrayFunctionMerge
-from lightberries.array_transforms.meteors import (
-    ArrayFunctionMeteors as ArrayFunctionMeteors,
-)
-from lightberries.array_transforms.none import ArrayFunctionNone as ArrayFunctionNone
+from lightberries.array_transforms.cylon import TransformCylon as TransformCylon
+from lightberries.array_transforms.fade import TransformFade as TransformFade
+from lightberries.array_transforms.fade_off import TransformFadeOff as TransformFadeOff
+from lightberries.array_transforms.marquee import TransformMarquee as TransformMarquee
+from lightberries.array_transforms.merge import TransformMerge as TransformMerge
+from lightberries.array_transforms.meteors import TransformMeteors as TransformMeteors
+from lightberries.array_transforms.none import TransformNone as TransformNone
 from lightberries.array_transforms.off import TransformOff as TransformOff
 from lightberries.array_transforms.raindrops import (
-    ArrayFunctionRaindrops as ArrayFunctionRaindrops,
+    TransformRaindrop as TransformRaindrop,
 )
 from lightberries.array_transforms.random_change import (
-    ArrayFunctionRandomChange as ArrayFunctionRandomChange,
+    TransformRandomChange as TransformRandomChange,
 )
 from lightberries.array_transforms.solid_color_cycle import (
-    ArrayFunctionSolidColorCycle as ArrayFunctionSolidColorCycle,
+    TransformSolidColorCycle as TransformSolidColorCycle,
 )
-from lightberries.array_transforms.sprites import (
-    ArrayFunctionSprites as ArrayFunctionSprites,
-)
+from lightberries.array_transforms.sprites import TransformSprites as TransformSprites
 from lightberries.light_transforms.blink import ArrayFunctionBlink as ArrayFunctionBlink
 from lightberries.light_transforms.twinkle import (
     ArrayFunctionTwinkle as ArrayFunctionTwinkle,

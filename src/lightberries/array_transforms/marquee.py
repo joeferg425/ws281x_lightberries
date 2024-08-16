@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("lightBerries")
 
 
-class ArrayFunctionMarquee(ArrayTransform):
+class TransformMarquee(ArrayTransform):
     """Move the LEDs in the color sequence from one end of the LED string to the other continuously."""
 
     def __init__(
@@ -34,15 +34,10 @@ class ArrayFunctionMarquee(ArrayTransform):
         ----
             controller: Array controller instance
             state: the initial or previous state of the light string
-            kwargs: extra args to the state object
-            shift_amount: the number of pixels the marquee shifts on each update
-            delay_count: number of refreshes to delay for each cycle
-            initial_direction: a positive or negative value for marquee start direction
-            kwargs: extra args to the state object
 
         """
         super().__init__(
-            name=ArrayFunctionMarquee.__name__,
+            name=TransformMarquee.__name__,
             controller=controller,
         )
 
@@ -50,15 +45,17 @@ class ArrayFunctionMarquee(ArrayTransform):
         self,
         color_sequence: np.ndarray[Any, np.int32] | None = None,
         state: TransformState | None = None,
+        *,
         shift_amount: int | None = None,
         delay_count: int | None = None,
         initial_direction: int | None = None,
+        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> list[LightTransform]:
         """Configure the transformation.
 
         Args:
         ----
-            controller: Array controller instance
+            color_sequence: color sequence. Defaults to None.
             state: the initial or previous state of the light string
             kwargs: extra args to the state object
             shift_amount: the number of pixels the marquee shifts on each update

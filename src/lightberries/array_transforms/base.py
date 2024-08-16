@@ -27,6 +27,7 @@ class ArrayTransform(LightTransform):
         self,
         name: str,
         controller: lightberries.array_controller.ArrayController,
+        state: TransformState | None = None,
     ) -> None:
         """Initialize the Light Function tracking object.
 
@@ -34,13 +35,13 @@ class ArrayTransform(LightTransform):
         ----
             name: name of the function
             controller: Array controller instance
-            state: the initial or previous state of the light string
-            kwargs: extra args to the state object
+            state: initial state. Defaults to None.
 
         """
         super().__init__(
             name=name,
             controller=controller,
+            state=state,
         )
         self.ALL_ARRAY_TRANSFORMS[name] = self
 
@@ -66,3 +67,4 @@ class ArrayTransform(LightTransform):
         self.state.color_sequence = ArraySequence.default_color_sequence_by_month()
         if color_sequence is not None:
             self.state.color_sequence = color_sequence
+        return []

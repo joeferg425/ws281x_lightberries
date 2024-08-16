@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+from lightberries.constants import MAX_INT8
 from lightberries.light_sequences.base import ArraySequence
 from lightberries.pixel import PixelColors
 
@@ -25,22 +26,6 @@ class LEDFadeType(IntEnum):
     FADE_OFF = 0
     INSTANT_OFF = 1
     DONT = 2
-
-
-class SpriteState(IntEnum):
-    """Sprite function enum."""
-
-    OFF = 0
-    FADING_ON = 1
-    ON = 2
-    FADING_OFF = 3
-
-
-class RaindropStates(IntEnum):
-    """Raindrop function states."""
-
-    OFF = 0
-    SPLASH = 1
 
 
 class ThingMoves(IntEnum):
@@ -153,3 +138,20 @@ class TransformState:
         self.index_max: int = self.index
 
         self.color: np.ndarray[(3,), np.int32] = self.controller.color_sequence[0]
+
+    def set_fade_amount(self, fade_amount: float) -> None:
+        """Make sure fade amount is valid.
+
+        Args:
+        ----
+            fade_amount: a float in range [0.0, 1.0] or an int in range [0, 255]
+
+        """
+        if fade_amount > 0 and fade_amount < 1:
+            self.fade_amount = fade_amount
+        elif fade_amount > 0 and fade_amount <= MAX_INT8:
+            self.fade_amount = fade_amount / MAX_INT8
+        if fade_amount < 0:
+            self.fade_amount = 0.1
+        elif fade_amount > 1:
+            self.fade_amount = 0.9

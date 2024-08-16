@@ -1,51 +1,74 @@
+"""Fade all Pixels toward OFF."""
+
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import lightberries.array_controller
 from lightberries.array_transforms.base import ArrayTransform
-from lightberries.exceptions import FunctionError, LightBerryError
-from lightberries.state import TransformState
+
+if TYPE_CHECKING:
+    import numpy as np
+
+    import lightberries.array_controller
+    from lightberries.state import TransformState
+    from lightberries.transform import LightTransform
 
 LOGGER = logging.getLogger("lightBerries")
 
 
-class ArrayTransformFadeOff(ArrayTransform):
+class TransformFadeOff(ArrayTransform):
+    """Fade all Pixels toward OFF."""
+
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
         state: TransformState | None = None,
-        **kwargs: dict[str, Any],
     ) -> None:
-        super().__init__(
-            name=ArrayTransformFadeOff.__class__.__name__,
-            controller=controller,
-            state=state,
-            kwargs=kwargs,
-        )
-
-    def _transform(self):
         """Fade all Pixels toward OFF.
 
         Args:
         ----
-            fade: tracking object
-
-        Raises:
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightFunctionException: if something bad happens
+            controller: Array controller instance
+            state: initial state. Defaults to None.
 
         """
-        try:
-            self.controller.virtual_led_buffer[:] = self.controller.virtual_led_buffer * (1 - self.state.fade_amount)
-        except KeyboardInterrupt:  # pragma: no cover
-            raise
-        except SystemExit:  # pragma: no cover
-            raise
-        except LightBerryError:  # pragma: no cover
-            raise
-        except Exception as ex:  # pragma: no cover
-            raise FunctionError from ex
+        super().__init__(
+            name=TransformFadeOff.__class__.__name__,
+            controller=controller,
+            state=state,
+        )
+
+    def setup(
+        self,
+        color_sequence: np.ndarray[Any, np.int32] | None = None,
+        state: TransformState | None = None,
+        *,
+        fade_amount: float | None = None,
+        **kwargs: dict[str, Any],  # noqa: ARG002
+    ) -> list[LightTransform]:
+        """Configure the transformation.
+
+        Args:
+        ----
+            color_sequence: color sequence. Defaults to None.
+            state: the initial or previous state of the light string
+            kwargs: extra args to the state object
+            fade_amount: amount to fade on each iteration
+
+        Returns:
+        -------
+            list of transforms
+
+        """
+        if color_sequence is not None:
+            self.color_sequence = self.color_sequence
+        if state is not None:
+            self.state = state
+        else:
+            self.state.set_fade_amount(fade_amount=fade_amount)
+
+    def transform(self) -> None:
+        """Fade all Pixels toward OFF."""
+        self.controller.virtual_led_buffer[:] = self.controller.virtual_led_buffer * (1 - self.state.fade_amount)
+        self.controller.virtual_led_buffer[:] = self.controller.virtual_led_buffer * (1 - self.state.fade_amount)
