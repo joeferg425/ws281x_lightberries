@@ -12,17 +12,17 @@ from lightberries.array_transforms.collision_detection import TransformCollision
 from lightberries.array_transforms.fade_off import TransformFadeOff
 from lightberries.array_transforms.off import TransformOff
 from lightberries.constants import MAX_INT8, SHAPE_2D
+from lightberries.pixel_transform import PixelTransform
 from lightberries.state import LEDFadeType, TransformState
-from lightberries.transform import Transform
 
 if TYPE_CHECKING:
     import lightberries.array_controller
-    from lightberries.transform import Transform
+    from lightberries.pixel_transform import PixelTransform
 
 LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformMeteor(Transform):
+class TransformMeteor(PixelTransform):
     """Do meteor function things."""
 
     def __init__(
@@ -139,7 +139,7 @@ class TransformMeteor(Transform):
                 state=self.state,
                 fade_amount=fade_amount,
             )
-        transforms: list[Transform] = []
+        transforms: list[PixelTransform] = []
         if fade is not None:
             transforms.append(fade)
         for _ in range(meteor_count):

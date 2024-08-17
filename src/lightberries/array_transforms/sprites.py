@@ -11,11 +11,13 @@ import numpy as np
 
 from lightberries.array_transforms.fade_off import TransformFadeOff
 from lightberries.constants import SHAPE_2D
-from lightberries.pixel import PixelColors
-from lightberries.sequence import Sequence
-from lightberries.transform import Transform
+from lightberries.pixel import PixelColor
+from lightberries.pixel_sequence import PixelSequence
+from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
     import lightberries.array_controller
     from lightberries.state import TransformState
 
@@ -31,7 +33,7 @@ class SpriteState(IntEnum):
     FADING_OFF = 3
 
 
-class TransformSprites(Transform):
+class TransformSprites(PixelTransform):
     """Do sprite function things."""
 
     def __init__(
@@ -55,12 +57,12 @@ class TransformSprites(Transform):
 
     def setup(
         self,
-        color_sequence: np.ndarray[Any, np.int32] | None = None,
+        color_sequence: NDArray[np.int32] | None = None,
         state: TransformState | None = None,
         *,
         fade_steps: int | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
-    ) -> None:
+    ) -> list[PixelTransform]:
         """Meteors fade in and out in short bursts of random length and direction.
 
         Args:
@@ -69,7 +71,7 @@ class TransformSprites(Transform):
 
         """
         if color_sequence is not None:
-            self.color_sequence = self.color_sequence
+            self.color_sequence = color_sequence
         if state is not None:
             self.state = state
         else:
@@ -78,7 +80,7 @@ class TransformSprites(Transform):
         if fade_steps is not None:
             self.state.set_fade_amount(np.ceil(255 / fade_steps))
 
-        sprites: list[Transform] = []
+        sprites: list[PixelTransform] = []
         for _ in range(max(min(self.color_sequence_count, 10), 2)):
             sprite = TransformSprites(
                 controller=self.controller,
@@ -91,16 +93,11 @@ class TransformSprites(Transform):
             # randomize direction
             sprite.state.direction = self.get_random_direction()
             # assign the target color
-            sprite.state.color_goal = self.color_sequence_next
+            sprite.state.color_next = self.color_sequence_next
             # initialize sprite to
-            sprite.state.color = Sequence.DEFAULT_BACKGROUND_COLOR.array
+            sprite.state.color = PixelSequence.DEFAULT_BACKGROUND_COLOR.array
             # copy color sequence
             sprite.state.color_sequence = self.color_sequence
-            # set next color
-            sprite.state.color_next = PixelColors.OFF.array
-            # set fade step/amount
-            # sprite._fade_steps = fade_steps
-            # sprite.state.fade_amount = fade_amount
             sprite.state.state = SpriteState.OFF.value
             sprites.append(sprite)
         # set one sprite to "fading on"
@@ -135,24 +132,16 @@ class TransformSprites(Transform):
             # if we are fading off
             if self.state.state == SpriteState.FADING_OFF.value:
                 # fade the color
-                self.state.color = self.controller.fade_color(
-                    self.state.color,
-                    self.state.color_next,
-                    self.state.fade_amount,
-                )
+                self.state.color = self.state.fade_color()
                 # if we are done fading, then change state
                 if np.array_equal(self.state.color, self.state.color_next):
                     self.state.state = SpriteState.OFF.value
             # if we are fading on
             if self.state.state == SpriteState.FADING_ON.value:
                 # fade the color
-                self.state.color = self.controller.fade_color(
-                    self.state.color,
-                    self.state.color_goal,
-                    self.state.fade_amount,
-                )
+                self.state.color = self.state.fade_color()
                 # if we are done fading
-                if np.array_equal(self.state.color, self.state.color_goal):
+                if np.array_equal(self.state.color, self.state.color_next):
                     # change state
                     self.state.state = SpriteState.ON.value
             # increment duration counter
@@ -170,16 +159,11 @@ class TransformSprites(Transform):
             # set previous (prevent artifacts)
             self.state.index_previous = self.state.index
             # set target color
-            self.state.color_goal = self.color_sequence_next
+            self.state.color_next = self.color_sequence_next
             # set current color
-            self.state.color = PixelColors.OFF.array
-            # set next color
-            self.state.color_next = PixelColors.OFF.array
+            self.state.color = PixelColor.OFF.array
         # if we changed the index
-        if self.state.index_updated is True and isinstance(
-            self.state.index_range,
-            np.ndarray,
-        ):
+        if self.state.index_updated is True:
             # reset flag
             self.state.index_updated = False
             # assign LEDs to LED string

@@ -5,19 +5,19 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from lightberries.transform import Transform
+from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
     import numpy as np
 
     import lightberries.array_controller
+    from lightberries.pixel_transform import PixelTransform
     from lightberries.state import TransformState
-    from lightberries.transform import Transform
 
 LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformNone(Transform):
+class TransformNone(PixelTransform):
     """Basic function. It does nothing."""
 
     def __init__(
@@ -44,7 +44,7 @@ class TransformNone(Transform):
         color_sequence: np.ndarray[Any, np.int32] | None = None,
         state: TransformState | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
-    ) -> list[Transform]:
+    ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:

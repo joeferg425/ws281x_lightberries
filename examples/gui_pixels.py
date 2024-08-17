@@ -12,7 +12,7 @@ from tkinter.colorchooser import askcolor
 
 import lightberries.pixel
 from lightberries.array_controller import ArrayController
-from lightberries.light_sequences.base import ArraySequence
+from lightberries.array_sequence.base import ArraySequence
 from lightberries.pixel import Pixel
 
 # the number of pixels in the light string
@@ -86,7 +86,7 @@ class LightsProcess:
             lightControl.setVirtualLEDBuffer(
                 ArraySequence.SolidSequence(
                     arrayLength=PIXEL_COUNT,
-                    color=lightberries.pixel.PixelColors.OFF,
+                    color=lightberries.pixel.PixelColor.OFF,
                 ),
             )
             lightControl.copy_virtual_leds_to_ws281x()

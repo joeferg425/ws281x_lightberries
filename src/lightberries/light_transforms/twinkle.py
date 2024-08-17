@@ -5,18 +5,19 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING, Any
 
+from lightberries.light_transforms.base import OverlayTransform
 from lightberries.state import TransformState
-from lightberries.transform import Transform
 
 if TYPE_CHECKING:
     import numpy as np
+    from numpy.typing import NDArray
 
     import lightberries.array_controller
+    from lightberries.pixel_transform import PixelTransform
     from lightberries.state import TransformState
-    from lightberries.transform import Transform
 
 
-class TransformTwinkle(Transform):
+class TransformTwinkle(OverlayTransform):
     """Do temporary twinkle modifications."""
 
     def __init__(
@@ -43,41 +44,28 @@ class TransformTwinkle(Transform):
 
     def setup(
         self,
-        color_sequence: np.ndarray[Any, np.int32] | None = None,
+        color_sequence: NDArray[np.int32] | None = None,
         state: TransformState | None = None,
-    ) -> list[Transform]:
-        """Create one or more transform instances.
-
-        Args:
-        ----
-            color_sequence: color sequence. Defaults to None.
-            state: initial state. Defaults to None.
-            kwargs: extra args to the state object
-
-        Returns:
-        -------
-            one or more transform instances
-
-        """
-
-    def setup(
-        self,
         twinkle_chance: float | None = None,
-        color_sequence: np.ndarray[(3, Any), np.int32] | None = None,
-    ) -> None:
+    ) -> list[PixelTransform]:
         """Randomly sets some lights to 'twinkleColor' temporarily.
 
         Args:
         ----
-            twinkleChance: chance of a twinkle
-            colorSequence: the list of colors to be used when briefly flashing an LED
+            color_sequence: the list of colors to be used when briefly flashing an LED
+            state: initial state. Defaults to None.
+            twinkle_chance: chance of a twinkle
 
         """
-        if twinkle_chance is not None:
-            twinkle_chance = random.uniform(0.991, 0.995)
         if color_sequence is not None:
-            color_sequence = self.color_sequence.copy()
-        self.state.random = twinkle_chance
+            self.color_sequence = self.color_sequence.copy()
+        if state is not None:
+            self.state = state
+        else:
+            self.state.random = random.uniform(0.991, 0.995)
+
+        if twinkle_chance is not None:
+            self.state.random = twinkle_chance
         return [self]
 
     def transform(self) -> None:
@@ -91,5 +79,7 @@ class TransformTwinkle(Transform):
 
         """
         for index in range(self.controller.real_led_count):
+            if random.random() > self.state.random:
+                self.controller.overlay_dictionary[index] = self.color_sequence_next
             if random.random() > self.state.random:
                 self.controller.overlay_dictionary[index] = self.color_sequence_next

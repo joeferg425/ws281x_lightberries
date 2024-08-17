@@ -2,9 +2,9 @@
 """An example of using this module."""
 
 from lightberries.array_controller import ArrayController
+from lightberries.array_sequence.base import ArraySequence
 from lightberries.array_transforms.raindrops import TransformRaindrop
-from lightberries.light_sequences.base import ArraySequence
-from lightberries.pixel import PixelColors
+from lightberries.pixel import PixelColor
 
 # the number of pixels in the light string
 PIXEL_COUNT = 256

@@ -4,35 +4,40 @@ from __future__ import annotations
 
 import logging
 import random
-from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 
+from lightberries.array_sequence.base import ArraySequence
 from lightberries.exceptions import ControllerError, LightBerryError
-from lightberries.light_sequences.base import ArraySequence
 from lightberries.pixel import LEDOrder, Pixel
 from lightberries.state import TransformState
 
 if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
     import lightberries.array_controller
 
 LOGGER = logging.getLogger("lightBerries")
 
 
-class Transform(ABC):
+class PixelTransform:
     """Modify LED strings in interesting ways."""
 
-    ALL_TRANSFORMS: ClassVar[dict[str, type[Transform]]] = {}
+    ALL_TRANSFORMS: ClassVar[dict[str, type[PixelTransform]]] = {}
 
-    def __init_subclass__(cls, **kwargs) -> None:  # noqa: ANN003
+    def __init_subclass__(
+        cls,
+        **kwargs: dict[str, Any],
+    ) -> None:
         cls.ALL_TRANSFORMS[cls.__name__.replace("Transform", "")] = cls
 
     def __init__(
         self,
-        name: str,
         controller: lightberries.array_controller.ArrayController,
+        name: str | None = None,
         state: TransformState | None = None,
+        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> None:
         """Initialize the Light Function tracking object.
 
@@ -41,8 +46,11 @@ class Transform(ABC):
             name: name of the function
             controller: Array controller instance
             state: initial state. Defaults to None.
+            kwargs: args for patterns
 
         """
+        if name is None:
+            name = PixelTransform.__name__
         self.controller = controller
         self._name = name
         if state is None:
@@ -67,13 +75,13 @@ class Transform(ABC):
             string representation of this class(not de-serializable)
 
         """
-        return f"<{self.__name__}> {self!s}"
+        return f"<{PixelTransform.__name__}> {self!s}"
 
     def setup(
         self,
-        color_sequence: np.ndarray[Any, np.int32] | None = None,
+        color_sequence: NDArray[np.int32] | None = None,
         state: TransformState | None = None,
-    ) -> list[Transform]:
+    ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:
@@ -93,14 +101,13 @@ class Transform(ABC):
             self.state.color_sequence = color_sequence
         return []
 
-    @abstractmethod
     def transform(self) -> None:
         """Run this array function's transformation."""
 
     @property
     def color_sequence(
         self,
-    ) -> np.ndarray[(3, Any), np.int32]:
+    ) -> NDArray[np.int32]:
         """Return the color sequence.
 
         Returns
@@ -113,7 +120,7 @@ class Transform(ABC):
     @color_sequence.setter
     def color_sequence(
         self,
-        color_sequence: np.ndarray[(3, Any), np.int32],
+        color_sequence: NDArray[np.int32],
     ) -> None:
         """Set the color sequence.
 
@@ -125,6 +132,7 @@ class Transform(ABC):
         self.state.color_sequence = color_sequence
         self.state.color_sequence_count = len(self.state.color_sequence)
         self.state.color_sequence_index = 0
+        self.state.color = self.state.color_sequence[0]
 
     @property
     def color_sequence_count(
@@ -183,7 +191,7 @@ class Transform(ABC):
     @property
     def color_sequence_next(
         self,
-    ) -> np.ndarray[(3,), np.int32]:
+    ) -> NDArray[np.int32]:
         """Get the next color in the sequence.
 
         Returns
@@ -208,7 +216,7 @@ class Transform(ABC):
 
     def calc_range(
         self,
-    ) -> np.ndarray[(Any,), np.int32]:
+    ) -> NDArray[np.int32]:
         """Calculate index range.
 
         Args:
@@ -274,7 +282,7 @@ class Transform(ABC):
     def get_random_indices(
         self,
         count: int,
-    ) -> np.ndarray[(Any), np.int32]:
+    ) -> NDArray[np.int32]:
         """Retrieve a random list of Pixel indices.
 
         Args:

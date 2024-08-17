@@ -8,20 +8,20 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+from lightberries.array_sequence.solid import SequenceSolid
 from lightberries.array_transforms.fade_off import TransformFadeOff
-from lightberries.light_sequences.solid import SequenceSolid
-from lightberries.pixel import PixelColors
-from lightberries.transform import Transform
+from lightberries.pixel import PixelColor
+from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
     import lightberries.array_controller
+    from lightberries.pixel_transform import PixelTransform
     from lightberries.state import TransformState
-    from lightberries.transform import Transform
 
 LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformMarquee(Transform):
+class TransformMarquee(PixelTransform):
     """Move the LEDs in the color sequence from one end of the LED string to the other continuously."""
 
     def __init__(
@@ -52,7 +52,7 @@ class TransformMarquee(Transform):
         delay_count: int | None = None,
         initial_direction: int | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
-    ) -> list[Transform]:
+    ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:
@@ -91,7 +91,7 @@ class TransformMarquee(Transform):
         if self.color_sequence_count >= self.controller.virtual_led_count - 10:
             array = SequenceSolid(
                 arrayLength=self.color_sequence_count + 10,
-                color=PixelColors.OFF.array,
+                color=PixelColor.OFF.array,
             )
             array[: self.color_sequence_count] = self.color_sequence
             self.controller.set_virtual_led_buffer(array)

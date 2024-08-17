@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from lightberries.light_sequences.reflect import SequenceRepeatedReflected
-from lightberries.transform import Transform
+from lightberries.array_sequence.reflect import SequenceRepeatedReflected
+from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
     import lightberries.array_controller
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformMerge(Transform):
+class TransformMerge(PixelTransform):
     """Reflect a color sequence and shift the reflections toward each other in the middle."""
 
     def __init__(

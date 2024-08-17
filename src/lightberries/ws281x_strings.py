@@ -10,19 +10,21 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any, overload
 
 import numpy as np
+from numpy.typing import NDArray
 
-from lightberries.exceptions import PermissionsError, WS281xStringError
-from lightberries.light_sequences.base import ArraySequence
-from lightberries.pixel import Pixel, PixelColors
+from lightberries.array_sequence.base import ArraySequence
+from lightberries.exceptions import PermissionsError
+from lightberries.pixel import Pixel, PixelColor
 from lightberries.rpiws281x import rpi_ws281x
 
 if TYPE_CHECKING:
-    from ctypes import Union
+
+    from lightberries.rpiws281x_patch import PixelStrip
 
 LOGGER = logging.getLogger("lightBerries")
 
 
-class WS281xString(Sequence[np.int32]):
+class WS281xString(Sequence[NDArray[np.int32]]):
     """Defines basic LED array data and functions."""
 
     def __init__(  # noqa: PLR0913
@@ -36,7 +38,7 @@ class WS281xString(Sequence[np.int32]):
         led_strip_type: Any = None,  # noqa: ANN401
         led_gamma: Any = None,  # noqa: ANN401
         matrix_shape: tuple[int, int] | None = None,
-        matrix_layout: np.ndarray[np.int32] | None = None,
+        matrix_layout: NDArray[np.int32] | None = None,
         *,
         pwm_invert_signal: bool = False,
         simulate: bool = False,
@@ -70,13 +72,9 @@ class WS281xString(Sequence[np.int32]):
             LightStringException: if something bad happens
 
         """
-        self._ws281x_pixel_strip = None
+        self._ws281x_pixel_strip: PixelStrip
         self._simulate = simulate
         self._testing = testing
-        # catch error cases first
-        if led_count is None or not isinstance(led_count, int):
-            msg = f"Cannot create LightString with ledCount: {led_count}."
-            raise WS281xStringError(msg)
         # use passed led count if it is valid
         self._ledCount = led_count
         if self._testing:
@@ -115,7 +113,7 @@ class WS281xString(Sequence[np.int32]):
         led_strip_type: Any,  # noqa: ANN401
         led_brightness: Any,  # noqa: ANN401
         matrix_shape: tuple[int, int] | None = None,  # noqa: ARG002
-        matrix_layout: np.ndarray[np.int32] | None = None,  # noqa: ARG002
+        matrix_layout: NDArray[np.int32] | None = None,  # noqa: ARG002
         *,
         pwm_invert_signal: bool = False,
         testing: bool = False,  # noqa: ARG002
@@ -179,11 +177,11 @@ class WS281xString(Sequence[np.int32]):
 
         """
         # check if pixel strip has been created
-        if isinstance(self._ws281x_pixel_strip, rpi_ws281x.PixelStrip):
+        if hasattr(self, "_ws281x_pixel_strip"):
             # turn off LEDs
             self.off()
             # cleanup c memory usage
-            self._ws281x_pixel_strip._cleanup()  # noqa: SLF001
+            self._ws281x_pixel_strip._cleanup()  # type: ignore  # noqa: PGH003, SLF001
 
     def __len__(
         self,
@@ -201,23 +199,29 @@ class WS281xString(Sequence[np.int32]):
     def __getitem__(  # D105
         self,
         idx: int,
-    ) -> np.ndarray[(3,), np.int32]: ...  # pylint: disable=pointless-statement  # pragma: no cover
+    ) -> NDArray[np.int32] | None: ...  # pylint: disable=pointless-statement  # pragma: no cover
+
+    @overload
+    def __getitem__(  # D105
+        self,
+        idx: np.int32,
+    ) -> NDArray[np.int32] | None: ...  # pylint: disable=pointless-statement  # pragma: no cover
 
     @overload
     def __getitem__(  # D105 # pylint: disable=function-redefined
         self,
-        s: slice,
-    ) -> np.ndarray[(3, Any), np.int32]: ...  # pylint: disable=pointless-statement  # pragma: no cover
+        idx: slice,
+    ) -> NDArray[np.int32] | None: ...  # pylint: disable=pointless-statement  # pragma: no cover
 
-    def __getitem__(  # pylint: disable=function-redefined
+    def __getitem__(  # pylint: disable=function-redefined # type: ignore  # noqa: PGH003
         self,
-        key: int | slice,
-    ) -> Union[np.ndarray[(3,), np.int32], np.ndarray[(3, Any), np.int32]]:
+        idx: int | np.int32 | slice,
+    ) -> NDArray[np.int32] | None:
         """Return a LED index or slice from LED array.
 
         Args:
         ----
-            key: an index of a single LED, or a slice specifying a range of LEDs
+            idx: an index of a single LED, or a slice specifying a range of LEDs
 
         Returns:
         -------
@@ -231,21 +235,21 @@ class WS281xString(Sequence[np.int32]):
             LightStringException: if something bad happens
 
         """
-        pixel: np.ndarray[np.int32]
-        if isinstance(key, int):
-            pixel = Pixel(self._ws281x_pixel_strip.getPixelColor(key)).array
-        elif isinstance(key, (np.int32, np.int32)):
-            pixel = Pixel(self._ws281x_pixel_strip.getPixelColor(int(key))).array
+        pixel: NDArray[np.int32]
+        if isinstance(idx, int):
+            pixel = Pixel(self._ws281x_pixel_strip.getPixelColor(idx)).array
+        elif isinstance(idx, (np.integer)):
+            pixel = Pixel(self._ws281x_pixel_strip.getPixelColor(int(idx))).array
         else:
             pixel = ArraySequence.pixel_array_to_numpy_array(
-                [Pixel(self._ws281x_pixel_strip.getPixelColor(k)) for k in range(self._ledCount)[key]],
+                [Pixel(self._ws281x_pixel_strip.getPixelColor(k)) for k in range(self._ledCount)[idx]],
             )
         return pixel
 
     def __setitem__(
         self,
-        key: int | slice,
-        value: np.ndarray[(3,), np.int32] | np.ndarray[(3, Any), np.int32],
+        key: int | np.int32 | slice,
+        value: NDArray[np.int32],
     ) -> None:
         """Set LED value(s) in the array.
 
@@ -266,7 +270,7 @@ class WS281xString(Sequence[np.int32]):
             for i, j in enumerate(range(self._ledCount)[key]):
                 p = Pixel(value[i, :])
                 self._ws281x_pixel_strip.setPixelColor(j, p.int32value)
-        elif isinstance(key, (np.int32, np.int32)):
+        elif isinstance(key, (np.integer)):
             if int(key) >= self._ledCount:
                 raise IndexError
             p = Pixel(value)
@@ -321,5 +325,7 @@ class WS281xString(Sequence[np.int32]):
 
         """
         for index in range(len(self)):
-            self[index] = PixelColors.OFF
+            self[index] = PixelColor.OFF.array
+        self.refresh()
+        self.refresh()
         self.refresh()

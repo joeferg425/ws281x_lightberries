@@ -6,17 +6,19 @@ import logging
 import random
 from dataclasses import dataclass, field
 from enum import IntEnum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 
+from lightberries.array_sequence.base import ArraySequence
 from lightberries.constants import MAX_INT8
-from lightberries.light_sequences.base import ArraySequence
-from lightberries.pixel import PixelColors
+from lightberries.pixel import PixelColor
 
 if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
     import lightberries.array_controller
-    from lightberries.transform import Transform
+    from lightberries.pixel_transform import PixelTransform
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -28,7 +30,7 @@ class LEDFadeType(IntEnum):
     INSTANT_OFF = 1
     DONT = 2
 
-    @classmethod
+    @staticmethod
     def get_random() -> LEDFadeType:
         """Get a random one.
 
@@ -80,7 +82,7 @@ class TransformState:
 
     controller: lightberries.array_controller.ArrayController
 
-    color_sequence: np.ndarray[(3, Any), np.int32] = field(default_factory=lambda: np.zeros([3, 0], dtype=np.int32))
+    color_sequence: NDArray[np.int32] = field(default_factory=lambda: np.zeros([3, 0], dtype=np.int32))
     color_sequence_count: int = 0
     color_sequence_index: int = 0
 
@@ -94,17 +96,17 @@ class TransformState:
     index_min: int = 0
     index_max: int = 0
     index_updated: bool = False
-    index_range: np.ndarray[(3, Any), np.int32] = field(default_factory=lambda: np.zeros([3, 0], dtype=np.int32))
+    index_range: NDArray[np.int32] = field(default_factory=lambda: np.zeros([3, 0], dtype=np.int32))
 
-    color: np.ndarray[(3,), np.int32] = PixelColors.OFF
-    color_begin: np.ndarray[(3,), np.int32] = PixelColors.OFF.array
-    color_next: np.ndarray[(3,), np.int32] = PixelColors.OFF.array
-    color_goal: np.ndarray[(3,), np.int32] = PixelColors.OFF.array
+    color: NDArray[np.int32] = PixelColor.OFF.array
+    color_begin: NDArray[np.int32] = PixelColor.OFF.array
+    color_next: NDArray[np.int32] = PixelColor.OFF.array
+    color_goal: NDArray[np.int32] = PixelColor.OFF.array
     color_scaler: float = 0
     color_cycle: bool = False
 
     fade_type: LEDFadeType = LEDFadeType.FADE_OFF
-    fade_amount: float = 0.5
+    fade_amount: int = 128
 
     delay_counter: int = 0
     delay_count_max: int = 0
@@ -117,10 +119,8 @@ class TransformState:
 
     collision: bool = False
     collision_enabled: bool = False
-    collision_intersection: np.ndarray[(Any,), np.int32] = field(
-        default_factory=lambda: np.zeros([3, 0], dtype=np.int32)
-    )
-    collision_with: Transform | None = None
+    collision_intersection: NDArray[np.int32] = field(default_factory=lambda: np.zeros([3, 0], dtype=np.int32))
+    collision_with: PixelTransform | None = None
     collision_randomizer: bool = False
     collision_private: bool = False
 
@@ -151,7 +151,7 @@ class TransformState:
         self.index_min: int = self.index
         self.index_max: int = self.index
 
-        self.color: np.ndarray[(3,), np.int32] = self.controller.color_sequence[0]
+        self.color = self.controller.color_sequence[0]
 
     def set_fade_amount(self, fade_amount: float) -> None:
         """Make sure fade amount is valid.
@@ -162,13 +162,13 @@ class TransformState:
 
         """
         if fade_amount > 0 and fade_amount < 1:
-            self.fade_amount = fade_amount
+            self.fade_amount = int(fade_amount * MAX_INT8)
         elif fade_amount > 0 and fade_amount <= MAX_INT8:
-            self.fade_amount = fade_amount / MAX_INT8
+            self.fade_amount = int(fade_amount / MAX_INT8)
         if fade_amount < 0:
-            self.fade_amount = 0.1
+            self.fade_amount = int(0.1 * MAX_INT8)
         elif fade_amount > 1:
-            self.fade_amount = 0.9
+            self.fade_amount = int(0.9 * MAX_INT8)
 
     def copy(self) -> TransformState:
         """Get a copy of this object.
@@ -179,3 +179,36 @@ class TransformState:
 
         """
         return TransformState(**self.__dict__)
+
+    def fade_color(
+        self,
+        # color: np.ndarray[(3,), np.int32],
+        # color_next: np.ndarray[(3,), np.int32],
+        # fade_amount: float,
+    ) -> NDArray[np.int32]:
+        """Fade an LED's color by the given amount and return the new RGB value.
+
+        Args:
+        ----
+            color: current color
+            colorNext: desired color
+            fadeCount: amount to adjust each RGB value by
+
+        Returns:
+        -------
+            new RGB value
+
+        """
+        # copy it to make sure we don't change the original by reference
+        color = np.copy(self.color)
+        for rgb_index in range(len(color)):
+            # the values closest to the target color might match already
+            if color[rgb_index] != self.color_next[rgb_index]:
+                # subtract or add as appropriate in order to get closer to target color
+                if color[rgb_index] - self.fade_amount > self.color_next[rgb_index]:
+                    color[rgb_index] -= self.fade_amount
+                elif color[rgb_index] + self.fade_amount < self.color_next[rgb_index]:
+                    color[rgb_index] += self.fade_amount
+                else:
+                    color[rgb_index] = self.color_next[rgb_index]
+        return color

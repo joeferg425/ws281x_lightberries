@@ -6,7 +6,7 @@ import tkinter as tk
 from tkinter.colorchooser import askcolor
 
 from lightberries.array_controller import ArrayController
-from lightberries.light_sequences.base import ArraySequence
+from lightberries.array_sequence.base import ArraySequence
 from lightberries.pixel import Pixel
 
 # the number of pixels in the light string

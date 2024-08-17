@@ -7,19 +7,19 @@ from math import ceil
 from typing import TYPE_CHECKING, Any
 
 from lightberries.constants import MAX_INT8
-from lightberries.transform import Transform
+from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
     import numpy as np
 
     import lightberries.array_controller
+    from lightberries.pixel_transform import PixelTransform
     from lightberries.state import TransformState
-    from lightberries.transform import Transform
 
 LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformFade(Transform):
+class TransformFade(PixelTransform):
     """Fade all Pixels."""
 
     def __init__(
@@ -48,7 +48,7 @@ class TransformFade(Transform):
         *,
         fade_amount: float | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
-    ) -> list[Transform]:
+    ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:

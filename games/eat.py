@@ -1,14 +1,17 @@
 #!/usr/bin/python3
 from __future__ import annotations
+
+import logging
 import random
 import time
 from typing import Optional, cast
-from lightberries.matrix_controller import MatrixController
-from lightberries.pixel import PixelColors
-from game_objects import GameObject, Sprite, Projectile, Player
+
 import numpy as np
+from game_objects import GameObject, Player, Projectile, Sprite
 from light_game import LightEvent, LightEventId, LightGame, XboxController
-import logging
+
+from lightberries.matrix_controller import MatrixController
+from lightberries.pixel import PixelColor
 
 LOGGER = logging.getLogger(__name__)
 
@@ -22,7 +25,7 @@ class Snake(Player):
         x: int,
         y: int,
         tail_length: int = 2,
-        color: np.ndarray[(3), np.int32] = PixelColors.WHITE.array,
+        color: np.ndarray[(3), np.int32] = PixelColor.WHITE.array,
     ) -> None:
         super().__init__(
             x=x,
@@ -143,7 +146,7 @@ class Apple(Sprite):
     EXPIRATION_DELAY = 12
 
     def __init__(
-        self, x: int, y: int, color: np.ndarray[(3), np.int32] = PixelColors.RED.array, name: str = "apple"
+        self, x: int, y: int, color: np.ndarray[(3), np.int32] = PixelColor.RED.array, name: str = "apple"
     ) -> None:
         super().__init__(
             x=x,
@@ -171,7 +174,7 @@ class Apple(Sprite):
             if self.id not in GameObject.dead_objects:
                 GameObject.dead_objects.append(self.id)
             self._dead = True
-            self.color = PixelColors.YELLOW.array
+            self.color = PixelColor.YELLOW.array
         return self._dead
 
     def go(self):
@@ -184,7 +187,7 @@ class Apple(Sprite):
 
 class FastApple(Apple):
     def __init__(
-        self, x: int, y: int, color: np.ndarray[3, np.int32] = PixelColors.GREEN.array, name: str = "fast apple"
+        self, x: int, y: int, color: np.ndarray[3, np.int32] = PixelColor.GREEN.array, name: str = "fast apple"
     ) -> None:
         super().__init__(
             x=x,
@@ -200,7 +203,7 @@ class GrowyApple(Apple):
         self,
         x: int,
         y: int,
-        color: np.ndarray[3, np.int32] = PixelColors.CYAN2.array,
+        color: np.ndarray[3, np.int32] = PixelColor.CYAN2.array,
         name: str = "growy apple",
     ) -> None:
         super().__init__(
@@ -219,7 +222,7 @@ class BadApple(Sprite):
         x: int,
         y: int,
         owner: Snake,
-        color: np.ndarray[(3), np.int32] = PixelColors.WHITE.array,
+        color: np.ndarray[(3), np.int32] = PixelColor.WHITE.array,
         name: str = "bad apple",
     ) -> None:
         super().__init__(
@@ -285,7 +288,7 @@ class EatGame(LightGame):
         self.splash_screen("eat", 20)
 
     def get_new_player(self, old_player: Snake | None) -> GameObject:
-        color = PixelColors.WHITE.array
+        color = PixelColor.WHITE.array
         if old_player is not None:
             color = old_player.color
         return Snake(
@@ -330,7 +333,7 @@ class EatGame(LightGame):
                                     y=snake.y + (2 * snake.y_direction),
                                     dx=snake.x_direction * 2,
                                     dy=snake.y_direction * 2,
-                                    color=PixelColors.BLUE.array,
+                                    color=PixelColor.BLUE.array,
                                     size=0,
                                 )
                         if event.event_id == LightEventId.ButtonBottom:
@@ -345,7 +348,7 @@ class EatGame(LightGame):
                         elif event.event_id == LightEventId.ButtonTop:
                             if t - snake.color_change_time > EatGame.COLOR_CHANGE_DELAY:
                                 snake.color_change_time = t
-                                snake.color = PixelColors.RANDOM.array
+                                snake.color = PixelColor.RANDOM.array
                         elif event.event_id == LightEventId.ButtonPower and controller.controller.get_id() == 0:
                             # pygame.quit()
                             self.exiting = True
@@ -466,5 +469,7 @@ if __name__ == "__main__":
         matrixShape=MATRIX_SHAPE,
         matrixLayout=MATRIX_LAYOUT,
         # simulate=True,
+    )
+    run_eat_game(lights)
     )
     run_eat_game(lights)

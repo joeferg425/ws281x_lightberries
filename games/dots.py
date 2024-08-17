@@ -1,11 +1,13 @@
 #!/usr/bin/python3
 import random
-import numpy as np
-from lightberries.matrix_controller import MatrixController
-from lightberries.pixel import PixelColors
-from game_objects import Player, GameObject, SpriteShape, Projectile
 import time
+
+import numpy as np
+from game_objects import GameObject, Player, Projectile, SpriteShape
 from light_game import LightEvent, LightEventId, LightGame
+
+from lightberries.matrix_controller import MatrixController
+from lightberries.pixel import PixelColor
 
 
 class Dot(Player):
@@ -19,7 +21,7 @@ class Dot(Player):
             y=y,
             size=0,
             name="",
-            color=PixelColors.PSEUDO_RANDOM.array,
+            color=PixelColor.PSEUDO_RANDOM.array,
             has_gravity=False,
         )
         self.bounded = False
@@ -28,7 +30,7 @@ class Dot(Player):
         self.timestamp_shoot = self.timestamp_spawn
         self.timestamp_shape = self.timestamp_spawn
         self.timestamp_size = self.timestamp_spawn
-        self.splash_color = PixelColors.PSEUDO_RANDOM.array
+        self.splash_color = PixelColor.PSEUDO_RANDOM.array
         self._shape: SpriteShape = SpriteShape.CROSS
         self._size = 0
 
@@ -168,9 +170,9 @@ class DotsGame(LightGame):
                 player.x_aim = x_aim if abs(x_aim) > DotsGame.MIN_BULLET_SPEED else 0.0
                 player.y_aim = y_aim if abs(y_aim) > DotsGame.MIN_BULLET_SPEED else 0.0
                 if event.event_id == LightEventId.TriggerLeft:
-                    player.splash_color = PixelColors.RANDOM.array
+                    player.splash_color = PixelColor.RANDOM.array
                 elif event.event_id == LightEventId.ButtonTop:
-                    player.color = PixelColors.RANDOM.array
+                    player.color = PixelColor.RANDOM.array
                 elif event.event_id == LightEventId.TriggerRight:
                     if (t - player.timestamp_shoot >= GameObject.BUTTON_DEBOUNCE) and not (self.pause):
                         player.timestamp_shoot = t
@@ -266,4 +268,5 @@ if __name__ == "__main__":
         matrixShape=MATRIX_SHAPE,
     )
     while True:
+        run_dots_game(lights)
         run_dots_game(lights)

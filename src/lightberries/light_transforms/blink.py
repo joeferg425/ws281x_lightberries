@@ -5,18 +5,20 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING, Any
 
-from lightberries.exceptions import FunctionError, LightBerryError
+from lightberries.light_transforms.base import OverlayTransform
 from lightberries.state import TransformState
-from lightberries.transform import Transform
 
 if TYPE_CHECKING:
+
     import numpy as np
+    from numpy.typing import NDArray
 
     import lightberries.array_controller
+    from lightberries.pixel_transform import PixelTransform
     from lightberries.state import TransformState
 
 
-class TransformBlink(Transform):
+class TransformBlink(OverlayTransform):
     """Randomly set all lights in the string to the same color without changing the virtual LED buffer."""
 
     def __init__(
@@ -43,39 +45,29 @@ class TransformBlink(Transform):
 
     def setup(
         self,
-        color_sequence: np.ndarray[Any, np.int32] | None = None,
+        color_sequence: NDArray[np.int32] | None = None,
         state: TransformState | None = None,
-        **kwargs: dict[str, Any],
-    ) -> list[Transform]:
-        """Create one or more transform instances.
-
-        Args:
-        ----
-            color_sequence: color sequence. Defaults to None.
-            state: initial state. Defaults to None.
-            kwargs: extra args to the state object
-
-        Returns:
-        -------
-            one or more transform instances
-
-        """
-
-    def setup(
-        self,
         blink_chance: float | None = None,
-    ) -> None:
+    ) -> list[PixelTransform]:
         """Use the overlay that causes all LEDs to light up the same color at once.
 
         Args:
         ----
+            color_sequence: the list of colors to be used when briefly flashing an LED
+            state: initial state. Defaults to None.
             blink_chance: chance of a blink
 
         """
-        if blink_chance is None:
-            blink_chance = random.uniform(0.991, 0.995)
-        self.state.random = blink_chance
-        self.state.color_sequence = self.color_sequence
+        if color_sequence is not None:
+            self.color_sequence = self.color_sequence.copy()
+        if state is not None:
+            self.state = state
+        else:
+            self.state.random = random.uniform(0.991, 0.995)
+
+        if blink_chance is not None:
+            self.state.random = blink_chance
+
         return [self]
 
     def transform(self) -> None:
@@ -88,16 +80,8 @@ class TransformBlink(Transform):
             LightFunctionException: if something bad happens
 
         """
-        try:
-            if random.random() > self.state.random:
-                color = self.color_sequence_next
-                for index in range(self.controller.real_led_count):
-                    self.controller.overlay_dictionary[index] = color
-        except SystemExit:  # pragma: no cover
-            raise
-        except KeyboardInterrupt:  # pragma: no cover
-            raise
-        except LightBerryError:  # pragma: no cover
-            raise
-        except Exception as ex:  # pragma: no cover
-            raise FunctionError from ex
+        if random.random() > self.state.random:
+            color = self.color_sequence_next
+            for index in range(self.controller.real_led_count):
+                self.controller.overlay_dictionary[index] = color
+                self.controller.overlay_dictionary[index] = color

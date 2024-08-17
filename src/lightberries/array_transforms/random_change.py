@@ -11,17 +11,17 @@ import numpy as np
 from lightberries.array_transforms.fade_off import TransformFadeOff
 from lightberries.array_transforms.off import TransformOff
 from lightberries.constants import MAX_INT8, SHAPE_2D
+from lightberries.pixel_transform import PixelTransform
 from lightberries.state import ChangeStates, LEDFadeType, TransformState
-from lightberries.transform import Transform
 
 if TYPE_CHECKING:
     import lightberries.array_controller
-    from lightberries.transform import Transform
+    from lightberries.pixel_transform import PixelTransform
 
 LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformRandomChange(Transform):
+class TransformRandomChange(PixelTransform):
     """Do random change function things."""
 
     def __init__(
@@ -100,7 +100,7 @@ class TransformRandomChange(Transform):
                 controller=self.controller,
                 state=self.state.copy(),
             )
-        drops: list[Transform] = []
+        drops: list[PixelTransform] = []
         if fade is not None:
             drops.append(fade)
         # create a bunch of tracking objects

@@ -11,12 +11,12 @@ import numpy as np
 
 from lightberries.array_transforms.fade_off import TransformFadeOff
 from lightberries.constants import SHAPE_2D
-from lightberries.transform import Transform
+from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
     import lightberries.array_controller
+    from lightberries.pixel_transform import PixelTransform
     from lightberries.state import TransformState
-    from lightberries.transform import Transform
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -28,7 +28,7 @@ class RaindropStates(IntEnum):
     SPLASH = 1
 
 
-class TransformRaindrop(Transform):
+class TransformRaindrop(PixelTransform):
     """Do raindrop function things."""
 
     def __init__(
@@ -67,7 +67,7 @@ class TransformRaindrop(Transform):
         max_raindrops: int | None = None,
         fade_amount: float | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
-    ) -> list[Transform]:
+    ) -> list[PixelTransform]:
         """Cause random "splashes" across the LED strand.
 
         Args:

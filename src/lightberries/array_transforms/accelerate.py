@@ -10,8 +10,8 @@ import numpy as np
 
 from lightberries.array_transforms.fade_off import TransformFadeOff
 from lightberries.constants import MAX_INT8, SHAPE_2D
+from lightberries.pixel_transform import PixelTransform
 from lightberries.state import TransformState
-from lightberries.transform import Transform
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from lightberries.state import TransformState
 
 
-class TransformAccelerate(Transform):
+class TransformAccelerate(PixelTransform):
     """Function in which colorful lights accelerate across the string of lights repeatedly."""
 
     def __init__(
@@ -52,7 +52,7 @@ class TransformAccelerate(Transform):
         fade_amount: float | None = None,
         color_cycle: bool | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
-    ) -> list[Transform]:
+    ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:

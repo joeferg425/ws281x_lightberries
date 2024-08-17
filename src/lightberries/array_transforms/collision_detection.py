@@ -8,18 +8,18 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from lightberries.pixel import PixelColors
-from lightberries.transform import Transform
+from lightberries.pixel import PixelColor
+from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
     import lightberries.array_controller
+    from lightberries.pixel_transform import PixelTransform
     from lightberries.state import TransformState
-    from lightberries.transform import Transform
 
 LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformCollisionDetect(Transform):
+class TransformCollisionDetect(PixelTransform):
     """Perform collision detection on the list of light function objects."""
 
     def __init__(
@@ -46,7 +46,7 @@ class TransformCollisionDetect(Transform):
         color_sequence: np.ndarray[Any, np.int32] | None = None,
         state: TransformState | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
-    ) -> list[Transform]:
+    ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:
@@ -115,7 +115,7 @@ class TransformCollisionDetect(Transform):
                 if (
                     object1.state.collision_enabled
                     and object1.state.collision_private is True
-                    and isinstance(object1.state.collision_with, Transform)
+                    and isinstance(object1.state.collision_with, PixelTransform)
                 ):
                     object2 = object1.state.collision_with
                     if (object1.state.direction * object2.state.direction) < 0:
@@ -165,19 +165,19 @@ class TransformCollisionDetect(Transform):
                         if radius == 0:
                             radius = 1
                         explosion_indices.append(middle)
-                        explosion_colors.append(PixelColors.YELLOW.array)
+                        explosion_colors.append(PixelColor.YELLOW.array)
                         for i in range(1, radius + 1):
                             explosion_indices.append(
                                 (middle - i) % self.controller.virtual_led_count,
                             )
                             explosion_colors.append(
-                                PixelColors.YELLOW.array * ((radius - i) / radius),
+                                PixelColor.YELLOW.array * ((radius - i) / radius),
                             )
 
                             explosion_indices.append(
                                 (middle + i) % self.controller.virtual_led_count,
                             )
                             explosion_colors.append(
-                                PixelColors.YELLOW.array * ((radius - i) / radius),
+                                PixelColor.YELLOW.array * ((radius - i) / radius),
                             )
                         self.controller.virtual_led_buffer[explosion_indices] = np.array(explosion_colors)

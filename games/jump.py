@@ -1,15 +1,26 @@
 #!/usr/bin/python3
 from __future__ import annotations
+
+import logging
 import random
 import time
-import logging
 from typing import Optional
-from lightberries.matrix_controller import MatrixController
-from lightberries.pixel import PixelColors
-from game_objects import CollideEnum, GameObject, Floor, Player, Projectile, SpriteShape, Sprite
-import pygame
+
 import numpy as np
+import pygame
+from game_objects import (
+    CollideEnum,
+    Floor,
+    GameObject,
+    Player,
+    Projectile,
+    Sprite,
+    SpriteShape,
+)
 from light_game import LightEvent, LightEventId, LightGame
+
+from lightberries.matrix_controller import MatrixController
+from lightberries.pixel import PixelColor
 
 LOGGER = logging.getLogger(__name__)
 
@@ -21,7 +32,7 @@ class Jumper(Player):
         y: int,
         size: int = 3,
         name: str = "player",
-        color: np.ndarray[3, np.int32] = PixelColors.ORANGE2.array,
+        color: np.ndarray[3, np.int32] = PixelColor.ORANGE2.array,
         has_gravity: bool = True,
     ) -> None:
         super().__init__(
@@ -118,7 +129,7 @@ class Jumper(Player):
                         self._y = int(obj.y + self.height)
                         self.dy = 0
         if self.dead:
-            self.color = PixelColors.YELLOW.array
+            self.color = PixelColor.YELLOW.array
         self.falling = False
 
     @property
@@ -150,7 +161,7 @@ class Jumper(Player):
                     self.timestamp_death = time.time()
                     self._dead = True
         if self._dead and not was_dead:
-            self.color = PixelColors.YELLOW.array
+            self.color = PixelColor.YELLOW.array
         return self._dead
 
     @property
@@ -181,7 +192,7 @@ class Bullet(Projectile):
         y: int,
         size: int = 0,
         name: str = "bullet",
-        color: np.ndarray[3, np.int32] = PixelColors.BLUE.array,
+        color: np.ndarray[3, np.int32] = PixelColor.BLUE.array,
         destructible: bool = True,
         bounded: bool = True,
         dx: float = 0,
@@ -219,7 +230,7 @@ class Baddy(Player):
             y=y,
             size=4,
             name="baddy",
-            color=PixelColors.RED.array,
+            color=PixelColor.RED.array,
             has_gravity=True,
         )
         self.height = self.size
@@ -273,7 +284,7 @@ class Baddy(Player):
                     self.timestamp_death = time.time()
                     self._dead = True
         if self._dead and not was_dead:
-            self.color = PixelColors.YELLOW.array
+            self.color = PixelColor.YELLOW.array
         return self._dead
 
 
@@ -288,7 +299,7 @@ class Platform(Floor):
         width: int,
         height: int = 1,
         name: str = "platform",
-        color: np.ndarray[3, np.int32] = PixelColors.GREEN.array,
+        color: np.ndarray[3, np.int32] = PixelColor.GREEN.array,
     ) -> None:
         super().__init__(
             x=x,
@@ -324,7 +335,7 @@ class FreePrize(Sprite):
         y: int,
         size: int = 2,
         name: str = "free prize!",
-        color: np.ndarray[3, np.int32] = PixelColors.CYAN.array,
+        color: np.ndarray[3, np.int32] = PixelColor.CYAN.array,
         destructible: bool = True,
         bounded: bool = True,
         dx: float = 0,
@@ -397,7 +408,7 @@ class JumpGame(LightGame):
         self.platform_type = 0
 
     def get_new_player(self, old_player: Optional[Jumper] = None) -> GameObject:
-        color = PixelColors.ORANGE2.array
+        color = PixelColor.ORANGE2.array
         platform = self.platforms[-1]
         x = random.randint(platform.left, platform.right)
         if old_player is not None:
@@ -532,7 +543,7 @@ class JumpGame(LightGame):
                     elif event.event_id == LightEventId.ButtonTop:
                         if t - player.timestamp_color > 0.15:
                             player.timestamp_color = t
-                            player.color = PixelColors.PSEUDO_RANDOM.array
+                            player.color = PixelColor.PSEUDO_RANDOM.array
                             player.real_color = player.color
                     elif event.event_id == LightEventId.ButtonBottom:
                         if t - player.timestamp_jump > 0.25:
@@ -602,5 +613,7 @@ if __name__ == "__main__":
         matrixShape=MATRIX_SHAPE,
         matrixLayout=MATRIX_LAYOUT,
     )
+    while True:
+        run_jump_game(lights)
     while True:
         run_jump_game(lights)

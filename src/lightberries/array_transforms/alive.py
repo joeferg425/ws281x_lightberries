@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from lightberries.array_transforms.fade_off import TransformFadeOff
+from lightberries.pixel_transform import PixelTransform
 from lightberries.state import ThingColors, ThingMoves, ThingSizes, TransformState
-from lightberries.transform import Transform
 
 if TYPE_CHECKING:
     import lightberries.array_controller
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformAlive(Transform):
+class TransformAlive(PixelTransform):
     """Do alive function things."""
 
     def __init__(
@@ -95,7 +95,7 @@ class TransformAlive(Transform):
         if step_count_max is not None:
             step_count_max = int(step_count_max)
 
-        things: list[Transform] = []
+        things: list[PixelTransform] = []
         for _ in range(random.randint(2, 5)):
             thing = TransformAlive(controller=self.controller, state=self.state.copy())
             # randomize start index

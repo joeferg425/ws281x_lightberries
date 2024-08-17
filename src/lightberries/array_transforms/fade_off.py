@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from lightberries.transform import Transform
+from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
     import numpy as np
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformFadeOff(Transform):
+class TransformFadeOff(PixelTransform):
     """Fade all Pixels toward OFF."""
 
     def __init__(
@@ -45,7 +45,7 @@ class TransformFadeOff(Transform):
         *,
         fade_amount: float | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
-    ) -> list[Transform]:
+    ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:

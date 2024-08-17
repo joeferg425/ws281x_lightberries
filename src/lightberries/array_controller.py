@@ -2,26 +2,22 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import random
 import time
-from math import ceil
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 import numpy as np
+from numpy.typing import NDArray
 
-from lightberries.exceptions import (
-    ControllerError,
-    LightBerryError,
-    PermissionsError,
-    WS281xStringError,
-)
-from lightberries.light_sequences.base import ArraySequence
-from lightberries.light_sequences.solid import SequenceSolid
-from lightberries.pixel import Pixel, PixelColors
-from lightberries.sequence import Sequence
-from lightberries.state import LEDFadeType, ThingMoves
-from lightberries.transform import Transform
+from lightberries.array_sequence.base import ArraySequence
+from lightberries.array_sequence.solid import SequenceSolid
+from lightberries.constants import SHAPE_2D, SHAPE_3D
+from lightberries.exceptions import ControllerError, LightBerryError
+from lightberries.pixel import Pixel, PixelColor
+from lightberries.pixel_sequence import PixelSequence
+from lightberries.pixel_transform import PixelTransform
 from lightberries.ws281x_strings import WS281xString
 
 LOGGER = logging.getLogger("lightBerries")
@@ -51,7 +47,7 @@ class ArrayController:
                 lights.run()
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         led_count: int = 100,
         pwm_gpio_pin: int = 18,
@@ -59,9 +55,9 @@ class ArrayController:
         pwm_frequency: int = 800000,
         led_brightness: float = 0.75,
         pwm_channel: int = 0,
-        led_strip_type: Any = None,
-        gamma: Any = None,
-        refresh_callback: Callable = None,
+        led_strip_type: Any = None,  # noqa: ANN401
+        gamma: Any = None,  # noqa: ANN401
+        refresh_callback: Callable[[], None] | None = None,
         *,
         pwm_invert_signal: bool = False,
         debug: bool = False,
@@ -88,6 +84,7 @@ class ArrayController:
             verbose: set true for even more information
             refresh_callback: callback method is called whenever new LED values are sent to LED string
             simulate: only call refreshCallback, don't use GPIO
+            testing: when testing
 
         Raises:
         ------
@@ -103,19 +100,12 @@ class ArrayController:
                 if not LOGGER.handlers:
                     stream_handler = logging.StreamHandler()
                     LOGGER.addHandler(stream_handler)
-                LOGGER.setLevel(logging.INFO)
-                # if sys.platform != "linux":
-                #     fh = logging.FileHandler(__name__ + ".log")
-                # else:
-                #     fh = logging.FileHandler("/home/pi/" + __name__ + ".log")  # pragma: no cover
-                # fh.setLevel(logging.DEBUG)
-                # LOGGER.addHandler(fh)
                 LOGGER.setLevel(logging.DEBUG)
             if verbose is True:
                 LOGGER.setLevel(5)
             self.simulate = simulate
             # wrap pixel strip in my own interface object
-            self._instantiate_WS281xString(
+            self._instantiate_ws281x_string(
                 led_count=led_count,
                 pwm_gpio_pin=pwm_gpio_pin,
                 dma_channel=dma_channel,
@@ -131,32 +121,30 @@ class ArrayController:
 
             # initialize instance variables
             self._led_count: int = len(self.ws281xString)
-            self.virtual_led_buffer: np.ndarray[(3, Any), np.int32] = SequenceSolid(
+            self.virtual_led_buffer: NDArray[np.int32] = SequenceSolid(
                 led_count=self._led_count,
-                color=PixelColors.OFF.array,
+                color=PixelColor.OFF.array,
             ).sequence
-            self.virtual_led_index_buffer: np.ndarray[(Any,), np.int32] = np.array(
+            self.virtual_led_index_buffer: NDArray[np.int32] = np.array(
                 range(len(self.ws281xString)),
             )
-            self._overlay_dict: dict[int, np.ndarray[(3,), np.int32]] = {}
+            self._overlay_dict: dict[int, NDArray[np.int32]] = {}
             self._virtual_led_count: int = len(self.virtual_led_buffer)
             self._virtual_led_index_count: int = len(self.virtual_led_index_buffer)
             self._last_mode_change: float = time.time() - 1000
             self._next_mode_change: float = time.time()
             self._refresh_delay: float = 0.001
             self._seconds_per_mode: float = 120.0
-            self._background_color: np.ndarray[(3,), np.int32] = PixelColors.OFF.array
-            self._color_sequence: np.ndarray[(3, Any), np.int32] = ArraySequence.default_color_sequence_by_month()
+            self._background_color: NDArray[np.int32] = PixelColor.OFF.array
+            self._color_sequence: NDArray[np.int32] = ArraySequence.default_color_sequence_by_month()
             self._color_sequence_count: int = len(self._color_sequence)
             self._color_sequence_index: int = 0
             self._loop_forever: bool = False
-            self._transforms: list[Transform] = []
-
-            # # give LightFunction class a pointer to this class
-            # LightTransform.Controller = self
+            self._transforms: list[PixelTransform] = []
 
             self.running: bool = False
-            self.refreshCallback: Callable = refresh_callback
+            self.refresh_callback: Callable[[], None] | None = refresh_callback
+
             # initialize stuff
             self.reset()
         except SystemExit:  # pragma: no cover
@@ -168,21 +156,21 @@ class ArrayController:
         except Exception as ex:  # pragma: no cover
             raise ControllerError from ex
 
-    def _instantiate_WS281xString(
+    def _instantiate_ws281x_string(  # noqa: PLR0913
         self,
         led_count: int,
         pwm_gpio_pin: int,
         dma_channel: int,
         pwm_frequency: int,
-        pwm_invert_signal: bool,
+        pwm_invert_signal: bool,  # noqa: FBT001
         led_brightness: float,
         pwm_channel: int,
-        led_strip_type: Any,
-        gamma: Any,
-        simulate: bool,
-        testing: bool = False,
+        led_strip_type: Any,  # noqa: ANN401
+        gamma: Any,  # noqa: ANN401
+        simulate: bool,  # noqa: FBT001
+        testing: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
-        self.ws281xString: WS281xString | None = WS281xString(
+        self.ws281xString: WS281xString = WS281xString(
             led_count=led_count,
             pwm_gpio_pin=pwm_gpio_pin,
             dma_channel=dma_channel,
@@ -209,27 +197,15 @@ class ArrayController:
             LightControlException: if something bad happens
 
         """
-        try:
-            if hasattr(self, "ws281xString") and self.ws281xString is not None:
+        if hasattr(self, "ws281xString"):
+            with contextlib.suppress(Exception):
                 self.off()
+            with contextlib.suppress(Exception):
                 self.copy_virtual_leds_to_ws281x()
+            with contextlib.suppress(Exception):
                 self.refresh_leds()
+            with contextlib.suppress(Exception):
                 self.ws281xString.__del__()
-                self.ws281xString = None
-        except SystemExit:  # pragma: no cover
-            raise
-        except KeyboardInterrupt:  # pragma: no cover
-            raise
-        except PermissionsError:
-            raise
-        except WS281xStringError:
-            raise
-        except LightBerryError:  # pragma: no cover
-            raise
-        except Exception as ex:  # pragma: no cover
-            raise ControllerError(
-                "Failed to clean up LightBerries ArrayController",
-            ) from ex
 
     @property
     def virtual_led_count(self) -> int:
@@ -283,7 +259,7 @@ class ArrayController:
     @property
     def background_color(
         self,
-    ) -> np.ndarray[(3,), np.int32]:
+    ) -> NDArray[np.int32]:
         """The defined background, or "Off" color for the LED string.
 
         Returns
@@ -296,7 +272,7 @@ class ArrayController:
     @background_color.setter
     def background_color(
         self,
-        color: np.ndarray[(3,), np.int32],
+        color: NDArray[np.int32],
     ) -> None:
         """Set the background color.
 
@@ -310,7 +286,7 @@ class ArrayController:
     @property
     def seconds_per_mode(
         self,
-    ) -> float:
+    ) -> float | None:
         """The number of seconds to run the configuration.
 
         Returns
@@ -337,7 +313,7 @@ class ArrayController:
     @property
     def color_sequence(
         self,
-    ) -> np.ndarray[(3, Any), np.int32]:
+    ) -> NDArray[np.int32]:
         """The sequence of RGB values to use for generating patterns when using the functions.
 
         Returns
@@ -350,7 +326,7 @@ class ArrayController:
     @color_sequence.setter
     def color_sequence(
         self,
-        color_sequence: np.ndarray[(3, Any), np.int32],
+        color_sequence: NDArray[np.int32],
     ) -> None:
         """Set the color sequence.
 
@@ -359,8 +335,11 @@ class ArrayController:
             color_sequence: the sequence of RGB values
 
         """
-        self._color_sequence = np.copy(
-            ArraySequence.pixel_array_to_numpy_array(color_sequence),
+        self._color_sequence = cast(
+            NDArray[np.int32],
+            np.copy(
+                a=ArraySequence.pixel_array_to_numpy_array(color_sequence),
+            ),  # type: ignore  # noqa: PGH003
         )
         self.color_sequence_count = len(self._color_sequence)
         self.color_sequence_index = 0
@@ -414,7 +393,7 @@ class ArrayController:
 
         Args:
         ----
-            colorSequenceIndex: the new index
+            color_sequence_index: the new index
 
         """
         if color_sequence_index >= len(self.color_sequence):
@@ -425,7 +404,7 @@ class ArrayController:
     @property
     def color_sequence_next(
         self,
-    ) -> np.ndarray[(3,), np.int32]:
+    ) -> NDArray[np.int32]:
         """Get the next color in the sequence.
 
         Returns
@@ -438,7 +417,7 @@ class ArrayController:
         return temp
 
     @property
-    def function_list(self) -> list[Transform]:
+    def function_list(self) -> list[PixelTransform]:
         """The list of function objects that will be used to modify the light pattern.
 
         Returns
@@ -459,32 +438,6 @@ class ArrayController:
         """
         return self._overlay_dict
 
-    # def get_color_methods_list(self) -> list[str]:
-    #     """Get the list of methods in this class (by name) that set the color sequence.
-
-    #     Returns
-    #     -------
-    #         a list of method name strings
-
-    #     """
-    #     attrs = list(dir(self))
-    #     colors = [c for c in attrs if c[:8] == "useColor"]
-    #     colors.sort()
-    #     return colors
-
-    # def get_function_methods_list(self) -> list[str]:
-    #     """Get the list of methods in this class (by name) that set the color functions.
-
-    #     Returns
-    #     -------
-    #         a list of method name strings
-
-    #     """
-    #     attrs = list(dir(self))
-    #     functions = [f for f in attrs if f[:11] == "useFunction"]
-    #     functions.sort()
-    #     return functions
-
     def reset(
         self,
     ) -> None:
@@ -504,9 +457,9 @@ class ArrayController:
             if self.virtual_led_count >= self.real_led_count:
                 self.set_virtual_led_buffer(self.virtual_led_buffer[: self.real_led_count])
             elif self.virtual_led_count < self.real_led_count:
-                array = ArraySequence.SolidSequence(
-                    arrayLength=self.real_led_count,
-                    color=PixelColors.OFF.array,
+                array = SequenceSolid(
+                    led_count=self.real_led_count,
+                    color=PixelColor.OFF,
                 )
                 self.set_virtual_led_buffer(array)
         except SystemExit:  # pragma: no cover
@@ -520,7 +473,7 @@ class ArrayController:
 
     def set_virtual_led_buffer(
         self,
-        led_buffer: np.ndarray[(3, Any), np.int32],
+        led_buffer: NDArray[np.int32] | PixelSequence,
     ) -> None:
         """Assign a sequence of pixel data to the LED.
 
@@ -538,14 +491,17 @@ class ArrayController:
         """
         try:
             # make sure the passed LED array is the correct type
-            _led_buffer = led_buffer
+            if isinstance(led_buffer, PixelSequence):
+                _led_buffer = led_buffer.sequence
+            else:
+                _led_buffer = led_buffer
             _led_buffer_length = int(_led_buffer.size / 3)
 
             # check assignment length
             if (
                 _led_buffer_length >= self.real_led_count
-                or len(_led_buffer.shape) > 2
-                or len(self.virtual_led_buffer.shape) > 2
+                or len(_led_buffer.shape) > SHAPE_2D
+                or len(self.virtual_led_buffer.shape) > SHAPE_2D
             ):
                 self.virtual_led_buffer = _led_buffer
             else:
@@ -558,14 +514,14 @@ class ArrayController:
             # create array of index values for manipulation if needed
             self.virtual_led_index_buffer = np.arange(self.virtual_led_count)
             # if the array is smaller than the actual light strand, make our entire strand addressable
-            if self._virtual_led_index_count < self.real_led_count and len(self.virtual_led_buffer.shape) < 3:
+            if self._virtual_led_index_count < self.real_led_count and len(self.virtual_led_buffer.shape) < SHAPE_3D:
                 self._virtual_led_index_count = self.real_led_count
                 self.virtual_led_index_buffer = np.arange(self._virtual_led_index_count)
                 self.virtual_led_buffer = np.concatenate(
                     (
                         self.virtual_led_buffer,
                         np.array(
-                            [PixelColors.OFF.tuple for i in range(self.real_led_count - self.virtual_led_count)],
+                            [PixelColor.OFF.tuple for _ in range(self.real_led_count - self.virtual_led_count)],
                         ),
                     ),
                 )
@@ -593,7 +549,7 @@ class ArrayController:
         """
         # callback function to do work
 
-        def set_pixel(i_rgb: tuple[int]) -> None:
+        def set_pixel(i_rgb: tuple[int, NDArray[np.int32]]) -> None:
             """Set pixel value in ws281x object.
 
             Args:
@@ -611,7 +567,7 @@ class ArrayController:
                     self.virtual_led_buffer[self.virtual_led_index_buffer][
                         np.where(self.virtual_led_index_buffer < self.real_led_count)
                     ],
-                ),
+                ),  # type: ignore  # noqa: PGH003
             ),
         )
 
@@ -630,8 +586,8 @@ class ArrayController:
         """
         try:
             # call light string's refresh method to send the communications out to the addressable LEDs
-            if isinstance(self.refreshCallback, Callable):
-                self.refreshCallback()
+            if isinstance(self.refresh_callback, Callable):
+                self.refresh_callback()
             self.ws281xString.refresh()
         except SystemExit:  # pragma: no cover
             raise
@@ -716,45 +672,6 @@ class ArrayController:
         except Exception as ex:  # pragma: no cover
             raise ControllerError from ex
 
-    def fade_color(
-        self,
-        color: np.ndarray[(3,), np.int32],
-        color_next: np.ndarray[(3,), np.int32],
-        fade_amount: float,
-    ) -> np.ndarray[(3,), np.int32]:
-        """Fade an LED's color by the given amount and return the new RGB value.
-
-        Args:
-        ----
-            color: current color
-            colorNext: desired color
-            fadeCount: amount to adjust each RGB value by
-
-        Returns:
-        -------
-            new RGB value
-
-        """
-        # copy it to make sure we don't change the original by reference
-        _color: np.ndarray[(3,), np.int32] = np.copy(color)
-        _fadeAmount = ceil(fade_amount * 256)
-        if _fadeAmount < 0:
-            _fadeAmount = 1
-        elif _fadeAmount > 255:
-            _fadeAmount = 255
-        # loop through RGB values
-        for rgbIndex in range(len(_color)):
-            # the values closest to the target color might match already
-            if _color[rgbIndex] != color_next[rgbIndex]:
-                # subtract or add as appropriate in order to get closer to target color
-                if _color[rgbIndex] - _fadeAmount > color_next[rgbIndex]:
-                    _color[rgbIndex] -= _fadeAmount
-                elif _color[rgbIndex] + _fadeAmount < color_next[rgbIndex]:
-                    _color[rgbIndex] += _fadeAmount
-                else:
-                    _color[rgbIndex] = color_next[rgbIndex]
-        return _color
-
     def run(self):
         """Run the configured color pattern and function either forever or for self.secondsPerMode.
 
@@ -787,17 +704,17 @@ class ArrayController:
             self.refresh_leds()
         self._last_mode_change = time.time()
         if self.seconds_per_mode is None:
-            self._next_mode_change = self._last_mode_change + (random.random(30, 120))
+            self._next_mode_change = self._last_mode_change + (random.randint(30, 120))
         else:
             self._next_mode_change = self._last_mode_change + (self.seconds_per_mode)
 
     def demo(
         self,
-        secondsPerMode: float = 0.5,
-        functionNames: list[str] = None,
-        colorNames: list[str] = None,
-        skipFunctions: list[str] = None,
-        skipColors: list[str] = None,
+        seconds_per_mode: float | None = 0.5,
+        function_names: list[str] | None = None,
+        color_names: list[str] | None = None,
+        skip_functions: list[str] | None = None,
+        skip_colors: list[str] | None = None,
     ):
         """Run colors and functions semi-randomly.
 
@@ -816,109 +733,79 @@ class ArrayController:
             LightControlException: if something bad happens
 
         """
-        try:
-            _secondsPerMode: int = 60
-            if secondsPerMode is not None:
-                _secondsPerMode = int(secondsPerMode)
-            self.seconds_per_mode = _secondsPerMode
+        _seconds_per_mode: int = 60
+        if seconds_per_mode is not None:
+            _seconds_per_mode = int(seconds_per_mode)
+        self.seconds_per_mode = _seconds_per_mode
 
-            if functionNames is None:
-                functionNames = []
-            elif not isinstance(functionNames, list):
-                functionNames = [functionNames]
-            if colorNames is None:
-                colorNames = []
-            elif not isinstance(colorNames, list):
-                colorNames = [colorNames]
-            if skipFunctions is None:
-                skipFunctions = []
-            elif not isinstance(skipFunctions, list):
-                skipFunctions = [skipFunctions]
-            if skipColors is None:
-                skipColors = []
-            elif not isinstance(skipColors, list):
-                skipColors = [skipColors]
+        if function_names is None:
+            function_names = []
+        if color_names is None:
+            color_names = []
+        if skip_functions is None:
+            skip_functions = []
+        if skip_colors is None:
+            skip_colors = []
 
-            functions = list(Transform.ALL_TRANSFORMS)
-            colors = list(Sequence.ALL_SEQUENCES)
-            # get methods that match user's string
-            if len(functionNames) > 0:
-                matches = []
-                for name in functionNames:
-                    matches.extend([f for f in Transform.ALL_TRANSFORMS if name.lower() in f.lower()])
-                functions = matches
-            # get methods that match user's string
-            if len(colorNames) > 0:
-                matches = []
-                for name in colorNames:
-                    matches.extend([f for f in Sequence.ALL_SEQUENCES if name.lower() in f.lower()])
-                colors = matches
-            # remove methods that user requested
-            if len(skipFunctions) > 0:
-                matches = []
-                for name in skipFunctions:
-                    for function in functions:
-                        if name.lower() in function.lower():
-                            functions.remove(function)
-            # remove methods that user requested
-            if len(skipColors) > 0:
-                matches = []
-                for name in skipColors:
-                    for color in colors:
-                        if name.lower() in color.lower():
-                            colors.remove(color)
+        functions = list(PixelTransform.ALL_TRANSFORMS)
+        colors = list(PixelSequence.ALL_SEQUENCES)
+        # get methods that match user's string
+        if len(function_names) > 0:
+            matches: list[str] = []
+            for name in function_names:
+                matches.extend([f for f in PixelTransform.ALL_TRANSFORMS if name.lower() in f.lower()])
+            functions = matches
+        # get methods that match user's string
+        if len(color_names) > 0:
+            matches: list[str] = []
+            for name in color_names:
+                matches.extend([f for f in PixelSequence.ALL_SEQUENCES if name.lower() in f.lower()])
+            colors = matches
+        # remove methods that user requested
+        if len(skip_functions) > 0:
+            matches = []
+            for name in skip_functions:
+                for function in functions:
+                    if name.lower() in function.lower():
+                        functions.remove(function)
+        # remove methods that user requested
+        if len(skip_colors) > 0:
+            matches = []
+            for name in skip_colors:
+                for color in colors:
+                    if name.lower() in color.lower():
+                        colors.remove(color)
 
-            if len(functions) == 0:
-                raise ControllerError("No functions selected in demo")
-            elif len(colors) == 0:
-                raise ControllerError("No colors selected in demo")
-            else:
-                while True:
-                    # try:
-                    # make a temporary copy (so we can go through each one)
-                    functionsCopy = functions.copy()
-                    colorsCopy = colors.copy()
-                    # loop while we still have a color and a function
-                    while (len(functionsCopy) * len(colorsCopy)) > 0:
-                        # get a new function if there is one
-                        if len(functionsCopy) > 0:
-                            function = functionsCopy[random.randint(0, len(functionsCopy) - 1)]
-                            functionsCopy.remove(function)
-                        # get a new color pattern if there is one
-                        if len(colorsCopy) > 0:
-                            color = colorsCopy[random.randint(0, len(colorsCopy) - 1)]
-                            colorsCopy.remove(color)
-                        # reset
-                        self.reset()
-                        # apply color
-                        clr = Sequence.ALL_SEQUENCES[color](led_count=self.real_led_count)
-                        # configure function
-                        self._transforms = Transform.ALL_TRANSFORMS[function](controller=self).setup(
-                            color_sequence=clr.sequence
-                        )
+        if len(functions) == 0:
+            msg = "No functions selected in demo"
+            raise ControllerError(msg)
+        if len(colors) == 0:
+            msg = "No colors selected in demo"
+            raise ControllerError(msg)
+        while True:
+            # make a temporary copy (so we can go through each one)
+            functions_copy = functions.copy()
+            colors_copy = colors.copy()
+            function = functions_copy[random.randint(0, len(functions_copy) - 1)]
+            color = colors_copy[random.randint(0, len(colors_copy) - 1)]
+            # loop while we still have a color and a function
+            while (len(functions_copy) * len(colors_copy)) > 0:
+                # get a new function if there is one
+                if len(functions_copy) > 0:
+                    function = functions_copy[random.randint(0, len(functions_copy) - 1)]
+                    functions_copy.remove(function)
+                # get a new color pattern if there is one
+                if len(colors_copy) > 0:
+                    color = colors_copy[random.randint(0, len(colors_copy) - 1)]
+                    colors_copy.remove(color)
+                # reset
+                self.reset()
+                # apply color
+                clr = PixelSequence.ALL_SEQUENCES[color](led_count=self.real_led_count)
+                # configure function
+                self._transforms = PixelTransform.ALL_TRANSFORMS[function](controller=self).setup(
+                    color_sequence=clr.sequence
+                )
 
-                        # run the combination
-                        self.run()
-                # except SystemExit:  # pragma: no cover
-                #     raise
-                # except KeyboardInterrupt:  # pragma: no cover
-                #     raise
-                # except Exception as ex:  # pragma: no cover
-                #     LOGGER.exception(
-                #         "%s.%s Exception: %s",
-                #         self.__name__,
-                #         self.demo.__name__,
-                #         ex,
-                #     )
-        except SystemExit:  # pragma: no cover
-            raise
-        except KeyboardInterrupt:  # pragma: no cover
-            raise
-        except Exception as ex:  # pragma: no cover
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                ArrayController.__name__,
-                self.demo.__name__,
-                ex,
-            )
-            raise ControllerError from ex
+                # run the combination
+                self.run()

@@ -9,6 +9,7 @@ from numpy.typing import NDArray
 
 import lightberries.rpiws281x_patch
 from lightberries.array_controller import ArrayController
+from lightberries.array_sequence.base import ArraySequence, pixel_array_to_numpy_array
 from lightberries.array_transforms.base import (
     LEDFadeType,
     LightTransform,
@@ -18,8 +19,7 @@ from lightberries.array_transforms.base import (
     ThingMoves,
     ThingSizes,
 )
-from lightberries.light_sequences.base import ArraySequence, pixel_array_to_numpy_array
-from lightberries.pixel import PixelColors
+from lightberries.pixel import PixelColor
 from lightberries.ws281x_strings import WS281xString, WS281xStringError
 
 
@@ -146,7 +146,7 @@ def test_creation_with_colors():
 def test_str():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE],
+        [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
     function = LightTransform(control, assert_func, pattern)
     control.function_list.append(function)
@@ -156,7 +156,7 @@ def test_str():
 def test_repr():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE],
+        [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
     function = LightTransform(control, assert_func, pattern)
     control.function_list.append(function)
@@ -174,7 +174,7 @@ def test_run():
 def test_colorSequenceCount():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE],
+        [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
     function = LightTransform(newController(), assert_func, pattern)
     control.function_list.append(function)
@@ -184,7 +184,7 @@ def test_colorSequenceCount():
 def test_colorSequenceIndex():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE],
+        [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
     function = LightTransform(control, assert_func, pattern)
     control.function_list.append(function)
@@ -194,21 +194,21 @@ def test_colorSequenceIndex():
 def test_colorSequenceNext():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE],
+        [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
     function = LightTransform(control, assert_func, pattern)
     control.function_list.append(function)
     left = function._color
-    right = PixelColors.RED.array
+    right = PixelColor.RED.array
     assert_array_equal(left, right)
     left = function.color_sequence_next
-    right = PixelColors.GREEN.array
+    right = PixelColor.GREEN.array
     assert_array_equal(left, right)
     left = function.color_sequence_next
-    right = PixelColors.BLUE.array
+    right = PixelColor.BLUE.array
     assert_array_equal(left, right)
     left = function.color_sequence_next
-    right = PixelColors.RED.array
+    right = PixelColor.RED.array
     assert_array_equal(left, right)
 
 
@@ -228,32 +228,32 @@ def test_colorSequenceNext():
 def test_doFade():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.OFF, PixelColors.PINK],
+        [PixelColor.RED, PixelColor.OFF, PixelColor.PINK],
     )
     function = LightTransform(control, LightTransform.do_fade, pattern)
     control.function_list.append(function)
     delay_count = 2
     function._delay_count_max = delay_count
     function._fade_amount = 1.0
-    assert_array_equal(function._color, PixelColors.RED.array)
+    assert_array_equal(function._color, PixelColor.RED.array)
     assert function._delay_counter == 0
     control._run_functions()
     assert function._delay_counter == 1
     control._run_functions()
     assert function._delay_counter == 0
-    assert_array_equal(function._color, PixelColors.OFF.array)
-    function._color_next = PixelColors.PINK.array
+    assert_array_equal(function._color, PixelColor.OFF.array)
+    function._color_next = PixelColor.PINK.array
     control._run_functions()
     assert function._delay_counter == 1
     control._run_functions()
     assert function._delay_counter == 0
-    assert_array_equal(function._color, PixelColors.PINK.array)
-    function._color_next = PixelColors.GREEN.array
+    assert_array_equal(function._color, PixelColor.PINK.array)
+    function._color_next = PixelColor.GREEN.array
     control._run_functions()
     assert function._delay_counter == 1
     control._run_functions()
     assert function._delay_counter == 0
-    assert_array_equal(function._color, PixelColors.GREEN.array)
+    assert_array_equal(function._color, PixelColor.GREEN.array)
     function._delay_count_max = 0
     function._fade_amount = -1.0
     control._run_functions()
@@ -264,7 +264,7 @@ def test_doFade():
 def test_updateArrayIndex_singlestep():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.OFF, PixelColors.PINK],
+        [PixelColor.RED, PixelColor.OFF, PixelColor.PINK],
     )
     function = LightTransform(control, LightTransform.update_array_index, pattern)
     control.function_list.append(function)
@@ -288,7 +288,7 @@ def test_updateArrayIndex_singlestep():
 def test_updateArrayIndex_largestep():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.OFF, PixelColors.PINK],
+        [PixelColor.RED, PixelColor.OFF, PixelColor.PINK],
     )
     function = LightTransform(control, LightTransform.update_array_index, pattern)
     control.function_list.append(function)
@@ -317,7 +317,7 @@ def test_updateArrayIndex_largestep():
 def test_functionCollisionDetection_only_one():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.OFF, PixelColors.PINK],
+        [PixelColor.RED, PixelColor.OFF, PixelColor.PINK],
     )
     function = LightTransform(control, LightTransform.functionCollisionDetection, pattern)
     control.function_list.append(function)
@@ -336,7 +336,7 @@ def test_functionCollisionDetection_only_one():
 def test_functionCollisionDetection_small_step():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.OFF, PixelColors.PINK],
+        [PixelColor.RED, PixelColor.OFF, PixelColor.PINK],
     )
     function1 = LightTransform(control, LightTransform.update_array_index, pattern)
     function2 = LightTransform(control, LightTransform.update_array_index, pattern)
@@ -364,7 +364,7 @@ def test_functionCollisionDetection_small_step():
 def test_functionCollisionDetection_large_step():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.OFF, PixelColors.PINK],
+        [PixelColor.RED, PixelColor.OFF, PixelColor.PINK],
     )
     function1 = LightTransform(control, LightTransform.update_array_index, pattern)
     function2 = LightTransform(control, LightTransform.update_array_index, pattern)
@@ -409,7 +409,7 @@ def test_functionCollisionDetection_large_step():
 def test_functionCollisionDetection_slow_fast():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.OFF, PixelColors.PINK],
+        [PixelColor.RED, PixelColor.OFF, PixelColor.PINK],
     )
     function1 = LightTransform(control, LightTransform.update_array_index, pattern)
     function2 = LightTransform(control, LightTransform.update_array_index, pattern)
@@ -457,10 +457,10 @@ def test_functionCollisionDetection_slow_fast():
 def test_functionOff():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.OFF, PixelColors.PINK],
+        [PixelColor.RED, PixelColor.OFF, PixelColor.PINK],
     )
     off = pixel_array_to_numpy_array(
-        [PixelColors.OFF, PixelColors.OFF, PixelColors.OFF],
+        [PixelColor.OFF, PixelColor.OFF, PixelColor.OFF],
     )
     control.set_virtual_led_buffer(pattern)
     function1 = LightTransform(control, LightTransform.functionOff, pattern)
@@ -473,16 +473,16 @@ def test_functionOff():
 def test_functionFadeOff():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE],
+        [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
     half = pixel_array_to_numpy_array(
-        [PixelColors.RED2, PixelColors.GREEN2, PixelColors.BLUE2],
+        [PixelColor.RED2, PixelColor.GREEN2, PixelColor.BLUE2],
     )
     quarter = pixel_array_to_numpy_array(
-        [PixelColors.RED3, PixelColors.GREEN3, PixelColors.BLUE3],
+        [PixelColor.RED3, PixelColor.GREEN3, PixelColor.BLUE3],
     )
     eighth = pixel_array_to_numpy_array(
-        [PixelColors.RED4, PixelColors.GREEN4, PixelColors.BLUE4],
+        [PixelColor.RED4, PixelColor.GREEN4, PixelColor.BLUE4],
     )
     control.set_virtual_led_buffer(pattern)
     function1 = LightTransform(control, LightTransform.functionFadeOff, pattern)
@@ -501,19 +501,19 @@ def test_functionFadeOff():
 def test_functionSolidColorCycle():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE],
+        [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
     one = pixel_array_to_numpy_array(
-        [PixelColors.OFF, PixelColors.OFF, PixelColors.OFF],
+        [PixelColor.OFF, PixelColor.OFF, PixelColor.OFF],
     )
     two = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.RED, PixelColors.RED],
+        [PixelColor.RED, PixelColor.RED, PixelColor.RED],
     )
     three = pixel_array_to_numpy_array(
-        [PixelColors.GREEN, PixelColors.GREEN, PixelColors.GREEN],
+        [PixelColor.GREEN, PixelColor.GREEN, PixelColor.GREEN],
     )
     four = pixel_array_to_numpy_array(
-        [PixelColors.BLUE, PixelColors.BLUE, PixelColors.BLUE],
+        [PixelColor.BLUE, PixelColor.BLUE, PixelColor.BLUE],
     )
     function1 = LightTransform(control, LightTransform.functionSolidColorCycle, pattern)
     control.function_list.append(function1)
@@ -529,16 +529,16 @@ def test_functionSolidColorCycle():
 def test_functionFade():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE],
+        [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
     one = pixel_array_to_numpy_array(
-        [PixelColors.OFF, PixelColors.OFF, PixelColors.OFF],
+        [PixelColor.OFF, PixelColor.OFF, PixelColor.OFF],
     )
     two = pixel_array_to_numpy_array(
-        [PixelColors.RED2, PixelColors.RED2, PixelColors.RED2],
+        [PixelColor.RED2, PixelColor.RED2, PixelColor.RED2],
     ) + [1, 0, 0]
     three = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.RED, PixelColors.RED],
+        [PixelColor.RED, PixelColor.RED, PixelColor.RED],
     ) + [1, 0, 0]
     three -= [1, 0, 0]
     function1 = LightTransform(control, LightTransform.functionFade, pattern)
@@ -549,7 +549,7 @@ def test_functionFade():
     assert_array_equal(control.virtual_led_buffer, two)
     control._run_functions()
     assert_array_equal(control.virtual_led_buffer, three)
-    function1._color = PixelColors.OFF.array
+    function1._color = PixelColor.OFF.array
     control.virtual_led_buffer += [1, 0, 0]
     control._run_functions()
     assert_array_equal(control.virtual_led_buffer, two)
@@ -564,15 +564,15 @@ def test_functionFade():
 
 def test_functionMarquee():
     control = newController()
-    pattern = pixel_array_to_numpy_array([PixelColors.RED])
+    pattern = pixel_array_to_numpy_array([PixelColor.RED])
     one = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.OFF, PixelColors.OFF],
+        [PixelColor.RED, PixelColor.OFF, PixelColor.OFF],
     )
     two = pixel_array_to_numpy_array(
-        [PixelColors.OFF, PixelColors.RED, PixelColors.OFF],
+        [PixelColor.OFF, PixelColor.RED, PixelColor.OFF],
     )
     three = pixel_array_to_numpy_array(
-        [PixelColors.OFF, PixelColors.OFF, PixelColors.RED],
+        [PixelColor.OFF, PixelColor.OFF, PixelColor.RED],
     )
     off = LightTransform(control, LightTransform.functionOff, pattern)
     control.function_list.append(off)
@@ -592,15 +592,15 @@ def test_functionMarquee():
 
 def test_functionCylon():
     control = newController()
-    pattern = pixel_array_to_numpy_array([PixelColors.RED])
+    pattern = pixel_array_to_numpy_array([PixelColor.RED])
     one = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.OFF, PixelColors.OFF],
+        [PixelColor.RED, PixelColor.OFF, PixelColor.OFF],
     )
     two = pixel_array_to_numpy_array(
-        [PixelColors.OFF, PixelColors.RED, PixelColors.OFF],
+        [PixelColor.OFF, PixelColor.RED, PixelColor.OFF],
     )
     three = pixel_array_to_numpy_array(
-        [PixelColors.OFF, PixelColors.OFF, PixelColors.RED],
+        [PixelColor.OFF, PixelColor.OFF, PixelColor.RED],
     )
     off = LightTransform(control, LightTransform.functionOff, pattern)
     control.function_list.append(off)
@@ -622,12 +622,12 @@ def test_functionMerge():
     control = newControllerBigger()
     pattern = pixel_array_to_numpy_array(
         [
-            PixelColors.RED,
-            PixelColors.OFF,
-            PixelColors.OFF,
-            PixelColors.OFF,
-            PixelColors.OFF,
-            PixelColors.RED,
+            PixelColor.RED,
+            PixelColor.OFF,
+            PixelColor.OFF,
+            PixelColor.OFF,
+            PixelColor.OFF,
+            PixelColor.RED,
         ],
     )
     one = np.array([0, 1, 2, 3, 4, 5])
@@ -654,22 +654,22 @@ def test_functionMerge():
 def test_functionAccelerate():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE],
+        [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
     one = pixel_array_to_numpy_array(
-        [PixelColors.OFF, PixelColors.RED, PixelColors.OFF],
+        [PixelColor.OFF, PixelColor.RED, PixelColor.OFF],
     )
     two = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.OFF, PixelColors.RED],
+        [PixelColor.RED, PixelColor.OFF, PixelColor.RED],
     )
     three = pixel_array_to_numpy_array(
-        [PixelColors.OFF, PixelColors.RED, PixelColors.RED],
+        [PixelColor.OFF, PixelColor.RED, PixelColor.RED],
     )
     four = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.RED, PixelColors.RED],
+        [PixelColor.RED, PixelColor.RED, PixelColor.RED],
     )
     five = pixel_array_to_numpy_array(
-        [PixelColors.GREEN, PixelColors.GREEN, PixelColors.GREEN],
+        [PixelColor.GREEN, PixelColor.GREEN, PixelColor.GREEN],
     )
     off = LightTransform(control, LightTransform.functionOff, pattern)
     control.function_list.append(off)
@@ -693,10 +693,10 @@ def test_functionAccelerate():
 def test_functionRandomChange():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE],
+        [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
     off = pixel_array_to_numpy_array(
-        [PixelColors.OFF, PixelColors.OFF, PixelColors.OFF],
+        [PixelColor.OFF, PixelColor.OFF, PixelColor.OFF],
     )
     function = LightTransform(control, LightTransform.functionRandomChange, pattern)
     function._color_next = function._color
@@ -717,22 +717,22 @@ def test_functionRandomChange():
 def test_functionMeteors():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE],
+        [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
     initial = pixel_array_to_numpy_array(
-        [PixelColors.OFF, PixelColors.OFF, PixelColors.OFF],
+        [PixelColor.OFF, PixelColor.OFF, PixelColor.OFF],
     )
     one = pixel_array_to_numpy_array(
-        [PixelColors.OFF, PixelColors.RED, PixelColors.OFF],
+        [PixelColor.OFF, PixelColor.RED, PixelColor.OFF],
     )
     two = pixel_array_to_numpy_array(
-        [PixelColors.OFF, PixelColors.OFF, PixelColors.RED],
+        [PixelColor.OFF, PixelColor.OFF, PixelColor.RED],
     )
     three = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.OFF, PixelColors.OFF],
+        [PixelColor.RED, PixelColor.OFF, PixelColor.OFF],
     )
     four = pixel_array_to_numpy_array(
-        [PixelColors.OFF, PixelColors.GREEN, PixelColors.OFF],
+        [PixelColor.OFF, PixelColor.GREEN, PixelColor.OFF],
     )
     off = LightTransform(control, LightTransform.functionOff, pattern)
     control.function_list.append(off)
@@ -754,10 +754,10 @@ def test_functionMeteors():
 def test_functionSprites():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE],
+        [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
     initial = pixel_array_to_numpy_array(
-        [PixelColors.OFF, PixelColors.OFF, PixelColors.OFF],
+        [PixelColor.OFF, PixelColor.OFF, PixelColor.OFF],
     )
     off = LightTransform(control, LightTransform.functionOff, pattern)
     control.function_list.append(off)
@@ -775,16 +775,16 @@ def test_functionSprites():
 def test_functionRaindrops():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE],
+        [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
     initial = pixel_array_to_numpy_array(
-        [PixelColors.OFF, PixelColors.OFF, PixelColors.OFF],
+        [PixelColor.OFF, PixelColor.OFF, PixelColor.OFF],
     )
     one = pixel_array_to_numpy_array(
-        [PixelColors.OFF, PixelColors.RED, PixelColors.OFF],
+        [PixelColor.OFF, PixelColor.RED, PixelColor.OFF],
     )
     two = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.OFF, PixelColors.RED],
+        [PixelColor.RED, PixelColor.OFF, PixelColor.RED],
     )
     off = LightTransform(control, LightTransform.functionOff, pattern)
     control.function_list.append(off)
@@ -799,7 +799,7 @@ def test_functionRaindrops():
     while function.state == RaindropStates.OFF.value:
         control._run_functions()
     function._step_count_max = 2
-    function._color = PixelColors.RED.array
+    function._color = PixelColor.RED.array
     control._run_functions()
     assert_array_equal(control.virtual_led_buffer, one)
     control._run_functions()
@@ -809,10 +809,10 @@ def test_functionRaindrops():
 def test_functionAlive():
     control = newController()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE],
+        [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
     initial = pixel_array_to_numpy_array(
-        [PixelColors.OFF, PixelColors.OFF, PixelColors.OFF],
+        [PixelColor.OFF, PixelColor.OFF, PixelColor.OFF],
     )
     off = LightTransform(control, LightTransform.functionOff, pattern)
     control.function_list.append(off)
@@ -882,7 +882,7 @@ def test_functionAlive():
 def test_overlayTwinkle():
     control = newControllerBigger()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE],
+        [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
     function = LightTransform(control, LightTransform.overlayTwinkle, pattern)
     function._random = 0.0
@@ -895,7 +895,7 @@ def test_overlayTwinkle():
 def test_overlayBlink():
     control = newControllerBigger()
     pattern = pixel_array_to_numpy_array(
-        [PixelColors.RED, PixelColors.GREEN, PixelColors.BLUE],
+        [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
     function = LightTransform(control, LightTransform.overlayBlink, pattern)
     function._random = 0.0

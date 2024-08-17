@@ -1,14 +1,17 @@
 #!/usr/bin/python3
 from __future__ import annotations
+
+import logging
 import random
 import time
 from typing import Optional
-from light_game import LightEvent, LightEventId, LightGame
-from lightberries.matrix_controller import MatrixController
-from lightberries.pixel import PixelColors
-from game_objects import GameObject, Player, Projectile, Enemy
+
 import numpy as np
-import logging
+from game_objects import Enemy, GameObject, Player, Projectile
+from light_game import LightEvent, LightEventId, LightGame
+
+from lightberries.matrix_controller import MatrixController
+from lightberries.pixel import PixelColor
 
 LOGGER = logging.getLogger(__name__)
 
@@ -21,7 +24,7 @@ class SpaceShip(Player):
         color: np.ndarray[(3), np.int32] | None = None,
     ) -> None:
         if color is None:
-            color = PixelColors.PSEUDO_RANDOM.array
+            color = PixelColor.PSEUDO_RANDOM.array
         super().__init__(
             x=x,
             y=y,
@@ -51,7 +54,7 @@ class Bullet(Projectile):
             y=y,
             size=size,
             name="Bullet",
-            color=PixelColors.BLUE.array,
+            color=PixelColor.BLUE.array,
             destructible=True,
             bounded=True,
             dx=dx,
@@ -81,7 +84,7 @@ class SpaceEnemy(Enemy):
         y: int,
         dx: float = 0,
         dy: float = 0,
-        color: np.ndarray[3, np.int32] = PixelColors.RED.array,
+        color: np.ndarray[3, np.int32] = PixelColor.RED.array,
         name: str = "space_enemy",
     ) -> None:
         super().__init__(
@@ -105,7 +108,7 @@ class ShieldEnemy(SpaceEnemy):
         y: int,
         dx: float = 0,
         dy: float = 0,
-        color: np.ndarray[3, np.int32] = PixelColors.ORANGE.array,
+        color: np.ndarray[3, np.int32] = PixelColor.ORANGE.array,
     ) -> None:
         super().__init__(x, y, dx, dy, color, name="ShieldEnemy")
 
@@ -121,7 +124,7 @@ class Shield(Projectile):
             y=0,
             size=3,
             name="Shield",
-            color=PixelColors.CYAN3.array,
+            color=PixelColor.CYAN3.array,
             destructible=True,
             bounded=False,
             dx=0.0,
@@ -206,7 +209,7 @@ class DeathRay(Projectile):
             y=0,
             size=1,
             name="death_ray",
-            color=PixelColors.CYAN.array,
+            color=PixelColor.CYAN.array,
             destructible=False,
             dx=0.0,
             dy=0.0,
@@ -219,9 +222,9 @@ class DeathRay(Projectile):
 
     def go(self):
         if self.alternate:
-            self.color = PixelColors.CYAN.array
+            self.color = PixelColor.CYAN.array
         else:
-            self.color = PixelColors.MAGENTA.array
+            self.color = PixelColor.MAGENTA.array
         self.alternate = not self.alternate
         if time.time() - self.timestamp_spawn > self.life_time:
             self._dead = True
@@ -330,7 +333,7 @@ class SpaceGame(LightGame):
         self.splash_screen("space", 20)
 
     def get_new_player(self, old_player: Optional[SpaceShip] = None) -> GameObject:
-        color = PixelColors.PSEUDO_RANDOM.array
+        color = PixelColor.PSEUDO_RANDOM.array
         if old_player is not None:
             color = old_player.color
         return SpaceShip(
@@ -408,7 +411,7 @@ class SpaceGame(LightGame):
                         elif event.event_id == LightEventId.ButtonTop:
                             if t - ship.color_time > 0.15:
                                 ship.color_time = t
-                                ship.color = PixelColors.PSEUDO_RANDOM.array
+                                ship.color = PixelColor.PSEUDO_RANDOM.array
             if time.time() - self.enemy_time >= self.enemy_delay and (self.first_render is True or self.pause is False):
                 self.enemy_time = time.time()
                 if random.randint(0, SpaceGame.SHIELD_ENEMY_CHANCE - 1) == SpaceGame.SHIELD_ENEMY_CHANCE - 1:
@@ -489,5 +492,7 @@ if __name__ == "__main__":
         matrixLayout=MATRIX_LAYOUT,
         matrixShape=MATRIX_SHAPE,
     )
+
+    run_space_game(lights)
 
     run_space_game(lights)

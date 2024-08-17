@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from lightberries.exceptions import LightBerryError, PatternError
-from lightberries.light_sequences.base import ArraySequence
+from lightberries.array_sequence.base import ArraySequence
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
+    from lightberries.pixel import PixelColor
 
 
 class SequenceSolid(ArraySequence):
@@ -17,6 +21,7 @@ class SequenceSolid(ArraySequence):
         self,
         led_count: int,
         name: str | None = None,
+        color: PixelColor | NDArray[np.int32] | None = None,
         **kwargs: dict[str, Any],
     ) -> None:
         """Create array of RGB tuples that are all one color.
@@ -37,10 +42,11 @@ class SequenceSolid(ArraySequence):
             led_count=led_count,
             kwargs=kwargs,
         )
-        color = self.DEFAULT_COLOR_SEQUENCE[0]
-        if "color" in kwargs:
-            color = kwargs["color"]
+
+        if color is None:
+            color = self.DEFAULT_COLOR_SEQUENCE[0]
         if led_count > 0:
-            self._sequence = np.array([color for i in range(int(led_count))])
+            self._sequence = np.array([color for _ in range(int(led_count))])
         else:
-            self._sequence = np.zeros((0, 3))
+            self._sequence = np.zeros((0, 3), dtype=np.int32)
+            self._sequence = np.zeros((0, 3), dtype=np.int32)

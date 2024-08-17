@@ -1,12 +1,15 @@
 #!/usr/bin/python3
 from __future__ import annotations
+
+import time
 from dataclasses import dataclass
 from enum import IntEnum
-import numpy as np
-from lightberries.pixel import PixelColors, Pixel
-from lightberries.matrix_controller import MatrixController
-import time
 from typing import Optional
+
+import numpy as np
+
+from lightberries.matrix_controller import MatrixController
+from lightberries.pixel import Pixel, PixelColor
 
 
 @dataclass
@@ -95,7 +98,7 @@ class GameObject:
         size: int,
         name: str,
         shape: SpriteShape = SpriteShape.CROSS,
-        color: np.ndarray[(3), np.int32] = PixelColors.WHITE.array,
+        color: np.ndarray[(3), np.int32] = PixelColor.WHITE.array,
         has_gravity: bool = True,
         destructible: bool = True,
     ) -> None:
@@ -553,7 +556,7 @@ class Floor(GameObject):
         width: int = 1,
         height: int = 1,
         name: str = "floor",
-        color: np.ndarray[(3), np.int32] = PixelColors.ORANGE.array,
+        color: np.ndarray[(3), np.int32] = PixelColor.ORANGE.array,
     ) -> None:
         super().__init__(
             x=x,
@@ -593,7 +596,7 @@ class Wall(GameObject):
         height: int = 1,
         width: int = 1,
         name: str = "wall",
-        color: np.ndarray[(3), np.int32] = PixelColors.WHITE.array,
+        color: np.ndarray[(3), np.int32] = PixelColor.WHITE.array,
     ) -> None:
         super().__init__(
             x=x,
@@ -615,7 +618,7 @@ class Sprite(GameObject):
         size: int,
         name: str,
         shape: SpriteShape = SpriteShape.CROSS,
-        color: np.ndarray[(3), np.int32] = PixelColors.WHITE.array,
+        color: np.ndarray[(3), np.int32] = PixelColor.WHITE.array,
         has_gravity: bool = True,
         destructible: bool = True,
         bounded: bool = True,
@@ -710,7 +713,7 @@ class Sprite(GameObject):
                     self.dead_time = time.time()
                     self._dead = True
         if self._dead:
-            self.color = PixelColors.YELLOW.array
+            self.color = PixelColor.YELLOW.array
         return self._dead
 
     @dead.setter
@@ -766,7 +769,7 @@ class Player(Sprite):
         y: int,
         size: int = 0,
         name="player",
-        color: np.ndarray[(3), np.int32] = PixelColors.GREEN.array,
+        color: np.ndarray[(3), np.int32] = PixelColor.GREEN.array,
         has_gravity: bool = True,
     ) -> None:
         super().__init__(
@@ -867,7 +870,7 @@ class Enemy(Sprite):
         y: int,
         size: int = 1,
         name: str = "enemy",
-        color: np.ndarray[(3), np.int32] = PixelColors.RED.array,
+        color: np.ndarray[(3), np.int32] = PixelColor.RED.array,
         destructible: bool = True,
         dx: float = 0.0,
         dy: float = 0.0,
@@ -913,7 +916,7 @@ class Projectile(Sprite):
         y: int,
         size: int = 1,
         name: str = "projectile",
-        color: np.ndarray[(3), np.int32] = PixelColors.BLUE.array,
+        color: np.ndarray[(3), np.int32] = PixelColor.BLUE.array,
         destructible: bool = True,
         bounded: bool = True,
         dx: float = 0.0,
@@ -1080,5 +1083,7 @@ def check_for_collisions(lights: Optional[MatrixController] = None):
                             obj2.collide(obj1, x2)
                     except KeyError:
                         pass
+            except KeyError:
+                pass
             except KeyError:
                 pass

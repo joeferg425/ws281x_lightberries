@@ -1,0 +1,63 @@
+"""Creates an array of random colors."""
+
+from __future__ import annotations
+
+import random
+from typing import Any
+
+from lightberries.array_sequence.base import ArraySequence
+from lightberries.array_sequence.off import SequenceOff
+
+RED = 0
+GREEN = 1
+BLUE = 2
+
+
+class SequenceRandom(ArraySequence):
+    """Creates an array of random colors."""
+
+    def __init__(
+        self,
+        led_count: int,
+        name: str | None = None,
+        **kwargs: dict[str, Any],
+    ) -> None:
+        """Create an array of random colors.
+
+        Args:
+        ----
+            name: the name of this pattern
+            led_count: the number of random colors to generate for the array
+            kwargs: args for patterns
+
+        Returns:
+        -------
+            a list of Pixel objects in the pattern you requested
+
+        """
+        if name is None:
+            name = SequenceRandom.__name__
+        super().__init__(
+            led_count=led_count,
+            name=name,
+            kwargs=kwargs,
+        )
+
+        temp_array = SequenceOff(led_count).sequence
+        for i in range(led_count):
+            # prevent 255, 255, 255
+            exclusion = random.randint(0, 2)
+            if exclusion != RED:
+                red_led = random.randint(0, 255)
+            else:
+                red_led = 0
+            if exclusion != GREEN:
+                green_led = random.randint(0, 255)
+            else:
+                green_led = 0
+            if exclusion != BLUE:
+                blue_led = random.randint(0, 255)
+            else:
+                blue_led = 0
+            temp_array[i] = [red_led, green_led, blue_led]
+        self._sequence = temp_array

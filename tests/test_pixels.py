@@ -6,11 +6,12 @@ from typing import Callable
 
 import numpy as np
 import pytest
+from numpy.testing import assert_array_equal
+
 from lightberries.exceptions import PixelError
 
 # import lightberries.pixel
-from lightberries.pixel import LEDOrder, Pixel, PixelColors
-from numpy.testing import assert_array_equal
+from lightberries.pixel import LEDOrder, Pixel, PixelColor
 
 
 def test_pixel_creation_default():
@@ -206,11 +207,11 @@ def test_pixel_creation_pixel_order_invalid():
 def test_pixelcolors():
     """Test whether the pixel colors helper class is returning valid and consistent colors."""
     # loop through each class member
-    for var in dir(PixelColors):
+    for var in dir(PixelColor):
         # skip private members
         if "__" not in var:
             # get member by name
-            p = getattr(PixelColors, var)
+            p = getattr(PixelColor, var)
             # if member is function, call it
             if isinstance(p, Callable):
                 p = p()

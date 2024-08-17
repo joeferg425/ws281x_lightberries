@@ -5,12 +5,15 @@ from __future__ import annotations
 import enum
 import logging
 import random
-from typing import Any, NamedTuple
+from typing import TYPE_CHECKING, Callable, NamedTuple, Union, cast
 
 import numpy as np
 
 from lightberries.constants import MAX_INT8, MAX_INT24, PIXEL_COLOR_COUNT
 from lightberries.exceptions import PixelError
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -23,10 +26,13 @@ class Order(NamedTuple):
     blue: int
 
 
+COLOR_COUNT = 3
+
+
 class StaticPixelProperty:
     """Works like @property and @staticmethod combined."""
 
-    def __init__(self, func: callable[None]) -> None:
+    def __init__(self, func: Callable[[], Pixel]) -> None:
         """Make decorator.
 
         Args:
@@ -46,8 +52,8 @@ class LEDOrder(Order, enum.Enum):
     If your colors are all wrong, try a different enum.
     """
 
-    RGB: list[int] = Order(red=0, green=1, blue=2)
-    GRB: list[int] = Order(red=1, green=0, blue=2)
+    RGB = (0, 1, 2)
+    GRB = (1, 0, 2)
 
 
 class Pixel:
@@ -57,8 +63,8 @@ class Pixel:
 
     def __init__(
         self,
-        rgb: int | np.ndarray[(3), np.dtype[Any]] | Pixel | None = None,
-        order: LEDOrder | list | None = None,
+        rgb: Pixel | int | NDArray[np.int32] | tuple[int, int, int] | list[int] | None = None,
+        order: LEDOrder | tuple[int, int, int] | list[int] | None = None,
     ) -> None:
         """Create a single RGB LED pixel.
 
@@ -91,7 +97,7 @@ class Pixel:
             self.int32value = 0
 
         # if it is an int and in range
-        elif isinstance(rgb, (int, np.int32, np.int32)) and rgb >= 0 and rgb <= MAX_INT24:
+        elif isinstance(rgb, (int, np.integer)) and rgb >= 0 and rgb <= MAX_INT24:
             rgb = int(rgb)
             if self._order == LEDOrder.RGB.value:
                 self.int32value = rgb & MAX_INT24
@@ -135,7 +141,7 @@ class Pixel:
         """
         return len(self.array)
 
-    def __int32_(
+    def int32(
         self,
     ) -> int:
         """Return the pixel value as a single integer value.
@@ -174,7 +180,7 @@ class Pixel:
             a string representation of the Pixel instance
 
         """
-        return f"<{self.__name__}> {self.__str__()} ({self.int32value}/{LEDOrder (self._order).name})"
+        return f"<{Pixel.__name__}> {self.__str__()} ({self.int32value}/{LEDOrder (self._order).name})"
 
     def __eq__(self, other: object) -> bool:
         """Text pixel equality with other objects.
@@ -188,15 +194,20 @@ class Pixel:
             true if objects are equal
 
         """
-        if other is None or not isinstance(other, (int, np.ndarray, tuple, Pixel)):
-            return False
+        if (
+            isinstance(other, (int, Pixel))
+            or (isinstance(other, tuple) and all(isinstance(e, int) for e in other) and len(other) >= COLOR_COUNT)  # type: ignore  # noqa: PGH003
+            or (isinstance(other, list) and all(isinstance(e, int) for e in other) and len(other) >= COLOR_COUNT)  # type: ignore # noqa: PGH003
+        ):
+            other = cast("Union[int, Pixel, tuple[int, int, int], list[int]]", other)
+            return self.pixel.int32value == Pixel(other, LEDOrder.RGB).pixel.int32value
+        return False
         # convert the pixel orders to the same order then compare
-        return self.pixel.int32value == Pixel(other, LEDOrder.RGB).pixel.int32value
 
     @property
     def tuple(
         self,
-    ) -> tuple[int]:
+    ) -> tuple[int, int, int]:
         """Return Pixel value as a tuple of ints.
 
         Returns
@@ -231,7 +242,7 @@ class Pixel:
     @property
     def array(
         self,
-    ) -> np.ndarray[(3,), np.int32]:
+    ) -> NDArray[np.int32]:
         """Return Pixel value as a numpy array.
 
         Returns
@@ -244,7 +255,7 @@ class Pixel:
     @property
     def rgb_array(
         self,
-    ) -> np.ndarray[(3,), np.int32]:
+    ) -> NDArray[np.int32]:
         """Return Pixel value as a numpy array.
 
         Returns
@@ -300,7 +311,7 @@ class Pixel:
         return Pixel([255 - a for a in self.array])
 
 
-class PixelColors:
+class PixelColor(Pixel, enum.Enum):
     """List of commonly used colors for ease of use."""
 
     OFF = Pixel((0, 0, 0), order=LEDOrder.RGB)
@@ -346,8 +357,8 @@ class PixelColors:
 
         """
         valid_colors = [
-            getattr(PixelColors, p)
-            for p in dir(PixelColors)
+            getattr(PixelColor, p)
+            for p in dir(PixelColor)
             if "__" not in p and "random" not in p.lower() and "off" not in p.lower()
         ]
         return valid_colors[random.randint(0, len(valid_colors) - 1)]
@@ -361,4 +372,5 @@ class PixelColors:
             random pixel color
 
         """
+        return Pixel([random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)])
         return Pixel([random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)])

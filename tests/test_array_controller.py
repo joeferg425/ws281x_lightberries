@@ -3,14 +3,15 @@ from __future__ import annotations
 from typing import Any
 from unittest import mock
 
-import lightberries.rpiws281x_patch
 import numpy as np
-from lightberries.array_controller import ArrayController
-from lightberries.exceptions import WS281xStringError
-from lightberries.light_sequences.base import pixel_array_to_numpy_array
-from lightberries.pixel import PixelColors
-from lightberries.ws281x_strings import WS281xString
 from numpy.typing import NDArray
+
+import lightberries.rpiws281x_patch
+from lightberries.array_controller import ArrayController
+from lightberries.array_sequence.base import pixel_array_to_numpy_array
+from lightberries.exceptions import WS281xStringError
+from lightberries.pixel import PixelColor
+from lightberries.ws281x_strings import WS281xString
 
 
 def new_instantiate_pixelstrip(
@@ -104,11 +105,11 @@ def test_properties():
         assert isinstance(ac.refresh_delay, float)
         ac.refresh_delay = 0.1
         assert isinstance(ac.background_color, np.ndarray)
-        ac.background_color = PixelColors.OFF.array
+        ac.background_color = PixelColor.OFF.array
         assert isinstance(ac.seconds_per_mode, float)
         ac.seconds_per_mode = 1.0
         assert isinstance(ac.color_sequence, np.ndarray)
-        ac.color_sequence = pixel_array_to_numpy_array([PixelColors.OFF])
+        ac.color_sequence = pixel_array_to_numpy_array([PixelColor.OFF])
         assert isinstance(ac.color_sequence_count, int)
         ac.color_sequence_count = 1
         assert isinstance(ac.color_sequence_index, int)
@@ -133,7 +134,7 @@ def test_delete():
 def test_reset():
     with mock.patch.object(ArrayController, "_instantiate_WS281xString", new_instantiate_WS281xString):
         ac = ArrayController(testing=True)
-        ac.set_virtual_led_buffer(pixel_array_to_numpy_array([PixelColors.OFF]))
+        ac.set_virtual_led_buffer(pixel_array_to_numpy_array([PixelColor.OFF]))
         ac.reset()
         assert len(ac.virtual_led_buffer) == ac.real_led_count
 
@@ -141,7 +142,7 @@ def test_reset():
 def test_refresh_callback():
     with mock.patch.object(ArrayController, "_instantiate_WS281xString", new_instantiate_WS281xString):
         ac = ArrayController(testing=True)
-        ac.refreshCallback = print
+        ac.refresh_callback = print
         ac.refresh_leds()
 
 

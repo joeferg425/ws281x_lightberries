@@ -6,8 +6,8 @@ from typing import Any
 
 import numpy as np
 
+from lightberries.array_sequence.base import ArraySequence
 from lightberries.exceptions import LightBerryError, PatternError
-from lightberries.light_sequences.base import ArraySequence
 from lightberries.pixel import Pixel
 
 LOGGER = logging.getLogger("lightBerries")

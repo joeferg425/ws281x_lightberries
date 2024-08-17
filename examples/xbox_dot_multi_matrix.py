@@ -6,11 +6,11 @@ import os
 import numpy as np
 import pygame
 
-from lightberries.light_sequences.base import ArraySequence
+from lightberries.array_sequence.base import ArraySequence
 from lightberries.matrix_controller import MatrixController
 from lightberries.matrix_functions import MatrixFunction
-from lightberries.pixel import Pixel, PixelColors
-from lightberries.transform import Transform
+from lightberries.pixel import Pixel, PixelColor
+from lightberries.pixel_transform import PixelTransform
 
 # COUNT = 1
 # COUNT = 2
@@ -90,7 +90,7 @@ class sprite:
         bounded: bool = False,
         stop=False,
         size: int = 1,
-        color: np.ndarray[(3), np.int32] = PixelColors.WHITE.array,
+        color: np.ndarray[(3), np.int32] = PixelColor.WHITE.array,
     ) -> None:
         self.name = name
         self._x = x
@@ -206,20 +206,20 @@ PAUSE_DELAY = 0.3
 pygame.init()
 keepPlaying = True
 THRESHOLD = 0.05
-fade = Transform(
+fade = PixelTransform(
     lightControl,
     MatrixFunction.functionFadeOff,
     ArraySequence.default_color_sequence_by_month(),
 )
 fade._fade_amount = 0.3
 fade.colorFade = int(0.3 * 256)
-fade._color = PixelColors.OFF.array
+fade._color = PixelColor.OFF.array
 x_change = 0
 y_change = 0
 player = sprite(
     "player",
     stop=True,
-    color=PixelColors.GREEN.array,
+    color=PixelColor.GREEN.array,
 )
 joystick_count = 0
 joystick = None

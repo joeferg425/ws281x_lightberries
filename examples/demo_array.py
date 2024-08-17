@@ -35,7 +35,7 @@ lightControl = ArrayController(
 )
 # run the configuration until killed
 try:
-    lightControl.demo(secondsPerMode=30, skipFunctions=["none", "solid"], skipColors=["single"])
+    lightControl.demo(seconds_per_mode=30, skip_functions=["none", "solid"], skip_colors=["single"])
 except KeyboardInterrupt:
     pass
 except SystemExit:

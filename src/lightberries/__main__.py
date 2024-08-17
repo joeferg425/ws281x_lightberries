@@ -1,6 +1,6 @@
 """Defines callable behaviors for this module."""
 
-# ruff: noqa: F401
+# ruff: noqa: F401, PGH003, I001, F403
 from __future__ import annotations
 
 import argparse
@@ -9,46 +9,17 @@ import sys
 
 import lightberries
 from lightberries.array_controller import ArrayController
-from lightberries.array_transforms.all_functions import (
-    TransformAccelerate,
-    TransformAlive,
-    TransformBlink,
-    TransformCollisionDetect,
-    TransformCylon,
-    TransformFade,
-    TransformFadeOff,
-    TransformMarquee,
-    TransformMerge,
-    TransformMeteor,
-    TransformNone,
-    TransformOff,
-    TransformRaindrop,
-    TransformRandomChange,
-    TransformSolidColorCycle,
-    TransformSprites,
-    TransformTwinkle,
-)
+from lightberries.array_sequence.all_sequences import *
+from lightberries.array_transforms.all_functions import *
 from lightberries.exceptions import LightBerryError, PermissionsError
-from lightberries.light_sequences import (
-    SequenceOff,
-    SequencePseudoRandom,
-    SequenceRainbow,
-    SequenceRainbowRepeating,
-    SequenceRandom,
-    SequenceRepeatedReflected,
-    SequenceRepeating,
-    SequenceSolid,
-    SequenceStretch,
-    SequenceTransition,
-)
-from lightberries.sequence import Sequence
-from lightberries.transform import Transform
+from lightberries.pixel_sequence import PixelSequence
+from lightberries.pixel_transform import PixelTransform
 
 LOGGER = logging.getLogger("lightBerries")
 
 if __name__ == "__main__":  # pylint: disable=invalid-name
     # the number of pixels in the light string
-    PIXEL_COUNT = 100
+    led_count = 100
     # GPIO pin to use for PWM signal
     GPIO_PWM_PIN = 18
     # DMA channel
@@ -61,17 +32,22 @@ if __name__ == "__main__":  # pylint: disable=invalid-name
     LED_STRIP_TYPE = None
     INVERT = False
     PWM_CHANNEL = 0
-    BRIGHTNESS = 0.75
-    DURATION = 20.0
-    FUNCTIONS = None
-    COLORS = None
+    brightness = 0.75
+    duration = 20.0
+    functions: list[str] = []
+    colors: list[str] = []
 
     # command-line args
     parser = argparse.ArgumentParser(
         description=lightberries.__doc__,
         usage="sudo python3 -m lightberries (Needs root for GPIO access)",
     )
-    parser.add_argument("-l", "--LED_count", type=int, help="the number of LEDs in your LED string")
+    parser.add_argument(
+        "-l",
+        "--LED_count",
+        type=int,
+        help="the number of LEDs in your LED string",
+    )
     parser.add_argument(
         "-d",
         "--function_duration",
@@ -81,13 +57,13 @@ if __name__ == "__main__":  # pylint: disable=invalid-name
     parser.add_argument(
         "-f",
         "--function",
-        choices=[name.lower() for name in Transform.ALL_TRANSFORMS],
+        choices=[name.lower() for name in PixelTransform.ALL_TRANSFORMS],
         help="the name of the function to demo using randomized parameters",
     )
     parser.add_argument(
         "-c",
         "--color",
-        choices=[name.lower() for name in Sequence.ALL_SEQUENCES],
+        choices=[name.lower() for name in PixelSequence.ALL_SEQUENCES],
         help="the name of the color pattern to demo using randomized parameters",
     )
     parser.add_argument(
@@ -95,30 +71,31 @@ if __name__ == "__main__":  # pylint: disable=invalid-name
         "--brightness",
         metavar="[0-1]",
         type=float,
-        default=BRIGHTNESS,
+        default=brightness,
         help="the name of the color pattern to demo using randomized parameters",
     )
+    parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
 
     if args.LED_count is not None:
-        PIXEL_COUNT = args.LED_count
+        led_count = args.LED_count
 
     if args.function_duration is not None:
-        DURATION = args.function_duration
+        duration = args.function_duration
 
     if args.function is not None:
-        FUNCTIONS = [args.function]
+        functions = [args.function]
 
     if args.color is not None:
-        COLORS = [args.color]
+        colors = [args.color]
 
     if args.brightness >= 0 and args.brightness <= 1:
-        BRIGHTNESS = float(args.brightness)
+        brightness = float(args.brightness)
 
     # create the light-function object
     try:
-        lightControl = ArrayController(
-            led_count=PIXEL_COUNT,
+        light_control = ArrayController(
+            led_count=led_count,
             pwm_gpio_pin=GPIO_PWM_PIN,
             dma_channel=DMA_CHANNEL,
             pwm_frequency=PWM_FREQUENCY,
@@ -126,33 +103,22 @@ if __name__ == "__main__":  # pylint: disable=invalid-name
             pwm_invert_signal=INVERT,
             gamma=GAMMA,
             led_strip_type=LED_STRIP_TYPE,
-            debug=True,
-            led_brightness=BRIGHTNESS,
+            debug=args.debug,
+            led_brightness=brightness,
         )
-    except PermissionsError as ex:
-        LOGGER.error("%s", ex)
+    except PermissionsError:
+        LOGGER.exception("LightBerries failed")
         sys.exit(1)
     except LightBerryError:
         LOGGER.exception("Failed to launch LightBerries Controller")
         sys.exit(1)
     # run the demo!
     try:
-        lightControl.demo(DURATION, functionNames=FUNCTIONS, colorNames=COLORS)
+        light_control.demo(duration, function_names=functions, color_names=colors)
     except SystemExit:
         pass
     except KeyboardInterrupt:
         pass
-    except Exception as ex:
-        LOGGER.exception(ex)
-        lightControl.__del__()
-        # sys.exit(1)
-    # run the demo!
-    try:
-        lightControl.demo(DURATION, functionNames=FUNCTIONS, colorNames=COLORS)
-    except SystemExit:
-        pass
-    except KeyboardInterrupt:
-        pass
-    except Exception as ex:
-        LOGGER.exception(ex)
-    lightControl.__del__()
+    except Exception:
+        LOGGER.exception("LightBerries Demo failed")
+        light_control.__del__()
