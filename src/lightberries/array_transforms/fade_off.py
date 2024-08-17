@@ -5,19 +5,18 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from lightberries.array_transforms.base import ArrayTransform
+from lightberries.transform import Transform
 
 if TYPE_CHECKING:
     import numpy as np
 
     import lightberries.array_controller
     from lightberries.state import TransformState
-    from lightberries.transform import LightTransform
 
 LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformFadeOff(ArrayTransform):
+class TransformFadeOff(Transform):
     """Fade all Pixels toward OFF."""
 
     def __init__(
@@ -34,7 +33,7 @@ class TransformFadeOff(ArrayTransform):
 
         """
         super().__init__(
-            name=TransformFadeOff.__class__.__name__,
+            name=TransformFadeOff.__name__,
             controller=controller,
             state=state,
         )
@@ -46,7 +45,7 @@ class TransformFadeOff(ArrayTransform):
         *,
         fade_amount: float | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
-    ) -> list[LightTransform]:
+    ) -> list[Transform]:
         """Configure the transformation.
 
         Args:

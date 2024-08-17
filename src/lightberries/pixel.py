@@ -174,7 +174,7 @@ class Pixel:
             a string representation of the Pixel instance
 
         """
-        return f"<{self.__class__.__name__}> {self.__str__()} ({self.int32value}/{LEDOrder (self._order).name})"
+        return f"<{self.__name__}> {self.__str__()} ({self.int32value}/{LEDOrder (self._order).name})"
 
     def __eq__(self, other: object) -> bool:
         """Text pixel equality with other objects.

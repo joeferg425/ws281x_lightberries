@@ -6,20 +6,20 @@ import logging
 from math import ceil
 from typing import TYPE_CHECKING, Any
 
-from lightberries.array_transforms.base import ArrayTransform
 from lightberries.constants import MAX_INT8
+from lightberries.transform import Transform
 
 if TYPE_CHECKING:
     import numpy as np
 
     import lightberries.array_controller
     from lightberries.state import TransformState
-    from lightberries.transform import LightTransform
+    from lightberries.transform import Transform
 
 LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformFade(ArrayTransform):
+class TransformFade(Transform):
     """Fade all Pixels."""
 
     def __init__(
@@ -48,7 +48,7 @@ class TransformFade(ArrayTransform):
         *,
         fade_amount: float | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
-    ) -> list[LightTransform]:
+    ) -> list[Transform]:
         """Configure the transformation.
 
         Args:
@@ -63,7 +63,12 @@ class TransformFade(ArrayTransform):
             list of transforms
 
         """
-        return super().setup(color_sequence, state)
+        if color_sequence is not None:
+            self.color_sequence = self.color_sequence
+        if state is not None:
+            self.state = state
+        else:
+            self.state.set_fade_amount(fade_amount=fade_amount)
 
     def transform(self) -> None:
         """Fade all Pixels."""

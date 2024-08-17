@@ -1,70 +1,73 @@
-"""Functions that modify the LED patterns in interesting ways."""
+# """Functions that modify the LED patterns in interesting ways."""
 
-from __future__ import annotations
+# from __future__ import annotations
 
-import logging
-from typing import TYPE_CHECKING, Any, ClassVar
+# import logging
+# from typing import TYPE_CHECKING, Any, ClassVar
 
-from lightberries.light_sequences.base import ArraySequence
-from lightberries.transform import LightTransform
+# from lightberries.light_sequences.base import ArraySequence
+# from lightberries.transform import LightTransform
 
-if TYPE_CHECKING:
-    import numpy as np
+# if TYPE_CHECKING:
+#     import numpy as np
 
-    import lightberries.array_controller
-    from lightberries.state import TransformState
-
-
-LOGGER = logging.getLogger("lightBerries")
+#     import lightberries.array_controller
+#     from lightberries.state import TransformState
 
 
-class ArrayTransform(LightTransform):
-    """Modify LED patterns in interesting ways."""
+# LOGGER = logging.getLogger("lightBerries")
 
-    ALL_ARRAY_TRANSFORMS: ClassVar[dict[str, ArrayTransform]] = {}
 
-    def __init__(
-        self,
-        name: str,
-        controller: lightberries.array_controller.ArrayController,
-        state: TransformState | None = None,
-    ) -> None:
-        """Initialize the Light Function tracking object.
+# class LightTransform(LightTransform):
+#     """Modify LED patterns in interesting ways."""
 
-        Args:
-        ----
-            name: name of the function
-            controller: Array controller instance
-            state: initial state. Defaults to None.
+#     ALL_ARRAY_TRANSFORMS: ClassVar[dict[str, LightTransform]] = {}
 
-        """
-        super().__init__(
-            name=name,
-            controller=controller,
-            state=state,
-        )
-        self.ALL_ARRAY_TRANSFORMS[name] = self
+#     def __init_subclass__(cls, name: str) -> None:
+#         return super().__init_subclass__(name=name)
 
-    def setup(
-        self,
-        color_sequence: np.ndarray[Any, np.int32] | None = None,
-        state: TransformState | None = None,
-    ) -> list[LightTransform]:
-        """Configure the transformation.
+#     def __init__(
+#         self,
+#         name: str,
+#         controller: lightberries.array_controller.ArrayController,
+#         state: TransformState | None = None,
+#     ) -> None:
+#         """Initialize the Light Function tracking object.
 
-        Args:
-        ----
-            color_sequence: color sequence. Defaults to None.
-            state: initial state. Defaults to None.
+#         Args:
+#         ----
+#             name: name of the function
+#             controller: Array controller instance
+#             state: initial state. Defaults to None.
 
-        Returns:
-        -------
-            list of transforms
+#         """
+#         super().__init__(
+#             name=name,
+#             controller=controller,
+#             state=state,
+#         )
+#         self.ALL_ARRAY_TRANSFORMS[name] = self
 
-        """
-        if state is not None:
-            self.state = state
-        self.state.color_sequence = ArraySequence.default_color_sequence_by_month()
-        if color_sequence is not None:
-            self.state.color_sequence = color_sequence
-        return []
+#     def setup(
+#         self,
+#         color_sequence: np.ndarray[Any, np.int32] | None = None,
+#         state: TransformState | None = None,
+#     ) -> list[LightTransform]:
+#         """Configure the transformation.
+
+#         Args:
+#         ----
+#             color_sequence: color sequence. Defaults to None.
+#             state: initial state. Defaults to None.
+
+#         Returns:
+#         -------
+#             list of transforms
+
+#         """
+#         if state is not None:
+#             self.state = state
+#         self.state.color_sequence = ArraySequence.default_color_sequence_by_month()
+#         if color_sequence is not None:
+#             self.state.color_sequence = color_sequence
+#         return []

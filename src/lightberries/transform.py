@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 import numpy as np
 
 from lightberries.exceptions import ControllerError, LightBerryError
+from lightberries.light_sequences.base import ArraySequence
 from lightberries.pixel import LEDOrder, Pixel
 from lightberries.state import TransformState
 
@@ -19,10 +20,13 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("lightBerries")
 
 
-class LightTransform(ABC):
+class Transform(ABC):
     """Modify LED strings in interesting ways."""
 
-    ALL_TRANSFORMS: ClassVar[dict[str, LightTransform]] = {}
+    ALL_TRANSFORMS: ClassVar[dict[str, type[Transform]]] = {}
+
+    def __init_subclass__(cls, **kwargs) -> None:  # noqa: ANN003
+        cls.ALL_TRANSFORMS[cls.__name__.replace("Transform", "")] = cls
 
     def __init__(
         self,
@@ -39,8 +43,6 @@ class LightTransform(ABC):
             state: initial state. Defaults to None.
 
         """
-        self.ALL_TRANSFORMS[name] = self
-
         self.controller = controller
         self._name = name
         if state is None:
@@ -65,28 +67,31 @@ class LightTransform(ABC):
             string representation of this class(not de-serializable)
 
         """
-        return f"<{self.__class__.__name__}> {self!s}"
+        return f"<{self.__name__}> {self!s}"
 
-    @abstractmethod
     def setup(
         self,
-        color_sequence: np.ndarray[(3, Any), np.int32] | None = None,
+        color_sequence: np.ndarray[Any, np.int32] | None = None,
         state: TransformState | None = None,
-        **kwargs: dict[str, Any],
-    ) -> list[LightTransform]:
-        """Create one or more transform instances.
+    ) -> list[Transform]:
+        """Configure the transformation.
 
         Args:
         ----
             color_sequence: color sequence. Defaults to None.
             state: initial state. Defaults to None.
-            kwargs: extra args to the state object
 
         Returns:
         -------
-            one or more transform instances
+            list of transforms
 
         """
+        if state is not None:
+            self.state = state
+        self.state.color_sequence = ArraySequence.default_color_sequence_by_month()
+        if color_sequence is not None:
+            self.state.color_sequence = color_sequence
+        return []
 
     @abstractmethod
     def transform(self) -> None:
@@ -103,7 +108,7 @@ class LightTransform(ABC):
             the color sequence
 
         """
-        return self._color_sequence
+        return self.state.color_sequence
 
     @color_sequence.setter
     def color_sequence(
@@ -117,9 +122,9 @@ class LightTransform(ABC):
             color_sequence: desired color sequence
 
         """
-        self._color_sequence = color_sequence
-        self._color_sequence_count = len(self._color_sequence)
-        self._color_sequence_index = 0
+        self.state.color_sequence = color_sequence
+        self.state.color_sequence_count = len(self.state.color_sequence)
+        self.state.color_sequence_index = 0
 
     @property
     def color_sequence_count(
@@ -132,7 +137,7 @@ class LightTransform(ABC):
             the color sequence count
 
         """
-        return self._color_sequence_count
+        return self.state.color_sequence_count
 
     @color_sequence_count.setter
     def color_sequence_count(
@@ -146,7 +151,7 @@ class LightTransform(ABC):
             color_sequence_count: the number of colors in the sequence
 
         """
-        self._color_sequence_count = color_sequence_count
+        self.state.color_sequence_count = color_sequence_count
 
     @property
     def color_sequence_index(
@@ -159,7 +164,7 @@ class LightTransform(ABC):
             the current color sequence index
 
         """
-        return self._color_sequence_index
+        return self.state.color_sequence_index
 
     @color_sequence_index.setter
     def color_sequence_index(
@@ -173,7 +178,7 @@ class LightTransform(ABC):
             color_sequence_index: the current index being used for the color sequence
 
         """
-        self._color_sequence_index = color_sequence_index
+        self.state.color_sequence_index = color_sequence_index
 
     @property
     def color_sequence_next(
@@ -186,10 +191,10 @@ class LightTransform(ABC):
             the next color in the sequence
 
         """
-        self._color_sequence_index += 1
-        if self._color_sequence_index >= self._color_sequence_count:
-            self._color_sequence_index = 0
-        return self._color_sequence[self._color_sequence_index]
+        self.state.color_sequence_index += 1
+        if self.state.color_sequence_index >= self.state.color_sequence_count:
+            self.state.color_sequence_index = 0
+        return self.state.color_sequence[self.state.color_sequence_index]
 
     def update_array_index(
         self,
@@ -256,7 +261,7 @@ class LightTransform(ABC):
 
         """
         try:
-            return random.randint(0, (self.virtual_led_count - 1))
+            return random.randint(0, (self.controller.virtual_led_count - 1))
         except SystemExit:  # pragma: no cover
             raise
         except KeyboardInterrupt:  # pragma: no cover

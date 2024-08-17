@@ -8,25 +8,26 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from lightberries.array_transforms.base import ArrayTransform
-from lightberries.array_transforms.off import TransformOff
-from lightberries.light_sequences.solid import SolidSequence
+from lightberries.array_transforms.fade_off import TransformFadeOff
+from lightberries.light_sequences.solid import SequenceSolid
 from lightberries.pixel import PixelColors
+from lightberries.transform import Transform
 
 if TYPE_CHECKING:
     import lightberries.array_controller
     from lightberries.state import TransformState
-    from lightberries.transform import LightTransform
+    from lightberries.transform import Transform
 
 LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformMarquee(ArrayTransform):
+class TransformMarquee(Transform):
     """Move the LEDs in the color sequence from one end of the LED string to the other continuously."""
 
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
+        state: TransformState | None = None,
     ) -> None:
         """Move the LEDs in the color sequence from one end of the LED string to the other continuously.
 
@@ -39,6 +40,7 @@ class TransformMarquee(ArrayTransform):
         super().__init__(
             name=TransformMarquee.__name__,
             controller=controller,
+            state=state,
         )
 
     def setup(
@@ -50,7 +52,7 @@ class TransformMarquee(ArrayTransform):
         delay_count: int | None = None,
         initial_direction: int | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
-    ) -> list[LightTransform]:
+    ) -> list[Transform]:
         """Configure the transformation.
 
         Args:
@@ -72,28 +74,22 @@ class TransformMarquee(ArrayTransform):
             self.color_sequence = self.color_sequence
         if state is not None:
             self.state = state
-
-        shift_amount: int = random.randint(1, 2)
-        delay_count: int = random.randint(0, 6)
-        initial_direction: int = self.get_random_direction()
+        else:
+            self.state.step = random.randint(1, 2)
+            self.state.delay_count_max = random.randint(0, 6)
+            self.state.direction = self.get_random_direction()
         if shift_amount is not None:
-            shift_amount = int(shift_amount)
+            self.state.step = shift_amount
         if delay_count is not None:
-            delay_count = int(delay_count)
+            self.state.delay_count_max = delay_count
         if initial_direction is not None:
-            initial_direction = 1 if (initial_direction >= 1) else -1
+            self.state.direction = 1 if (initial_direction >= 1) else -1
         # store the size of the color sequence being shifted back and forth
         self.state.size = self.color_sequence_count
-        # assign starting direction
-        self.state.direction = initial_direction
-        # this is how much the LEDs will move by each time
-        self.state.step = shift_amount
-        # this is how many LED updates will be ignored before doing another LED shift
-        self.state.delay_count_max = delay_count
         # this function just shifts the existing virtual LED buffer,
         # so make sure the virtual LED buffer is initialized here
         if self.color_sequence_count >= self.controller.virtual_led_count - 10:
-            array = SolidSequence(
+            array = SequenceSolid(
                 arrayLength=self.color_sequence_count + 10,
                 color=PixelColors.OFF.array,
             )
@@ -102,7 +98,7 @@ class TransformMarquee(ArrayTransform):
         else:
             self.controller.set_virtual_led_buffer(self.color_sequence)
         # turn off all LEDs every time so we can turn on new ones
-        transform_off = TransformOff(controller=self.controller)
+        transform_off = TransformFadeOff(controller=self.controller)
         transform_off.setup(
             color_sequence=self.color_sequence,
             state=self.state,

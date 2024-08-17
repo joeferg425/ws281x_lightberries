@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 from lightberries.exceptions import FunctionError, LightBerryError
 from lightberries.state import TransformState
-from lightberries.transform import LightTransform
+from lightberries.transform import Transform
 
 if TYPE_CHECKING:
     import numpy as np
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from lightberries.state import TransformState
 
 
-class ArrayFunctionBlink(LightTransform):
+class TransformBlink(Transform):
     """Randomly set all lights in the string to the same color without changing the virtual LED buffer."""
 
     def __init__(
@@ -35,7 +35,7 @@ class ArrayFunctionBlink(LightTransform):
 
         """
         super().__init__(
-            name=ArrayFunctionBlink.__class__.__name__,
+            name=TransformBlink.__name__,
             controller=controller,
             state=state,
             kwargs=kwargs,
@@ -46,7 +46,7 @@ class ArrayFunctionBlink(LightTransform):
         color_sequence: np.ndarray[Any, np.int32] | None = None,
         state: TransformState | None = None,
         **kwargs: dict[str, Any],
-    ) -> list[LightTransform]:
+    ) -> list[Transform]:
         """Create one or more transform instances.
 
         Args:

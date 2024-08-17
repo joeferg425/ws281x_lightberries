@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import random
 from dataclasses import dataclass, field
 from enum import IntEnum
 from typing import TYPE_CHECKING, Any
@@ -15,7 +16,7 @@ from lightberries.pixel import PixelColors
 
 if TYPE_CHECKING:
     import lightberries.array_controller
-    from lightberries.transform import LightTransform
+    from lightberries.transform import Transform
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -26,6 +27,18 @@ class LEDFadeType(IntEnum):
     FADE_OFF = 0
     INSTANT_OFF = 1
     DONT = 2
+
+    @classmethod
+    def get_random() -> LEDFadeType:
+        """Get a random one.
+
+        Returns
+        -------
+            a random one
+
+        """
+        fade_types: list[LEDFadeType] = list(LEDFadeType)
+        return fade_types[random.randint(0, len(fade_types) - 1)]
 
 
 class ThingMoves(IntEnum):
@@ -67,7 +80,7 @@ class TransformState:
 
     controller: lightberries.array_controller.ArrayController
 
-    color_sequence: np.ndarray[(3, Any), np.int32] = field(default_factory=np.array)
+    color_sequence: np.ndarray[(3, Any), np.int32] = field(default_factory=lambda: np.zeros([3, 0], dtype=np.int32))
     color_sequence_count: int = 0
     color_sequence_index: int = 0
 
@@ -81,7 +94,7 @@ class TransformState:
     index_min: int = 0
     index_max: int = 0
     index_updated: bool = False
-    index_range: np.ndarray[(3, Any), np.int32] = field(default_factory=np.array([], dtype=np.int32))
+    index_range: np.ndarray[(3, Any), np.int32] = field(default_factory=lambda: np.zeros([3, 0], dtype=np.int32))
 
     color: np.ndarray[(3,), np.int32] = PixelColors.OFF
     color_begin: np.ndarray[(3,), np.int32] = PixelColors.OFF.array
@@ -92,7 +105,6 @@ class TransformState:
 
     fade_type: LEDFadeType = LEDFadeType.FADE_OFF
     fade_amount: float = 0.5
-    fade_steps: int = 0
 
     delay_counter: int = 0
     delay_count_max: int = 0
@@ -105,8 +117,10 @@ class TransformState:
 
     collision: bool = False
     collision_enabled: bool = False
-    collision_intersection: np.ndarray[(Any,), np.int32] = field(default_factory=np.array)
-    collision_with: LightTransform | None = None
+    collision_intersection: np.ndarray[(Any,), np.int32] = field(
+        default_factory=lambda: np.zeros([3, 0], dtype=np.int32)
+    )
+    collision_with: Transform | None = None
     collision_randomizer: bool = False
     collision_private: bool = False
 
@@ -155,3 +169,13 @@ class TransformState:
             self.fade_amount = 0.1
         elif fade_amount > 1:
             self.fade_amount = 0.9
+
+    def copy(self) -> TransformState:
+        """Get a copy of this object.
+
+        Returns
+        -------
+            a copy of this object
+
+        """
+        return TransformState(**self.__dict__)

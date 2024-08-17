@@ -5,11 +5,12 @@ import os
 
 import numpy as np
 import pygame
-from lightberries.array_transforms.base import ArrayTransform
+
 from lightberries.light_sequences.base import ArraySequence
 from lightberries.matrix_controller import MatrixController
 from lightberries.matrix_functions import MatrixFunction
 from lightberries.pixel import Pixel, PixelColors
+from lightberries.transform import Transform
 
 # COUNT = 1
 # COUNT = 2
@@ -205,7 +206,7 @@ PAUSE_DELAY = 0.3
 pygame.init()
 keepPlaying = True
 THRESHOLD = 0.05
-fade = ArrayTransform(
+fade = Transform(
     lightControl,
     MatrixFunction.functionFadeOff,
     ArraySequence.default_color_sequence_by_month(),

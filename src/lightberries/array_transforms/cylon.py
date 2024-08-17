@@ -8,11 +8,11 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from lightberries.array_transforms.base import ArrayTransform
 from lightberries.array_transforms.fade_off import TransformFadeOff
 from lightberries.constants import MAX_INT8, SHAPE_2D
-from lightberries.light_sequences.solid import SolidSequence
+from lightberries.light_sequences.solid import SequenceSolid
 from lightberries.pixel import PixelColors
+from lightberries.transform import Transform
 
 if TYPE_CHECKING:
     import lightberries.array_controller
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformCylon(ArrayTransform):
+class TransformCylon(Transform):
     """Do cylon eye things."""
 
     def __init__(
@@ -90,7 +90,7 @@ class TransformCylon(ArrayTransform):
         self.state.size = self.color_sequence_count
         # adjust virtual LED buffer if necessary so that the cylon can actually move
         if self.controller.virtual_led_count < self.state.size:
-            array = SolidSequence(
+            array = SequenceSolid(
                 arrayLength=self.state.size + 3,
                 color=PixelColors.OFF.array,
             )

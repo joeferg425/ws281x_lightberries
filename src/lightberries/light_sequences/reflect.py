@@ -8,10 +8,10 @@ import numpy as np
 
 from lightberries.exceptions import LightBerryError, PatternError
 from lightberries.light_sequences.base import ArraySequence
-from lightberries.light_sequences.off import OffSequence
+from lightberries.light_sequences.off import SequenceOff
 
 
-class RepeatedSequenceReflected(ArraySequence):
+class SequenceRepeatedReflected(ArraySequence):
     """Generates an array where each repetition of the input. Sequence is reversed from the previous one."""
 
     def __init__(self, led_count: int, name: str | None = None, **kwargs: dict[str, Any]) -> None:
@@ -38,8 +38,12 @@ class RepeatedSequenceReflected(ArraySequence):
 
         """
         if name is None:
-            name = RepeatedSequenceReflected.__name__
-        super().__init__(led_count=led_count, name=name, kwargs=kwargs)
+            name = SequenceRepeatedReflected.__name__
+        super().__init__(
+            led_count=led_count,
+            name=name,
+            kwargs=kwargs,
+        )
         # if user didn't specify otherwise, fold in middle
         try:
             input_sequence = ArraySequence.DEFAULT_COLOR_SEQUENCE
@@ -53,12 +57,12 @@ class RepeatedSequenceReflected(ArraySequence):
                 self.sequence = np.zeros((0, 3))
             else:
                 if fold_length > color_sequence_length:
-                    temp = OffSequence(fold_length).sequence
+                    temp = SequenceOff(fold_length).sequence
                     temp[fold_length - color_sequence_length :] = input_sequence
                     input_sequence = temp
                     color_sequence_length = len(input_sequence)
                 flip = False
-                temp_array = OffSequence(led_count).sequence
+                temp_array = SequenceOff(led_count).sequence
                 for seg_begin in range(0, led_count, fold_length):
                     overflow = 0
                     seg_end = 0

@@ -10,24 +10,33 @@ import numpy as np
 
 from lightberries.exceptions import LightBerryError, PatternError
 from lightberries.pixel import PixelColors
-from lightberries.sequence import PixelSequence
+from lightberries.sequence import Sequence
 
 LOGGER = logging.getLogger("lightBerries")
 
 
-class ArraySequence(PixelSequence):
+class ArraySequence(Sequence):
     """A pattern of lights."""
 
-    DEFAULT_COLOR_SEQUENCE = PixelSequence.pixel_array_to_numpy_array(
+    DEFAULT_COLOR_SEQUENCE = Sequence.pixel_array_to_numpy_array(
         [
             PixelColors.RED,
             PixelColors.GREEN,
             PixelColors.BLUE,
         ],
     )
-    ARRAY_PATTERNS: ClassVar[dict[str, ArraySequence]] = {}
+    ALL_ARRAY_SEQUENCES: ClassVar[dict[str, type[ArraySequence]]] = {}
 
-    def __init__(self, led_count: int, name: str | None = None, **kwargs: dict[str, Any]) -> None:
+    def __init_subclass__(cls) -> None:
+        super().__init_subclass__()
+        cls.ALL_ARRAY_SEQUENCES[cls.__name__.replace("Sequence", "")] = cls
+
+    def __init__(
+        self,
+        led_count: int,
+        name: str | None = None,
+        **kwargs: dict[str, Any],
+    ) -> None:
         """Create a pattern of lights.
 
         Args:
@@ -39,8 +48,11 @@ class ArraySequence(PixelSequence):
         """
         if name is None:
             name = ArraySequence.__name__
-        super().__init__(led_count=led_count, name=name, kwargs=kwargs)
-        self.ARRAY_PATTERNS[name] = self
+        super().__init__(
+            led_count=led_count,
+            name=name,
+            kwargs=kwargs,
+        )
         self._sequence: np.ndarray[(3, Any), np.int32] = np.array(
             [PixelColors.OFF.array for i in range(int(led_count))],
         )

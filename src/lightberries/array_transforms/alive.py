@@ -8,9 +8,9 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from lightberries.array_transforms.base import ArrayTransform
 from lightberries.array_transforms.fade_off import TransformFadeOff
 from lightberries.state import ThingColors, ThingMoves, ThingSizes, TransformState
+from lightberries.transform import Transform
 
 if TYPE_CHECKING:
     import lightberries.array_controller
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformAlive(ArrayTransform):
+class TransformAlive(Transform):
     """Do alive function things."""
 
     def __init__(
@@ -35,7 +35,7 @@ class TransformAlive(ArrayTransform):
 
         """
         super().__init__(
-            name=TransformAlive.__class__.__name__,
+            name=TransformAlive.__name__,
             controller=controller,
             state=state,
         )
@@ -95,9 +95,9 @@ class TransformAlive(ArrayTransform):
         if step_count_max is not None:
             step_count_max = int(step_count_max)
 
-        things: list[ArrayTransform] = []
+        things: list[Transform] = []
         for _ in range(random.randint(2, 5)):
-            thing = TransformAlive(controller=self.controller)
+            thing = TransformAlive(controller=self.controller, state=self.state.copy())
             # randomize start index
             thing.state.index = self.get_random_index()
             # randomize direction
@@ -119,7 +119,7 @@ class TransformAlive(ArrayTransform):
             # set max size
             thing.state.size_max = size_max
             # start the state at 1
-            thing.state = ThingMoves.METEOR.value
+            thing.state.state = ThingMoves.METEOR.value
             # calculate random next state immediately
             thing.state.step_counter = 1000
             thing.state.delay_counter = 1000

@@ -8,13 +8,18 @@ import numpy as np
 
 from lightberries.exceptions import LightBerryError, PatternError
 from lightberries.light_sequences.base import ArraySequence
-from lightberries.light_sequences.off import OffSequence
+from lightberries.light_sequences.off import SequenceOff
 
 
-class ColorTransitionSequence(ArraySequence):
+class SequenceTransition(ArraySequence):
     """A more versatile version of CreateRainbow."""
 
-    def __init__(self, led_count: int, name: str | None = None, **kwargs: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        led_count: int,
+        name: str | None = None,
+        **kwargs: dict[str, Any],
+    ) -> None:
         """More versatile version of CreateRainbow.
 
         The user specifies a color sequence and the number of steps (LEDs)
@@ -38,12 +43,16 @@ class ColorTransitionSequence(ArraySequence):
 
         """
         if name is None:
-            name = ColorTransitionSequence.__name__
-        super().__init__(name=name, led_count=led_count, kwargs=kwargs)
+            name = SequenceTransition.__name__
+        super().__init__(
+            name=name,
+            led_count=led_count,
+            kwargs=kwargs,
+        )
         try:
             input_sequence = ArraySequence.DEFAULT_COLOR_SEQUENCE
             if "color_sequence" in kwargs:
-                input_sequence = kwargs[" color_sequence"].copy()
+                input_sequence = kwargs["color_sequence"].copy()
             # get length of sequence
             if len(input_sequence.shape):
                 sequence_length = input_sequence.shape[0]
@@ -63,7 +72,7 @@ class ColorTransitionSequence(ArraySequence):
                 step_count = led_count // (sequence_length - wrap_offset)
                 previous_step_count = step_count
             # create temporary array
-            temp_array = OffSequence(led_count)
+            temp_array = SequenceOff(led_count).sequence
             # step through color sequence
             for color_index in range(sequence_length - wrap_offset):
                 if color_index == sequence_length - 1 or color_index == sequence_length - 2:

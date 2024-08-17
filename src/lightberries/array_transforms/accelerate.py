@@ -8,20 +8,19 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from lightberries.array_transforms.base import ArrayTransform
 from lightberries.array_transforms.fade_off import TransformFadeOff
 from lightberries.constants import MAX_INT8, SHAPE_2D
 from lightberries.state import TransformState
+from lightberries.transform import Transform
 
 LOGGER = logging.getLogger("lightBerries")
 
 if TYPE_CHECKING:
     import lightberries.array_controller
     from lightberries.state import TransformState
-    from lightberries.transform import LightTransform
 
 
-class TransformAccelerate(ArrayTransform):
+class TransformAccelerate(Transform):
     """Function in which colorful lights accelerate across the string of lights repeatedly."""
 
     def __init__(
@@ -38,7 +37,7 @@ class TransformAccelerate(ArrayTransform):
 
         """
         super().__init__(
-            name=TransformAccelerate.__class__.__name__,
+            name=TransformAccelerate.__name__,
             controller=controller,
             state=state,
         )
@@ -53,7 +52,7 @@ class TransformAccelerate(ArrayTransform):
         fade_amount: float | None = None,
         color_cycle: bool | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
-    ) -> list[LightTransform]:
+    ) -> list[Transform]:
         """Configure the transformation.
 
         Args:

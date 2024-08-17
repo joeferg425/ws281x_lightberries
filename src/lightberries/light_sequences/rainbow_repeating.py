@@ -6,11 +6,11 @@ from typing import Any
 
 from lightberries.exceptions import LightBerryError, PatternError
 from lightberries.light_sequences.base import ArraySequence
-from lightberries.light_sequences.rainbow import RainbowSequence
-from lightberries.light_sequences.sequence_repeating import RepeatingSequence
+from lightberries.light_sequences.rainbow import SequenceRainbow
+from lightberries.light_sequences.sequence_repeating import SequenceRepeating
 
 
-class RainbowSequenceRepeating(ArraySequence):
+class SequenceRainbowRepeating(ArraySequence):
     """Creates a repeating gradient."""
 
     def __init__(self, led_count: int, name: str | None = None, **kwargs: dict[str, Any]) -> None:
@@ -36,15 +36,15 @@ class RainbowSequenceRepeating(ArraySequence):
 
         """
         if name is None:
-            name = RainbowSequenceRepeating.__name__
+            name = SequenceRainbowRepeating.__name__
         super().__init__(name=name, led_count=led_count, kwargs=kwargs)
         segment_length = led_count // 4
         if "segment_length" in kwargs:
             segment_length = kwargs["segment_length"]
         try:
-            self._sequence = RepeatingSequence(
+            self._sequence = SequenceRepeating(
                 led_count=led_count,
-                color_sequence=RainbowSequence(led_count=segment_length, wrap=True).sequence,
+                color_sequence=SequenceRainbow(led_count=segment_length, wrap=True).sequence,
             ).sequence
         except SystemExit:  # pragma: no cover
             raise

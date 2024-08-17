@@ -8,9 +8,10 @@ import numpy as np
 
 from lightberries.exceptions import LightBerryError, PatternError
 from lightberries.light_sequences.base import ArraySequence
+from lightberries.light_sequences.off import SequenceOff
 
 
-class RepeatingSequence(ArraySequence):
+class SequenceRepeating(ArraySequence):
     """Creates a repeating LightPattern from a given sequence."""
 
     def __init__(self, led_count: int, name: str | None = None, **kwargs: dict[str, Any]) -> None:
@@ -36,7 +37,7 @@ class RepeatingSequence(ArraySequence):
 
         """
         if name is None:
-            name = RepeatingSequence.__name__
+            name = SequenceRepeating.__name__
         super().__init__(name=name, led_count=led_count, kwargs=kwargs)
         try:
             input_sequence = ArraySequence.DEFAULT_COLOR_SEQUENCE
@@ -46,7 +47,7 @@ class RepeatingSequence(ArraySequence):
                 self.sequence = np.zeros((0, 3))
             else:
                 sequence_length = len(input_sequence)
-                temp_array = ArraySequence.PixelArrayOff(arrayLength=led_count)
+                temp_array = SequenceOff(led_count=led_count).sequence
                 if led_count > sequence_length:
                     temp_array[0:sequence_length] = input_sequence
                     for i in range(0, led_count, sequence_length):

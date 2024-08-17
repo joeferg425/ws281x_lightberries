@@ -8,12 +8,19 @@ import numpy as np
 from numpy.typing import NDArray
 
 from lightberries.array_controller import ArrayController
-from lightberries.array_transforms.base import ArrayTransform
 from lightberries.exceptions import ControllerError, LightBerryError
 from lightberries.light_sequences.base import ArraySequence
-from lightberries.matrix_functions import MatrixFunction
-from lightberries.matrix_patterns import DEFAULT_MATRIX_ORDER, MatrixOrder, SolidColorMatrix, Spectrum2, TextMatrix
+
+# from lightberries.matrix_functions import MatrixFunction
+from lightberries.matrix_patterns import (
+    DEFAULT_MATRIX_ORDER,
+    MatrixOrder,
+    SolidColorMatrix,
+    Spectrum2,
+    TextMatrix,
+)
 from lightberries.pixel import PixelColors
+from lightberries.transform import Transform
 from lightberries.ws281x_strings import WS281xString
 
 LOGGER = logging.getLogger("lightBerries")
@@ -605,7 +612,7 @@ class MatrixController(ArrayController):
             if ballCount is not None:
                 _ballCount = int(ballCount)
             if _fadeAmount == 0.0:
-                off: ArrayTransform = ArrayTransform(
+                off: Transform = Transform(
                     self,
                     MatrixFunction.functionOff,
                     self.color_sequence,
@@ -613,9 +620,9 @@ class MatrixController(ArrayController):
                 self._transforms.append(off)
             else:
                 # fade the whole LED strand
-                fade: ArrayTransform = ArrayTransform(
+                fade: Transform = Transform(
                     self,
-                    ArrayTransform.functionFadeOff,
+                    Transform.functionFadeOff,
                     self.color_sequence,
                 )
                 # by this amount
@@ -701,7 +708,7 @@ class MatrixController(ArrayController):
             if fireworkCount is not None:
                 _zoomyCount = int(fireworkCount)
             if _fadeAmount == 1.0:
-                off: ArrayTransform = ArrayTransform(
+                off: Transform = Transform(
                     self,
                     MatrixFunction.functionOff,
                     self.color_sequence,
@@ -709,9 +716,9 @@ class MatrixController(ArrayController):
                 self._transforms.append(off)
             else:
                 # fade the whole LED strand
-                fade: ArrayTransform = ArrayTransform(
+                fade: Transform = Transform(
                     self,
-                    ArrayTransform.functionFadeOff,
+                    Transform.functionFadeOff,
                     self.color_sequence,
                 )
                 # by this amount
@@ -788,9 +795,9 @@ class MatrixController(ArrayController):
             if self.color_sequence is None or len(self.color_sequence) == 0:
                 self.color_sequence = ArraySequence.default_color_sequence_by_month()
             # fade the whole LED strand
-            fade: ArrayTransform = ArrayTransform(
+            fade: Transform = Transform(
                 self,
-                ArrayTransform.functionFadeOff,
+                Transform.functionFadeOff,
                 self.color_sequence,
             )
             # by this amount
@@ -873,9 +880,9 @@ class MatrixController(ArrayController):
             if self.color_sequence is None or len(self.color_sequence) == 0:
                 self.color_sequence = ArraySequence.default_color_sequence_by_month()
             # turn off the whole LED strand each time
-            off: ArrayTransform = ArrayTransform(
+            off: Transform = Transform(
                 self,
-                ArrayTransform.functionOff,
+                Transform.functionOff,
                 self.color_sequence,
             )
             # add function to list
@@ -1064,4 +1071,5 @@ class MatrixController(ArrayController):
                 self.demo.__name__,
                 ex,
             )
+            raise ControllerError from ex
             raise ControllerError from ex

@@ -1,68 +1,86 @@
 """Cycle the entire light string's color at once."""
 
+from __future__ import annotations
+
 import logging
+import random
+from typing import TYPE_CHECKING, Any
 
-import numpy as np
+from lightberries.transform import Transform
 
-import lightberries.array_controller
-from lightberries.array_transforms.base import ArrayTransform
-from lightberries.exceptions import FunctionError, LightBerryError
+if TYPE_CHECKING:
+    import numpy as np
+
+    import lightberries.array_controller
+    from lightberries.state import TransformState
+    from lightberries.transform import Transform
 
 LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformSolidColorCycle(ArrayTransform):
+class TransformSolidColorCycle(Transform):
     """Cycle the entire light string's color at once."""
 
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        color_sequence: np.ndarray = None,
+        state: TransformState | None = None,
     ) -> None:
         """Cycle the entire light string's color at once.
 
         Args:
         ----
-            controller: _description_
-            color_sequence: _description_. Defaults to None.
+            controller: Array controller instance
+            state: the initial or previous state of the light string
 
         """
         super().__init__(
-            name=TransformSolidColorCycle.__class__.__name__,
+            name=TransformSolidColorCycle.__name__,
             controller=controller,
-            color_sequence=color_sequence,
+            state=state,
         )
-        _delayCount: int = random.randint(50, 100)
-        if delayCount is not None:
-            _delayCount = int(delayCount)
-        # create the tracking object
-        cycle: ArrayTransform = ArrayTransform(
-            self,
-            ArrayTransform.functionSolidColorCycle,
-            self.color_sequence,
-        )
-        # set refresh counter
-        cycle._delay_counter = _delayCount
-        # set refresh limit (after which this function will execute)
-        cycle._delay_count_max = _delayCount
-        # add this function to our function list
-        self.privateLightFunctions.append(cycle)
-        # clear LEDs, assign first color in sequence to all LEDs
-        self.virtualLEDBuffer *= 0
-        self.virtualLEDBuffer += self.color_sequence[0, :]
 
-    def transform(self):
+    def setup(
+        self,
+        color_sequence: np.ndarray[Any, np.int32] | None = None,
+        state: TransformState | None = None,
+        *,
+        delay_count: int | None = None,
+        **kwargs: dict[str, Any],  # noqa: ARG002
+    ) -> list[Transform]:
+        """Configure the transformation.
+
+        Args:
+        ----
+            color_sequence: color sequence. Defaults to None.
+            state: the initial or previous state of the light string
+            kwargs: extra args to the state object
+            delay_count: number of delays
+
+        Returns:
+        -------
+            list of transforms
+
+        """
+        if color_sequence is not None:
+            self.color_sequence = self.color_sequence
+        if state is not None:
+            self.state = state
+        else:
+            self.state.delay_count_max = random.randint(50, 100)
+            self.state.delay_counter = self.state.delay_count_max
+
+        if delay_count is not None:
+            self.state.delay_count_max = delay_count
+            self.state.delay_counter = self.state.delay_count_max
+        return [self]
+
+    def transform(self) -> None:
         """Set all pixels to the next color.
 
         Args:
         ----
             cycle: tracking object
-
-        Raises:
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightFunctionException: if something bad happens
 
         """
         # wait for delay count before changing LEDs
@@ -74,4 +92,5 @@ class TransformSolidColorCycle(ArrayTransform):
             # add new color
             self.controller.virtual_led_buffer += self.color_sequence_next
         # increment delay counter
+        self.state.delay_counter += 1
         self.state.delay_counter += 1

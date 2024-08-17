@@ -7,10 +7,10 @@ from typing import Any
 
 from lightberries.exceptions import LightBerryError, PatternError
 from lightberries.light_sequences.base import ArraySequence
-from lightberries.light_sequences.off import OffSequence
+from lightberries.light_sequences.off import SequenceOff
 
 
-class PseudoRandomSequence(ArraySequence):
+class SequencePseudoRandom(ArraySequence):
     """Creates an array of random colors."""
 
     def __init__(self, led_count: int, name: str | None = None, **kwargs: dict[str, Any]) -> None:
@@ -36,11 +36,11 @@ class PseudoRandomSequence(ArraySequence):
 
         """
         if name is None:
-            name = PseudoRandomSequence.__name__
+            name = SequencePseudoRandom.__name__
         super().__init__(led_count=led_count, name=name, kwargs=kwargs)
         try:
             input_sequence = None
-            temp_array = OffSequence(led_count=led_count)
+            temp_array = SequenceOff(led_count=led_count).sequence
             input_sequence = ArraySequence.DEFAULT_COLOR_SEQUENCE
             if "color_sequence" in kwargs:
                 input_sequence = kwargs["color_sequence"].copy()

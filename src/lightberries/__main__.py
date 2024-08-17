@@ -1,5 +1,6 @@
 """Defines callable behaviors for this module."""
 
+# ruff: noqa: F401
 from __future__ import annotations
 
 import argparse
@@ -8,7 +9,40 @@ import sys
 
 import lightberries
 from lightberries.array_controller import ArrayController
+from lightberries.array_transforms.all_functions import (
+    TransformAccelerate,
+    TransformAlive,
+    TransformBlink,
+    TransformCollisionDetect,
+    TransformCylon,
+    TransformFade,
+    TransformFadeOff,
+    TransformMarquee,
+    TransformMerge,
+    TransformMeteor,
+    TransformNone,
+    TransformOff,
+    TransformRaindrop,
+    TransformRandomChange,
+    TransformSolidColorCycle,
+    TransformSprites,
+    TransformTwinkle,
+)
 from lightberries.exceptions import LightBerryError, PermissionsError
+from lightberries.light_sequences import (
+    SequenceOff,
+    SequencePseudoRandom,
+    SequenceRainbow,
+    SequenceRainbowRepeating,
+    SequenceRandom,
+    SequenceRepeatedReflected,
+    SequenceRepeating,
+    SequenceSolid,
+    SequenceStretch,
+    SequenceTransition,
+)
+from lightberries.sequence import Sequence
+from lightberries.transform import Transform
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -47,13 +81,13 @@ if __name__ == "__main__":  # pylint: disable=invalid-name
     parser.add_argument(
         "-f",
         "--function",
-        choices=[f.replace("useFunction", "").lower() for f in dir(ArrayController) if "useFunction" in f],
+        choices=[name.lower() for name in Transform.ALL_TRANSFORMS],
         help="the name of the function to demo using randomized parameters",
     )
     parser.add_argument(
         "-c",
         "--color",
-        choices=[f.replace("useColor", "").lower() for f in dir(ArrayController) if "useColor" in f],
+        choices=[name.lower() for name in Sequence.ALL_SEQUENCES],
         help="the name of the color pattern to demo using randomized parameters",
     )
     parser.add_argument(
@@ -73,10 +107,10 @@ if __name__ == "__main__":  # pylint: disable=invalid-name
         DURATION = args.function_duration
 
     if args.function is not None:
-        FUNCTIONS = ["useFunction" + args.function]
+        FUNCTIONS = [args.function]
 
     if args.color is not None:
-        COLORS = ["useColor" + args.color]
+        COLORS = [args.color]
 
     if args.brightness >= 0 and args.brightness <= 1:
         BRIGHTNESS = float(args.brightness)
@@ -101,6 +135,17 @@ if __name__ == "__main__":  # pylint: disable=invalid-name
     except LightBerryError:
         LOGGER.exception("Failed to launch LightBerries Controller")
         sys.exit(1)
+    # run the demo!
+    try:
+        lightControl.demo(DURATION, functionNames=FUNCTIONS, colorNames=COLORS)
+    except SystemExit:
+        pass
+    except KeyboardInterrupt:
+        pass
+    except Exception as ex:
+        LOGGER.exception(ex)
+        lightControl.__del__()
+        # sys.exit(1)
     # run the demo!
     try:
         lightControl.demo(DURATION, functionNames=FUNCTIONS, colorNames=COLORS)

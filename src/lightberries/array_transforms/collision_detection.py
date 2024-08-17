@@ -8,18 +8,18 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from lightberries.array_transforms.base import ArrayTransform
 from lightberries.pixel import PixelColors
+from lightberries.transform import Transform
 
 if TYPE_CHECKING:
     import lightberries.array_controller
     from lightberries.state import TransformState
-    from lightberries.transform import LightTransform
+    from lightberries.transform import Transform
 
 LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformCollisionDetect(ArrayTransform):
+class TransformCollisionDetect(Transform):
     """Perform collision detection on the list of light function objects."""
 
     def __init__(
@@ -36,7 +36,7 @@ class TransformCollisionDetect(ArrayTransform):
 
         """
         super().__init__(
-            name=TransformCollisionDetect.__class__.__name__,
+            name=TransformCollisionDetect.__name__,
             controller=controller,
             state=state,
         )
@@ -46,7 +46,7 @@ class TransformCollisionDetect(ArrayTransform):
         color_sequence: np.ndarray[Any, np.int32] | None = None,
         state: TransformState | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
-    ) -> list[LightTransform]:
+    ) -> list[Transform]:
         """Configure the transformation.
 
         Args:
@@ -60,7 +60,10 @@ class TransformCollisionDetect(ArrayTransform):
             list of transforms
 
         """
-        return super().setup(color_sequence, state)
+        if color_sequence is not None:
+            self.color_sequence = self.color_sequence
+        if state is not None:
+            self.state = state
 
     def transform(self) -> None:  # noqa: C901, PLR0912, PLR0915
         """Perform collision detection on the list of light function objects."""
@@ -112,7 +115,7 @@ class TransformCollisionDetect(ArrayTransform):
                 if (
                     object1.state.collision_enabled
                     and object1.state.collision_private is True
-                    and isinstance(object1.state.collision_with, ArrayTransform)
+                    and isinstance(object1.state.collision_with, Transform)
                 ):
                     object2 = object1.state.collision_with
                     if (object1.state.direction * object2.state.direction) < 0:

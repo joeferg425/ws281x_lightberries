@@ -5,18 +5,18 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING, Any
 
-from lightberries.array_transforms.base import ArrayTransform
 from lightberries.state import TransformState
+from lightberries.transform import Transform
 
 if TYPE_CHECKING:
     import numpy as np
 
     import lightberries.array_controller
     from lightberries.state import TransformState
-    from lightberries.transform import LightTransform
+    from lightberries.transform import Transform
 
 
-class ArrayFunctionTwinkle(ArrayTransform):
+class TransformTwinkle(Transform):
     """Do temporary twinkle modifications."""
 
     def __init__(
@@ -35,7 +35,7 @@ class ArrayFunctionTwinkle(ArrayTransform):
 
         """
         super().__init__(
-            name=ArrayFunctionTwinkle.__class__.__name__,
+            name=TransformTwinkle.__name__,
             controller=controller,
             state=state,
             kwargs=kwargs,
@@ -45,7 +45,7 @@ class ArrayFunctionTwinkle(ArrayTransform):
         self,
         color_sequence: np.ndarray[Any, np.int32] | None = None,
         state: TransformState | None = None,
-    ) -> list[LightTransform]:
+    ) -> list[Transform]:
         """Create one or more transform instances.
 
         Args:

@@ -6,10 +6,10 @@ from typing import Any
 
 from lightberries.exceptions import LightBerryError, PatternError
 from lightberries.light_sequences.base import ArraySequence
-from lightberries.light_sequences.off import OffSequence
+from lightberries.light_sequences.off import SequenceOff
 
 
-class StretchedSequence(ArraySequence):
+class SequenceStretch(ArraySequence):
     """Takes a sequence of input colors and repeats each element the requested number of times."""
 
     def __init__(self, led_count: int, name: str | None = None, **kwargs: dict[str, Any]) -> None:
@@ -33,7 +33,7 @@ class StretchedSequence(ArraySequence):
 
         """
         if name is None:
-            name = StretchedSequence.__name__
+            name = SequenceStretch.__name__
         super().__init__(led_count=led_count, name=name, kwargs=kwargs)
         try:
             input_sequence = ArraySequence.DEFAULT_COLOR_SEQUENCE
@@ -43,7 +43,7 @@ class StretchedSequence(ArraySequence):
             repeats = int(led_count / color_sequence_length)
             if led_count % color_sequence_length > 0:
                 repeats += 1
-            temp_array = OffSequence(color_sequence_length * repeats)
+            temp_array = SequenceOff(color_sequence_length * repeats).sequence
             for i in range(color_sequence_length):
                 temp_array[i * repeats : (i + 1) * repeats] = input_sequence[i]
             self._sequence = temp_array[:led_count]

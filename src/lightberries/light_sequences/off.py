@@ -6,15 +6,19 @@ from typing import Any
 
 import numpy as np
 
-from lightberries.exceptions import LightBerryError, PatternError
 from lightberries.light_sequences.base import ArraySequence
 from lightberries.pixel import PixelColors
 
 
-class OffSequence(ArraySequence):
+class SequenceOff(ArraySequence):
     """Creates array of RGB tuples that are all off."""
 
-    def __init__(self, led_count: int, name: str | None = None, **kwargs: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        led_count: int,
+        name: str | None = None,
+        **kwargs: dict[str, Any],
+    ) -> None:
         """Create array of RGB tuples that are all off.
 
         Args:
@@ -32,18 +36,13 @@ class OffSequence(ArraySequence):
 
         """
         if name is None:
-            name = OffSequence.__name__
-        super().__init__(name=name, led_count=led_count, kwargs=kwargs)
-        try:
-            if led_count > 0:
-                self._sequence = np.array([PixelColors.OFF.array for i in range(int(led_count))])
-            else:
-                self._sequence = np.zeros((0, 3))
-        except SystemExit:  # pragma: no cover
-            raise
-        except KeyboardInterrupt:  # pragma: no cover
-            raise
-        except LightBerryError:  # pragma: no cover
-            raise
-        except Exception as ex:  # pragma: no cover
-            raise PatternError from ex
+            name = SequenceOff.__name__
+        super().__init__(
+            name=name,
+            led_count=led_count,
+            kwargs=kwargs,
+        )
+        if led_count > 0:
+            self._sequence = np.array([PixelColors.OFF.array for i in range(int(led_count))])
+        else:
+            self._sequence = np.zeros((0, 3))

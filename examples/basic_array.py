@@ -2,6 +2,7 @@
 """An example of using this module."""
 
 from lightberries.array_controller import ArrayController
+from lightberries.array_transforms.raindrops import TransformRaindrop
 from lightberries.light_sequences.base import ArraySequence
 from lightberries.pixel import PixelColors
 
@@ -37,17 +38,14 @@ lightControl = ArrayController(
     debug=True,
 )
 # configure a color pattern using a "useColor" method
-lightControl.use_color_sequence(
-    color_sequence=ArraySequence.DEFAULT_COLOR_SEQUENCE,
-    background_color=PixelColors.OFF,
-)
+lightControl.color_sequence = ArraySequence.DEFAULT_COLOR_SEQUENCE
 # configure a function using a "useFunction" method
-lightControl.useFunctionRaindrops(
-    maxSize=12,
-    raindropChance=0.05,
-    stepSize=1,
-    maxRaindrops=3,
-    fadeAmount=0.4,
+lightControl._transforms = TransformRaindrop(controller=lightControl).setup(
+    max_size=12,
+    raindrop_chance=0.05,
+    step_size=1,
+    max_raindrops=3,
+    fade_amount=0.4,
 )
 # run the configuration until killed
 try:

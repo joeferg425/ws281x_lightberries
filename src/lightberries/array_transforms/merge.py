@@ -3,24 +3,28 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+import random
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-import lightberries.array_controller
-from lightberries.array_transforms.base import ArrayTransform
-from lightberries.state import TransformState
+from lightberries.light_sequences.reflect import SequenceRepeatedReflected
+from lightberries.transform import Transform
+
+if TYPE_CHECKING:
+    import lightberries.array_controller
+    from lightberries.state import TransformState
 
 LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformMerge(ArrayTransform):
+class TransformMerge(Transform):
     """Reflect a color sequence and shift the reflections toward each other in the middle."""
 
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        color_sequence: np.ndarray = None,
+        state: TransformState | None = None,
     ) -> None:
         """Do merge function things.
 
@@ -31,9 +35,9 @@ class TransformMerge(ArrayTransform):
 
         """
         super().__init__(
-            name=TransformMerge.__class__.__name__,
+            name=TransformMerge.__name__,
             controller=controller,
-            color_sequence=color_sequence,
+            state=state,
         )
 
     def setup(
@@ -49,25 +53,26 @@ class TransformMerge(ArrayTransform):
 
         Args:
         ----
-            shiftAmount: amount the merge will shift in each update
-            delayCount: length of reflected segments
-
-        Raises:
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightBerryException: if propagating an exception
-            LightControlException: if something bad happens
+            color_sequence: color sequence. Defaults to None.
+            state: the initial or previous state of the light string
+            kwargs: extra args to the state object
+            shift_amount: amount the merge will shift in each update
+            delay_count: length of reflected segments
 
         """
-        _delayCount: int = random.randint(6, 12)
-        _shiftAmount: int = 1
+        if color_sequence is not None:
+            self.color_sequence = self.color_sequence
+        if state is not None:
+            self.state = state
+        else:
+            self.state.delay_count_max = random.randint(6, 12)
+            self.state.step = 1
         if delay_count is not None:
-            _delayCount = int(delay_count)
+            self.state.delay_count_max = delay_count
         if shift_amount is not None:
-            _shiftAmount = int(shift_amount)
+            self.state.step = shift_amount
         # make sure doing a merge function would be visible
-        if self.color_sequence_count >= self.real_led_count:
+        if self.color_sequence_count >= self.controller.real_led_count:
             # if sequence is too long, cut it in half
             self.color_sequence = self.color_sequence[: int(self.color_sequence_count // 2)]
             # don't remember offhand why this is here
@@ -80,46 +85,43 @@ class TransformMerge(ArrayTransform):
                 else:
                     self.color_sequence = self.color_sequence[:-1]
         # calculate modulo length
-        _arrayLength = np.ceil(self.real_led_count / self.color_sequence_count) * self.color_sequence_count
+        array_length = np.ceil(self.controller.real_led_count / self.color_sequence_count) * self.color_sequence_count
         # update LED buffer with any changes we had to make
-        self.set_virtual_led_buffer(
-            ArraySequence.ReflectArray(
-                arrayLength=_arrayLength,
+        self.controller.set_virtual_led_buffer(
+            SequenceRepeatedReflected(
+                arrayLength=array_length,
                 colorSequence=self.color_sequence,
                 foldLength=self.color_sequence_count,
             ),
         )
-        # create tracking object
-        merge: LightTransform = LightTransform(
-            self,
-            LightTransform.functionMerge,
-            self.color_sequence,
-        )
         # set merge size
-        merge._size = self.color_sequence_count
+        self.state.size = self.color_sequence_count
         # set shift amount
-        merge._step = _shiftAmount
+        self.state.step = shift_amount
         # set the number of LED refreshes to skip
-        merge._delay_count_max = _delayCount
+        self.state.delay_count_max = delay_count
         # add function to list
-        self._transforms.append(merge)
+        return [self]
 
-    def transform(self):
+    def transform(self) -> None:
+        """Do nothing."""
         self.state.delay_counter += 1
         # check delay counter
         if self.state.delay_counter >= self.state.delay_count_max:
             # reset delay counter
             self.state.delay_counter = 0
             # figure out how many segments there are
-            segmentCount = int(self.controller.virtual_led_count // self.state.size)
-            # this takes the 1-dimensional array
-            # [0,1,2,3,4,5]
-            # and creates a 2-dimensional matrix like
-            # [[0,1,2],
-            #  [3,4,5]]
+            segment_count = int(self.controller.virtual_led_count // self.state.size)
+            """
+            this takes the 1-dimensional array
+            [0,1,2,3,4,5]
+            and creates a 2-dimensional matrix like
+            [[0,1,2],
+            [3,4,5]]
+            """
             temp = np.reshape(
                 self.controller.virtual_led_index_buffer,
-                (segmentCount, self.state.size),
+                (segment_count, self.state.size),
             )
             # now roll each row in a different direction and then undo
             # the matrixification of the array

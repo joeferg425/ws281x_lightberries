@@ -5,15 +5,18 @@ from __future__ import annotations
 import logging
 import random
 from enum import IntEnum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from lightberries.array_transforms.base import ArrayTransform
 from lightberries.array_transforms.fade_off import TransformFadeOff
+from lightberries.constants import SHAPE_2D
+from lightberries.transform import Transform
 
 if TYPE_CHECKING:
     import lightberries.array_controller
+    from lightberries.state import TransformState
+    from lightberries.transform import Transform
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -25,18 +28,20 @@ class RaindropStates(IntEnum):
     SPLASH = 1
 
 
-class TransformRaindrop(ArrayTransform):
+class TransformRaindrop(Transform):
     """Do raindrop function things."""
 
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
+        state: TransformState | None = None,
     ) -> None:
         """Do raindrop function things.
 
         Args:
         ----
-            raindrop: tracking object
+            controller: Array controller instance
+            state: the initial or previous state of the light string
 
         Raises:
         ------
@@ -46,55 +51,60 @@ class TransformRaindrop(ArrayTransform):
 
         """
         super().__init__(
-            name=TransformRaindrop.state.__name__,
+            name=TransformRaindrop.__name__,
             controller=controller,
+            state=state,
         )
 
     def setup(
         self,
+        color_sequence: np.ndarray[Any, np.int32] | None = None,
+        state: TransformState | None = None,
+        *,
         max_size: int | None = None,
         raindrop_chance: float | None = None,
         step_size: int | None = None,
         max_raindrops: int | None = None,
         fade_amount: float | None = None,
-    ):
+        **kwargs: dict[str, Any],  # noqa: ARG002
+    ) -> list[Transform]:
         """Cause random "splashes" across the LED strand.
 
         Args:
         ----
-            maxSize: max splash size
-            raindropChance: chance of raindrop
-            stepSize: splash speed
-            maxRaindrops: number of raindrops
-            fadeAmount: amount to fade LED each refresh
+            color_sequence: color sequence. Defaults to None.
+            state: initial state. Defaults to None.
+            kwargs: extra args to the state object
+            max_size: max splash size
+            raindrop_chance: chance of raindrop
+            step_size: splash speed
+            max_raindrops: number of raindrops
+            fade_amount: amount to fade LED each refresh
 
         """
-        if max_size is None:
-            max_size = random.randint(2, int(self.virtual_led_count // 8))
-        if raindrop_chance is None:
-            raindrop_chance: float = random.uniform(0.005, 0.1)
-        if step_size is None:
-            step_size = random.randint(2, 5)
-        # fade_amount: float = random.uniform(0.25, 0.65)
-        if fade_amount is None:
-            fade_amount = ((255 / max_size) / 255) * 2
+        if color_sequence is not None:
+            self.color_sequence = self.color_sequence
+        if state is not None:
+            self.state = state
+        else:
+            self.state.size_max = random.randint(2, int(self.controller.virtual_led_count // 8))
+            self.state.active_chance = random.uniform(0.005, 0.1)
+            self.state.step_size_max = random.randint(2, 5)
+
+        if max_size is not None:
+            self.state.size_max = max_size
         if max_raindrops is None:
             max_raindrops = max(min(self.color_sequence_count, 10), 2)
-        if step_size > 3:
-            raindrop_chance /= 3.0
-        # make sure fade amount is valid
-        if fade_amount > 0 and fade_amount < 1:
-            # do nothing
-            pass
-        elif fade_amount > 0 and fade_amount < 256:
-            fade_amount /= 255
-        if fade_amount < 0 or fade_amount > 1:
-            fade_amount = 0.1
+        if step_size is not None:
+            self.state.step_size_max = step_size
+        if self.state.step_size_max > 3:
+            self.state.active_chance /= 3.0
+        self.state.set_fade_amount(((255 / max_size) / 255) * 2)
         raindrops: list[TransformRaindrop] = []
         for _ in range(max_raindrops):
-            raindrop = TransformRaindrop(controller=self.controller)
+            raindrop = TransformRaindrop(controller=self.controller, state=self.state.copy())
             # randomize start index
-            raindrop.state.index = random.randint(0, self.virtual_led_count - 1)
+            raindrop.state.index = random.randint(0, self.controller.virtual_led_count - 1)
             # assign raindrop growth speed
             raindrop.state.step = step_size
             # max raindrop "splash"
@@ -108,7 +118,7 @@ class TransformRaindrop(ArrayTransform):
             raindrop.color_sequence = self.color_sequence
             raindrop.state.fade_amount = fade_amount
             # set raindrop to be inactive initially
-            raindrop.state = RaindropStates.OFF.value
+            raindrop.state.state = RaindropStates.OFF.value
             raindrops.append(raindrop)
         # set first raindrop active
         raindrops[0].state.state = RaindropStates.SPLASH.value
@@ -118,7 +128,8 @@ class TransformRaindrop(ArrayTransform):
         raindrops.insert(0, fade)
         return raindrops
 
-    def transform(self):
+    def transform(self) -> None:
+        """Cause random "splashes" across the LED strand."""
         # if raindrop is off
         if self.state.state == RaindropStates.OFF.value:
             # randomly turn on
@@ -140,48 +151,44 @@ class TransformRaindrop(ArrayTransform):
             # if splash is still growing
             if self.state.step_counter <= self.state.step_count_max:
                 # lower valued side of "splash"
-                indexLowerMin = max(
+                index_lower_min = max(
                     self.state.index - self.state.step * self.state.step_counter,
                     0,
                 )
-                indexLowerMax = max(
+                index_lower_max = max(
                     self.state.index + 1 - self.state.step * self.state.step_counter,
                     0,
                 )
                 # higher valued side of "splash"
-                indexHigherMin = min(
+                index_higher_min = min(
                     self.state.index + self.state.step_counter,
                     self.controller.virtual_led_count,
                 )
-                indexHigherMax = min(
+                index_higher_max = min(
                     self.state.index + self.state.step_counter + self.state.step,
                     self.controller.virtual_led_count,
                 )
-                if (indexLowerMax - indexLowerMin) > 0:
-                    indexRange = list(range(indexLowerMin, indexLowerMax))
-                    self.controller.virtual_led_buffer[indexLowerMin:indexLowerMax] = [self.state.color] * (
-                        indexLowerMax - indexLowerMin
+                if (index_lower_max - index_lower_min) > 0:
+                    index_range = list(range(index_lower_min, index_lower_max))
+                    self.controller.virtual_led_buffer[index_lower_min:index_lower_max] = [self.state.color] * (
+                        index_lower_max - index_lower_min
                     )
-                    if len(self.controller.virtual_led_buffer.shape) == 2:
-                        self.controller.virtual_led_buffer[indexRange] = self.state.color
+                    if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
+                        self.controller.virtual_led_buffer[index_range] = self.state.color
                     else:
                         self.controller.virtual_led_buffer[
                             np.where(
-                                self.controller.virtual_led_index_buffer == indexRange,
+                                self.controller.virtual_led_index_buffer == index_range,
                             )
                         ] = self.state.color
-                if (indexHigherMax - indexHigherMin) > 0:
-                    indexRange = list(range(indexHigherMin, indexHigherMax))
-                    # self.controller.virtualLEDBuffer[indexHigherMin:indexHigherMax]
-                    # = [raindrop.color] * (
-                    # indexHigherMax - indexHigherMin
-                    # )
-                    if len(self.controller.virtual_led_buffer.shape) == 2:
-                        self.controller.virtual_led_buffer[indexRange] = self.state.color
+                if (index_higher_max - index_higher_min) > 0:
+                    index_range = list(range(index_higher_min, index_higher_max))
+                    if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
+                        self.controller.virtual_led_buffer[index_range] = self.state.color
                     else:
                         self.controller.virtual_led_buffer[
                             np.where(
-                                self.controller.virtual_led_index_buffer == indexRange,
+                                self.controller.virtual_led_index_buffer == index_range,
                             )
                         ] = self.state.color
                 # scaled fading as splash grows
@@ -202,5 +209,3 @@ class TransformRaindrop(ArrayTransform):
                     self.state.color = self.color_sequence_next
                 # set state to off
                 self.state.state = RaindropStates.OFF.value
-        # increment delay
-        # raindrop.delayCounter += 1

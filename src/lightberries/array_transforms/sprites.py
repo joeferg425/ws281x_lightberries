@@ -3,15 +3,21 @@
 from __future__ import annotations
 
 import logging
+import random
 from enum import IntEnum
-from random import random
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-import lightberries.array_controller
-from lightberries.array_transforms.base import ArrayTransform
-from lightberries.exceptions import FunctionError, LightBerryError
+from lightberries.array_transforms.fade_off import TransformFadeOff
+from lightberries.constants import SHAPE_2D
 from lightberries.pixel import PixelColors
+from lightberries.sequence import Sequence
+from lightberries.transform import Transform
+
+if TYPE_CHECKING:
+    import lightberries.array_controller
+    from lightberries.state import TransformState
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -25,34 +31,35 @@ class SpriteState(IntEnum):
     FADING_OFF = 3
 
 
-class TransformSprites(ArrayTransform):
+class TransformSprites(Transform):
     """Do sprite function things."""
 
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
+        state: TransformState | None = None,
     ) -> None:
         """Do sprite function things.
 
         Args:
         ----
-            sprite: tracking object
-
-        Raises:
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightFunctionException: if something bad happens
+            controller: Array controller instance
+            state: the initial or previous state of the light string
 
         """
         super().__init__(
-            name=TransformSprites.__class__.__name__,
+            name=TransformSprites.__name__,
             controller=controller,
+            state=state,
         )
 
     def setup(
         self,
+        color_sequence: np.ndarray[Any, np.int32] | None = None,
+        state: TransformState | None = None,
+        *,
         fade_steps: int | None = None,
+        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> None:
         """Meteors fade in and out in short bursts of random length and direction.
 
@@ -61,54 +68,53 @@ class TransformSprites(ArrayTransform):
             fadeSteps: amount to fade
 
         """
-        if fade_steps is None:
-            fade_steps = random.randint(1, 6)
-        fade_amount = np.ceil(255 / fade_steps)
-        # make sure fade amount is valid
-        if fade_amount > 0 and fade_amount < 1:
-            # do nothing
-            pass
-        elif fade_amount > 0 and fade_amount < 256:
-            fade_amount /= 255
-        if fade_amount < 0 or fade_amount > 1:
-            fade_amount = 0.1
+        if color_sequence is not None:
+            self.color_sequence = self.color_sequence
+        if state is not None:
+            self.state = state
+        else:
+            self.state.set_fade_amount(np.ceil(255 / random.randint(1, 6)))
+
+        if fade_steps is not None:
+            self.state.set_fade_amount(np.ceil(255 / fade_steps))
+
+        sprites: list[Transform] = []
         for _ in range(max(min(self.color_sequence_count, 10), 2)):
-            sprite: LightTransform = LightTransform(
-                self,
-                LightTransform.functionSprites,
-                self.color_sequence,
+            sprite = TransformSprites(
+                controller=self.controller,
+                state=self.state.copy(),
             )
             # randomize index
-            sprite._index = random.randint(0, self.virtual_led_count - 1)
+            sprite.state.index = random.randint(0, self.controller.virtual_led_count - 1)
             # initialize previous index
-            sprite._index_previous = sprite._index
+            sprite.state.index_previous = random.randint(0, self.controller.virtual_led_count - 1)
             # randomize direction
-            sprite._direction = self.get_random_direction()
+            sprite.state.direction = self.get_random_direction()
             # assign the target color
-            sprite._color_goal = self.color_sequence_next
+            sprite.state.color_goal = self.color_sequence_next
             # initialize sprite to
-            sprite._color = ArraySequence.DEFAULT_BACKGROUND_COLOR.array
+            sprite.state.color = Sequence.DEFAULT_BACKGROUND_COLOR.array
             # copy color sequence
-            sprite.color_sequence = self.color_sequence
+            sprite.state.color_sequence = self.color_sequence
             # set next color
-            sprite._color_next = PixelColors.OFF.array
+            sprite.state.color_next = PixelColors.OFF.array
             # set fade step/amount
-            sprite._fade_steps = fade_steps
-            sprite._fade_amount = fade_amount
-            sprite.state = SpriteState.OFF.value
-            self._transforms.append(sprite)
+            # sprite._fade_steps = fade_steps
+            # sprite.state.fade_amount = fade_amount
+            sprite.state.state = SpriteState.OFF.value
+            sprites.append(sprite)
         # set one sprite to "fading on"
-        self._transforms[0].state = SpriteState.FADING_ON.value
+        sprites[0].state.state = SpriteState.FADING_ON.value
         # add LED fading for comet trails
-        fade = LightTransform(
-            self,
-            LightTransform.functionFadeOff,
-            self.color_sequence,
+        fade = TransformFadeOff(
+            controller=self.controller,
+            state=self.state.copy(),
         )
-        fade._fade_amount = fade_amount
-        self._transforms.append(fade)
+        sprites.insert(0, fade)
+        return sprites
 
-    def transform(self):
+    def transform(self) -> None:
+        """Meteors fade in and out in short bursts of random length and direction."""
         # if not off
         if self.state.state != SpriteState.OFF.value:
             # semi-randomly die
@@ -158,9 +164,9 @@ class TransformSprites(ArrayTransform):
             # reset step counter
             self.state.step_counter = 0
             # randomize direction
-            self.state.direction = self.controller.get_random_direction()
+            self.state.direction = self.get_random_direction()
             # randomize start index
-            self.state.index = self.controller.get_random_index()
+            self.state.index = self.get_random_index()
             # set previous (prevent artifacts)
             self.state.index_previous = self.state.index
             # set target color
@@ -177,8 +183,7 @@ class TransformSprites(ArrayTransform):
             # reset flag
             self.state.index_updated = False
             # assign LEDs to LED string
-            # self.controller.virtualLEDBuffer[sprite.indexRange] = [sprite.color] * len(sprite.indexRange)
-            if len(self.controller.virtual_led_buffer.shape) == 2:
+            if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
                 self.controller.virtual_led_buffer[self.state.index_range] = self.state.color
             else:
                 self.controller.virtual_led_buffer[

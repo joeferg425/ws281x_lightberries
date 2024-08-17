@@ -16,12 +16,15 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("lightBerries")
 
 
-class PixelSequence:
+class Sequence:
     """A pattern of lights."""
 
     DEFAULT_TWINKLE_COLOR = PixelColors.GRAY
     DEFAULT_BACKGROUND_COLOR = PixelColors.OFF
-    ALL_PATTERNS: ClassVar[dict[str, PixelSequence]] = {}
+    ALL_SEQUENCES: ClassVar[dict[str, type[Sequence]]] = {}
+
+    def __init_subclass__(cls) -> None:
+        cls.ALL_SEQUENCES[cls.__name__.replace("Sequence", "")] = cls
 
     def __init__(self, led_count: int, name: str | None = None, **kwargs: dict[str, Any]) -> None:  # noqa: ARG002
         """Create a pattern of lights.
@@ -34,8 +37,7 @@ class PixelSequence:
 
         """
         if name is None:
-            name = PixelSequence.__name__
-        self.ALL_PATTERNS[name] = self
+            name = Sequence.__name__
         self._sequence: np.ndarray[(3, Any), np.int32] = np.array(
             [PixelColors.OFF.array for i in range(int(led_count))],
         )
@@ -75,6 +77,7 @@ class PixelSequence:
         except Exception as ex:  # pragma: no cover
             raise PatternError from ex
 
+    @property
     def sequence(self) -> np.ndarray[(3, Any), np.int32]:
         """Get the light sequence.
 

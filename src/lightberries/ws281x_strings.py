@@ -161,7 +161,7 @@ class WS281xString(Sequence[np.int32]):
 
         self._ws281x_pixel_strip.begin()
         self._ledCount = int(self._ws281x_pixel_strip.numPixels())
-        LOGGER.debug("Created %s", self.__class__.__name__)
+        LOGGER.debug("Created %s", WS281xString.__name__)
 
     def __del__(
         self,

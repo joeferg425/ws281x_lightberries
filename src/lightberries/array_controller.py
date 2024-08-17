@@ -17,9 +17,11 @@ from lightberries.exceptions import (
     WS281xStringError,
 )
 from lightberries.light_sequences.base import ArraySequence
+from lightberries.light_sequences.solid import SequenceSolid
 from lightberries.pixel import Pixel, PixelColors
+from lightberries.sequence import Sequence
 from lightberries.state import LEDFadeType, ThingMoves
-from lightberries.transform import LightTransform
+from lightberries.transform import Transform
 from lightberries.ws281x_strings import WS281xString
 
 LOGGER = logging.getLogger("lightBerries")
@@ -129,10 +131,10 @@ class ArrayController:
 
             # initialize instance variables
             self._led_count: int = len(self.ws281xString)
-            self.virtual_led_buffer: np.ndarray[(3, Any), np.int32] = ArraySequence.SolidSequence(
-                arrayLength=self._led_count,
+            self.virtual_led_buffer: np.ndarray[(3, Any), np.int32] = SequenceSolid(
+                led_count=self._led_count,
                 color=PixelColors.OFF.array,
-            )
+            ).sequence
             self.virtual_led_index_buffer: np.ndarray[(Any,), np.int32] = np.array(
                 range(len(self.ws281xString)),
             )
@@ -148,7 +150,7 @@ class ArrayController:
             self._color_sequence_count: int = len(self._color_sequence)
             self._color_sequence_index: int = 0
             self._loop_forever: bool = False
-            self._transforms: list[LightTransform] = []
+            self._transforms: list[Transform] = []
 
             # # give LightFunction class a pointer to this class
             # LightTransform.Controller = self
@@ -358,7 +360,7 @@ class ArrayController:
 
         """
         self._color_sequence = np.copy(
-            ArraySequence.ArrayPattern.pixel_array_to_numpy_array(color_sequence),
+            ArraySequence.pixel_array_to_numpy_array(color_sequence),
         )
         self.color_sequence_count = len(self._color_sequence)
         self.color_sequence_index = 0
@@ -436,7 +438,7 @@ class ArrayController:
         return temp
 
     @property
-    def function_list(self) -> list[LightTransform]:
+    def function_list(self) -> list[Transform]:
         """The list of function objects that will be used to modify the light pattern.
 
         Returns
@@ -457,31 +459,31 @@ class ArrayController:
         """
         return self._overlay_dict
 
-    def get_color_methods_list(self) -> list[str]:
-        """Get the list of methods in this class (by name) that set the color sequence.
+    # def get_color_methods_list(self) -> list[str]:
+    #     """Get the list of methods in this class (by name) that set the color sequence.
 
-        Returns
-        -------
-            a list of method name strings
+    #     Returns
+    #     -------
+    #         a list of method name strings
 
-        """
-        attrs = list(dir(self))
-        colors = [c for c in attrs if c[:8] == "useColor"]
-        colors.sort()
-        return colors
+    #     """
+    #     attrs = list(dir(self))
+    #     colors = [c for c in attrs if c[:8] == "useColor"]
+    #     colors.sort()
+    #     return colors
 
-    def get_function_methods_list(self) -> list[str]:
-        """Get the list of methods in this class (by name) that set the color functions.
+    # def get_function_methods_list(self) -> list[str]:
+    #     """Get the list of methods in this class (by name) that set the color functions.
 
-        Returns
-        -------
-            a list of method name strings
+    #     Returns
+    #     -------
+    #         a list of method name strings
 
-        """
-        attrs = list(dir(self))
-        functions = [f for f in attrs if f[:11] == "useFunction"]
-        functions.sort()
-        return functions
+    #     """
+    #     attrs = list(dir(self))
+    #     functions = [f for f in attrs if f[:11] == "useFunction"]
+    #     functions.sort()
+    #     return functions
 
     def reset(
         self,
@@ -497,7 +499,7 @@ class ArrayController:
 
         """
         try:
-            LOGGER.debug("%s.%s:", self.__class__.__name__, self.reset.__name__)
+            LOGGER.debug("%s.%s:", ArrayController.__name__, self.reset.__name__)
             self._transforms = []
             if self.virtual_led_count >= self.real_led_count:
                 self.set_virtual_led_buffer(self.virtual_led_buffer[: self.real_led_count])
@@ -680,18 +682,9 @@ class ArrayController:
             LightControlException: if something bad happens
 
         """
-        try:
-            # invoke the function pointer saved in the light data object
-            for function in self._transforms:
-                function.transform()
-        except SystemExit:  # pragma: no cover
-            raise
-        except KeyboardInterrupt:  # pragma: no cover
-            raise
-        except LightBerryError:  # pragma: no cover
-            raise
-        except Exception as ex:  # pragma: no cover
-            raise ControllerError from ex
+        # invoke the function pointer saved in the light data object
+        for function in self._transforms:
+            function.transform()
 
     def _copy_overlays(
         self,
@@ -773,54 +766,30 @@ class ArrayController:
             LightControlException: if something bad happens
 
         """
-        try:
-            LOGGER.debug("%s.%s:", self.__class__.__name__, self.run.__name__)
-            # set start time
-            self._last_mode_change = time.time()
-            # set a target time to change
-            if self.seconds_per_mode is None:
-                self._next_mode_change = self._last_mode_change + (random.uniform(30, 120))
-            else:
-                self._next_mode_change = self._last_mode_change + (self.seconds_per_mode)
-            # loop
-            self.running = True
-            while (time.time() < self._next_mode_change and self.running is True) or self._loop_forever:
-                try:
-                    # run the selected functions using LightFunction object callbacks
-                    self._run_functions()
-                    # copy the resulting RGB values to the ws28xx LED buffer
-                    self.copy_virtual_leds_to_ws281x()
-                    # copy temporary changes (not buffered in this class) to the ws28xx LED buffer
-                    self._copy_overlays()
-                    # tell the ws28xx controller to transmit the new data
-                    self.refresh_leds()
-                except KeyboardInterrupt:  # pragma: no cover
-                    raise
-                except SystemExit:  # pragma: no cover
-                    raise
-                except LightBerryError:  # pragma: no cover
-                    raise
-                except Exception as ex:  # pragma: no cover
-                    raise ControllerError from ex
-            self._last_mode_change = time.time()
-            if self.seconds_per_mode is None:
-                self._next_mode_change = self._last_mode_change + (random.random(30, 120))
-            else:
-                self._next_mode_change = self._last_mode_change + (self.seconds_per_mode)
-        except SystemExit:  # pragma: no cover
-            raise
-        except KeyboardInterrupt:  # pragma: no cover
-            raise
-        except LightBerryError:  # pragma: no cover
-            raise
-        except Exception as ex:  # pragma: no cover
-            LOGGER.exception(
-                "%s.%s Exception: %s",
-                self.__class__.__name__,
-                self.run.__name__,
-                ex,
-            )
-            raise ControllerError from ex
+        LOGGER.debug("%s.%s:", ArrayController.__name__, self.run.__name__)
+        # set start time
+        self._last_mode_change = time.time()
+        # set a target time to change
+        if self.seconds_per_mode is None:
+            self._next_mode_change = self._last_mode_change + (random.uniform(30, 120))
+        else:
+            self._next_mode_change = self._last_mode_change + (self.seconds_per_mode)
+        # loop
+        self.running = True
+        while (time.time() < self._next_mode_change and self.running is True) or self._loop_forever:
+            # run the selected functions using LightFunction object callbacks
+            self._run_functions()
+            # copy the resulting RGB values to the ws28xx LED buffer
+            self.copy_virtual_leds_to_ws281x()
+            # copy temporary changes (not buffered in this class) to the ws28xx LED buffer
+            self._copy_overlays()
+            # tell the ws28xx controller to transmit the new data
+            self.refresh_leds()
+        self._last_mode_change = time.time()
+        if self.seconds_per_mode is None:
+            self._next_mode_change = self._last_mode_change + (random.random(30, 120))
+        else:
+            self._next_mode_change = self._last_mode_change + (self.seconds_per_mode)
 
     def demo(
         self,
@@ -870,19 +839,19 @@ class ArrayController:
             elif not isinstance(skipColors, list):
                 skipColors = [skipColors]
 
-            functions = self.get_function_methods_list()
-            colors = self.get_color_methods_list()
+            functions = list(Transform.ALL_TRANSFORMS)
+            colors = list(Sequence.ALL_SEQUENCES)
             # get methods that match user's string
             if len(functionNames) > 0:
                 matches = []
                 for name in functionNames:
-                    matches.extend([f for f in functions if name.lower() in f.lower()])
+                    matches.extend([f for f in Transform.ALL_TRANSFORMS if name.lower() in f.lower()])
                 functions = matches
             # get methods that match user's string
             if len(colorNames) > 0:
                 matches = []
                 for name in colorNames:
-                    matches.extend([f for f in colors if name.lower() in f.lower()])
+                    matches.extend([f for f in Sequence.ALL_SEQUENCES if name.lower() in f.lower()])
                 colors = matches
             # remove methods that user requested
             if len(skipFunctions) > 0:
@@ -905,39 +874,42 @@ class ArrayController:
                 raise ControllerError("No colors selected in demo")
             else:
                 while True:
-                    try:
-                        # make a temporary copy (so we can go through each one)
-                        functionsCopy = functions.copy()
-                        colorsCopy = colors.copy()
-                        # loop while we still have a color and a function
-                        while (len(functionsCopy) * len(colorsCopy)) > 0:
-                            # get a new function if there is one
-                            if len(functionsCopy) > 0:
-                                function = functionsCopy[random.randint(0, len(functionsCopy) - 1)]
-                                functionsCopy.remove(function)
-                            # get a new color pattern if there is one
-                            if len(colorsCopy) > 0:
-                                color = colorsCopy[random.randint(0, len(colorsCopy) - 1)]
-                                colorsCopy.remove(color)
-                            # reset
-                            self.reset()
-                            # apply color
-                            getattr(self, color)()
-                            # configure function
-                            getattr(self, function)()
-                            # run the combination
-                            self.run()
-                    except SystemExit:  # pragma: no cover
-                        raise
-                    except KeyboardInterrupt:  # pragma: no cover
-                        raise
-                    except Exception as ex:  # pragma: no cover
-                        LOGGER.exception(
-                            "%s.%s Exception: %s",
-                            self.__class__.__name__,
-                            self.demo.__name__,
-                            ex,
+                    # try:
+                    # make a temporary copy (so we can go through each one)
+                    functionsCopy = functions.copy()
+                    colorsCopy = colors.copy()
+                    # loop while we still have a color and a function
+                    while (len(functionsCopy) * len(colorsCopy)) > 0:
+                        # get a new function if there is one
+                        if len(functionsCopy) > 0:
+                            function = functionsCopy[random.randint(0, len(functionsCopy) - 1)]
+                            functionsCopy.remove(function)
+                        # get a new color pattern if there is one
+                        if len(colorsCopy) > 0:
+                            color = colorsCopy[random.randint(0, len(colorsCopy) - 1)]
+                            colorsCopy.remove(color)
+                        # reset
+                        self.reset()
+                        # apply color
+                        clr = Sequence.ALL_SEQUENCES[color](led_count=self.real_led_count)
+                        # configure function
+                        self._transforms = Transform.ALL_TRANSFORMS[function](controller=self).setup(
+                            color_sequence=clr.sequence
                         )
+
+                        # run the combination
+                        self.run()
+                # except SystemExit:  # pragma: no cover
+                #     raise
+                # except KeyboardInterrupt:  # pragma: no cover
+                #     raise
+                # except Exception as ex:  # pragma: no cover
+                #     LOGGER.exception(
+                #         "%s.%s Exception: %s",
+                #         self.__name__,
+                #         self.demo.__name__,
+                #         ex,
+                #     )
         except SystemExit:  # pragma: no cover
             raise
         except KeyboardInterrupt:  # pragma: no cover
@@ -945,7 +917,7 @@ class ArrayController:
         except Exception as ex:  # pragma: no cover
             LOGGER.exception(
                 "%s.%s Exception: %s",
-                self.__class__.__name__,
+                ArrayController.__name__,
                 self.demo.__name__,
                 ex,
             )
