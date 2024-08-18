@@ -99,6 +99,8 @@
 					"100",
 					"-f",
 					"sprites",
+					"-c",
+					"solid",
 					"--debug"
 				]
 			},

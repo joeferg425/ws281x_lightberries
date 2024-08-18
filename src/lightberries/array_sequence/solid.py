@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from lightberries.array_sequence.base import ArraySequence
+from lightberries.pixel import Pixel
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -45,8 +46,9 @@ class SequenceSolid(ArraySequence):
 
         if color is None:
             color = self.DEFAULT_COLOR_SEQUENCE[0]
+        if not isinstance(color, Pixel):
+            color = Pixel(color)
         if led_count > 0:
-            self._sequence = np.array([color for _ in range(int(led_count))])
+            self._array = np.array([color for _ in range(int(led_count))])
         else:
-            self._sequence = np.zeros((0, 3), dtype=np.int32)
-            self._sequence = np.zeros((0, 3), dtype=np.int32)
+            self._array = [color]

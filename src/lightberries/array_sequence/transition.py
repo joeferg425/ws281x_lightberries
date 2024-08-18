@@ -67,7 +67,7 @@ class SequenceTransition(ArraySequence):
             step_count = led_count // (sequence_length - wrap_offset)
             previous_step_count = step_count
         # create temporary array
-        temp_array = SequenceOff(led_count).sequence
+        temp_array = SequenceOff(led_count).ndarray
         # step through color sequence
         for color_index in range(sequence_length - wrap_offset):
             if color_index == sequence_length - 1 or color_index == sequence_length - 2:
@@ -85,5 +85,5 @@ class SequenceTransition(ArraySequence):
                     step_count,
                 )
             count += step_count
-        self._sequence = temp_array.astype(int)
-        self._sequence = temp_array.astype(int)
+        self._array = temp_array.astype(int)
+        self._array = temp_array.astype(int)

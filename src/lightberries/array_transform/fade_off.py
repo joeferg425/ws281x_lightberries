@@ -69,5 +69,6 @@ class TransformFadeOff(PixelTransform):
 
     def transform(self) -> None:
         """Fade all Pixels toward OFF."""
-        self.controller.virtual_led_buffer[:] = self.controller.virtual_led_buffer * (1 - self.state.fade_amount)
-        self.controller.virtual_led_buffer[:] = self.controller.virtual_led_buffer * (1 - self.state.fade_amount)
+        self.controller.virtual_led_buffer[:] = self.controller.virtual_led_buffer * (
+            1 - self.state.fade_amount_float
+        )

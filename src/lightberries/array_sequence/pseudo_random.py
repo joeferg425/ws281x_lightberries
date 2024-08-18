@@ -44,7 +44,7 @@ class SequencePseudoRandom(ArraySequence):
             name=name,
             **kwargs,
         )
-        temp_array = SequenceOff(led_count=led_count).sequence
+        temp_array = SequenceOff(led_count=led_count).ndarray
         if color_sequence is None:
             color_sequence = ArraySequence.DEFAULT_COLOR_SEQUENCE
         input_sequence_length = color_sequence.shape[0]
@@ -53,4 +53,4 @@ class SequencePseudoRandom(ArraySequence):
             input_sequence_length = color_sequence.shape[0]
         for i in range(led_count):
             temp_array[i] = color_sequence[random.randint(0, input_sequence_length - 1)]
-        self._sequence = temp_array
+        self._array = temp_array

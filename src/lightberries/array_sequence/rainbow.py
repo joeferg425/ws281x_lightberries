@@ -40,7 +40,7 @@ class SequenceRainbow(ArraySequence):
         super().__init__(name=name, led_count=led_count, kwargs=kwargs)
         if wrap is None:
             wrap = self.get_random_boolean()
-        self._sequence = SequenceTransition(
+        self._array = SequenceTransition(
             led_count=led_count,
             color_sequence=np.array(
                 [
@@ -51,4 +51,4 @@ class SequenceRainbow(ArraySequence):
                 ],
             ),
             wrap=wrap,
-        ).sequence
+        ).ndarray

@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import logging
 
-from lightberries.array_controller import ArrayController as ArrayController  # noqa
-from lightberries.matrix_controller import MatrixController as MatrixController  # noqa
+from lightberries.array_controller import ArrayController as ArrayController
+from lightberries.matrix_controller import MatrixController as MatrixController
 
 # setup logging
 LOGGER = logging.getLogger("lightBerries")

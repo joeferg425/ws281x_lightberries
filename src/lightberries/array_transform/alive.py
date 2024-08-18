@@ -8,12 +8,15 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from lightberries.array_transforms.fade_off import TransformFadeOff
+from lightberries.array_transform.fade_off import TransformFadeOff
+from lightberries.constants import SHAPE_2D
 from lightberries.pixel_transform import PixelTransform
 from lightberries.state import ThingColors, ThingMoves, ThingSizes, TransformState
 
 if TYPE_CHECKING:
     import lightberries.array_controller
+    from lightberries.pixel_sequence import PixelSequence
+
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -42,7 +45,7 @@ class TransformAlive(PixelTransform):
 
     def setup(  # noqa: PLR0913
         self,
-        color_sequence: np.ndarray[Any, np.int32] | None = None,
+        color_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         fade_amount: float | None = None,
@@ -50,7 +53,7 @@ class TransformAlive(PixelTransform):
         step_count_max: int | None = None,
         step_size_max: int | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
-    ) -> None:
+    ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:
@@ -73,7 +76,7 @@ class TransformAlive(PixelTransform):
         if state is not None:
             self.state = state
         else:
-            self.state.fade_amount = random.uniform(0.20, 0.75)
+            self.state.set_fade_amount(random.uniform(0.20, 0.75))
             self.state.size_max = random.randint(
                 self.controller.virtual_led_count // 6,
                 self.controller.virtual_led_count // 3,
@@ -85,7 +88,7 @@ class TransformAlive(PixelTransform):
             self.state.step_size_max = random.randint(6, 10)
 
         if fade_amount is not None:
-            self.state.fade_amount = fade_amount
+            self.state.set_fade_amount(fade_amount)
         if size_max is not None:
             self.state.size_max = size_max
         if step_size_max is not None:
@@ -97,27 +100,22 @@ class TransformAlive(PixelTransform):
 
         things: list[PixelTransform] = []
         for _ in range(random.randint(2, 5)):
-            thing = TransformAlive(controller=self.controller, state=self.state.copy())
+            thing = TransformAlive(
+                controller=self.controller,
+                state=self.state.copy(),
+            )
             # randomize start index
             thing.state.index = self.get_random_index()
             # randomize direction
             thing.state.direction = self.get_random_direction()
             # copy color sequence
-            thing.color_sequence = self.color_sequence
-            # assign color
-            thing.state.color = thing.color_sequence_next
-            # set max step count before possible state change
-            thing.state.step_count_max = step_count_max
-            # set max step size in normal condition
-            thing.state.step_size_max = step_size_max
+            thing.color_sequence = self.state.color_sequence.copy()
             # randomize speed
             thing.state.step = random.randint(1, thing.state.step_size_max)
-            # set refresh speed
+            # randomize refresh speed
             thing.state.delay_count_max = random.randint(6, 15)
-            # set initial size
-            thing.state.size = random.randint(1, int(size_max // 2))
-            # set max size
-            thing.state.size_max = size_max
+            # randomize initial size
+            thing.state.size = random.randint(1, int(thing.state.size_max // 2))
             # start the state at 1
             thing.state.state = ThingMoves.METEOR.value
             # calculate random next state immediately
@@ -127,7 +125,7 @@ class TransformAlive(PixelTransform):
         things[0].state.active = True
         # add a fade
         fade = TransformFadeOff(controller=self.controller)
-        fade.state.fade_amount = fade_amount
+        fade.state.set_fade_amount(self.state.fade_amount)
         things.insert(0, fade)
         return things
 
@@ -144,11 +142,8 @@ class TransformAlive(PixelTransform):
                     self.state.step = 1
                     # set next index
                     self.update_array_index()
-                    # thing.indexNext = (
-                    #     thing.index + (thing.step * thing.direction)
-                    # ) % self.controller.virtualLEDCount
                     # randomly change direction
-                    if random.randint(0, 99) > 95:
+                    if random.randint(0, 99) > 95:  # noqa: PLR2004
                         self.state.direction *= -1  # pragma: no cover
                 # if in fast meteor mode
                 elif self.state.state & ThingMoves.LIGHT_SPEED.value:
@@ -159,24 +154,18 @@ class TransformAlive(PixelTransform):
                     self.state.step = random.randint(7, 12)
                     # set next index
                     self.update_array_index()
-                    # thing.index = (
-                    #     thing.index + (thing.step * thing.direction)
-                    # ) % self.controller.virtualLEDCount
                     # randomly change direction
-                    if random.randint(0, 99) > 95:
+                    if random.randint(0, 99) > 95:  # noqa: PLR2004
                         self.state.direction *= -1  # pragma: no cover
                 # if slow meteor
                 elif self.state.state & ThingMoves.TURTLE.value:
                     # set step to 1
                     self.state.step = 1
                     # randomly change direction
-                    if random.randint(0, 99) > 80:
+                    if random.randint(0, 99) > 80:  # noqa: PLR2004
                         self.state.direction *= -1  # pragma: no cover
                     # set next index
                     self.update_array_index()
-                    # thing.index = (
-                    #     thing.index + (thing.step * thing.direction)
-                    # ) % self.controller.virtualLEDCount
                 # if we are growing
                 if self.state.state & ThingSizes.GROW.value:
                     # artificially limit duration
@@ -185,15 +174,14 @@ class TransformAlive(PixelTransform):
                     # if we can still grow
                     if self.state.size < self.state.size_max:
                         # randomly grow
-                        if random.randint(0, 99) > 80:
+                        if random.randint(0, 99) > 80:  # noqa: PLR2004
                             self.state.size += random.randint(
                                 1,
                                 5,
                             )  # pragma: no cover
                         # also randomly shrink a bit
-                        if self.state.size > 2:
-                            if random.randint(0, 99) > 90:
-                                self.state.size -= 1  # pragma: no cover
+                        if self.state.size > 2 and random.randint(0, 99) > 90:  # noqa: PLR2004
+                            self.state.size -= 1  # pragma: no cover
                     # make sure we aren't overgrown
                     if self.state.size > self.state.size_max:
                         self.state.size = self.state.size_max
@@ -208,12 +196,11 @@ class TransformAlive(PixelTransform):
                     # if we can shrink
                     if self.state.size > 0:
                         # randomly shrink
-                        if random.randint(0, 99) > 80:
+                        if random.randint(0, 99) > 80:  # noqa: PLR2004
                             self.state.size -= random.randint(1, 5)
                         # also randomly grow a bit
-                        if self.state.size < self.state.size_max:
-                            if random.randint(0, 99) > 90:
-                                self.state.size += 1  # pragma: no cover
+                        if self.state.size < self.state.size_max and random.randint(0, 99) > 90:  # noqa: PLR2004
+                            self.state.size += 1  # pragma: no cover
                     # make sure we aren't overgrown
                     if self.state.size >= self.state.size_max:
                         self.state.size = self.state.size_max
@@ -226,16 +213,9 @@ class TransformAlive(PixelTransform):
                     if self.state.step_count_max >= self.state.period_short:
                         self.state.step_count_max = self.state.period_short
                     # randomly cycle through assign colors
-                    if random.randint(0, 99) > 90:
+                    if random.randint(0, 99) > 90:  # noqa: PLR2004
                         for _ in range(random.randint(1, 3)):
-                            self.state.color = self.color_sequence_next
-                # calculate range of affected indices
-                # index1 = thing.indexPrevious - (thing.size * thing.direction)
-                # index2 = thing.indexPrevious + ((thing.step + thing.size) * thing.direction)
-                # indexLower = min(index1, index2)
-                # indexHigher = max(index1, index2)
-                # calculate affected range
-                # thing.indexRange = thing.calcRange()
+                            self.state.color_sequence.advance_index()
                 # increment step counter
                 self.state.step_counter += 1
             # we hit our step goal, randomize next state
@@ -270,21 +250,15 @@ class TransformAlive(PixelTransform):
                 else:
                     self.state.delay_count_max = random.randint(1, 7)
                 # calculate affected range
-                # index1 = thing.indexPrevious - (thing.size * thing.direction)
-                # index2 = thing.indexPrevious + ((thing.step + thing.size) * thing.direction)
-                # indexLower = min(index1, index2)
-                # indexHigher = max(index1, index2)
-                # rng = np.array(range(_x1, _x2 + 1))
                 self.state.index_range = self.calc_range()
         # increment delay
         self.state.delay_counter += 1
         # assign colors to indices
-        # self.controller.virtualLEDBuffer[thing.indexRange] = thing.color
-        if len(self.controller.virtual_led_buffer.shape) == 2:
-            self.controller.virtual_led_buffer[self.state.index_range] = self.state.color
+        if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
+            self.controller.virtual_led_buffer[self.state.index_range] = self.state.color_sequence.pixel
         else:
             self.controller.virtual_led_buffer[
                 np.where(
                     self.controller.virtual_led_index_buffer == self.state.index_range,
                 )
-            ] = self.state.color
+            ] = self.state.color_sequence.pixel

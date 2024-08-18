@@ -1,15 +1,14 @@
-"""Randomly set all lights in the string to the same color without changing the virtual LED buffer."""
+"""Do temporary twinkle modifications."""
 
 from __future__ import annotations
 
 import random
 from typing import TYPE_CHECKING, Any
 
-from lightberries.light_transforms.base import OverlayTransform
 from lightberries.state import TransformState
+from lightberries.transform_overlay.base import OverlayTransform
 
 if TYPE_CHECKING:
-
     import numpy as np
     from numpy.typing import NDArray
 
@@ -18,8 +17,8 @@ if TYPE_CHECKING:
     from lightberries.state import TransformState
 
 
-class TransformBlink(OverlayTransform):
-    """Randomly set all lights in the string to the same color without changing the virtual LED buffer."""
+class TransformTwinkle(OverlayTransform):
+    """Do temporary twinkle modifications."""
 
     def __init__(
         self,
@@ -27,7 +26,7 @@ class TransformBlink(OverlayTransform):
         state: TransformState | None = None,
         **kwargs: dict[str, Any],
     ) -> None:
-        """Randomly set all lights in the string to the same color without changing the virtual LED buffer.
+        """Do temporary twinkle modifications.
 
         Args:
         ----
@@ -37,7 +36,7 @@ class TransformBlink(OverlayTransform):
 
         """
         super().__init__(
-            name=TransformBlink.__name__,
+            name=TransformTwinkle.__name__,
             controller=controller,
             state=state,
             kwargs=kwargs,
@@ -47,15 +46,15 @@ class TransformBlink(OverlayTransform):
         self,
         color_sequence: NDArray[np.int32] | None = None,
         state: TransformState | None = None,
-        blink_chance: float | None = None,
+        twinkle_chance: float | None = None,
     ) -> list[PixelTransform]:
-        """Use the overlay that causes all LEDs to light up the same color at once.
+        """Randomly sets some lights to 'twinkleColor' temporarily.
 
         Args:
         ----
             color_sequence: the list of colors to be used when briefly flashing an LED
             state: initial state. Defaults to None.
-            blink_chance: chance of a blink
+            twinkle_chance: chance of a twinkle
 
         """
         if color_sequence is not None:
@@ -65,13 +64,12 @@ class TransformBlink(OverlayTransform):
         else:
             self.state.random = random.uniform(0.991, 0.995)
 
-        if blink_chance is not None:
-            self.state.random = blink_chance
-
+        if twinkle_chance is not None:
+            self.state.random = twinkle_chance
         return [self]
 
     def transform(self) -> None:
-        """Randomly set all lights in the string to the same color without changing the virtual LED buffer.
+        """Do temporary twinkle modifications.
 
         Raises
         ------
@@ -80,8 +78,8 @@ class TransformBlink(OverlayTransform):
             LightFunctionException: if something bad happens
 
         """
-        if random.random() > self.state.random:
-            color = self.color_sequence_next
-            for index in range(self.controller.real_led_count):
-                self.controller.overlay_dictionary[index] = color
-                self.controller.overlay_dictionary[index] = color
+        for index in range(self.controller.real_led_count):
+            if random.random() > self.state.random:
+                self.controller.overlay_dictionary[index] = self.color_sequence_next
+            if random.random() > self.state.random:
+                self.controller.overlay_dictionary[index] = self.color_sequence_next

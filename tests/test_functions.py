@@ -10,9 +10,9 @@ from numpy.typing import NDArray
 import lightberries.rpiws281x_patch
 from lightberries.array_controller import ArrayController
 from lightberries.array_sequence.base import ArraySequence, pixel_array_to_numpy_array
-from lightberries.array_transforms.base import (
+from lightberries.array_transform.base import (
+    ArrayTransform,
     LEDFadeType,
-    LightTransform,
     RaindropStates,
     SpriteState,
     ThingColors,
@@ -121,26 +121,26 @@ def newControllerBigger() -> ArrayController:
         )
 
 
-def assert_func(func: LightTransform):
+def assert_func(func: ArrayTransform):
     assert func is not None
-    assert isinstance(func, LightTransform)
+    assert isinstance(func, ArrayTransform)
 
 
 def test_creation_simple():
     control = newController()
-    function = LightTransform(control, assert_func)
+    function = ArrayTransform(control, assert_func)
     control.function_list.append(function)
     assert function is not None
-    assert isinstance(function, LightTransform)
+    assert isinstance(function, ArrayTransform)
 
 
 def test_creation_with_colors():
     control = newController()
     pattern = ArraySequence.default_color_sequence_by_month()
-    function = LightTransform(control, assert_func, pattern)
+    function = ArrayTransform(control, assert_func, pattern)
     control.function_list.append(function)
     assert function is not None
-    assert isinstance(function, LightTransform)
+    assert isinstance(function, ArrayTransform)
 
 
 def test_str():
@@ -148,7 +148,7 @@ def test_str():
     pattern = pixel_array_to_numpy_array(
         [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
-    function = LightTransform(control, assert_func, pattern)
+    function = ArrayTransform(control, assert_func, pattern)
     control.function_list.append(function)
     assert str(function) == '[0]: "assert_func" PX #FF0000'
 
@@ -158,14 +158,14 @@ def test_repr():
     pattern = pixel_array_to_numpy_array(
         [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
-    function = LightTransform(control, assert_func, pattern)
+    function = ArrayTransform(control, assert_func, pattern)
     control.function_list.append(function)
     assert repr(function) == '<ArrayFunction> [0]: "assert_func" PX #FF0000'
 
 
 def test_run():
     control = newController()
-    function = LightTransform(control, assert_func)
+    function = ArrayTransform(control, assert_func)
     control.function_list.append(function)
     control._run_functions()
     function._transform()
@@ -176,7 +176,7 @@ def test_colorSequenceCount():
     pattern = pixel_array_to_numpy_array(
         [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
-    function = LightTransform(newController(), assert_func, pattern)
+    function = ArrayTransform(newController(), assert_func, pattern)
     control.function_list.append(function)
     assert function.color_sequence_count == len(pattern)
 
@@ -186,7 +186,7 @@ def test_colorSequenceIndex():
     pattern = pixel_array_to_numpy_array(
         [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
-    function = LightTransform(control, assert_func, pattern)
+    function = ArrayTransform(control, assert_func, pattern)
     control.function_list.append(function)
     assert function.color_sequence_index == 0
 
@@ -196,7 +196,7 @@ def test_colorSequenceNext():
     pattern = pixel_array_to_numpy_array(
         [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
-    function = LightTransform(control, assert_func, pattern)
+    function = ArrayTransform(control, assert_func, pattern)
     control.function_list.append(function)
     left = function._color
     right = PixelColor.RED.array
@@ -230,7 +230,7 @@ def test_doFade():
     pattern = pixel_array_to_numpy_array(
         [PixelColor.RED, PixelColor.OFF, PixelColor.PINK],
     )
-    function = LightTransform(control, LightTransform.do_fade, pattern)
+    function = ArrayTransform(control, ArrayTransform.do_fade, pattern)
     control.function_list.append(function)
     delay_count = 2
     function._delay_count_max = delay_count
@@ -266,19 +266,19 @@ def test_updateArrayIndex_singlestep():
     pattern = pixel_array_to_numpy_array(
         [PixelColor.RED, PixelColor.OFF, PixelColor.PINK],
     )
-    function = LightTransform(control, LightTransform.update_array_index, pattern)
+    function = ArrayTransform(control, ArrayTransform.update_array_index, pattern)
     control.function_list.append(function)
     assert function._index == 0
     assert function._step == 1
     assert function._direction == 1
-    for i in range(LightTransform.Controller.realLEDCount):
+    for i in range(ArrayTransform.Controller.realLEDCount):
         control._run_functions()
-        assert function._index == (i + 1) % LightTransform.Controller.realLEDCount
+        assert function._index == (i + 1) % ArrayTransform.Controller.realLEDCount
         assert function._step == 1
         assert function._direction == 1
         assert_array_equal(
             function._index_range,
-            np.array([(i + 1) % LightTransform.Controller.realLEDCount]),
+            np.array([(i + 1) % ArrayTransform.Controller.realLEDCount]),
         )
     assert function._index == 0
     assert function._step == 1
@@ -290,23 +290,23 @@ def test_updateArrayIndex_largestep():
     pattern = pixel_array_to_numpy_array(
         [PixelColor.RED, PixelColor.OFF, PixelColor.PINK],
     )
-    function = LightTransform(control, LightTransform.update_array_index, pattern)
+    function = ArrayTransform(control, ArrayTransform.update_array_index, pattern)
     control.function_list.append(function)
     function._step = 2
     assert function._index == 0
     assert function._step == 2
     assert function._direction == 1
-    for i in range(LightTransform.Controller.realLEDCount):
+    for i in range(ArrayTransform.Controller.realLEDCount):
         control._run_functions()
         begin_idx = function._index_previous + 1
         idx = begin_idx + (function._step - 1)
-        assert function._index == idx % LightTransform.Controller.realLEDCount
+        assert function._index == idx % ArrayTransform.Controller.realLEDCount
         assert function._step == 2
         assert function._direction == 1
         assert_array_equal(
             function._index_range,
             np.array(
-                [j % LightTransform.Controller.realLEDCount for j in range(begin_idx, idx + 1)],
+                [j % ArrayTransform.Controller.realLEDCount for j in range(begin_idx, idx + 1)],
             ),
         )
     assert function._index == 0
@@ -319,13 +319,13 @@ def test_functionCollisionDetection_only_one():
     pattern = pixel_array_to_numpy_array(
         [PixelColor.RED, PixelColor.OFF, PixelColor.PINK],
     )
-    function = LightTransform(control, LightTransform.functionCollisionDetection, pattern)
+    function = ArrayTransform(control, ArrayTransform.functionCollisionDetection, pattern)
     control.function_list.append(function)
     function._step = 1
     assert function._index == 0
     assert function._step == 1
     assert function._direction == 1
-    for i in range(LightTransform.Controller.realLEDCount):
+    for i in range(ArrayTransform.Controller.realLEDCount):
         control._run_functions()
     assert function._index == 0
     assert function._step == 1
@@ -338,11 +338,11 @@ def test_functionCollisionDetection_small_step():
     pattern = pixel_array_to_numpy_array(
         [PixelColor.RED, PixelColor.OFF, PixelColor.PINK],
     )
-    function1 = LightTransform(control, LightTransform.update_array_index, pattern)
-    function2 = LightTransform(control, LightTransform.update_array_index, pattern)
-    function3 = LightTransform(
+    function1 = ArrayTransform(control, ArrayTransform.update_array_index, pattern)
+    function2 = ArrayTransform(control, ArrayTransform.update_array_index, pattern)
+    function3 = ArrayTransform(
         control,
-        LightTransform.functionCollisionDetection,
+        ArrayTransform.functionCollisionDetection,
         pattern,
     )
     control.function_list.append(function1)
@@ -366,11 +366,11 @@ def test_functionCollisionDetection_large_step():
     pattern = pixel_array_to_numpy_array(
         [PixelColor.RED, PixelColor.OFF, PixelColor.PINK],
     )
-    function1 = LightTransform(control, LightTransform.update_array_index, pattern)
-    function2 = LightTransform(control, LightTransform.update_array_index, pattern)
-    function3 = LightTransform(
+    function1 = ArrayTransform(control, ArrayTransform.update_array_index, pattern)
+    function2 = ArrayTransform(control, ArrayTransform.update_array_index, pattern)
+    function3 = ArrayTransform(
         control,
-        LightTransform.functionCollisionDetection,
+        ArrayTransform.functionCollisionDetection,
         pattern,
     )
     function3._explode = True
@@ -411,11 +411,11 @@ def test_functionCollisionDetection_slow_fast():
     pattern = pixel_array_to_numpy_array(
         [PixelColor.RED, PixelColor.OFF, PixelColor.PINK],
     )
-    function1 = LightTransform(control, LightTransform.update_array_index, pattern)
-    function2 = LightTransform(control, LightTransform.update_array_index, pattern)
-    function3 = LightTransform(
+    function1 = ArrayTransform(control, ArrayTransform.update_array_index, pattern)
+    function2 = ArrayTransform(control, ArrayTransform.update_array_index, pattern)
+    function3 = ArrayTransform(
         control,
-        LightTransform.functionCollisionDetection,
+        ArrayTransform.functionCollisionDetection,
         pattern,
     )
     function3._explode = True
@@ -463,7 +463,7 @@ def test_functionOff():
         [PixelColor.OFF, PixelColor.OFF, PixelColor.OFF],
     )
     control.set_virtual_led_buffer(pattern)
-    function1 = LightTransform(control, LightTransform.functionOff, pattern)
+    function1 = ArrayTransform(control, ArrayTransform.functionOff, pattern)
     control.function_list.append(function1)
     assert_array_equal(control.virtual_led_buffer, pattern)
     control._run_functions()
@@ -485,7 +485,7 @@ def test_functionFadeOff():
         [PixelColor.RED4, PixelColor.GREEN4, PixelColor.BLUE4],
     )
     control.set_virtual_led_buffer(pattern)
-    function1 = LightTransform(control, LightTransform.functionFadeOff, pattern)
+    function1 = ArrayTransform(control, ArrayTransform.functionFadeOff, pattern)
     function1._fade_amount = 0.5
     control.function_list.append(function1)
     assert_array_equal(control.virtual_led_buffer, pattern)
@@ -515,7 +515,7 @@ def test_functionSolidColorCycle():
     four = pixel_array_to_numpy_array(
         [PixelColor.BLUE, PixelColor.BLUE, PixelColor.BLUE],
     )
-    function1 = LightTransform(control, LightTransform.functionSolidColorCycle, pattern)
+    function1 = ArrayTransform(control, ArrayTransform.functionSolidColorCycle, pattern)
     control.function_list.append(function1)
     assert_array_equal(control.virtual_led_buffer, one)
     control._run_functions()
@@ -541,7 +541,7 @@ def test_functionFade():
         [PixelColor.RED, PixelColor.RED, PixelColor.RED],
     ) + [1, 0, 0]
     three -= [1, 0, 0]
-    function1 = LightTransform(control, LightTransform.functionFade, pattern)
+    function1 = ArrayTransform(control, ArrayTransform.functionFade, pattern)
     function1._fade_amount = 0.5
     control.function_list.append(function1)
     assert_array_equal(control.virtual_led_buffer, one)
@@ -574,9 +574,9 @@ def test_functionMarquee():
     three = pixel_array_to_numpy_array(
         [PixelColor.OFF, PixelColor.OFF, PixelColor.RED],
     )
-    off = LightTransform(control, LightTransform.functionOff, pattern)
+    off = ArrayTransform(control, ArrayTransform.functionOff, pattern)
     control.function_list.append(off)
-    function = LightTransform(control, LightTransform.functionMarquee, pattern)
+    function = ArrayTransform(control, ArrayTransform.functionMarquee, pattern)
     control.function_list.append(function)
     control._run_functions()
     assert_array_equal(control.virtual_led_buffer, two)
@@ -602,9 +602,9 @@ def test_functionCylon():
     three = pixel_array_to_numpy_array(
         [PixelColor.OFF, PixelColor.OFF, PixelColor.RED],
     )
-    off = LightTransform(control, LightTransform.functionOff, pattern)
+    off = ArrayTransform(control, ArrayTransform.functionOff, pattern)
     control.function_list.append(off)
-    function = LightTransform(control, LightTransform.functionCylon, pattern)
+    function = ArrayTransform(control, ArrayTransform.functionCylon, pattern)
     control.function_list.append(function)
     control._run_functions()
     assert_array_equal(control.virtual_led_buffer, two)
@@ -634,7 +634,7 @@ def test_functionMerge():
     two = np.array([2, 0, 1, 1, 0, 2])
     three = np.array([1, 2, 0, 0, 2, 1])
     four = np.array([0, 1, 2, 2, 1, 0])
-    function = LightTransform(control, LightTransform.functionMerge, pattern)
+    function = ArrayTransform(control, ArrayTransform.functionMerge, pattern)
     function._size = 3
     control.function_list.append(function)
     control.set_virtual_led_buffer(pattern)
@@ -671,9 +671,9 @@ def test_functionAccelerate():
     five = pixel_array_to_numpy_array(
         [PixelColor.GREEN, PixelColor.GREEN, PixelColor.GREEN],
     )
-    off = LightTransform(control, LightTransform.functionOff, pattern)
+    off = ArrayTransform(control, ArrayTransform.functionOff, pattern)
     control.function_list.append(off)
-    function = LightTransform(control, LightTransform.functionAccelerate, pattern)
+    function = ArrayTransform(control, ArrayTransform.functionAccelerate, pattern)
     function._state_max = 5
     control.function_list.append(function)
     control._run_functions()
@@ -698,7 +698,7 @@ def test_functionRandomChange():
     off = pixel_array_to_numpy_array(
         [PixelColor.OFF, PixelColor.OFF, PixelColor.OFF],
     )
-    function = LightTransform(control, LightTransform.functionRandomChange, pattern)
+    function = ArrayTransform(control, ArrayTransform.functionRandomChange, pattern)
     function._color_next = function._color
     function._fade_amount = 1
     control.function_list.append(function)
@@ -734,9 +734,9 @@ def test_functionMeteors():
     four = pixel_array_to_numpy_array(
         [PixelColor.OFF, PixelColor.GREEN, PixelColor.OFF],
     )
-    off = LightTransform(control, LightTransform.functionOff, pattern)
+    off = ArrayTransform(control, ArrayTransform.functionOff, pattern)
     control.function_list.append(off)
-    function = LightTransform(control, LightTransform.functionMeteors, pattern)
+    function = ArrayTransform(control, ArrayTransform.functionMeteors, pattern)
     function._fade_amount = 1
     control.function_list.append(function)
     assert_array_equal(control.virtual_led_buffer, initial)
@@ -759,9 +759,9 @@ def test_functionSprites():
     initial = pixel_array_to_numpy_array(
         [PixelColor.OFF, PixelColor.OFF, PixelColor.OFF],
     )
-    off = LightTransform(control, LightTransform.functionOff, pattern)
+    off = ArrayTransform(control, ArrayTransform.functionOff, pattern)
     control.function_list.append(off)
-    function = LightTransform(control, LightTransform.functionSprites, pattern)
+    function = ArrayTransform(control, ArrayTransform.functionSprites, pattern)
     function._fade_amount = 1.0
     control.function_list.append(function)
     assert_array_equal(control.virtual_led_buffer, initial)
@@ -786,9 +786,9 @@ def test_functionRaindrops():
     two = pixel_array_to_numpy_array(
         [PixelColor.RED, PixelColor.OFF, PixelColor.RED],
     )
-    off = LightTransform(control, LightTransform.functionOff, pattern)
+    off = ArrayTransform(control, ArrayTransform.functionOff, pattern)
     control.function_list.append(off)
-    function = LightTransform(control, LightTransform.functionRaindrops, pattern)
+    function = ArrayTransform(control, ArrayTransform.functionRaindrops, pattern)
     function._fade_amount = 1.0
     control.function_list.append(function)
     assert_array_equal(control.virtual_led_buffer, initial)
@@ -814,9 +814,9 @@ def test_functionAlive():
     initial = pixel_array_to_numpy_array(
         [PixelColor.OFF, PixelColor.OFF, PixelColor.OFF],
     )
-    off = LightTransform(control, LightTransform.functionOff, pattern)
+    off = ArrayTransform(control, ArrayTransform.functionOff, pattern)
     control.function_list.append(off)
-    function = LightTransform(control, LightTransform.functionAlive, pattern)
+    function = ArrayTransform(control, ArrayTransform.functionAlive, pattern)
     function._fade_amount = 1.0
     control.function_list.append(function)
     assert_array_equal(control.virtual_led_buffer, initial)
@@ -884,7 +884,7 @@ def test_overlayTwinkle():
     pattern = pixel_array_to_numpy_array(
         [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
-    function = LightTransform(control, LightTransform.overlayTwinkle, pattern)
+    function = ArrayTransform(control, ArrayTransform.overlayTwinkle, pattern)
     function._random = 0.0
     control.function_list.append(function)
     control._run_functions()
@@ -897,7 +897,7 @@ def test_overlayBlink():
     pattern = pixel_array_to_numpy_array(
         [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
     )
-    function = LightTransform(control, LightTransform.overlayBlink, pattern)
+    function = ArrayTransform(control, ArrayTransform.overlayBlink, pattern)
     function._random = 0.0
     control.function_list.append(function)
     control._run_functions()

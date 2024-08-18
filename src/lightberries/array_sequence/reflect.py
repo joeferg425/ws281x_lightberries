@@ -54,19 +54,22 @@ class SequenceRepeatedReflected(ArraySequence):
         if fold_length is None:
             fold_length = led_count // 2
         if color_sequence_length == 0 or led_count == 0:
-            self._sequence = np.zeros((0, 3), dtype=np.int32)
+            self._array = np.zeros((0, 3), dtype=np.int32)
         else:
             if fold_length > color_sequence_length:
-                temp = SequenceOff(fold_length).sequence
+                temp = SequenceOff(fold_length).ndarray
                 temp[fold_length - color_sequence_length :] = color_sequence
                 color_sequence = temp
                 color_sequence_length = len(color_sequence)
             flip = False
-            temp_array = SequenceOff(led_count).sequence
+            temp_array = SequenceOff(led_count).ndarray
             for seg_begin in range(0, led_count, fold_length):
                 overflow = 0
                 seg_end = 0
-                if seg_begin + fold_length <= led_count and seg_begin + fold_length <= color_sequence_length:
+                if (
+                    seg_begin + fold_length <= led_count
+                    and seg_begin + fold_length <= color_sequence_length
+                ):
                     seg_end = seg_begin + fold_length
                 elif seg_begin + fold_length > led_count:
                     seg_end = seg_begin + fold_length
@@ -74,11 +77,17 @@ class SequenceRepeatedReflected(ArraySequence):
                     seg_end = (seg_begin + fold_length) - overflow
                 elif seg_begin + fold_length > color_sequence_length:
                     seg_end = seg_begin + color_sequence_length
-                    overflow = (seg_begin + color_sequence_length) % color_sequence_length
+                    overflow = (
+                        seg_begin + color_sequence_length
+                    ) % color_sequence_length
                     seg_end = (seg_begin + color_sequence_length) - overflow
                 if flip:
-                    temp_array[seg_begin:seg_end] = color_sequence[fold_length - overflow - 1 :: -1]
+                    temp_array[seg_begin:seg_end] = color_sequence[
+                        fold_length - overflow - 1 :: -1
+                    ]
                 else:
-                    temp_array[seg_begin:seg_end] = color_sequence[0 : fold_length - overflow]
+                    temp_array[seg_begin:seg_end] = color_sequence[
+                        0 : fold_length - overflow
+                    ]
                 flip = not flip
-            self._sequence = temp_array
+            self._array = temp_array

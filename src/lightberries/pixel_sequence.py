@@ -13,7 +13,6 @@ import numpy as np
 from lightberries.pixel import Pixel, PixelColor
 
 if TYPE_CHECKING:
-
     from numpy.typing import NDArray
 
 LOGGER = logging.getLogger("lightBerries")
@@ -39,7 +38,7 @@ class PixelSequence:
 
     def __init__(
         self,
-        led_count: int,
+        led_count: int = 0,
         name: str | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> None:
@@ -54,9 +53,80 @@ class PixelSequence:
         """
         if name is None:
             name = PixelSequence.__name__
-        self._sequence: NDArray[np.int32] = np.array(
-            [PixelColor.OFF.array for _ in range(int(led_count))],
-        )
+        LOGGER.debug("Sequence: %s", name)
+        self._array: list[Pixel] = [PixelColor.OFF for _ in range(int(led_count))]
+        self._led_count = led_count
+        self._index: int = 0
+        if self._led_count:
+            self._color: Pixel = self._array[0].copy()
+        else:
+            self._color: Pixel = PixelColor.OFF
+
+    def __len__(self) -> int:
+        return self._led_count
+
+    @property
+    def index(self) -> int:
+        """Get the sequence index.
+
+        Returns
+        -------
+            the sequence index
+
+        """
+        return self._index
+
+    @index.setter
+    def index(self, index: int) -> None:
+        self._index = index % self.count
+
+    @property
+    def index_next(self) -> int:
+        """Get the next valid sequence index.
+
+        Returns
+        -------
+            the next valid sequence index
+
+        """
+        return (self.index + 1) % self.count
+
+    @property
+    def pixel(self) -> Pixel:
+        """Get the color currently being manipulated.
+
+        Returns
+        -------
+            the color currently being manipulated
+
+        """
+        return self._color
+
+    @pixel.setter
+    def pixel(self, pixel: Pixel) -> None:
+        self._color = pixel
+
+    @property
+    def color_current(self) -> Pixel:
+        """Get the current color.
+
+        Returns
+        -------
+            the current color
+
+        """
+        return self._array[self.index]
+
+    @property
+    def color_next(self) -> Pixel:
+        """Get the next color.
+
+        Returns
+        -------
+            the next color
+
+        """
+        return self._array[self.index_next]
 
     @staticmethod
     def pixel_array_to_numpy_array(
@@ -87,7 +157,7 @@ class PixelSequence:
         return np.zeros((0, 3), dtype=np.int32)
 
     @property
-    def sequence(self) -> NDArray[np.int32]:
+    def ndarray(self) -> NDArray[np.int32]:
         """Get the light sequence.
 
         Returns
@@ -95,15 +165,41 @@ class PixelSequence:
             the light sequence
 
         """
-        return self._sequence
-        return self._sequence
-        return self._sequence
+        return np.array([p.array for p in self._array], dtype=np.int32)
 
-    @classmethod
+    @property
+    def count(self) -> int:
+        """Get the Pixel count.
+
+        Returns
+        -------
+            the Pixel count
+
+        """
+        return self._led_count
+
+    @staticmethod
+    def from_list(pixel_list: list[Pixel]) -> PixelSequence:
+        """Turn a list of pixels into a PixelSequence object.
+
+        Args:
+        ----
+            pixel_list: a list of pixels
+
+        Returns:
+        -------
+            pixel sequence object
+
+        """
+        pixel_sequence = PixelSequence(led_count=len(pixel_list))
+        for pxl_index, pxl in enumerate(pixel_list):
+            pixel_sequence.ndarray[pxl_index] = pxl.array
+        return pixel_sequence
+
+    @staticmethod
     def default_color_sequence_by_month(
-        cls,
         month: int | None = None,
-    ) -> NDArray[np.int32]:
+    ) -> PixelSequence:
         """Get the default sequence of colors defined for this month.
 
         Returns
@@ -133,12 +229,36 @@ class PixelSequence:
         """
         return [True, False][random.randint(0, 1)]
 
+    def copy(self) -> PixelSequence:
+        """Make a copy of the sequence.
+
+        Returns
+        -------
+            a copy of the sequence
+
+        """
+        sequence = PixelSequence(led_count=self._led_count)
+        sequence._array = self._array.copy()  # noqa: SLF001
+        return sequence
+
+    def advance_index(self) -> Pixel:
+        """Advance index, update current pixel object.
+
+        Returns
+        -------
+            next pixel object
+
+        """
+        self.index = self.index_next
+        self._color = self._array[self.index].copy()
+        return self.pixel
+
 
 MONTHLY_COLOR_SEQUENCE: dict[
     int,
-    NDArray[np.int32],
+    PixelSequence,
 ] = {
-    1: PixelSequence.pixel_array_to_numpy_array(
+    1: PixelSequence.from_list(
         [
             PixelColor.CYAN2,
             PixelColor.WHITE,
@@ -147,7 +267,7 @@ MONTHLY_COLOR_SEQUENCE: dict[
             PixelColor.BLUE,
         ],
     ),
-    2: PixelSequence.pixel_array_to_numpy_array(
+    2: PixelSequence.from_list(
         [
             PixelColor.PINK,
             PixelColor.WHITE,
@@ -155,7 +275,7 @@ MONTHLY_COLOR_SEQUENCE: dict[
             PixelColor.WHITE,
         ],
     ),
-    3: PixelSequence.pixel_array_to_numpy_array(
+    3: PixelSequence.from_list(
         [
             PixelColor.GREEN,
             PixelColor.WHITE,
@@ -164,7 +284,7 @@ MONTHLY_COLOR_SEQUENCE: dict[
             PixelColor.YELLOW,
         ],
     ),
-    4: PixelSequence.pixel_array_to_numpy_array(
+    4: PixelSequence.from_list(
         [
             PixelColor.PINK,
             PixelColor.CYAN,
@@ -173,7 +293,7 @@ MONTHLY_COLOR_SEQUENCE: dict[
             PixelColor.WHITE,
         ],
     ),
-    5: PixelSequence.pixel_array_to_numpy_array(
+    5: PixelSequence.from_list(
         [
             PixelColor.PINK,
             PixelColor.YELLOW,
@@ -181,7 +301,7 @@ MONTHLY_COLOR_SEQUENCE: dict[
             PixelColor.WHITE,
         ],
     ),
-    6: PixelSequence.pixel_array_to_numpy_array(
+    6: PixelSequence.from_list(
         [
             PixelColor.RED,
             PixelColor.WHITE,
@@ -189,14 +309,14 @@ MONTHLY_COLOR_SEQUENCE: dict[
             PixelColor.GREEN,
         ],
     ),
-    7: PixelSequence.pixel_array_to_numpy_array(
+    7: PixelSequence.from_list(
         [
             PixelColor.RED,
             PixelColor.WHITE,
             PixelColor.BLUE,
         ],
     ),
-    8: PixelSequence.pixel_array_to_numpy_array(
+    8: PixelSequence.from_list(
         [
             PixelColor.ORANGE,
             PixelColor.WHITE,
@@ -204,7 +324,7 @@ MONTHLY_COLOR_SEQUENCE: dict[
             PixelColor.ORANGE2,
         ],
     ),
-    9: PixelSequence.pixel_array_to_numpy_array(
+    9: PixelSequence.from_list(
         [
             PixelColor.RED,
             PixelColor.ORANGE,
@@ -214,7 +334,7 @@ MONTHLY_COLOR_SEQUENCE: dict[
             PixelColor.RED2,
         ],
     ),
-    10: PixelSequence.pixel_array_to_numpy_array(
+    10: PixelSequence.from_list(
         [
             PixelColor.MIDNIGHT,
             PixelColor.RED,
@@ -222,14 +342,14 @@ MONTHLY_COLOR_SEQUENCE: dict[
             PixelColor.OFF,
         ],
     ),
-    11: PixelSequence.pixel_array_to_numpy_array(
+    11: PixelSequence.from_list(
         [
             PixelColor.RED,
             PixelColor.MIDNIGHT,
             PixelColor.GRAY,
         ],
     ),
-    12: PixelSequence.pixel_array_to_numpy_array(
+    12: PixelSequence.from_list(
         [
             PixelColor.RED,
             PixelColor.WHITE,

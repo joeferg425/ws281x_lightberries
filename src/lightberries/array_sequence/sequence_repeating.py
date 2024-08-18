@@ -49,21 +49,23 @@ class SequenceRepeating(ArraySequence):
         if color_sequence is None:
             color_sequence = PixelSequence.DEFAULT_COLOR_SEQUENCE
         elif isinstance(color_sequence, PixelSequence):
-            color_sequence = color_sequence.sequence.copy()
+            color_sequence = color_sequence.ndarray.copy()
         else:
             color_sequence = color_sequence.copy()
         if len(color_sequence) == 0:
-            self._sequence = np.zeros((0, 3), dtype=np.int32)
+            self._array = np.zeros((0, 3), dtype=np.int32)
         else:
             sequence_length = len(color_sequence)
-            temp_array = SequenceOff(led_count=led_count).sequence
+            temp_array = SequenceOff(led_count=led_count).ndarray
             if led_count > sequence_length:
                 temp_array[0:sequence_length] = color_sequence
                 for i in range(0, led_count, sequence_length):
                     if i + sequence_length <= led_count:
-                        temp_array[i : i + sequence_length] = temp_array[0:sequence_length]
+                        temp_array[i : i + sequence_length] = temp_array[
+                            0:sequence_length
+                        ]
                     else:
                         extra = (i + sequence_length) % led_count
                         end = (i + sequence_length) - extra
                         temp_array[i:end] = temp_array[0 : (sequence_length - extra)]
-            self._sequence = temp_array
+            self._array = temp_array

@@ -63,7 +63,12 @@ class Pixel:
 
     def __init__(
         self,
-        rgb: Pixel | int | NDArray[np.int32] | tuple[int, int, int] | list[int] | None = None,
+        rgb: Pixel
+        | int
+        | NDArray[np.int32]
+        | tuple[int, int, int]
+        | list[int]
+        | None = None,
         order: LEDOrder | tuple[int, int, int] | list[int] | None = None,
     ) -> None:
         """Create a single RGB LED pixel.
@@ -102,7 +107,11 @@ class Pixel:
             if self._order == LEDOrder.RGB.value:
                 self.int32value = rgb & MAX_INT24
             elif self._order == LEDOrder.GRB.value:
-                self.int32value = ((rgb & 0xFF0000) >> 8) + ((rgb & 0x00FF00) << 8) + ((rgb & 0x0000FF) >> 0)
+                self.int32value = (
+                    ((rgb & 0xFF0000) >> 8)
+                    + ((rgb & 0x00FF00) << 8)
+                    + ((rgb & 0x0000FF) >> 0)
+                )
 
         # this is an instance of this class, just use the value
         elif isinstance(rgb, Pixel):
@@ -168,7 +177,12 @@ class Pixel:
             (self.int32value & 0xFF00) >> 8,
             self.int32value & 0xFF,
         )
-        return "PX #" + f"{rgb_value[0]:02X}" + f"{rgb_value[1]:02X}" + f"{rgb_value[2]:02X}"
+        return (
+            "PX #"
+            + f"{rgb_value[0]:02X}"
+            + f"{rgb_value[1]:02X}"
+            + f"{rgb_value[2]:02X}"
+        )
 
     def __repr__(
         self,
@@ -180,7 +194,7 @@ class Pixel:
             a string representation of the Pixel instance
 
         """
-        return f"<{Pixel.__name__}> {self.__str__()} ({self.int32value}/{LEDOrder (self._order).name})"
+        return f"<{Pixel.__name__}> {self.__str__()} ({self.rgb_array}/{LEDOrder (self._order).name})"
 
     def __eq__(self, other: object) -> bool:
         """Text pixel equality with other objects.
@@ -196,8 +210,16 @@ class Pixel:
         """
         if (
             isinstance(other, (int, Pixel))
-            or (isinstance(other, tuple) and all(isinstance(e, int) for e in other) and len(other) >= COLOR_COUNT)  # type: ignore  # noqa: PGH003
-            or (isinstance(other, list) and all(isinstance(e, int) for e in other) and len(other) >= COLOR_COUNT)  # type: ignore # noqa: PGH003
+            or (
+                isinstance(other, tuple)
+                and all(isinstance(e, int) for e in other)
+                and len(other) >= COLOR_COUNT
+            )  # type: ignore  # noqa: PGH003
+            or (
+                isinstance(other, list)
+                and all(isinstance(e, int) for e in other)
+                and len(other) >= COLOR_COUNT
+            )  # type: ignore # noqa: PGH003
         ):
             other = cast("Union[int, Pixel, tuple[int, int, int], list[int]]", other)
             return self.pixel.int32value == Pixel(other, LEDOrder.RGB).pixel.int32value
@@ -310,6 +332,56 @@ class Pixel:
         """
         return Pixel([255 - a for a in self.array])
 
+    def fade(
+        self,
+        color_next: Pixel | None = None,
+        fade_amount: int | None = None,
+    ) -> NDArray[np.int32]:
+        """Fade an LED's color by the given amount and return the new RGB value.
+
+        Args:
+        ----
+            color_next: desired color
+            fade_amount: amount to adjust each RGB value by
+
+        Returns:
+        -------
+            new RGB value
+
+        """
+        if color_next is None:
+            color_next = PixelColor.OFF
+        if fade_amount is None:
+            fade_amount = 25
+        color = self.array.copy()
+        # copy it to make sure we don't change the original by reference
+        for rgb_index in range(len(color)):
+            # the values closest to the target color might match already
+            if color[rgb_index] != color_next.array[rgb_index]:
+                # subtract or add as appropriate in order to get closer to target color
+                if color[rgb_index] - fade_amount > color_next.array[rgb_index]:
+                    color[rgb_index] -= fade_amount
+                elif color[rgb_index] + fade_amount < color_next.array[rgb_index]:
+                    color[rgb_index] += fade_amount
+                else:
+                    color[rgb_index] = color_next.array[rgb_index]
+        self.int32value = (
+            (int(color[self._order[0]]) << 16)
+            + (int(color[self._order[1]]) << 8)
+            + (int(color[self._order[2]]))
+        )
+        return color
+
+    def copy(self) -> Pixel:
+        """Get a copy of this pixel.
+
+        Returns
+        -------
+            a copy of this pixel
+
+        """
+        return Pixel(self.rgb_array)
+
 
 class PixelColor(Pixel, enum.Enum):
     """List of commonly used colors for ease of use."""
@@ -372,5 +444,9 @@ class PixelColor(Pixel, enum.Enum):
             random pixel color
 
         """
-        return Pixel([random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)])
-        return Pixel([random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)])
+        return Pixel(
+            [random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)]
+        )
+        return Pixel(
+            [random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)]
+        )

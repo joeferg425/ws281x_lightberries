@@ -43,6 +43,8 @@ class SequenceOff(ArraySequence):
             **kwargs,
         )
         if led_count > 0:
-            self._sequence = np.array([PixelColor.OFF.array for _ in range(int(led_count))])
+            self._array = np.array(
+                [PixelColor.OFF.array for _ in range(int(led_count))]
+            )
         else:
-            self._sequence = np.zeros((0, 3), dtype=np.int32)
+            self._array = np.zeros((0, 3), dtype=np.int32)

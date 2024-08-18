@@ -5,13 +5,10 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any, ClassVar
 
-import numpy as np
-
-from lightberries.pixel import PixelColor
 from lightberries.pixel_sequence import PixelSequence
 
 if TYPE_CHECKING:
-    from numpy.typing import NDArray
+    pass
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -47,6 +44,7 @@ class ArraySequence(PixelSequence):
             name=name,
             **kwargs,
         )
-        self._sequence: NDArray[np.int32] = np.array(
-            [PixelColor.OFF.array for _ in range(int(led_count))],
-        )
+        # LOGGER.debug("Sequence: %s", name)
+        # self._array: NDArray[np.int32] = np.array(
+        # [PixelColor.OFF.array for _ in range(int(led_count))],
+        # )

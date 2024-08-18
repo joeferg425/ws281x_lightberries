@@ -124,7 +124,7 @@ class ArrayController:
             self.virtual_led_buffer: NDArray[np.int32] = SequenceSolid(
                 led_count=self._led_count,
                 color=PixelColor.OFF.array,
-            ).sequence
+            ).ndarray
             self.virtual_led_index_buffer: NDArray[np.int32] = np.array(
                 range(len(self.ws281xString)),
             )
@@ -492,7 +492,7 @@ class ArrayController:
         try:
             # make sure the passed LED array is the correct type
             if isinstance(led_buffer, PixelSequence):
-                _led_buffer = led_buffer.sequence
+                _led_buffer = led_buffer.ndarray
             else:
                 _led_buffer = led_buffer
             _led_buffer_length = int(_led_buffer.size / 3)
@@ -672,7 +672,7 @@ class ArrayController:
         except Exception as ex:  # pragma: no cover
             raise ControllerError from ex
 
-    def run(self):
+    def run(self) -> None:
         """Run the configured color pattern and function either forever or for self.secondsPerMode.
 
         Raises
@@ -708,23 +708,23 @@ class ArrayController:
         else:
             self._next_mode_change = self._last_mode_change + (self.seconds_per_mode)
 
-    def demo(
+    def demo(  # noqa: C901, PLR0912, PLR0915
         self,
         seconds_per_mode: float | None = 0.5,
         function_names: list[str] | None = None,
         color_names: list[str] | None = None,
         skip_functions: list[str] | None = None,
         skip_colors: list[str] | None = None,
-    ):
+    ) -> None:
         """Run colors and functions semi-randomly.
 
         Args:
         ----
-            secondsPerMode: seconds to run current function
-            functionNames: function names to run
-            colorNames: color pattern names to run
-            skipFunctions: function strings to omit (run if "skipFunction not in name")
-            skipColors: color pattern strings to omit (run if "skipColor not in name")
+            seconds_per_mode: seconds to run current function
+            function_names: function names to run
+            color_names: color pattern names to run
+            skip_functions: function strings to omit (run if "skipFunction not in name")
+            skip_colors: color pattern strings to omit (run if "skipColor not in name")
 
         Raises:
         ------
@@ -804,7 +804,7 @@ class ArrayController:
                 clr = PixelSequence.ALL_SEQUENCES[color](led_count=self.real_led_count)
                 # configure function
                 self._transforms = PixelTransform.ALL_TRANSFORMS[function](controller=self).setup(
-                    color_sequence=clr.sequence
+                    color_sequence=clr,
                 )
 
                 # run the combination

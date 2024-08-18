@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     import lightberries.array_controller
+    from lightberries.pixel_sequence import PixelSequence
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -63,7 +64,7 @@ class PixelTransform:
     def __str__(
         self,
     ) -> str:
-        return f'[{self.state.index}]: "{self._name}" {Pixel(self.state.color, LEDOrder.RGB)}'
+        return f'[{self.state.index}]: "{self._name}" {Pixel(self.state.color_sequence.pixel, LEDOrder.RGB)}'
 
     def __repr__(
         self,
@@ -79,7 +80,7 @@ class PixelTransform:
 
     def setup(
         self,
-        color_sequence: NDArray[np.int32] | None = None,
+        color_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
     ) -> list[PixelTransform]:
         """Configure the transformation.
@@ -107,7 +108,7 @@ class PixelTransform:
     @property
     def color_sequence(
         self,
-    ) -> NDArray[np.int32]:
+    ) -> PixelSequence:
         """Return the color sequence.
 
         Returns
@@ -120,7 +121,7 @@ class PixelTransform:
     @color_sequence.setter
     def color_sequence(
         self,
-        color_sequence: NDArray[np.int32],
+        color_sequence: PixelSequence,
     ) -> None:
         """Set the color sequence.
 
@@ -130,79 +131,6 @@ class PixelTransform:
 
         """
         self.state.color_sequence = color_sequence
-        self.state.color_sequence_count = len(self.state.color_sequence)
-        self.state.color_sequence_index = 0
-        self.state.color = self.state.color_sequence[0]
-
-    @property
-    def color_sequence_count(
-        self,
-    ) -> int:
-        """Get the color sequence count.
-
-        Returns
-        -------
-            the color sequence count
-
-        """
-        return self.state.color_sequence_count
-
-    @color_sequence_count.setter
-    def color_sequence_count(
-        self,
-        color_sequence_count: int,
-    ) -> None:
-        """Setter for color sequence count.
-
-        Args:
-        ----
-            color_sequence_count: the number of colors in the sequence
-
-        """
-        self.state.color_sequence_count = color_sequence_count
-
-    @property
-    def color_sequence_index(
-        self,
-    ) -> int:
-        """Color sequence index.
-
-        Returns
-        -------
-            the current color sequence index
-
-        """
-        return self.state.color_sequence_index
-
-    @color_sequence_index.setter
-    def color_sequence_index(
-        self,
-        color_sequence_index: int,
-    ) -> None:
-        """Color sequence index.
-
-        Args:
-        ----
-            color_sequence_index: the current index being used for the color sequence
-
-        """
-        self.state.color_sequence_index = color_sequence_index
-
-    @property
-    def color_sequence_next(
-        self,
-    ) -> NDArray[np.int32]:
-        """Get the next color in the sequence.
-
-        Returns
-        -------
-            the next color in the sequence
-
-        """
-        self.state.color_sequence_index += 1
-        if self.state.color_sequence_index >= self.state.color_sequence_count:
-            self.state.color_sequence_index = 0
-        return self.state.color_sequence[self.state.color_sequence_index]
 
     def update_array_index(
         self,

@@ -43,7 +43,7 @@ class SequenceRandom(ArraySequence):
             kwargs=kwargs,
         )
 
-        temp_array = SequenceOff(led_count).sequence
+        temp_array = SequenceOff(led_count).ndarray
         for i in range(led_count):
             # prevent 255, 255, 255
             exclusion = random.randint(0, 2)
@@ -60,4 +60,4 @@ class SequenceRandom(ArraySequence):
             else:
                 blue_led = 0
             temp_array[i] = [red_led, green_led, blue_led]
-        self._sequence = temp_array
+        self._array = temp_array

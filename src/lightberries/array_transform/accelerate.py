@@ -4,24 +4,29 @@ from __future__ import annotations
 
 import logging
 import random
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 
-from lightberries.array_transforms.fade_off import TransformFadeOff
+from lightberries.array_transform.base import ArrayTransform
+from lightberries.array_transform.fade_off import TransformFadeOff
 from lightberries.constants import MAX_INT8, SHAPE_2D
-from lightberries.pixel_transform import PixelTransform
 from lightberries.state import TransformState
 
 LOGGER = logging.getLogger("lightBerries")
 
 if TYPE_CHECKING:
+
     import lightberries.array_controller
+    from lightberries.pixel_sequence import PixelSequence
+    from lightberries.pixel_transform import PixelTransform
     from lightberries.state import TransformState
 
 
-class TransformAccelerate(PixelTransform):
+class TransformAccelerate(ArrayTransform):
     """Function in which colorful lights accelerate across the string of lights repeatedly."""
+
+    INSTANCES: ClassVar[dict[int, TransformAccelerate]] = {}
 
     def __init__(
         self,
@@ -41,10 +46,11 @@ class TransformAccelerate(PixelTransform):
             controller=controller,
             state=state,
         )
+        self.INSTANCES[len(self.INSTANCES)] = self
 
     def setup(  # noqa: PLR0913
         self,
-        color_sequence: np.ndarray[Any, np.int32] | None = None,
+        color_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         delay_count_max: int | None = None,
@@ -135,7 +141,7 @@ class TransformAccelerate(PixelTransform):
             )
             self.state.index_range[modulo] -= self.controller.real_led_count
             if self.state.color_cycle is True:
-                self.state.color = self.color_sequence_next
+                self.state.color_sequence.advance_index()
         # check index step counter, update speed state when it hits step count max
         if self.state.step_counter >= self.state.step_count_max:
             # reset step counter
@@ -153,6 +159,7 @@ class TransformAccelerate(PixelTransform):
             # update state counter
             self.state.state += 1
         # check state counter, reset speed state when it hits max speed
+        splash_range = np.zeros([], dtype=np.int32)
         if self.state.state > self.state.state_max:
             # "splash" color when we hit the end
             splash = True
@@ -179,7 +186,7 @@ class TransformAccelerate(PixelTransform):
             # reset state max
             self.state.state_max = self.state.delay_count_max
             # randomize direction
-            self.state.direction = self.controller.get_random_direction()
+            self.state.direction = self.get_random_direction()
             # reset state
             self.state.state = 0
             # reset step
@@ -187,23 +194,19 @@ class TransformAccelerate(PixelTransform):
             # reset step counter
             self.state.step_counter = 0
             # randomize starting index
-            self.state.index = self.controller.get_random_index()
+            self.state.index = self.get_random_index()
             self.state.index_previous = self.state.index
             self.state.index_range = np.arange(
                 self.state.index_previous,
                 self.state.index + 1,
             )
         if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
-            self.controller.virtual_led_buffer[self.state.index_range] = self.state.color
+            self.controller.virtual_led_buffer[self.state.index_range] = self.state.color_sequence.pixel
         else:
             self.controller.virtual_led_buffer[
                 np.where(
                     self.controller.virtual_led_index_buffer == self.state.index_range,
                 )
-            ] = self.state.color
+            ] = self.state.color_sequence.pixel
         if splash is True:
-            self.controller.virtual_led_buffer[splash_range, :] = self.controller.fade_color(
-                self.state.color,
-                self.controller.background_color,
-                50,
-            )
+            self.controller.virtual_led_buffer[splash_range, :] = self.state.fade_color()

@@ -47,7 +47,7 @@ class SequenceStretch(ArraySequence):
         repeats = int(led_count / color_sequence_length)
         if led_count % color_sequence_length > 0:
             repeats += 1
-        temp_array = SequenceOff(color_sequence_length * repeats).sequence
+        temp_array = SequenceOff(color_sequence_length * repeats).ndarray
         for i in range(color_sequence_length):
             temp_array[i * repeats : (i + 1) * repeats] = color_sequence[i]
-        self._sequence = temp_array[:led_count]
+        self._array = temp_array[:led_count]

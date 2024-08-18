@@ -10,7 +10,7 @@ import sys
 import lightberries
 from lightberries.array_controller import ArrayController
 from lightberries.array_sequence.all_sequences import *
-from lightberries.array_transforms.all_functions import *
+from lightberries.array_transform.all_functions import *
 from lightberries.exceptions import LightBerryError, PermissionsError
 from lightberries.pixel_sequence import PixelSequence
 from lightberries.pixel_transform import PixelTransform

@@ -42,7 +42,7 @@ class SequenceRainbowRepeating(ArraySequence):
         )
         if segment_length is None:
             segment_length = led_count // 4
-        self._sequence = SequenceRepeating(
+        self._array = SequenceRepeating(
             led_count=led_count,
-            color_sequence=SequenceRainbow(led_count=segment_length, wrap=True).sequence,
-        ).sequence
+            color_sequence=SequenceRainbow(led_count=segment_length, wrap=True).ndarray,
+        ).ndarray

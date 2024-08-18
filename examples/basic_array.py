@@ -3,7 +3,7 @@
 
 from lightberries.array_controller import ArrayController
 from lightberries.array_sequence.base import ArraySequence
-from lightberries.array_transforms.raindrops import TransformRaindrop
+from lightberries.array_transform.raindrops import TransformRaindrop
 from lightberries.pixel import PixelColor
 
 # the number of pixels in the light string
