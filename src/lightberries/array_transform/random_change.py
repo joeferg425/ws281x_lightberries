@@ -11,12 +11,13 @@ import numpy as np
 from lightberries.array_transform.fade_off import TransformFadeOff
 from lightberries.array_transform.off import TransformOff
 from lightberries.constants import MAX_INT8, SHAPE_2D
+from lightberries.pixel import Pixel
 from lightberries.pixel_transform import PixelTransform
 from lightberries.state import ChangeStates, LEDFadeType, TransformState
 
 if TYPE_CHECKING:
     import lightberries.array_controller
-    from lightberries.pixel_transform import PixelTransform
+    from lightberries.pixel_sequence import PixelSequence
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -43,9 +44,9 @@ class TransformRandomChange(PixelTransform):
             state=state,
         )
 
-    def setup(
+    def setup(  # noqa: C901, PLR0912, PLR0913
         self,
-        color_sequence: np.ndarray[Any, np.int32] | None = None,
+        color_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         delay_count: int | None = None,
@@ -53,7 +54,7 @@ class TransformRandomChange(PixelTransform):
         fade_step_count: int | None = None,
         fade_type: LEDFadeType | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
-    ) -> None:
+    ) -> list[PixelTransform]:
         """Randomly changes pixels from one color to the next.
 
         Args:
@@ -72,7 +73,7 @@ class TransformRandomChange(PixelTransform):
         if state is not None:
             self.state = state
         else:
-            self.state.delay_count_max = random.randint(30, 50)
+            self.state.delay_count_limit = random.randint(50, 100)
             self.state.fade_type = LEDFadeType.get_random()
 
         if change_count is None:
@@ -82,10 +83,10 @@ class TransformRandomChange(PixelTransform):
             )
 
         if fade_step_count is None:
-            fade_step_count = random.randint(5, 20)
+            fade_step_count = random.randint(1, 5)
         self.state.set_fade_amount(fade_step_count / MAX_INT8)
         if delay_count is not None:
-            self.state.delay_count_max = delay_count
+            self.state.delay_count_limit = delay_count
         if fade_type is not None:
             self.state.fade_type = fade_type
         # make comet trails
@@ -114,28 +115,28 @@ class TransformRandomChange(PixelTransform):
                 change.state.index = int(index)
                 # copy the current color of this LED index
                 if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
-                    change.state.color = np.copy(self.virtual_led_buffer[change.state.index])
+                    change.state.color_sequence.pixel = Pixel(self.controller.virtual_led_buffer[change.state.index])
                 else:
-                    change.state.color = self.controller.virtual_led_buffer[
-                        np.where(
-                            self.controller.virtual_led_index_buffer == change.state.index,
-                        )
-                    ]
+                    change.state.color_sequence.pixel = Pixel(
+                        self.controller.virtual_led_buffer[
+                            np.where(
+                                self.controller.virtual_led_index_buffer == change.state.index,
+                            )
+                        ],
+                    )
                 # randomly set the color we are fading toward
                 if random.randint(0, 1) == 1:
-                    change.state.color_next = self.color_sequence_next
-                else:
-                    change.state.color_next = change.state.color
+                    change.state.color_sequence.pixel_next = self.color_sequence.advance_index(keep_current=True)
                 # we want all the delays random, so don't start them all at zero
-                change.state.delay_counter = random.randint(0, change.state.delay_count_max)
+                change.state.delay_count_max = random.randint(0, change.state.delay_count_limit)
                 # add function to list
                 drops.append(change)
         return drops
 
-    def transform(self) -> None:
+    def transform(self) -> None:  # noqa: C901, PLR0912
         """Randomly changes pixels from one color to the next."""
         # if the random change has completed
-        if np.array_equal(self.state.color, self.state.color_next):
+        if self.state.color_sequence.pixel == self.state.color_sequence.pixel_next:
             # if the state is "fading on"
             if self.state.state == ChangeStates.FADING_ON.value:
                 # just set next state to "on"
@@ -147,16 +148,18 @@ class TransformRandomChange(PixelTransform):
                 # if we are done delaying
                 if self.state.delay_counter >= self.state.delay_count_max:
                     # reset delay counter
-                    self.state.delay_counter = random.randint(
+                    self.state.delay_counter = 0
+                    self.state.delay_count_max = random.randint(
                         0,
-                        self.state.delay_count_max,
+                        self.state.delay_count_limit,
                     )
                     # randomly fading some LEDs to background color
-                    if random.randint(0, 3) == 3:
+                    if random.randint(0, 3) == 3:  # noqa: PLR2004
                         # set next color to background color
-                        self.state.color_next = self.controller.background_color
+                        self.state.color_sequence.pixel_next = Pixel(self.controller.background_color)
                         # set state to "fading off"
                         self.state.state = ChangeStates.FADING_OFF.value
+                        self.state.index = self.get_random_index()
                     # if not fading to background
                     else:
                         # go to wait state
@@ -170,9 +173,10 @@ class TransformRandomChange(PixelTransform):
                     # set state to "waiting"
                     self.state.state = ChangeStates.WAIT.value
                     # reset delay counter
-                    self.state.delay_counter = random.randint(
+                    self.state.delay_counter = 0
+                    self.state.delay_count_max = random.randint(
                         0,
-                        self.state.delay_count_max,
+                        self.state.delay_count_limit,
                     )
             # if state is "waiting"
             elif self.state.state == ChangeStates.WAIT.value:
@@ -181,42 +185,44 @@ class TransformRandomChange(PixelTransform):
                 # if we are done waiting
                 if self.state.delay_counter >= self.state.delay_count_max:
                     # randomize next index
-                    self.state.index = self.controller.get_random_index()
+                    self.state.index = self.get_random_index()
                     # get color of current LED index
                     if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
-                        self.state.color = self.controller.virtual_led_buffer[self.state.index]
+                        self.state.color_sequence.pixel = Pixel(self.controller.virtual_led_buffer[self.state.index])
                     else:
-                        self.state.color = self.controller.virtual_led_buffer[
-                            np.where(
-                                self.controller.virtual_led_index_buffer == self.state.index,
-                            )
-                        ]
+                        self.state.color_sequence.pixel = Pixel(
+                            self.controller.virtual_led_buffer[
+                                np.where(
+                                    self.controller.virtual_led_index_buffer == self.state.index,
+                                )
+                            ],
+                        )
                     # get next color
                     for _ in range(random.randint(1, 5)):
-                        self.state.color_next = self.color_sequence_next
+                        self.state.color_sequence.advance_index(keep_current=True)
                     # set state to "fading on"
                     self.state.state = ChangeStates.FADING_ON.value
                     # randomize delay counter so they aren't synchronized
-                    self.state.delay_counter = random.randint(
+                    self.state.delay_counter = 0
+                    self.state.delay_count_max = random.randint(
                         0,
-                        self.state.delay_count_max,
+                        self.state.delay_count_limit,
                     )
         # if fading LEDs
         if self.state.fade_type == LEDFadeType.FADE_OFF:
             # fade the color
-            self.state.color = self.controller.fade_color(
-                self.state.color,
-                self.state.color_next,
-                self.state.fade_amount,
+            self.state.color_sequence.pixel.fade(
+                color_next=self.state.color_sequence.pixel_next,
+                fade_amount=self.state.fade_amount,
             )
         # if instant on/off
         else:
             # set the color
-            self.state.color = self.state.color_next
+            self.state.color_sequence.pixel = self.state.color_sequence.pixel_next
         # assign LED color to LED string
         if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
-            self.controller.virtual_led_buffer[self.state.index] = self.state.color
+            self.controller.virtual_led_buffer[self.state.index] = self.state.color_sequence.pixel.array
         else:
             self.controller.virtual_led_buffer[
                 np.where(self.controller.virtual_led_index_buffer == self.state.index)
-            ] = self.state.color
+            ] = self.state.color_sequence.pixel.array

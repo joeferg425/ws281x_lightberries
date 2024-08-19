@@ -98,7 +98,9 @@
 					"-l",
 					"100",
 					"-f",
-					"sprites",
+					// "sprites",
+					// "solidcolorcycle",
+					"cylon",
 					"-c",
 					"solid",
 					"--debug"

@@ -135,8 +135,8 @@ class ArrayController:
             self._next_mode_change: float = time.time()
             self._refresh_delay: float = 0.001
             self._seconds_per_mode: float = 120.0
-            self._background_color: NDArray[np.int32] = PixelColor.OFF.array
-            self._color_sequence: NDArray[np.int32] = ArraySequence.default_color_sequence_by_month()
+            self._background_color: Pixel = PixelColor.OFF
+            self._color_sequence: PixelSequence = PixelSequence.default_color_sequence_by_month()
             self._color_sequence_count: int = len(self._color_sequence)
             self._color_sequence_index: int = 0
             self._loop_forever: bool = False

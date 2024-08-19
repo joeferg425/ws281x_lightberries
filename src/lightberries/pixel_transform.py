@@ -97,7 +97,7 @@ class PixelTransform:
         """
         if state is not None:
             self.state = state
-        self.state.color_sequence = ArraySequence.default_color_sequence_by_month()
+        self.state.color_sequence = self.default_color_sequence_by_month()
         if color_sequence is not None:
             self.state.color_sequence = color_sequence
         return []

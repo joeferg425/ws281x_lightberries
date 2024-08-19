@@ -42,7 +42,7 @@ class SequenceStretch(ArraySequence):
         super().__init__(led_count=led_count, name=name, kwargs=kwargs)
 
         if color_sequence is None:
-            color_sequence = ArraySequence.DEFAULT_COLOR_SEQUENCE
+            color_sequence = self.default_color_sequence_by_month()
         color_sequence_length = color_sequence.shape[0]
         repeats = int(led_count / color_sequence_length)
         if led_count % color_sequence_length > 0:

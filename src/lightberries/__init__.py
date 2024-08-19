@@ -8,7 +8,8 @@ from __future__ import annotations
 import logging
 
 from lightberries.array_controller import ArrayController as ArrayController
-from lightberries.matrix_controller import MatrixController as MatrixController
+
+# from lightberries.matrix_controller import MatrixController as MatrixController
 
 # setup logging
 LOGGER = logging.getLogger("lightBerries")
@@ -16,4 +17,5 @@ logging.addLevelName(5, "VERBOSE")
 if not LOGGER.handlers:
     stream_handler = logging.StreamHandler()
     LOGGER.addHandler(stream_handler)
+LOGGER.setLevel(logging.INFO)
 LOGGER.setLevel(logging.INFO)

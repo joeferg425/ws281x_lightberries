@@ -9,10 +9,9 @@ from typing import TYPE_CHECKING, Any
 from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
-    import numpy as np
 
     import lightberries.array_controller
-    from lightberries.pixel_transform import PixelTransform
+    from lightberries.pixel_sequence import PixelSequence
     from lightberries.state import TransformState
 
 LOGGER = logging.getLogger("lightBerries")
@@ -42,7 +41,7 @@ class TransformSolidColorCycle(PixelTransform):
 
     def setup(
         self,
-        color_sequence: np.ndarray[Any, np.int32] | None = None,
+        color_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         delay_count: int | None = None,
@@ -90,7 +89,10 @@ class TransformSolidColorCycle(PixelTransform):
             # remove any current color
             self.controller.virtual_led_buffer *= 0
             # add new color
-            self.controller.virtual_led_buffer += self.color_sequence_next
+            self.controller.virtual_led_buffer += self.color_sequence.pixel_next.array
+            self.color_sequence.advance_index()
         # increment delay counter
+        self.state.delay_counter += 1
+        self.state.delay_counter += 1
         self.state.delay_counter += 1
         self.state.delay_counter += 1

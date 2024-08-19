@@ -49,7 +49,7 @@ class SequenceRepeatedReflected(ArraySequence):
 
         # if user didn't specify otherwise, fold in middle
         if color_sequence is None:
-            color_sequence = ArraySequence.DEFAULT_COLOR_SEQUENCE
+            color_sequence = self.default_color_sequence_by_month()
         color_sequence_length = color_sequence.shape[0]
         if fold_length is None:
             fold_length = led_count // 2
@@ -66,10 +66,7 @@ class SequenceRepeatedReflected(ArraySequence):
             for seg_begin in range(0, led_count, fold_length):
                 overflow = 0
                 seg_end = 0
-                if (
-                    seg_begin + fold_length <= led_count
-                    and seg_begin + fold_length <= color_sequence_length
-                ):
+                if seg_begin + fold_length <= led_count and seg_begin + fold_length <= color_sequence_length:
                     seg_end = seg_begin + fold_length
                 elif seg_begin + fold_length > led_count:
                     seg_end = seg_begin + fold_length
@@ -77,17 +74,11 @@ class SequenceRepeatedReflected(ArraySequence):
                     seg_end = (seg_begin + fold_length) - overflow
                 elif seg_begin + fold_length > color_sequence_length:
                     seg_end = seg_begin + color_sequence_length
-                    overflow = (
-                        seg_begin + color_sequence_length
-                    ) % color_sequence_length
+                    overflow = (seg_begin + color_sequence_length) % color_sequence_length
                     seg_end = (seg_begin + color_sequence_length) - overflow
                 if flip:
-                    temp_array[seg_begin:seg_end] = color_sequence[
-                        fold_length - overflow - 1 :: -1
-                    ]
+                    temp_array[seg_begin:seg_end] = color_sequence[fold_length - overflow - 1 :: -1]
                 else:
-                    temp_array[seg_begin:seg_end] = color_sequence[
-                        0 : fold_length - overflow
-                    ]
+                    temp_array[seg_begin:seg_end] = color_sequence[0 : fold_length - overflow]
                 flip = not flip
             self._array = temp_array

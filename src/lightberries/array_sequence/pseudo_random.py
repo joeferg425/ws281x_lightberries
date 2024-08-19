@@ -46,10 +46,10 @@ class SequencePseudoRandom(ArraySequence):
         )
         temp_array = SequenceOff(led_count=led_count).ndarray
         if color_sequence is None:
-            color_sequence = ArraySequence.DEFAULT_COLOR_SEQUENCE
+            color_sequence = self.default_color_sequence_by_month()
         input_sequence_length = color_sequence.shape[0]
         if input_sequence_length == 0:
-            color_sequence = ArraySequence.DEFAULT_COLOR_SEQUENCE
+            color_sequence = self.default_color_sequence_by_month()
             input_sequence_length = color_sequence.shape[0]
         for i in range(led_count):
             temp_array[i] = color_sequence[random.randint(0, input_sequence_length - 1)]

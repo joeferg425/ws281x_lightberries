@@ -5,7 +5,7 @@ from __future__ import annotations
 import enum
 import logging
 import random
-from typing import TYPE_CHECKING, Callable, NamedTuple, Union, cast
+from typing import TYPE_CHECKING, Callable, NamedTuple, Union, cast, overload
 
 import numpy as np
 
@@ -59,23 +59,17 @@ class LEDOrder(Order, enum.Enum):
 class Pixel:
     """A single LED pixel."""
 
-    DEFAULT_PIXEL_ORDER: list[int] = LEDOrder.GRB.value
+    default_pixel_order: list[int] = LEDOrder.GRB.value
 
     def __init__(
         self,
-        rgb: Pixel
-        | int
-        | NDArray[np.int32]
-        | tuple[int, int, int]
-        | list[int]
-        | None = None,
-        order: LEDOrder | tuple[int, int, int] | list[int] | None = None,
+        colors: Pixel | int | NDArray[np.int32] | tuple[int, int, int] | list[int] | None = None,
     ) -> None:
         """Create a single RGB LED pixel.
 
         Args:
         ----
-            rgb: pixel color definition
+            colors: pixel color definition
             order: enum determining the order of the colors (e.g. RGB vs GRB)
 
         Raises:
@@ -89,53 +83,43 @@ class Pixel:
         # initialize to zero
         self.int32value: int = 0
 
-        self._order = Pixel.DEFAULT_PIXEL_ORDER
-        if isinstance(order, LEDOrder):
-            self._order = order.value
-        elif isinstance(order, list):
-            self._order = order
-        else:
-            self._order = Pixel.DEFAULT_PIXEL_ORDER
+        self._order = Pixel.default_pixel_order
 
         # none gets a zero
-        if rgb is None:
+        if colors is None:
             self.int32value = 0
 
         # if it is an int and in range
-        elif isinstance(rgb, (int, np.integer)) and rgb >= 0 and rgb <= MAX_INT24:
-            rgb = int(rgb)
+        elif isinstance(colors, (int, np.integer)) and colors >= 0 and colors <= MAX_INT24:
+            colors = int(colors)
             if self._order == LEDOrder.RGB.value:
-                self.int32value = rgb & MAX_INT24
+                self.int32value = colors & MAX_INT24
             elif self._order == LEDOrder.GRB.value:
-                self.int32value = (
-                    ((rgb & 0xFF0000) >> 8)
-                    + ((rgb & 0x00FF00) << 8)
-                    + ((rgb & 0x0000FF) >> 0)
-                )
+                self.int32value = ((colors & 0xFF0000) >> 8) + ((colors & 0x00FF00) << 8) + ((colors & 0x0000FF) >> 0)
 
         # this is an instance of this class, just use the value
-        elif isinstance(rgb, Pixel):
-            self.int32value = rgb.int32value
+        elif isinstance(colors, Pixel):
+            self.int32value = colors.int32value
 
         # if it is a tuple, list, or numpy array
         elif (
-            isinstance(rgb, (tuple, list, np.ndarray))
+            isinstance(colors, (tuple, list, np.ndarray))
             # and has length three
-        ) and len(rgb) == PIXEL_COLOR_COUNT:
-            if rgb[0] > MAX_INT8 or rgb[1] > MAX_INT8 or rgb[2] > MAX_INT8:
-                msg = f"Invalid Pixel values: {rgb}"
+        ) and len(colors) == PIXEL_COLOR_COUNT:
+            if colors[0] > MAX_INT8 or colors[1] > MAX_INT8 or colors[2] > MAX_INT8:
+                msg = f"Invalid Pixel values: {colors}"
                 raise PixelError(msg)
             # create a 3-byte int from the three bytes
             self.int32value = (
                 # this is where the rgb order comes into play
-                (int(rgb[self._order[0]]) << 16)
-                + (int(rgb[self._order[1]]) << 8)
-                + (int(rgb[self._order[2]]))
+                (int(colors[self._order[0]]) << 16)
+                + (int(colors[self._order[1]]) << 8)
+                + (int(colors[self._order[2]]))
             )
 
         # we've got an error boys!
         else:
-            msg = f"Cannot assign pixel using value: {rgb!s} ({type(rgb)})"
+            msg = f"Cannot assign pixel using value: {colors!s} ({type(colors)})"
             raise PixelError(msg)
 
     def __len__(
@@ -177,12 +161,7 @@ class Pixel:
             (self.int32value & 0xFF00) >> 8,
             self.int32value & 0xFF,
         )
-        return (
-            "PX #"
-            + f"{rgb_value[0]:02X}"
-            + f"{rgb_value[1]:02X}"
-            + f"{rgb_value[2]:02X}"
-        )
+        return f"PX#{rgb_value[0]:02X}{rgb_value[1]:02X}{rgb_value[2]:02X}"
 
     def __repr__(
         self,
@@ -194,7 +173,7 @@ class Pixel:
             a string representation of the Pixel instance
 
         """
-        return f"<{Pixel.__name__}> {self.__str__()} ({self.rgb_array}/{LEDOrder (self._order).name})"
+        return f"<{Pixel.__name__}> {self.__str__()} ({LEDOrder (self._order).name})"
 
     def __eq__(self, other: object) -> bool:
         """Text pixel equality with other objects.
@@ -211,18 +190,14 @@ class Pixel:
         if (
             isinstance(other, (int, Pixel))
             or (
-                isinstance(other, tuple)
-                and all(isinstance(e, int) for e in other)
-                and len(other) >= COLOR_COUNT
+                isinstance(other, tuple) and all(isinstance(e, int) for e in other) and len(other) >= COLOR_COUNT  # type: ignore  # noqa: PGH003
             )  # type: ignore  # noqa: PGH003
             or (
-                isinstance(other, list)
-                and all(isinstance(e, int) for e in other)
-                and len(other) >= COLOR_COUNT
+                isinstance(other, list) and all(isinstance(e, int) for e in other) and len(other) >= COLOR_COUNT  # type: ignore  # noqa: PGH003
             )  # type: ignore # noqa: PGH003
         ):
             other = cast("Union[int, Pixel, tuple[int, int, int], list[int]]", other)
-            return self.pixel.int32value == Pixel(other, LEDOrder.RGB).pixel.int32value
+            return self.pixel.int32value == Pixel(other).pixel.int32value
         return False
         # convert the pixel orders to the same order then compare
 
@@ -259,7 +234,7 @@ class Pixel:
             this pixel with default RGB order
 
         """
-        return Pixel(self.tuple, self.DEFAULT_PIXEL_ORDER)
+        return Pixel(self.tuple)
 
     @property
     def array(
@@ -366,9 +341,7 @@ class Pixel:
                 else:
                     color[rgb_index] = color_next.array[rgb_index]
         self.int32value = (
-            (int(color[self._order[0]]) << 16)
-            + (int(color[self._order[1]]) << 8)
-            + (int(color[self._order[2]]))
+            (int(color[self._order[0]]) << 16) + (int(color[self._order[1]]) << 8) + (int(color[self._order[2]]))
         )
         return color
 
@@ -380,44 +353,44 @@ class Pixel:
             a copy of this pixel
 
         """
-        return Pixel(self.rgb_array)
+        return Pixel(self.array)
 
 
 class PixelColor(Pixel, enum.Enum):
     """List of commonly used colors for ease of use."""
 
-    OFF = Pixel((0, 0, 0), order=LEDOrder.RGB)
-    RED4 = Pixel((31, 0, 0), order=LEDOrder.RGB)
-    RED3 = Pixel((63, 0, 0), order=LEDOrder.RGB)
-    RED2 = Pixel((127, 0, 0), order=LEDOrder.RGB)
-    RED = Pixel((255, 0, 0), order=LEDOrder.RGB)
-    ORANGE3 = Pixel((63, 63, 0), order=LEDOrder.RGB)
-    ORANGE2 = Pixel((127, 127, 0), order=LEDOrder.RGB)
-    ORANGE = Pixel((255, 127, 0), order=LEDOrder.RGB)
-    YELLOW = Pixel((255, 210, 80), order=LEDOrder.RGB)
-    LIME = Pixel((127, 255, 0), order=LEDOrder.RGB)
-    GREEN4 = Pixel((0, 31, 0), order=LEDOrder.RGB)
-    GREEN3 = Pixel((0, 63, 0), order=LEDOrder.RGB)
-    GREEN2 = Pixel((0, 127, 0), order=LEDOrder.RGB)
-    GREEN = Pixel((0, 255, 0), order=LEDOrder.RGB)
-    TEAL = Pixel((0, 255, 127), order=LEDOrder.RGB)
-    CYAN3 = Pixel((0, 63, 63), order=LEDOrder.RGB)
-    CYAN2 = Pixel((0, 127, 127), order=LEDOrder.RGB)
-    CYAN = Pixel((0, 255, 255), order=LEDOrder.RGB)
-    SKY = Pixel((0, 127, 255), order=LEDOrder.RGB)
-    BLUE = Pixel((0, 0, 255), order=LEDOrder.RGB)
-    BLUE2 = Pixel((0, 0, 127), order=LEDOrder.RGB)
-    BLUE3 = Pixel((0, 0, 63), order=LEDOrder.RGB)
-    BLUE4 = Pixel((0, 0, 31), order=LEDOrder.RGB)
-    VIOLET = Pixel((127, 0, 255), order=LEDOrder.RGB)
-    PURPLE = Pixel((127, 0, 127), order=LEDOrder.RGB)
-    PURPLE2 = Pixel((63, 0, 63), order=LEDOrder.RGB)
-    MIDNIGHT = Pixel((70, 0, 127), order=LEDOrder.RGB)
-    MAGENTA = Pixel((255, 0, 255), order=LEDOrder.RGB)
-    PINK = Pixel((255, 0, 127), order=LEDOrder.RGB)
-    WHITE = Pixel((255, 255, 255), order=LEDOrder.RGB)
-    GRAY = Pixel((127, 118, 108), order=LEDOrder.RGB)
-    GRAY2 = Pixel((64, 55, 50), order=LEDOrder.RGB)
+    OFF = Pixel((0, 0, 0))
+    RED4 = Pixel((31, 0, 0))
+    RED3 = Pixel((63, 0, 0))
+    RED2 = Pixel((127, 0, 0))
+    RED = Pixel((255, 0, 0))
+    ORANGE3 = Pixel((63, 63, 0))
+    ORANGE2 = Pixel((127, 127, 0))
+    ORANGE = Pixel((255, 127, 0))
+    YELLOW = Pixel((255, 210, 80))
+    LIME = Pixel((127, 255, 0))
+    GREEN4 = Pixel((0, 31, 0))
+    GREEN3 = Pixel((0, 63, 0))
+    GREEN2 = Pixel((0, 127, 0))
+    GREEN = Pixel((0, 255, 0))
+    TEAL = Pixel((0, 255, 127))
+    CYAN3 = Pixel((0, 63, 63))
+    CYAN2 = Pixel((0, 127, 127))
+    CYAN = Pixel((0, 255, 255))
+    SKY = Pixel((0, 127, 255))
+    BLUE = Pixel((0, 0, 255))
+    BLUE2 = Pixel((0, 0, 127))
+    BLUE3 = Pixel((0, 0, 63))
+    BLUE4 = Pixel((0, 0, 31))
+    VIOLET = Pixel((127, 0, 255))
+    PURPLE = Pixel((127, 0, 127))
+    PURPLE2 = Pixel((63, 0, 63))
+    MIDNIGHT = Pixel((70, 0, 127))
+    MAGENTA = Pixel((255, 0, 255))
+    PINK = Pixel((255, 0, 127))
+    WHITE = Pixel((255, 255, 255))
+    GRAY = Pixel((127, 118, 108))
+    GRAY2 = Pixel((64, 55, 50))
 
     @StaticPixelProperty
     def pseudo_random() -> Pixel:
@@ -444,9 +417,68 @@ class PixelColor(Pixel, enum.Enum):
             random pixel color
 
         """
-        return Pixel(
-            [random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)]
-        )
-        return Pixel(
-            [random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)]
+        return Pixel([random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)])
+
+    @overload
+    def __getitem__(  # D105
+        self,
+        idx: int,
+    ) -> int | list[int] | None: ...  # pylint: disable=pointless-statement  # pragma: no cover
+
+    @overload
+    def __getitem__(  # D105
+        self,
+        idx: np.int32,
+    ) -> int | list[int] | None: ...  # pylint: disable=pointless-statement  # pragma: no cover
+
+    @overload
+    def __getitem__(  # D105 # pylint: disable=function-redefined
+        self,
+        idx: slice,
+    ) -> int | list[int] | None: ...  # pylint: disable=pointless-statement  # pragma: no cover
+
+    def __getitem__(  # pylint: disable=function-redefined # type: ignore  # noqa: PGH003
+        self,
+        idx: int | np.int32 | slice,
+    ) -> int | list[int] | None:
+        """Return a color's value by index.
+
+        Args:
+        ----
+            idx: an index of a single color, or a slice specifying a range of colors
+
+        Returns:
+        -------
+            the color value or values as requested
+
+        """
+        color: int | list[int] | None = None
+        if isinstance(idx, int):
+            color = self.tuple[idx]
+        elif isinstance(idx, (np.integer)):
+            color = self.tuple[int(idx)]
+        else:
+            color = list(self.tuple)[idx]
+        return color
+
+    def __setitem__(
+        self,
+        key: int | np.int32 | slice,
+        value: int | list[int],
+    ) -> None:
+        """Set LED value(s) in the array.
+
+        Args:
+        ----
+            key: the index or slice specifying one or more LED indices
+            value: the RGB value or values to assign to the given LED indices
+
+        """
+        array = self.array.copy()
+        array[key] = value
+        self.int32value = (
+            # this is where the rgb order comes into play
+            (int(array[self._order[0]]) << 16)
+            + (int(array[self._order[1]]) << 8)
+            + (int(array[self._order[2]]))
         )

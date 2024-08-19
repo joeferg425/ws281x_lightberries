@@ -47,7 +47,7 @@ class SequenceTransition(ArraySequence):
             kwargs=kwargs,
         )
         if color_sequence is None:
-            color_sequence = ArraySequence.DEFAULT_COLOR_SEQUENCE
+            color_sequence = self.default_color_sequence_by_month()
         # get length of sequence
         sequence_length = color_sequence.shape[0]
         if sequence_length == 0 or led_count == 0:

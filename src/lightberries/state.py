@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from lightberries.array_sequence.base import ArraySequence
 from lightberries.constants import MAX_INT8
 from lightberries.pixel_sequence import PixelSequence
 
@@ -95,16 +94,15 @@ class TransformState:
     index_min: int = 0
     index_max: int = 0
     index_updated: bool = False
-    index_range: NDArray[np.int32] = field(
-        default_factory=lambda: np.zeros([3, 0], dtype=np.int32)
-    )
+    index_range: NDArray[np.int32] = field(default_factory=lambda: np.zeros([3, 0], dtype=np.int32))
 
     fade_type: LEDFadeType = LEDFadeType.FADE_OFF
     fade_amount: int = 128
-    fade_amount_float: int = 0.5
+    fade_amount_float: float = 0.5
 
     delay_counter: int = 0
     delay_count_max: int = 0
+    delay_count_limit: int = 0
 
     step: int = 1
     step_last: int = 0
@@ -114,9 +112,7 @@ class TransformState:
 
     collision: bool = False
     collision_enabled: bool = False
-    collision_intersection: NDArray[np.int32] = field(
-        default_factory=lambda: np.zeros([3, 0], dtype=np.int32)
-    )
+    collision_intersection: NDArray[np.int32] = field(default_factory=lambda: np.zeros([3, 0], dtype=np.int32))
     collision_with: PixelTransform | None = None
     collision_randomizer: bool = False
     collision_private: bool = False
@@ -140,7 +136,7 @@ class TransformState:
     period_short: int = 10
 
     def __post_init__(self) -> None:
-        self.color_sequence = ArraySequence.default_color_sequence_by_month()
+        self.color_sequence = PixelSequence.default_color_sequence_by_month()
 
         self.index_next: int = self.index
         self.index_previous: int = (self.index - 1) % self.controller.real_led_count
@@ -193,6 +189,6 @@ class TransformState:
         """
         # copy it to make sure we don't change the original by reference
         return self.color_sequence.pixel.fade(
-            color_next=self.color_sequence.color_next,
+            color_next=self.color_sequence.pixel_next,
             fade_amount=self.fade_amount,
         )

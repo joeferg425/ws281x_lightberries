@@ -86,19 +86,20 @@ class TransformSprites(PixelTransform):
             self.state.set_fade_amount(np.ceil(255 / fade_steps))
 
         sprites: list[PixelTransform] = []
+        fade = TransformFadeOff(
+            controller=self.controller,
+            state=self.state.copy(),
+        )
+        sprites.append(fade)
         for _ in range(max(min(self.color_sequence.count, 10), 2)):
             sprite = TransformSprites(
                 controller=self.controller,
                 state=self.state.copy(),
             )
             # randomize index
-            sprite.state.index = random.randint(
-                0, self.controller.virtual_led_count - 1
-            )
+            sprite.state.index = random.randint(0, self.controller.virtual_led_count - 1)
             # initialize previous index
-            sprite.state.index_previous = random.randint(
-                0, self.controller.virtual_led_count - 1
-            )
+            sprite.state.index_previous = random.randint(0, self.controller.virtual_led_count - 1)
             # randomize direction
             sprite.state.direction = self.get_random_direction()
             # copy color sequence
@@ -110,17 +111,12 @@ class TransformSprites(PixelTransform):
         # set one sprite to "fading on"
         sprites[0].state.state = SpriteState.FADING_ON.value
         # add LED fading for comet trails
-        fade = TransformFadeOff(
-            controller=self.controller,
-            state=self.state.copy(),
-        )
-        sprites.insert(0, fade)
         return sprites
 
-    def transform(self) -> None:
+    def transform(self) -> None:  # noqa: C901
         """Meteors fade in and out in short bursts of random length and direction."""
         # if not off
-        if self.state.state != SpriteState.OFF.value:
+        if self.state.state != SpriteState.OFF:
             # semi-randomly die
             _min = min(int(self.state.step_counter // 3), 5)
             _max = max(int(self.state.step_counter // 3), 6)
@@ -145,27 +141,25 @@ class TransformSprites(PixelTransform):
                 )
                 # if we are done fading, then change state
                 if np.array_equal(
-                    self.state.color_sequence.pixel.array, PixelColor.OFF.array
+                    self.state.color_sequence.pixel.array,
+                    PixelColor.OFF.array,
                 ):
                     self.state.state = SpriteState.OFF.value
             # if we are fading on
             if self.state.state == SpriteState.FADING_ON.value:
                 # fade the color
                 self.state.color_sequence.pixel.fade(
-                    color_next=self.state.color_sequence.color_current,
+                    color_next=self.state.color_sequence.pixel,
                     fade_amount=self.state.fade_amount,
                 )
                 # if we are done fading
-                if np.array_equal(
-                    self.state.color_sequence.pixel.array,
-                    self.state.color_sequence.color_next.array,
-                ):
+                if self.state.color_sequence.pixel == self.state.color_sequence.pixel_next:
                     # change state
                     self.state.state = SpriteState.ON.value
             # increment duration counter
             self.state.step_counter += 1
         # when sprite is in "off" state
-        elif random.randint(0, 999) > 800:
+        elif random.randint(0, 999) > 800:  # noqa: PLR2004
             # set state to fade on
             self.state.state = SpriteState.FADING_ON.value
             # reset step counter
@@ -187,13 +181,10 @@ class TransformSprites(PixelTransform):
             self.state.index_updated = False
             # assign LEDs to LED string
             if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
-                self.controller.virtual_led_buffer[self.state.index_range] = (
-                    self.state.color_sequence.pixel.array
-                )
+                self.controller.virtual_led_buffer[self.state.index_range] = self.state.color_sequence.pixel.array
             else:
                 self.controller.virtual_led_buffer[
                     np.where(
-                        self.controller.virtual_led_index_buffer
-                        == self.state.index_range,
+                        self.controller.virtual_led_index_buffer == self.state.index_range,
                     )
                 ] = self.state.color_sequence.pixel.array

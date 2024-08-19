@@ -2,17 +2,19 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
 from lightberries.array_sequence.base import ArraySequence
-from lightberries.pixel import Pixel
+from lightberries.pixel import Pixel, PixelColor
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-    from lightberries.pixel import PixelColor
+
+LOGGER = logging.getLogger("lightBerries")
 
 
 class SequenceSolid(ArraySequence):
@@ -20,9 +22,10 @@ class SequenceSolid(ArraySequence):
 
     def __init__(
         self,
-        led_count: int,
+        led_count: int | None = None,
+        pixel_array: list[Pixel] | None = None,
         name: str | None = None,
-        color: PixelColor | NDArray[np.int32] | None = None,
+        color: Pixel | PixelColor | NDArray[np.int32] | None = None,
         **kwargs: dict[str, Any],
     ) -> None:
         """Create array of RGB tuples that are all one color.
@@ -38,17 +41,23 @@ class SequenceSolid(ArraySequence):
         """
         if name is None:
             name = SequenceSolid.__name__
+        if color is None:
+            pixel = self.default_color_sequence_by_month()[0]
+        elif isinstance(color, PixelColor):
+            pixel = color.value
+        elif isinstance(color, np.ndarray):
+            pixel = Pixel(color)
+        else:
+            pixel = color
+        if pixel_array is None:
+            if led_count is not None:
+                pixel_array = [pixel for _ in range(int(led_count))]
+            else:
+                pixel_array = [pixel]
+        else:
+            pixel_array = [pixel]
         super().__init__(
             name=name,
-            led_count=led_count,
-            kwargs=kwargs,
+            pixel_array=pixel_array,
         )
-
-        if color is None:
-            color = self.DEFAULT_COLOR_SEQUENCE[0]
-        if not isinstance(color, Pixel):
-            color = Pixel(color)
-        if led_count > 0:
-            self._array = np.array([color for _ in range(int(led_count))])
-        else:
-            self._array = [color]
+        LOGGER.debug("%s %d : %s", SequenceSolid.__name__, led_count, pixel)

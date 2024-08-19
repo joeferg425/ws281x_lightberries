@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from lightberries.pixel_sequence import PixelSequence
 
 if TYPE_CHECKING:
-    pass
+    from lightberries.pixel import Pixel
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -24,7 +24,8 @@ class ArraySequence(PixelSequence):
 
     def __init__(
         self,
-        led_count: int,
+        led_count: int | None = None,
+        pixel_array: list[Pixel] | None = None,
         name: str | None = None,
         **kwargs: dict[str, Any],
     ) -> None:
@@ -41,10 +42,7 @@ class ArraySequence(PixelSequence):
             name = ArraySequence.__name__
         super().__init__(
             led_count=led_count,
+            pixel_array=pixel_array,
             name=name,
             **kwargs,
         )
-        # LOGGER.debug("Sequence: %s", name)
-        # self._array: NDArray[np.int32] = np.array(
-        # [PixelColor.OFF.array for _ in range(int(led_count))],
-        # )

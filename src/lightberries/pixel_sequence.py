@@ -6,7 +6,7 @@ import datetime
 import logging
 import random
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, overload
 
 import numpy as np
 
@@ -24,21 +24,14 @@ class PixelSequence:
     DEFAULT_TWINKLE_COLOR = PixelColor.GRAY
     DEFAULT_BACKGROUND_COLOR = PixelColor.OFF
     ALL_SEQUENCES: ClassVar[dict[str, type[PixelSequence]]] = {}
-    DEFAULT_COLOR_SEQUENCE: NDArray[np.int32] = np.array(
-        [
-            PixelColor.RED.array,
-            PixelColor.GREEN.array,
-            PixelColor.BLUE.array,
-        ],
-        dtype=np.int32,
-    )
 
     def __init_subclass__(cls) -> None:
         cls.ALL_SEQUENCES[cls.__name__.replace("Sequence", "")] = cls
 
     def __init__(
         self,
-        led_count: int = 0,
+        led_count: int | None = None,
+        pixel_array: list[Pixel] | None = None,
         name: str | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> None:
@@ -53,17 +46,94 @@ class PixelSequence:
         """
         if name is None:
             name = PixelSequence.__name__
+        self._name = name
         LOGGER.debug("Sequence: %s", name)
-        self._array: list[Pixel] = [PixelColor.OFF for _ in range(int(led_count))]
-        self._led_count = led_count
+        if pixel_array is not None:
+            self._array = pixel_array
+            self._led_count = len(pixel_array)
+        elif led_count is not None:
+            self._led_count = led_count
+            self._array: list[Pixel] = [PixelColor.OFF for _ in range(int(self._led_count))]
+        else:
+            self._led_count = 0
+            self._array: list[Pixel] = [PixelColor.OFF for _ in range(int(self._led_count))]
         self._index: int = 0
         if self._led_count:
-            self._color: Pixel = self._array[0].copy()
+            self._pixel: Pixel = self._array[0].copy()
         else:
-            self._color: Pixel = PixelColor.OFF
+            self._pixel: Pixel = PixelColor.OFF
+        if self._led_count > 1:
+            self._pixel_next: Pixel = self._array[1].copy()
+        else:
+            self._pixel_next: Pixel = self._pixel.copy()
 
     def __len__(self) -> int:
         return self._led_count
+
+    @overload
+    def __getitem__(  # D105
+        self,
+        idx: int,
+    ) -> Pixel: ...  # pylint: disable=pointless-statement  # pragma: no cover
+
+    @overload
+    def __getitem__(  # D105
+        self,
+        idx: np.int32,
+    ) -> Pixel: ...  # pylint: disable=pointless-statement  # pragma: no cover
+
+    @overload
+    def __getitem__(  # D105 # pylint: disable=function-redefined
+        self,
+        idx: slice,
+    ) -> list[Pixel]: ...  # pylint: disable=pointless-statement  # pragma: no cover
+
+    def __getitem__(  # pylint: disable=function-redefined # type: ignore  # noqa: PGH003
+        self,
+        idx: int | np.int32 | slice,
+    ) -> Pixel | list[Pixel]:
+        """Return a pixel value by index.
+
+        Args:
+        ----
+            idx: an index of a pixel, or a slice specifying a range of pixels
+
+        Returns:
+        -------
+            the pixel value or values as requested
+
+        """
+        pixels: Pixel | list[Pixel] | None = None
+        if isinstance(idx, int):
+            pixels = self._array[idx]
+        elif isinstance(idx, (np.integer)):
+            pixels = self._array[int(idx)]
+        else:
+            pixels = self._array[idx]
+        return pixels
+
+    def __setitem__(
+        self,
+        key: int | np.int32 | slice,
+        value: Pixel | list[Pixel],
+    ) -> None:
+        """Set LED value(s) in the array.
+
+        Args:
+        ----
+            key: the index or slice specifying one or more LED indices
+            value: the RGB value or values to assign to the given LED indices
+
+        """
+        if isinstance(key, np.integer) and isinstance(value, Pixel):
+            self._array[int(key)] = value
+        elif isinstance(key, int) and isinstance(value, Pixel):  # noqa: SIM114
+            self._array[key] = value
+        elif isinstance(key, slice) and isinstance(value, list):
+            self._array[key] = value
+        else:
+            msg = f"Pixel setitem failed for key/value: {key}/{value}"
+            raise TypeError(msg)
 
     @property
     def index(self) -> int:
@@ -100,33 +170,26 @@ class PixelSequence:
             the color currently being manipulated
 
         """
-        return self._color
+        return self._pixel
 
     @pixel.setter
     def pixel(self, pixel: Pixel) -> None:
-        self._color = pixel
+        self._pixel = pixel
 
     @property
-    def color_current(self) -> Pixel:
-        """Get the current color.
+    def pixel_next(self) -> Pixel:
+        """Get the color currently being manipulated.
 
         Returns
         -------
-            the current color
+            the color currently being manipulated
 
         """
-        return self._array[self.index]
+        return self._pixel_next
 
-    @property
-    def color_next(self) -> Pixel:
-        """Get the next color.
-
-        Returns
-        -------
-            the next color
-
-        """
-        return self._array[self.index_next]
+    @pixel_next.setter
+    def pixel_next(self, pixel: Pixel) -> None:
+        self._pixel_next = pixel
 
     @staticmethod
     def pixel_array_to_numpy_array(
@@ -192,8 +255,7 @@ class PixelSequence:
 
         """
         pixel_sequence = PixelSequence(led_count=len(pixel_list))
-        for pxl_index, pxl in enumerate(pixel_list):
-            pixel_sequence.ndarray[pxl_index] = pxl.array
+        pixel_sequence._array = pixel_list  # noqa: SLF001
         return pixel_sequence
 
     @staticmethod
@@ -237,11 +299,15 @@ class PixelSequence:
             a copy of the sequence
 
         """
-        sequence = PixelSequence(led_count=self._led_count)
-        sequence._array = self._array.copy()  # noqa: SLF001
+        sequence = PixelSequence(name=self._name, pixel_array=self._array)
+        sequence._index = self.index  # noqa: SLF001
+        sequence._pixel = self._pixel  # noqa: SLF001
+        sequence._pixel_next = self._pixel_next  # noqa: SLF001
+        sequence.pixel = self.pixel
+        sequence.pixel_next = self.pixel_next
         return sequence
 
-    def advance_index(self) -> Pixel:
+    def advance_index(self, *, keep_current: bool = False) -> Pixel:
         """Advance index, update current pixel object.
 
         Returns
@@ -250,8 +316,44 @@ class PixelSequence:
 
         """
         self.index = self.index_next
-        self._color = self._array[self.index].copy()
+        if keep_current:
+            self._pixel = self._array[self.index].copy()
+        self._pixel_next = self._array[self.index_next].copy()
         return self.pixel
+
+    def __str__(
+        self,
+    ) -> str:
+        """Return the value of the pixel as a string.
+
+        Returns
+        -------
+            a string representation of the pixel
+
+        """
+        chunks: list[str] = []
+        end = min(3, self._led_count)
+        for i in range(end):
+            index = (self.index + i) % self._led_count
+            chunks.append(str(self._array[index]))
+        s = ", ".join(chunks)
+        if self._led_count > end:
+            s += ",..."
+        else:
+            s += "]"
+        return f"SQX#{self._led_count}[{s}"
+
+    def __repr__(
+        self,
+    ) -> str:
+        """Represent the Pixel class as a string.
+
+        Returns
+        -------
+            a string representation of the Pixel instance
+
+        """
+        return f"<{PixelSequence.__name__}> {self.__str__()}"
 
 
 MONTHLY_COLOR_SEQUENCE: dict[
