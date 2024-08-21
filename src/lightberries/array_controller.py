@@ -156,6 +156,10 @@ class ArrayController:
         except Exception as ex:  # pragma: no cover
             raise ControllerError from ex
 
+    def set_transforms(self, transforms: list[PixelTransform]) -> None:
+        """Set transforms."""
+        self._transforms = transforms
+
     def _instantiate_ws281x_string(  # noqa: PLR0913
         self,
         led_count: int,
@@ -313,7 +317,7 @@ class ArrayController:
     @property
     def color_sequence(
         self,
-    ) -> NDArray[np.int32]:
+    ) -> PixelSequence:
         """The sequence of RGB values to use for generating patterns when using the functions.
 
         Returns
@@ -326,7 +330,7 @@ class ArrayController:
     @color_sequence.setter
     def color_sequence(
         self,
-        color_sequence: NDArray[np.int32],
+        color_sequence: PixelSequence,
     ) -> None:
         """Set the color sequence.
 

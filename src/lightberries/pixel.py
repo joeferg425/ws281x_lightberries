@@ -5,7 +5,7 @@ from __future__ import annotations
 import enum
 import logging
 import random
-from typing import TYPE_CHECKING, Callable, NamedTuple, Union, cast, overload
+from typing import TYPE_CHECKING, Any, Callable, NamedTuple, Union, cast, overload
 
 import numpy as np
 
@@ -355,6 +355,70 @@ class Pixel:
         """
         return Pixel(self.array)
 
+    @overload
+    def __getitem__(  # D105
+        self,
+        idx: int,
+    ) -> int | list[int] | None: ...  # pylint: disable=pointless-statement  # pragma: no cover
+
+    @overload
+    def __getitem__(  # D105
+        self,
+        idx: np.int32,
+    ) -> int | list[int] | None: ...  # pylint: disable=pointless-statement  # pragma: no cover
+
+    @overload
+    def __getitem__(  # D105 # pylint: disable=function-redefined
+        self,
+        idx: slice,
+    ) -> int | list[int] | None: ...  # pylint: disable=pointless-statement  # pragma: no cover
+
+    def __getitem__(  # pylint: disable=function-redefined # type: ignore  # noqa: PGH003
+        self,
+        idx: int | np.int32 | slice,
+    ) -> int | list[int] | None:
+        """Return a color's value by index.
+
+        Args:
+        ----
+            idx: an index of a single color, or a slice specifying a range of colors
+
+        Returns:
+        -------
+            the color value or values as requested
+
+        """
+        color: int | list[int] | None = None
+        if isinstance(idx, int):
+            color = self.tuple[idx]
+        elif isinstance(idx, (np.integer)):
+            color = self.tuple[int(idx)]
+        else:
+            color = list(self.tuple)[idx]
+        return color
+
+    def __setitem__(
+        self,
+        key: int | np.int32 | slice,
+        value: int | list[int] | NDArray[Any],
+    ) -> None:
+        """Set LED value(s) in the array.
+
+        Args:
+        ----
+            key: the index or slice specifying one or more LED indices
+            value: the RGB value or values to assign to the given LED indices
+
+        """
+        array = self.array.copy()
+        array[key] = value
+        self.int32value = (
+            # this is where the rgb order comes into play
+            (int(array[self._order[0]]) << 16)
+            + (int(array[self._order[1]]) << 8)
+            + (int(array[self._order[2]]))
+        )
+
 
 class PixelColor(Pixel, enum.Enum):
     """List of commonly used colors for ease of use."""
@@ -418,67 +482,3 @@ class PixelColor(Pixel, enum.Enum):
 
         """
         return Pixel([random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)])
-
-    @overload
-    def __getitem__(  # D105
-        self,
-        idx: int,
-    ) -> int | list[int] | None: ...  # pylint: disable=pointless-statement  # pragma: no cover
-
-    @overload
-    def __getitem__(  # D105
-        self,
-        idx: np.int32,
-    ) -> int | list[int] | None: ...  # pylint: disable=pointless-statement  # pragma: no cover
-
-    @overload
-    def __getitem__(  # D105 # pylint: disable=function-redefined
-        self,
-        idx: slice,
-    ) -> int | list[int] | None: ...  # pylint: disable=pointless-statement  # pragma: no cover
-
-    def __getitem__(  # pylint: disable=function-redefined # type: ignore  # noqa: PGH003
-        self,
-        idx: int | np.int32 | slice,
-    ) -> int | list[int] | None:
-        """Return a color's value by index.
-
-        Args:
-        ----
-            idx: an index of a single color, or a slice specifying a range of colors
-
-        Returns:
-        -------
-            the color value or values as requested
-
-        """
-        color: int | list[int] | None = None
-        if isinstance(idx, int):
-            color = self.tuple[idx]
-        elif isinstance(idx, (np.integer)):
-            color = self.tuple[int(idx)]
-        else:
-            color = list(self.tuple)[idx]
-        return color
-
-    def __setitem__(
-        self,
-        key: int | np.int32 | slice,
-        value: int | list[int],
-    ) -> None:
-        """Set LED value(s) in the array.
-
-        Args:
-        ----
-            key: the index or slice specifying one or more LED indices
-            value: the RGB value or values to assign to the given LED indices
-
-        """
-        array = self.array.copy()
-        array[key] = value
-        self.int32value = (
-            # this is where the rgb order comes into play
-            (int(array[self._order[0]]) << 16)
-            + (int(array[self._order[1]]) << 8)
-            + (int(array[self._order[2]]))
-        )

@@ -3,17 +3,30 @@
 
 Use GUI to interact with individual LEDs.
 """
+from __future__ import annotations
 
+import contextlib
+import logging
 import multiprocessing
 import multiprocessing.queues
+import queue
 import time
 import tkinter as tk
+from multiprocessing import Queue
 from tkinter.colorchooser import askcolor
+from typing import TYPE_CHECKING, Any
 
 import lightberries.pixel
 from lightberries.array_controller import ArrayController
-from lightberries.array_sequence.base import ArraySequence
+from lightberries.array_sequence.solid import SequenceSolid
 from lightberries.pixel import Pixel
+
+if TYPE_CHECKING:
+
+    import numpy as np
+    from numpy.typing import NDArray
+
+LOGGER = logging.getLogger("pixel_gui")
 
 # the number of pixels in the light string
 PIXEL_COUNT = 196
@@ -31,28 +44,41 @@ GAMMA = None
 LED_STRIP_TYPE = None
 INVERT = False
 PWM_CHANNEL = 0
-Pixel.DEFAULT_PIXEL_ORDER = lightberries.pixel.LEDOrder.RGB.value
+Pixel.default_pixel_order = lightberries.pixel.LEDOrder.RGB.value
+
+
+class LedButton(tk.Button):
+    """Custom type wrapper that knows about my custom index."""
+
+    def __init__(  # noqa: D107
+        self,
+        master=None,  # noqa: ANN001, PGH003, RUF100 # type: ignore
+        cnf={},  # noqa: ANN001, B006, PGH003, RUF100 # type: ignore
+        **kwargs: dict[str, Any],
+    ) -> None:
+        super().__init__(master=master, cnf=cnf, **kwargs)  # type: ignore  # noqa: PGH003
+        self.led_index: int | None = 0
 
 
 class LightsProcess:
     """Handles LightBerries functions in a separate process."""
 
-    selfObject = None
-    appObject = None
+    self_object = None
+    app_object = None
 
-    def __init__(self, app) -> None:
-        """Handles LightBerries functions in a separate process.
+    def __init__(self, app: App) -> None:
+        """Handle LightBerries functions in a separate process.
 
         Args:
         ----
             app: the tkinter app
 
         """
-        LightsProcess.selfObject = self
-        LightsProcess.appObject = app
-        self.inQ = multiprocessing.Queue(2)
-        self.outQ = multiprocessing.Queue(2)
-        self.process = multiprocessing.Process(target=LightsProcess.mainLoop, args=[self.inQ, self.outQ])
+        LightsProcess.self_object = self
+        LightsProcess.app_object = app
+        self.in_q: Queue[tuple[str, int, int]] = Queue(2)
+        self.out_q: Queue[tuple[int, NDArray[np.int32]]] = Queue(2)
+        self.process = multiprocessing.Process(target=LightsProcess.main_loop, args=[self.in_q, self.out_q])
         self.process.start()
 
     def __del__(self) -> None:
@@ -60,18 +86,19 @@ class LightsProcess:
         self.process.terminate()
 
     @classmethod
-    def mainLoop(cls, inQ, _):
-        """The main loop.
+    def main_loop(cls, in_q: Queue[tuple[str, int, int]], _: Any) -> None:  # noqa: ANN401
+        """Loop happens.
 
         Args:
         ----
-            inQ: multiprocess queue for getting input
+            in_q: multiprocess queue for getting input
             _ : [description]
 
         """
+        light_control = None
         try:
             # create LightBerry controller
-            lightControl = ArrayController(
+            light_control = ArrayController(
                 led_count=PIXEL_COUNT,
                 pwm_gpio_pin=GPIO_PWM_PIN,
                 dma_channel=DMA_CHANNEL,
@@ -83,61 +110,65 @@ class LightsProcess:
                 led_brightness=BRIGHTNESS,
                 debug=True,
             )
-            lightControl.setVirtualLEDBuffer(
-                ArraySequence.SolidSequence(
-                    arrayLength=PIXEL_COUNT,
-                    color=lightberries.pixel.PixelColor.OFF,
-                ),
-            )
-            lightControl.copy_virtual_leds_to_ws281x()
-            lightControl.refresh_leds()
-
-            # run loop forever
-            while True:
-                # check for new user input
-                msg = None
-                try:
-                    msg = inQ.get()
-                except Exception:
-                    pass
-                if msg is not None:
-                    print(msg)
-                    if msg[0] == "color":
-                        try:
-                            index, color = msg[1:]
-                            print("setting color")
-                            lightControl.virtual_led_buffer[index] = Pixel(
-                                color,
-                                order=lightberries.pixel.LEDOrder.RGB,
-                            ).array
-                            lightControl.copy_virtual_leds_to_ws281x()
-                            lightControl.refresh_leds()
-                            time.sleep(0.05)
-                        except Exception as ex:
-                            print(ex)
-                time.sleep(0.001)
         except KeyboardInterrupt:
             pass
-        except Exception as ex:
-            print(ex)
-        lightControl.__del__()
-        time.sleep(0.05)
+        except Exception:
+            LOGGER.exception("whoops")
+        if light_control is not None:
+            try:
+                light_control.set_virtual_led_buffer(
+                    SequenceSolid(
+                        led_count=PIXEL_COUNT,
+                        color=lightberries.pixel.PixelColor.OFF,
+                    ),
+                )
+                light_control.copy_virtual_leds_to_ws281x()
+                light_control.refresh_leds()
+
+                # run loop forever
+                while True:
+                    # check for new user input
+                    msg = None
+                    with contextlib.suppress(Exception):
+                        msg = in_q.get()
+                    if msg is not None:
+                        LOGGER.critical(msg)
+                        if msg[0] == "color":
+                            try:
+                                index, color = msg[1:]
+                                LOGGER.critical("setting color")
+                                Pixel.default_pixel_order = lightberries.pixel.LEDOrder.RGB.value
+                                light_control.virtual_led_buffer[index] = Pixel(
+                                    color,
+                                ).array
+                                light_control.copy_virtual_leds_to_ws281x()
+                                light_control.refresh_leds()
+                                time.sleep(0.05)
+                            except Exception:
+                                LOGGER.exception("oh no")
+                    time.sleep(0.001)
+            except KeyboardInterrupt:
+                pass
+            except Exception:
+                LOGGER.exception("aaah")
+            light_control.__del__()
+            time.sleep(0.05)
 
 
 class App:
     """The application for tkinter."""
 
     def __init__(self) -> None:
-        """The application for tkinter."""
+        """Application for tkinter."""
         # create tKinter GUI. This GUI could really use some help
         self.root = tk.Tk()
 
         self.canvas = tk.Canvas(self.root)
         self.canvas.pack(side=tk.RIGHT, fill="both", expand=True)
 
-        self.scrollbarY = tk.Scrollbar(self.canvas, command=self.canvas.yview, orient=tk.VERTICAL)
+        self.scrollbarY = tk.Scrollbar(self.canvas, command=self.canvas.yview, orient=tk.VERTICAL)  # type: ignore  # noqa: PGH003
         self.scrollbarY.pack(side=tk.RIGHT, fill="y")
-        self.scrollbarX = tk.Scrollbar(self.canvas, command=self.canvas.xview, orient=tk.HORIZONTAL)
+        self.scrollbarX = tk.Scrollbar(self.canvas, command=self.canvas.xview, orient=tk.HORIZONTAL)  # type: ignore  # noqa: PGH003
         self.scrollbarX.pack(side=tk.BOTTOM, fill="y")
 
         self.mainFrame = tk.Frame(self.canvas)
@@ -158,37 +189,14 @@ class App:
 
         # update scrollregion after starting 'mainloop'
         # when all widgets are in canvas
-        self.canvas.bind("<Configure>", lambda _: self.onConfigure())
+        self.canvas.bind("<Configure>", lambda _: self.on_configure())
 
-        self.rowInt = tk.IntVar(value=3)
-        self.rowString = tk.StringVar()
         self.columnInt = tk.IntVar(value=3)
         self.columnString = tk.StringVar()
 
-        self.rowlabel = tk.Label(
-            self.mainFrame,
-            text="Row Count",
-        )
-        self.rowlabel.grid(
-            row=0,
-            column=0,
-            sticky="news",
-        )
-
-        self.rowInput = tk.Entry(
-            self.mainFrame,
-            textvariable=self.rowString,
-        )
-        self.rowInput.grid(
-            row=0,
-            column=1,
-            sticky="news",
-        )
-        self.rowString.set(str(self.rowInt.get()))
-
         self.columnLabel = tk.Label(
             self.mainFrame,
-            text="Column Count",
+            text="LED Count",
         )
         self.columnLabel.grid(
             row=0,
@@ -207,50 +215,50 @@ class App:
         )
         self.columnString.set(str(self.columnInt.get()))
 
-        self.configureButton = tk.Button(
+        self.configureButton = LedButton(
             self.mainFrame,
-            text="Configure",
-            command=self.configureLightBerries,
+            text="Configure",  # type: ignore  # noqa: PGH003
+            command=self.configure_lightberries,  # type: ignore  # noqa: PGH003
         )
         self.configureButton.grid(
             row=0,
             column=4,
             sticky="news",
         )
-        self.root.bind("<Return>", lambda event: self.configureLightBerries())
+        self.root.bind("<Return>", lambda _: self.configure_lightberries())
 
-        self.leftClickColorBtn = tk.Button(
+        self.leftClickColorBtn = LedButton(
             self.mainFrame,
-            bg="black",
-            fg="white",
-            text="Left-Click\nColor",
-            width=5,
-            height=2,
+            bg="black",  # type: ignore  # noqa: PGH003
+            fg="white",  # type: ignore  # noqa: PGH003
+            text="Left-Click\nColor",  # type: ignore  # noqa: PGH003
+            width=5,  # type: ignore  # noqa: PGH003
+            height=2,  # type: ignore  # noqa: PGH003
         )
         self.leftClickColorBtn.grid(
             row=0,
             column=5,
             sticky="news",
         )
-        self.leftClickColorBtn.ledIndex = None
-        self.leftClickColorBtn.bind("<Button-1>", self.getColor)
+        self.leftClickColorBtn.led_index = None  # type: ignore  # noqa: PGH003
+        self.leftClickColorBtn.bind("<Button-1>", self.get_color)  # type: ignore  # noqa: PGH003
 
-        self.rightClickColorBtn = tk.Button(
+        self.rightClickColorBtn = LedButton(
             self.mainFrame,
-            bg="black",
-            fg="white",
-            text="Right-Click\nColor",
-            width=5,
-            height=2,
+            bg="black",  # type: ignore  # noqa: PGH003
+            fg="white",  # type: ignore  # noqa: PGH003
+            text="Right-Click\nColor",  # type: ignore  # noqa: PGH003
+            width=5,  # type: ignore  # noqa: PGH003
+            height=2,  # type: ignore  # noqa: PGH003
         )
         self.rightClickColorBtn.grid(
             row=0,
             column=6,
             sticky="news",
         )
-        self.rightClickColorBtn.ledIndex = None
-        self.rightClickColorBtn.bind("<Button-1>", self.getColor)
-        self.rightClickColorBtn.bind("<Button-3>", self.getColor)
+        self.rightClickColorBtn.led_index = None  # type: ignore  # noqa: PGH003
+        self.rightClickColorBtn.bind("<Button-1>", self.get_color)  # type: ignore  # noqa: PGH003
+        self.rightClickColorBtn.bind("<Button-3>", self.get_color)  # type: ignore  # noqa: PGH003
 
         self.buttonFrame = tk.Frame(
             self.mainFrame,
@@ -269,48 +277,48 @@ class App:
         self.root.title("LightBerries Pixel Color Chooser")
         self.root.mainloop()
 
-    def onConfigure(self):
-        """Configure the convas widget."""
-        # update scrollregion after starting 'mainloop'
+    def on_configure(self) -> None:
+        """Configure the canvas widget."""
+        # update scroll region after starting 'mainloop'
         # when all widgets are in canvas
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
-    def configureLightBerries(self):
+    def configure_lightberries(self) -> None:
         """Configure LightBerries."""
         counter = 0
         try:
-            for row in range(int(self.rowString.get())):
+            for row in range(1):
                 self.buttonFrame.rowconfigure(row, weight=1)
                 for column in range(int(self.columnString.get())):
                     self.buttonFrame.columnconfigure(column, weight=1)
-                    btn = tk.Button(
+                    btn = LedButton(
                         self.buttonFrame,
-                        bg="black",
-                        fg="white",
-                        text=str(counter),
-                        width=5,
-                        height=2,
+                        bg="black",  # type: ignore  # noqa: PGH003
+                        fg="white",  # type: ignore  # noqa: PGH003
+                        text=str(counter),  # type: ignore  # noqa: PGH003
+                        width=5,  # type: ignore  # noqa: PGH003
+                        height=2,  # type: ignore  # noqa: PGH003
                     )
                     btn.grid(
                         row=row,
                         column=column,
                         sticky="nw",
                     )
-                    btn.bind("<Button-1>", self.getColor)
-                    btn.bind("<Button-3>", self.getColor2)
+                    btn.bind("<Button-1>", self.get_color)
+                    btn.bind("<Button-3>", self.get_color2)  # type: ignore  # noqa: PGH003
                     btn.grid(column=column, row=row, sticky="nw")
-                    btn.ledIndex = counter
+                    btn.led_index = counter
                     counter += 1
             self.configureButton["state"] = "disabled"
         except Exception:
-            pass
+            LOGGER.exception("another one")
 
     def destroy(self) -> None:
         """Destroy this object."""
         self.root.destroy()
         self.__del__()
 
-    def getColor(self, event) -> None:
+    def get_color(self, event: tk.Event[LedButton]) -> None:
         """Get a color from user, pass it to LightBerries.
 
         Args:
@@ -318,27 +326,30 @@ class App:
             event: tkinter widget event object
 
         """
-        if event.widget.ledIndex is None:
+        if event.widget.led_index is None:
             color = askcolor(event.widget["background"])
-            if color is not None:
-                color = int(color[1][1:], 16)
-                colorHex = f"#{color:06X}"
-                event.widget.configure(bg=colorHex)
-                invertColor = 0xFFFFFF - color
-                invertColorHex = "#" + f"{invertColor:06X}"[-6:]
-                event.widget.configure(fg=invertColorHex)
+            if color[0] is not None:
+                rgb = color[0]
+                color_int = int(rgb[0] << 16 + rgb[1] << 8 + rgb[2])
+                color_hex = str(color[1])
+                event.widget.configure(background=color_hex)
+                event.widget.configure(activebackground=color_hex)
+                invert_color = 0xFFFFFF - color_int
+                invert_color_hex = "#" + f"{invert_color:06X}"[-6:]
+                event.widget.configure(foreground=invert_color_hex)
         else:
             color = self.leftClickColorBtn["background"]
-            event.widget.configure(bg=color)
-            invertColor = self.leftClickColorBtn["foreground"]
-            event.widget.configure(fg=invertColor)
+            event.widget.configure(background=color)
+            event.widget.configure(activebackground=color)
+            invert_color = self.leftClickColorBtn["foreground"]
+            event.widget.configure(foreground=invert_color)
             try:
                 color = int(color[1:], 16)
-                self.lights.inQ.put_nowait(("color", event.widget.ledIndex, color))
-            except multiprocessing.queues.Full:
+                self.lights.in_q.put_nowait(("color", event.widget.led_index, color))
+            except queue.Full:
                 pass
 
-    def getColor2(self, event) -> None:
+    def get_color2(self, event: tk.Event[Any]) -> None:
         """Get a color from user, pass it to LightBerries.
 
         Args:
@@ -348,12 +359,12 @@ class App:
         """
         color = self.rightClickColorBtn["background"]
         event.widget.configure(bg=color)
-        invertColor = self.rightClickColorBtn["foreground"]
-        event.widget.configure(fg=invertColor)
+        invert_color = self.rightClickColorBtn["foreground"]
+        event.widget.configure(fg=invert_color)
         try:
             color = int(color[1:], 16)
-            self.lights.inQ.put_nowait(("color", event.widget.ledIndex, color))
-        except multiprocessing.queues.Full:
+            self.lights.in_q.put_nowait(("color", event.widget.led_index, color))
+        except queue.Full:
             pass
 
     def __del__(self) -> None:
@@ -362,5 +373,5 @@ class App:
 
 
 if __name__ == "__main__":
-    theApp = App()
-    del theApp
+    the_app = App()
+    del the_app

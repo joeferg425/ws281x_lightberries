@@ -42,6 +42,7 @@ class PixelSequence:
             name: the name of this pattern
             led_count: the number of pixels desired in the returned pixel array
             kwargs: args for patterns
+            pixel_array: a list of pixels
 
         """
         if name is None:

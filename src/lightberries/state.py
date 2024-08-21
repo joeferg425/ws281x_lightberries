@@ -83,6 +83,7 @@ class TransformState:
 
     color_sequence: PixelSequence = field(default_factory=PixelSequence)
     color_cycle: bool = False
+    color_scaler: float = 0.5
 
     state: int = 0
     state_max: int = 0

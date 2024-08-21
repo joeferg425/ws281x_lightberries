@@ -2,9 +2,8 @@
 """An example of using this module."""
 
 from lightberries.array_controller import ArrayController
-from lightberries.array_sequence.base import ArraySequence
 from lightberries.array_transform.raindrops import TransformRaindrop
-from lightberries.pixel import PixelColor
+from lightberries.pixel_sequence import PixelSequence
 
 # the number of pixels in the light string
 PIXEL_COUNT = 256
@@ -25,7 +24,7 @@ PWM_CHANNEL = 0
 
 
 # create the LightBerries Controller object
-lightControl = ArrayController(
+light_control = ArrayController(
     led_count=PIXEL_COUNT,
     pwm_gpio_pin=GPIO_PWM_PIN,
     dma_channel=DMA_CHANNEL,
@@ -38,23 +37,25 @@ lightControl = ArrayController(
     debug=True,
 )
 # configure a color pattern using a "useColor" method
-lightControl.color_sequence = ArraySequence.DEFAULT_COLOR_SEQUENCE
+light_control.color_sequence = PixelSequence.default_color_sequence_by_month()
 # configure a function using a "useFunction" method
-lightControl._transforms = TransformRaindrop(controller=lightControl).setup(
-    max_size=12,
-    raindrop_chance=0.05,
-    step_size=1,
-    max_raindrops=3,
-    fade_amount=0.4,
+light_control.set_transforms(
+    TransformRaindrop(controller=light_control).setup(
+        max_size=12,
+        raindrop_chance=0.05,
+        step_size=1,
+        max_raindrops=3,
+        fade_amount=0.4,
+    ),
 )
 # run the configuration until killed
 try:
-    lightControl.run()
+    light_control.run()
 except KeyboardInterrupt:
     pass
 except SystemExit:
     pass
 # turn all LEDs off
-lightControl.off()
+light_control.off()
 # cleanup memory
-del lightControl
+del light_control
