@@ -149,7 +149,7 @@ class TransformAccelerate(ArrayTransform):
             # reduce delay max
             self.state.delay_count_max -= 1
             # increment step size every two delay reductions
-            if (self.state.state % 2) == 0:
+            if (self.state.current_state % 2) == 0:
                 self.state.step += 1
             # set step counter to a random number of steps based on LED count
             self.state.step_count_max = random.randint(
@@ -157,10 +157,10 @@ class TransformAccelerate(ArrayTransform):
                 int(self.controller.real_led_count / 4),
             )
             # update state counter
-            self.state.state += 1
+            self.state.current_state += 1
         # check state counter, reset speed state when it hits max speed
         splash_range = np.zeros([], dtype=np.int32)
-        if self.state.state > self.state.state_max:
+        if self.state.current_state > self.state.state_max:
             # "splash" color when we hit the end
             splash = True
             #  create the "splash" index array before updating direction etc.
@@ -188,7 +188,7 @@ class TransformAccelerate(ArrayTransform):
             # randomize direction
             self.state.direction = self.get_random_direction()
             # reset state
-            self.state.state = 0
+            self.state.current_state = 0
             # reset step
             self.state.step = 1
             # reset step counter

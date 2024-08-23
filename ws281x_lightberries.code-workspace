@@ -11,7 +11,7 @@
 			"editor.formatOnSave": true,
 			"editor.defaultFormatter": "ms-python.black-formatter",
 			"editor.codeActionsOnSave": {
-				"source.organizeImports": "explicit"
+				"source.organizeImports.ruff": "explicit"
 			}
 		},
 		"isort.args": [
@@ -49,6 +49,7 @@
 			"lightberries",
 			"matplotlib",
 			"matrixification",
+			"multiprocess",
 			"ndarray",
 			"numpy",
 			"pyaudio",
@@ -100,10 +101,14 @@
 					"-f",
 					// "sprites",
 					// "solidcolorcycle",
-					"cylon",
+					// "cylon",
+					// "raindrop",
+					"meteor",
 					"-c",
 					"solid",
-					"--debug"
+					"--debug",
+					"meteor_count",
+					"5"
 				]
 			},
 			{

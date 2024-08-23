@@ -6,18 +6,19 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from lightberries.pixel_transform import PixelTransform
+from lightberries.transform_overlay.base import OverlayTransform
 
 if TYPE_CHECKING:
-    import numpy as np
 
     import lightberries.array_controller
+    from lightberries.pixel_sequence import PixelSequence
     from lightberries.pixel_transform import PixelTransform
     from lightberries.state import TransformState
 
 LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformOff(PixelTransform):
+class TransformOff(OverlayTransform):
     """Turn all Pixels OFF."""
 
     def __init__(
@@ -41,7 +42,7 @@ class TransformOff(PixelTransform):
 
     def setup(
         self,
-        color_sequence: np.ndarray[Any, np.int32] | None = None,
+        color_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> list[PixelTransform]:
@@ -62,7 +63,9 @@ class TransformOff(PixelTransform):
             color_sequence=color_sequence,
             state=state,
         )
-        return [self]
+        self.ACTIVE_TRANSFORMS.clear()
+        self.ACTIVE_TRANSFORMS.append(self)
+        return self.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
         """Turn all Pixels OFF."""

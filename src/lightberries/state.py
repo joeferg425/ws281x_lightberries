@@ -85,7 +85,7 @@ class TransformState:
     color_cycle: bool = False
     color_scaler: float = 0.5
 
-    state: int = 0
+    current_state: int = 0
     state_max: int = 0
     direction: int = 1
 
@@ -170,7 +170,9 @@ class TransformState:
             a copy of this object
 
         """
-        return TransformState(**self.__dict__)
+        t = TransformState(**self.__dict__)
+        t.color_sequence = self.color_sequence.copy()
+        return t
 
     def fade_color(
         self,

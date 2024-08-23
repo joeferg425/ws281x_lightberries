@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("lightBerries")
 
 
-class PixelSequence:
+class PixelSequence(Sequence[Pixel]):
     """A pattern of lights."""
 
     DEFAULT_TWINKLE_COLOR = PixelColor.GRAY
@@ -93,11 +93,11 @@ class PixelSequence:
         self,
         idx: int | np.int32 | slice,
     ) -> Pixel | list[Pixel]:
-        """Return a pixel value by index.
+        """Return a pixel value by led_index.
 
         Args:
         ----
-            idx: an index of a pixel, or a slice specifying a range of pixels
+            idx: an led_index of a pixel, or a slice specifying a range of pixels
 
         Returns:
         -------
@@ -122,7 +122,7 @@ class PixelSequence:
 
         Args:
         ----
-            key: the index or slice specifying one or more LED indices
+            key: the led_index or slice specifying one or more LED indices
             value: the RGB value or values to assign to the given LED indices
 
         """
@@ -137,30 +137,30 @@ class PixelSequence:
             raise TypeError(msg)
 
     @property
-    def index(self) -> int:
-        """Get the sequence index.
+    def led_index(self) -> int:
+        """Get the sequence led_index.
 
         Returns
         -------
-            the sequence index
+            the sequence led_index
 
         """
         return self._index
 
-    @index.setter
-    def index(self, index: int) -> None:
-        self._index = index % self.count
+    @led_index.setter
+    def led_index(self, led_index: int) -> None:
+        self._index = led_index % self.led_count
 
     @property
     def index_next(self) -> int:
-        """Get the next valid sequence index.
+        """Get the next valid sequence led_index.
 
         Returns
         -------
-            the next valid sequence index
+            the next valid sequence led_index
 
         """
-        return (self.index + 1) % self.count
+        return (self.led_index + 1) % self.led_count
 
     @property
     def pixel(self) -> Pixel:
@@ -194,7 +194,7 @@ class PixelSequence:
 
     @staticmethod
     def pixel_array_to_numpy_array(
-        color_sequence: Sequence[Pixel] | NDArray[np.int32],
+        color_sequence: Sequence[Pixel] | PixelSequence,
     ) -> NDArray[np.int32]:
         """Convert an array of Pixels into a numpy array of rgb arrays.
 
@@ -215,9 +215,7 @@ class PixelSequence:
 
         """
         if len(color_sequence) > 0:
-            if isinstance(color_sequence, Sequence):
-                return np.array([Pixel(p).array for p in color_sequence])
-            return color_sequence
+            return np.array([Pixel(p).array for p in color_sequence])
         return np.zeros((0, 3), dtype=np.int32)
 
     @property
@@ -231,8 +229,22 @@ class PixelSequence:
         """
         return np.array([p.array for p in self._array], dtype=np.int32)
 
+    def count(self, value: Pixel) -> int:
+        """Count instances of the pixel value.
+
+        Args:
+        ----
+            value: a pixel instance
+
+        Returns:
+        -------
+            count of the value
+
+        """
+        return self._array.count(value)
+
     @property
-    def count(self) -> int:
+    def led_count(self) -> int:
         """Get the Pixel count.
 
         Returns
@@ -292,6 +304,19 @@ class PixelSequence:
         """
         return [True, False][random.randint(0, 1)]
 
+    def random_index(self) -> int:
+        """Get a random index.
+
+        Returns
+        -------
+            random index
+
+        """
+        i = 0
+        for _ in range(5):
+            i = random.randint(0, self.led_count - 1)
+        return i
+
     def copy(self) -> PixelSequence:
         """Make a copy of the sequence.
 
@@ -301,7 +326,7 @@ class PixelSequence:
 
         """
         sequence = PixelSequence(name=self._name, pixel_array=self._array)
-        sequence._index = self.index  # noqa: SLF001
+        sequence._index = self.led_index  # noqa: SLF001
         sequence._pixel = self._pixel  # noqa: SLF001
         sequence._pixel_next = self._pixel_next  # noqa: SLF001
         sequence.pixel = self.pixel
@@ -309,16 +334,16 @@ class PixelSequence:
         return sequence
 
     def advance_index(self, *, keep_current: bool = False) -> Pixel:
-        """Advance index, update current pixel object.
+        """Advance led_index, update current pixel object.
 
         Returns
         -------
             next pixel object
 
         """
-        self.index = self.index_next
+        self.led_index = self.index_next
         if keep_current:
-            self._pixel = self._array[self.index].copy()
+            self._pixel = self._array[self.led_index].copy()
         self._pixel_next = self._array[self.index_next].copy()
         return self.pixel
 
@@ -335,8 +360,8 @@ class PixelSequence:
         chunks: list[str] = []
         end = min(3, self._led_count)
         for i in range(end):
-            index = (self.index + i) % self._led_count
-            chunks.append(str(self._array[index]))
+            led_index = (self.led_index + i) % self._led_count
+            chunks.append(str(self._array[led_index]))
         s = ", ".join(chunks)
         if self._led_count > end:
             s += ",..."

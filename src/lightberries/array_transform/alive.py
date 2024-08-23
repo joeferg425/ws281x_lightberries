@@ -117,7 +117,7 @@ class TransformAlive(PixelTransform):
             # randomize initial size
             thing.state.size = random.randint(1, int(thing.state.size_max // 2))
             # start the state at 1
-            thing.state.state = ThingMoves.METEOR.value
+            thing.state.current_state = ThingMoves.METEOR.value
             # calculate random next state immediately
             thing.state.step_counter = 1000
             thing.state.delay_counter = 1000
@@ -138,7 +138,7 @@ class TransformAlive(PixelTransform):
             self.state.delay_counter = 0
             if self.state.step_counter < self.state.step_count_max:
                 # if in meteor mode
-                if self.state.state & ThingMoves.METEOR.value:
+                if self.state.current_state & ThingMoves.METEOR.value:
                     self.state.step = 1
                     # set next index
                     self.update_array_index()
@@ -146,7 +146,7 @@ class TransformAlive(PixelTransform):
                     if random.randint(0, 99) > 95:  # noqa: PLR2004
                         self.state.direction *= -1  # pragma: no cover
                 # if in fast meteor mode
-                elif self.state.state & ThingMoves.LIGHT_SPEED.value:
+                elif self.state.current_state & ThingMoves.LIGHT_SPEED.value:
                     # artificially limit duration of this mode
                     if self.state.step_count_max >= self.state.period_short:
                         self.state.step_count_max = self.state.period_short
@@ -158,7 +158,7 @@ class TransformAlive(PixelTransform):
                     if random.randint(0, 99) > 95:  # noqa: PLR2004
                         self.state.direction *= -1  # pragma: no cover
                 # if slow meteor
-                elif self.state.state & ThingMoves.TURTLE.value:
+                elif self.state.current_state & ThingMoves.TURTLE.value:
                     # set step to 1
                     self.state.step = 1
                     # randomly change direction
@@ -167,7 +167,7 @@ class TransformAlive(PixelTransform):
                     # set next index
                     self.update_array_index()
                 # if we are growing
-                if self.state.state & ThingSizes.GROW.value:
+                if self.state.current_state & ThingSizes.GROW.value:
                     # artificially limit duration
                     if self.state.step_count_max > self.state.period_short:
                         self.state.step_count_max = self.state.period_short
@@ -189,7 +189,7 @@ class TransformAlive(PixelTransform):
                     elif self.state.size < 1:
                         self.state.size = 1
                 # if we are shrinking
-                elif self.state.state & ThingSizes.SHRINK.value:
+                elif self.state.current_state & ThingSizes.SHRINK.value:
                     # artificially limit duration
                     if self.state.step_count_max > self.state.period_short:
                         self.state.step_count_max = self.state.period_short
@@ -208,7 +208,7 @@ class TransformAlive(PixelTransform):
                     elif self.state.size < 1:
                         self.state.size = 1
                 # if we are cycling through colors
-                if self.state.state & ThingColors.CYCLE.value:
+                if self.state.current_state & ThingColors.CYCLE.value:
                     # artificially limit duration
                     if self.state.step_count_max >= self.state.period_short:
                         self.state.step_count_max = self.state.period_short
@@ -222,7 +222,7 @@ class TransformAlive(PixelTransform):
             else:
                 # states are mutually exclusive bits, can just add one of each
                 for _ in range(random.randint(1, 3)):
-                    self.state.state = (
+                    self.state.current_state = (
                         list(ThingMoves)[random.randint(0, len(ThingMoves) - 1)].value
                         + list(ThingSizes)[random.randint(0, len(ThingSizes) - 1)].value
                         + list(ThingColors)[random.randint(0, len(ThingColors) - 1)].value
@@ -241,11 +241,11 @@ class TransformAlive(PixelTransform):
                 # randomize fade amount
                 self.state.fade_amount = random.randint(80, 192)
                 # randomize delays
-                if self.state.state & ThingMoves.METEOR.value:
+                if self.state.current_state & ThingMoves.METEOR.value:
                     self.state.delay_count_max = random.randint(1, 3)
-                elif self.state.state & ThingMoves.TURTLE.value:
+                elif self.state.current_state & ThingMoves.TURTLE.value:
                     self.state.delay_count_max = random.randint(15, 45)
-                elif self.state.state & ThingMoves.LIGHT_SPEED.value:
+                elif self.state.current_state & ThingMoves.LIGHT_SPEED.value:
                     self.state.delay_count_max = random.randint(0, 3)
                 else:
                     self.state.delay_count_max = random.randint(1, 7)

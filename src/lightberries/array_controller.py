@@ -140,7 +140,6 @@ class ArrayController:
             self._color_sequence_count: int = len(self._color_sequence)
             self._color_sequence_index: int = 0
             self._loop_forever: bool = False
-            self._transforms: list[PixelTransform] = []
 
             self.running: bool = False
             self.refresh_callback: Callable[[], None] | None = refresh_callback
@@ -155,10 +154,6 @@ class ArrayController:
             raise
         except Exception as ex:  # pragma: no cover
             raise ControllerError from ex
-
-    def set_transforms(self, transforms: list[PixelTransform]) -> None:
-        """Set transforms."""
-        self._transforms = transforms
 
     def _instantiate_ws281x_string(  # noqa: PLR0913
         self,
@@ -263,7 +258,7 @@ class ArrayController:
     @property
     def background_color(
         self,
-    ) -> NDArray[np.int32]:
+    ) -> Pixel:
         """The defined background, or "Off" color for the LED string.
 
         Returns
@@ -276,7 +271,7 @@ class ArrayController:
     @background_color.setter
     def background_color(
         self,
-        color: NDArray[np.int32],
+        color: Pixel,
     ) -> None:
         """Set the background color.
 
@@ -285,7 +280,7 @@ class ArrayController:
             color: an RGB value
 
         """
-        self._background_color = Pixel(color).array
+        self._background_color = color.copy()
 
     @property
     def seconds_per_mode(
@@ -408,7 +403,7 @@ class ArrayController:
     @property
     def color_sequence_next(
         self,
-    ) -> NDArray[np.int32]:
+    ) -> Pixel:
         """Get the next color in the sequence.
 
         Returns
@@ -429,7 +424,7 @@ class ArrayController:
             the list of functions
 
         """
-        return self._transforms
+        return PixelTransform.ACTIVE_TRANSFORMS
 
     @property
     def overlay_dictionary(self) -> dict[int, Any]:
@@ -457,7 +452,7 @@ class ArrayController:
         """
         try:
             LOGGER.debug("%s.%s:", ArrayController.__name__, self.reset.__name__)
-            self._transforms = []
+            PixelTransform.ACTIVE_TRANSFORMS.clear()
             if self.virtual_led_count >= self.real_led_count:
                 self.set_virtual_led_buffer(self.virtual_led_buffer[: self.real_led_count])
             elif self.virtual_led_count < self.real_led_count:
@@ -619,7 +614,7 @@ class ArrayController:
             # clear all current values
             self.virtual_led_buffer *= 0
             # set to background color
-            self.virtual_led_buffer[:] += self.background_color
+            self.virtual_led_buffer[:] += self.background_color.array
         except SystemExit:  # pragma: no cover
             raise
         except KeyboardInterrupt:  # pragma: no cover
@@ -643,7 +638,7 @@ class ArrayController:
 
         """
         # invoke the function pointer saved in the light data object
-        for function in self._transforms:
+        for function in PixelTransform.ACTIVE_TRANSFORMS:
             function.transform()
 
     def _copy_overlays(
@@ -676,7 +671,9 @@ class ArrayController:
         except Exception as ex:  # pragma: no cover
             raise ControllerError from ex
 
-    def run(self) -> None:
+    def run(
+        self,
+    ) -> None:
         """Run the configured color pattern and function either forever or for self.secondsPerMode.
 
         Raises
@@ -719,6 +716,8 @@ class ArrayController:
         color_names: list[str] | None = None,
         skip_functions: list[str] | None = None,
         skip_colors: list[str] | None = None,
+        *,
+        kwargs: dict[str, Any],
     ) -> None:
         """Run colors and functions semi-randomly.
 
@@ -807,8 +806,9 @@ class ArrayController:
                 # apply color
                 clr = PixelSequence.ALL_SEQUENCES[color](led_count=self.real_led_count)
                 # configure function
-                self._transforms = PixelTransform.ALL_TRANSFORMS[function](controller=self).setup(
+                PixelTransform.ALL_TRANSFORMS[function](controller=self).setup(
                     color_sequence=clr,
+                    **kwargs,
                 )
 
                 # run the combination

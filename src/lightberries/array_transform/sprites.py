@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import random
 from enum import IntEnum
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -34,8 +34,6 @@ class SpriteState(IntEnum):
 class TransformSprites(PixelTransform):
     """Do sprite function things."""
 
-    SPRITES: ClassVar[dict[int, TransformSprites]] = {}
-
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
@@ -49,9 +47,8 @@ class TransformSprites(PixelTransform):
             state: the initial or previous state of the light string
 
         """
-        self.SPRITES[len(self.SPRITES)] = self
         super().__init__(
-            name=f"{TransformSprites.__name__}[{len(self.SPRITES)}]",
+            name=f"{TransformSprites.__name__}[{len(self.ACTIVE_TRANSFORMS)}]",
             controller=controller,
             state=state,
         )
@@ -62,6 +59,7 @@ class TransformSprites(PixelTransform):
         state: TransformState | None = None,
         *,
         fade_steps: int | None = None,
+        sprite_count: int | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> list[PixelTransform]:
         """Meteors fade in and out in short bursts of random length and direction.
@@ -72,9 +70,10 @@ class TransformSprites(PixelTransform):
             state: the initial or previous state of the light string
             kwargs: extra args to the state object
             fade_steps: amount to fade
+            sprite_count:the number of sprites to render
 
         """
-        self.SPRITES.clear()
+        self.ACTIVE_TRANSFORMS.clear()
         if color_sequence is not None:
             self.color_sequence = color_sequence.copy()
         if state is not None:
@@ -82,16 +81,19 @@ class TransformSprites(PixelTransform):
         else:
             self.state.set_fade_amount(np.ceil(255 / random.randint(1, 6)))
 
+        if sprite_count is None or sprite_count < 1 or sprite_count > 10:  # noqa: PLR2004
+            sprite_count = max(min(self.color_sequence.led_count, 10), 2)
+
         if fade_steps is not None:
             self.state.set_fade_amount(np.ceil(255 / fade_steps))
 
-        sprites: list[PixelTransform] = []
         fade = TransformFadeOff(
             controller=self.controller,
             state=self.state.copy(),
         )
-        sprites.append(fade)
-        for _ in range(max(min(self.color_sequence.count, 10), 2)):
+        self.ACTIVE_TRANSFORMS.append(fade)
+        self.ACTIVE_TRANSFORMS.append(self)
+        for _ in range(sprite_count - 1):
             sprite = TransformSprites(
                 controller=self.controller,
                 state=self.state.copy(),
@@ -106,22 +108,22 @@ class TransformSprites(PixelTransform):
             sprite.state.color_sequence = self.color_sequence.copy()
             # advance the color sequence
             self.color_sequence.advance_index()
-            sprite.state.state = SpriteState.OFF.value
-            sprites.append(sprite)
+            sprite.state.current_state = SpriteState.OFF.value
+            self.ACTIVE_TRANSFORMS.append(sprite)
         # set one sprite to "fading on"
-        sprites[0].state.state = SpriteState.FADING_ON.value
+        self.ACTIVE_TRANSFORMS[0].state.current_state = SpriteState.FADING_ON.value
         # add LED fading for comet trails
-        return sprites
+        return self.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:  # noqa: C901
         """Meteors fade in and out in short bursts of random length and direction."""
         # if not off
-        if self.state.state != SpriteState.OFF:
+        if self.state.current_state != SpriteState.OFF:
             # semi-randomly die
             _min = min(int(self.state.step_counter // 3), 5)
             _max = max(int(self.state.step_counter // 3), 6)
             if random.randint(_min, _max) < self.state.step_counter:
-                self.state.state = SpriteState.FADING_OFF.value
+                self.state.current_state = SpriteState.FADING_OFF.value
             # randomize step sizes
             self.state.step = random.randint(1, 3)
             # only update LED string when we change the index
@@ -133,7 +135,7 @@ class TransformSprites(PixelTransform):
                 # move index
                 self.update_array_index()
             # if we are fading off
-            if self.state.state == SpriteState.FADING_OFF.value:
+            if self.state.current_state == SpriteState.FADING_OFF.value:
                 # fade the color
                 self.state.color_sequence.pixel.fade(
                     color_next=PixelColor.OFF,
@@ -144,9 +146,9 @@ class TransformSprites(PixelTransform):
                     self.state.color_sequence.pixel.array,
                     PixelColor.OFF.array,
                 ):
-                    self.state.state = SpriteState.OFF.value
+                    self.state.current_state = SpriteState.OFF.value
             # if we are fading on
-            if self.state.state == SpriteState.FADING_ON.value:
+            if self.state.current_state == SpriteState.FADING_ON.value:
                 # fade the color
                 self.state.color_sequence.pixel.fade(
                     color_next=self.state.color_sequence.pixel,
@@ -155,13 +157,13 @@ class TransformSprites(PixelTransform):
                 # if we are done fading
                 if self.state.color_sequence.pixel == self.state.color_sequence.pixel_next:
                     # change state
-                    self.state.state = SpriteState.ON.value
+                    self.state.current_state = SpriteState.ON.value
             # increment duration counter
             self.state.step_counter += 1
         # when sprite is in "off" state
         elif random.randint(0, 999) > 800:  # noqa: PLR2004
             # set state to fade on
-            self.state.state = SpriteState.FADING_ON.value
+            self.state.current_state = SpriteState.FADING_ON.value
             # reset step counter
             self.state.step_counter = 0
             # randomize direction

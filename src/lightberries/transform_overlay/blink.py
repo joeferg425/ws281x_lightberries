@@ -10,10 +10,8 @@ from lightberries.transform_overlay.base import OverlayTransform
 
 if TYPE_CHECKING:
 
-    import numpy as np
-    from numpy.typing import NDArray
-
     import lightberries.array_controller
+    from lightberries.pixel_sequence import PixelSequence
     from lightberries.pixel_transform import PixelTransform
     from lightberries.state import TransformState
 
@@ -45,7 +43,7 @@ class TransformBlink(OverlayTransform):
 
     def setup(
         self,
-        color_sequence: NDArray[np.int32] | None = None,
+        color_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         blink_chance: float | None = None,
     ) -> list[PixelTransform]:
@@ -58,8 +56,10 @@ class TransformBlink(OverlayTransform):
             blink_chance: chance of a blink
 
         """
+        self.ACTIVE_TRANSFORMS.clear()
+        self.ACTIVE_TRANSFORMS.append(self)
         if color_sequence is not None:
-            self.color_sequence = self.color_sequence.copy()
+            self.state.color_sequence = self.state.color_sequence.copy()
         if state is not None:
             self.state = state
         else:
@@ -68,7 +68,7 @@ class TransformBlink(OverlayTransform):
         if blink_chance is not None:
             self.state.random = blink_chance
 
-        return [self]
+        return self.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
         """Randomly set all lights in the string to the same color without changing the virtual LED buffer.
@@ -81,7 +81,6 @@ class TransformBlink(OverlayTransform):
 
         """
         if random.random() > self.state.random:
-            color = self.color_sequence_next
+            self.state.color_sequence.advance_index()
             for index in range(self.controller.real_led_count):
-                self.controller.overlay_dictionary[index] = color
-                self.controller.overlay_dictionary[index] = color
+                self.controller.overlay_dictionary[index] = self.state.color_sequence.pixel.array

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import logging
 import sys
 
@@ -75,7 +76,11 @@ if __name__ == "__main__":  # pylint: disable=invalid-name
         help="the name of the color pattern to demo using randomized parameters",
     )
     parser.add_argument("--debug", action="store_true")
-    args = parser.parse_args()
+    args, remaining_args = parser.parse_known_args()
+    kwargs: dict[str, str] = {}
+    if remaining_args and len(remaining_args) % 2 == 0:
+        with contextlib.suppress(Exception):
+            kwargs = dict(zip(remaining_args[0::2], remaining_args[1::2]))
 
     if args.LED_count is not None:
         led_count = args.LED_count
@@ -114,7 +119,12 @@ if __name__ == "__main__":  # pylint: disable=invalid-name
         sys.exit(1)
     # run the demo!
     try:
-        light_control.demo(duration, function_names=functions, color_names=colors)
+        light_control.demo(
+            duration,
+            function_names=functions,
+            color_names=colors,
+            kwargs=kwargs,
+        )
     except SystemExit:
         pass
     except KeyboardInterrupt:

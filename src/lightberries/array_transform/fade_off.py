@@ -3,20 +3,21 @@
 from __future__ import annotations
 
 import logging
+import random
 from typing import TYPE_CHECKING, Any
 
-from lightberries.pixel_transform import PixelTransform
+from lightberries.transform_overlay.base import OverlayTransform
 
 if TYPE_CHECKING:
-    import numpy as np
-
     import lightberries.array_controller
+    from lightberries.pixel_sequence import PixelSequence
+    from lightberries.pixel_transform import PixelTransform
     from lightberries.state import TransformState
 
 LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformFadeOff(PixelTransform):
+class TransformFadeOff(OverlayTransform):
     """Fade all Pixels toward OFF."""
 
     def __init__(
@@ -40,7 +41,7 @@ class TransformFadeOff(PixelTransform):
 
     def setup(
         self,
-        color_sequence: np.ndarray[Any, np.int32] | None = None,
+        color_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         fade_amount: float | None = None,
@@ -60,15 +61,19 @@ class TransformFadeOff(PixelTransform):
             list of transforms
 
         """
+        self.ACTIVE_TRANSFORMS.clear()
         if color_sequence is not None:
-            self.color_sequence = self.color_sequence
+            self.state.color_sequence = color_sequence.copy()
         if state is not None:
             self.state = state
         else:
-            self.state.set_fade_amount(fade_amount=fade_amount)
+            self.state.set_fade_amount(fade_amount=random.uniform(0.01, 0.5))
+            if fade_amount is not None:
+                self.state.set_fade_amount(fade_amount=fade_amount)
+
+        self.ACTIVE_TRANSFORMS.append(self)
+        return self.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
         """Fade all Pixels toward OFF."""
-        self.controller.virtual_led_buffer[:] = self.controller.virtual_led_buffer * (
-            1 - self.state.fade_amount_float
-        )
+        self.controller.virtual_led_buffer[:] = self.controller.virtual_led_buffer * (1 - self.state.fade_amount_float)

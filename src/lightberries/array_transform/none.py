@@ -8,10 +8,9 @@ from typing import TYPE_CHECKING, Any
 from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
-    import numpy as np
 
     import lightberries.array_controller
-    from lightberries.pixel_transform import PixelTransform
+    from lightberries.pixel_sequence import PixelSequence
     from lightberries.state import TransformState
 
 LOGGER = logging.getLogger("lightBerries")
@@ -41,7 +40,7 @@ class TransformNone(PixelTransform):
 
     def setup(
         self,
-        color_sequence: np.ndarray[Any, np.int32] | None = None,
+        color_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> list[PixelTransform]:

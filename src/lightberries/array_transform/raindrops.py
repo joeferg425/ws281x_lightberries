@@ -94,7 +94,7 @@ class TransformRaindrop(PixelTransform):
         if max_size is not None:
             self.state.size_max = max_size
         if max_raindrops is None:
-            max_raindrops = max(min(self.state.color_sequence.count, 10), 2)
+            max_raindrops = max(min(self.state.color_sequence.led_count, 10), 2)
         if step_size is not None:
             self.state.step_size_max = step_size
         if self.state.step_size_max > 3:  # noqa: PLR2004
@@ -124,21 +124,21 @@ class TransformRaindrop(PixelTransform):
             # max size
             raindrop.state.step_count_max = random.randint(2, raindrop.state.size_max)
             # set raindrop to be inactive initially
-            raindrop.state.state = RaindropStates.OFF
+            raindrop.state.current_state = RaindropStates.OFF
             raindrops.append(raindrop)
         # set first raindrop active
-        raindrops[0].state.state = RaindropStates.SPLASH
+        raindrops[0].state.current_state = RaindropStates.SPLASH
         # add fading
         return raindrops
 
     def transform(self) -> None:
         """Cause random "splashes" across the LED strand."""
         # if raindrop is off
-        if self.state.state is RaindropStates.OFF:
+        if self.state.current_state is RaindropStates.OFF:
             # randomly turn on
             if random.randint(0, 1000) / 1000 < self.state.active_chance:
                 # set state on
-                self.state.state = RaindropStates.SPLASH
+                self.state.current_state = RaindropStates.SPLASH
                 # set max width of this raindrop
                 self.state.step_count_max = random.randint(
                     1,
@@ -150,7 +150,7 @@ class TransformRaindrop(PixelTransform):
                     self.state.step_count_max - self.state.step_counter
                 ) / self.state.step_count_max
         # if raindrop is splashing
-        elif self.state.state is RaindropStates.SPLASH:
+        elif self.state.current_state is RaindropStates.SPLASH:
             # if splash is still growing
             if self.state.step_counter <= self.state.step_count_max:
                 # lower valued side of "splash"
@@ -174,33 +174,33 @@ class TransformRaindrop(PixelTransform):
                 if (index_lower_max - index_lower_min) > 0:
                     index_range = list(range(index_lower_min, index_lower_max))
                     self.controller.virtual_led_buffer[index_lower_min:index_lower_max] = [
-                        self.state.color_sequence[self.color_sequence.index].array,
+                        self.state.color_sequence[self.color_sequence.led_index].array,
                     ] * (index_lower_max - index_lower_min)
                     if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
                         self.controller.virtual_led_buffer[index_range] = self.state.color_sequence[
-                            self.color_sequence.index
+                            self.color_sequence.led_index
                         ].array
                     else:
                         self.controller.virtual_led_buffer[
                             np.where(
                                 self.controller.virtual_led_index_buffer == index_range,
                             )
-                        ] = self.state.color_sequence[self.color_sequence.index].array
+                        ] = self.state.color_sequence[self.color_sequence.led_index].array
                 if (index_higher_max - index_higher_min) > 0:
                     index_range = list(range(index_higher_min, index_higher_max))
                     if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
                         self.controller.virtual_led_buffer[index_range] = self.state.color_sequence[
-                            self.color_sequence.index
+                            self.color_sequence.led_index
                         ].array
                     else:
                         self.controller.virtual_led_buffer[
                             np.where(
                                 self.controller.virtual_led_index_buffer == index_range,
                             )
-                        ] = self.state.color_sequence[self.color_sequence.index].array
+                        ] = self.state.color_sequence[self.color_sequence.led_index].array
                 # scaled fading as splash grows
                 self.state.color_sequence.pixel[:] = (
-                    self.state.color_sequence[self.color_sequence.index].array * self.state.color_scaler
+                    self.state.color_sequence[self.color_sequence.led_index].array * self.state.color_scaler
                 )
                 # increment splash growth counter
                 self.state.step_counter += self.state.step
@@ -217,4 +217,4 @@ class TransformRaindrop(PixelTransform):
                 for _ in range(1, random.randint(2, 4)):
                     self.state.color_sequence.advance_index()
                 # set state to off
-                self.state.state = RaindropStates.OFF
+                self.state.current_state = RaindropStates.OFF

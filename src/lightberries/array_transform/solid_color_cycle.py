@@ -62,7 +62,7 @@ class TransformSolidColorCycle(PixelTransform):
 
         """
         if color_sequence is not None:
-            self.color_sequence = self.color_sequence
+            self.state.color_sequence = color_sequence
         if state is not None:
             self.state = state
         else:
@@ -89,8 +89,8 @@ class TransformSolidColorCycle(PixelTransform):
             # remove any current color
             self.controller.virtual_led_buffer *= 0
             # add new color
-            self.controller.virtual_led_buffer += self.color_sequence.pixel_next.array
-            self.color_sequence.advance_index()
+            self.controller.virtual_led_buffer += self.state.color_sequence.pixel_next.array
+            self.state.color_sequence.advance_index()
         # increment delay counter
         self.state.delay_counter += 1
         self.state.delay_counter += 1
