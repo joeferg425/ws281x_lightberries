@@ -41,7 +41,7 @@ class TransformSolidColorCycle(PixelTransform):
 
     def setup(
         self,
-        color_sequence: PixelSequence | None = None,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         delay_count: int | None = None,
@@ -61,8 +61,8 @@ class TransformSolidColorCycle(PixelTransform):
             list of transforms
 
         """
-        if color_sequence is not None:
-            self.state.color_sequence = color_sequence
+        if pixel_sequence is not None:
+            self.state.color_sequence = pixel_sequence
         if state is not None:
             self.state = state
         else:

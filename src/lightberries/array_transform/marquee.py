@@ -9,13 +9,13 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from lightberries.array_sequence.solid import SequenceSolid
-from lightberries.pixel import PixelColor
+from lightberries.pixel import Pixel, PixelColor
 from lightberries.pixel_transform import PixelTransform
 from lightberries.transform_overlay.fade_off import TransformFadeOff
 
 if TYPE_CHECKING:
     import lightberries.array_controller
-    from lightberries.pixel_transform import PixelTransform
+    from lightberries.pixel_sequence import PixelSequence
     from lightberries.state import TransformState
 
 LOGGER = logging.getLogger("lightBerries")
@@ -45,7 +45,7 @@ class TransformMarquee(PixelTransform):
 
     def setup(
         self,
-        color_sequence: np.ndarray[Any, np.int32] | None = None,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         shift_amount: int | None = None,
@@ -70,8 +70,8 @@ class TransformMarquee(PixelTransform):
             list of transforms
 
         """
-        if color_sequence is not None:
-            self.color_sequence = self.color_sequence
+        if pixel_sequence is not None:
+            self.state.color_sequence = pixel_sequence
         if state is not None:
             self.state = state
         else:
@@ -85,22 +85,22 @@ class TransformMarquee(PixelTransform):
         if initial_direction is not None:
             self.state.direction = 1 if (initial_direction >= 1) else -1
         # store the size of the color sequence being shifted back and forth
-        self.state.size = self.color_sequence_count
+        self.state.size = self.state.color_sequence.led_count
         # this function just shifts the existing virtual LED buffer,
         # so make sure the virtual LED buffer is initialized here
-        if self.color_sequence_count >= self.controller.virtual_led_count - 10:
+        if self.state.color_sequence.led_count >= self.controller.virtual_led_count - 10:
             array = SequenceSolid(
-                arrayLength=self.color_sequence_count + 10,
-                color=PixelColor.OFF.array,
+                led_count=self.state.color_sequence.led_count + 10,
+                color=Pixel(PixelColor.OFF),
             )
-            array[: self.color_sequence_count] = self.color_sequence
+            array[: self.state.color_sequence.led_count] = list(self.state.color_sequence)
             self.controller.set_virtual_led_buffer(array)
         else:
-            self.controller.set_virtual_led_buffer(self.color_sequence)
+            self.controller.set_virtual_led_buffer(self.state.color_sequence)
         # turn off all LEDs every time so we can turn on new ones
         transform_off = TransformFadeOff(controller=self.controller)
         transform_off.setup(
-            color_sequence=self.color_sequence,
+            pixel_sequence=self.state.color_sequence,
             state=self.state,
         )
         return [transform_off, self]
@@ -147,4 +147,4 @@ class TransformMarquee(PixelTransform):
             self.state.index + self.state.size,
         )
         # update LEDs with new values
-        self.controller.virtual_led_buffer[np.sort(self.state.index_range)] = self.color_sequence
+        self.controller.virtual_led_buffer[np.sort(self.state.index_range)] = self.state.color_sequence

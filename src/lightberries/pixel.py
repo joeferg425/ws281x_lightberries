@@ -59,11 +59,11 @@ class LEDOrder(Order, enum.Enum):
 class Pixel:
     """A single LED pixel."""
 
-    default_pixel_order: list[int] = LEDOrder.GRB.value
+    default_pixel_order: LEDOrder = LEDOrder.GRB
 
     def __init__(
         self,
-        colors: Pixel | int | NDArray[np.int32] | tuple[int, int, int] | list[int] | None = None,
+        colors: Pixel | int | NDArray[Any] | tuple[int, int, int] | list[int] | None = None,
     ) -> None:
         """Create a single RGB LED pixel.
 
@@ -173,7 +173,7 @@ class Pixel:
             a string representation of the Pixel instance
 
         """
-        return f"<{Pixel.__name__}> {self.__str__()} ({LEDOrder (self._order).name})"
+        return f"<{Pixel.__name__}> {self.__str__()} ({self._order.name})"
 
     def __eq__(self, other: object) -> bool:
         """Text pixel equality with other objects.
@@ -484,8 +484,8 @@ class PixelColor(_Pixel, enum.Enum):
     GRAY = (127, 118, 108)
     GRAY2 = (64, 55, 50)
 
-    @StaticPixelProperty
-    def pseudo_random() -> Pixel:
+    @staticmethod
+    def pseudo_random() -> PixelColor:
         """Get pseudo-random pixel value from list of named colors.
 
         Returns
@@ -493,15 +493,15 @@ class PixelColor(_Pixel, enum.Enum):
             pseudo-random pixel value from list of named colors
 
         """
-        valid_colors = [
+        valid_colors: list[PixelColor] = [
             getattr(PixelColor, p)
             for p in dir(PixelColor)
             if "__" not in p and "random" not in p.lower() and "off" not in p.lower()
         ]
         return valid_colors[random.randint(0, len(valid_colors) - 1)]
 
-    @StaticPixelProperty
-    def random() -> Pixel:
+    @staticmethod
+    def random() -> PixelColor:
         """Get random pixel color.
 
         Returns
@@ -509,4 +509,4 @@ class PixelColor(_Pixel, enum.Enum):
             random pixel color
 
         """
-        return Pixel([random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)])
+        return PixelColor([random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)])

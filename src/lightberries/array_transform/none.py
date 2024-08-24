@@ -40,7 +40,7 @@ class TransformNone(PixelTransform):
 
     def setup(
         self,
-        color_sequence: PixelSequence | None = None,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> list[PixelTransform]:
@@ -59,10 +59,22 @@ class TransformNone(PixelTransform):
         """
         # create an object to put in the light data list so we don't just abort the run
         super().setup(
-            color_sequence=color_sequence,
+            pixel_sequence=pixel_sequence,
             state=state,
         )
-        return [self]
+        if pixel_sequence is not None:
+            self.state.color_sequence = pixel_sequence
+        if state is not None:
+            self.state = state
+        self.ran_once = False
+        self.ACTIVE_TRANSFORMS.append(self)
+        return self.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
         """Do nothing."""
+        if not self.ran_once:
+            self.ran_once = True
+            if self.state.color_sequence.led_count <= self.controller.virtual_led_count:
+                self.controller.virtual_led_buffer[: self.state.color_sequence.led_count] = self.state.color_sequence
+            else:
+                self.controller.virtual_led_buffer[: self.controller.virtual_led_count] = self.state.color_sequence

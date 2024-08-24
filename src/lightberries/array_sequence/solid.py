@@ -13,6 +13,8 @@ from lightberries.pixel import Pixel, PixelColor
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
+    from lightberries.pixel_sequence import PixelSequence
+
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -23,10 +25,10 @@ class SequenceSolid(ArraySequence):
     def __init__(
         self,
         led_count: int | None = None,
-        pixel_array: list[Pixel] | None = None,
+        pixel_array: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
         color: Pixel | PixelColor | NDArray[np.int32] | None = None,
-        **kwargs: dict[str, Any],
+        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> None:
         """Create array of RGB tuples that are all one color.
 
@@ -34,6 +36,7 @@ class SequenceSolid(ArraySequence):
         ----
             name: the name of this pattern
             led_count: the total desired length of the return array
+            pixel_array: array of pixels
             color: a pixel object defining the rgb values you want in the pattern
             kwargs: args for patterns
 

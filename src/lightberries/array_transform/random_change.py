@@ -46,7 +46,7 @@ class TransformRandomChange(PixelTransform):
 
     def setup(  # noqa: C901, PLR0912, PLR0913
         self,
-        color_sequence: PixelSequence | None = None,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         delay_count: int | None = None,
@@ -68,8 +68,8 @@ class TransformRandomChange(PixelTransform):
             fade_type: set to fade colors, or instant on/off
 
         """
-        if color_sequence is not None:
-            self.state.color_sequence = color_sequence
+        if pixel_sequence is not None:
+            self.state.color_sequence = pixel_sequence
         if state is not None:
             self.state = state
         else:

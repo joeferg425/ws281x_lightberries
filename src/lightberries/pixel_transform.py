@@ -82,14 +82,14 @@ class PixelTransform:
 
     def setup(
         self,
-        color_sequence: PixelSequence | None = None,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
     ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:
         ----
-            color_sequence: color sequence. Defaults to None.
+            pixel_sequence: color sequence. Defaults to None.
             state: initial state. Defaults to None.
 
         Returns:
@@ -100,8 +100,8 @@ class PixelTransform:
         if state is not None:
             self.state = state
         self.state.color_sequence = PixelSequence.default_color_sequence_by_month()
-        if color_sequence is not None:
-            self.state.color_sequence = color_sequence
+        if pixel_sequence is not None:
+            self.state.color_sequence = pixel_sequence
         return []
 
     def transform(self) -> None:

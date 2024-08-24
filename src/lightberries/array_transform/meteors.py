@@ -46,7 +46,7 @@ class TransformMeteor(PixelTransform):
 
     def setup(  # noqa: C901, PGH003, PLR0912, PLR0913, PLR0915, RUF100 # type: ignore
         self,
-        color_sequence: PixelSequence | None = None,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         fade_amount: float | str | None = None,
@@ -81,8 +81,8 @@ class TransformMeteor(PixelTransform):
 
         """
         self.ACTIVE_TRANSFORMS.clear()
-        if color_sequence is not None:
-            self.state.color_sequence = color_sequence
+        if pixel_sequence is not None:
+            self.state.color_sequence = pixel_sequence
         if state is not None:
             self.state = state
         else:
@@ -144,7 +144,7 @@ class TransformMeteor(PixelTransform):
         elif self.state.fade_type == LEDFadeType.INSTANT_OFF:
             fade = TransformOff(controller=self.controller)
             fade.setup(
-                color_sequence=self.state.color_sequence,
+                pixel_sequence=self.state.color_sequence,
                 state=self.state,
             )
             self.ACTIVE_TRANSFORMS.append(fade)

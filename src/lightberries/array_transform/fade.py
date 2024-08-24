@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import random
 from math import ceil
 from typing import TYPE_CHECKING, Any
 
@@ -10,10 +11,9 @@ from lightberries.constants import MAX_INT8
 from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
-    import numpy as np
 
     import lightberries.array_controller
-    from lightberries.pixel_transform import PixelTransform
+    from lightberries.pixel_sequence import PixelSequence
     from lightberries.state import TransformState
 
 LOGGER = logging.getLogger("lightBerries")
@@ -43,7 +43,7 @@ class TransformFade(PixelTransform):
 
     def setup(
         self,
-        color_sequence: np.ndarray[Any, np.int32] | None = None,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         fade_amount: float | None = None,
@@ -63,12 +63,18 @@ class TransformFade(PixelTransform):
             list of transforms
 
         """
-        if color_sequence is not None:
-            self.color_sequence = self.color_sequence
+        if pixel_sequence is not None:
+            self.state.color_sequence = pixel_sequence
         if state is not None:
             self.state = state
         else:
+            self.state.set_fade_amount(fade_amount=random.uniform(0.01, 0.5))
+
+        if fade_amount is not None:
             self.state.set_fade_amount(fade_amount=fade_amount)
+
+        self.ACTIVE_TRANSFORMS.append(self)
+        return self.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
         """Fade all Pixels."""
@@ -80,14 +86,19 @@ class TransformFade(PixelTransform):
             elif fade_amount > MAX_INT8:
                 fade_amount = MAX_INT8
             for i in range(self.controller.real_led_count):
-                for rgb_index in range(len(self.state.color)):
-                    if self.controller.virtual_led_buffer[i, rgb_index] != self.state.color[rgb_index]:
-                        if self.controller.virtual_led_buffer[i, rgb_index] - fade_amount > self.state.color[rgb_index]:
+                for rgb_index in range(len(self.state.color_sequence.pixel)):
+                    if self.controller.virtual_led_buffer[i, rgb_index] != self.state.color_sequence.pixel[rgb_index]:
+                        if (
+                            self.controller.virtual_led_buffer[i, rgb_index] - fade_amount
+                            > self.state.color_sequence.pixel[rgb_index]
+                        ):
                             self.controller.virtual_led_buffer[i, rgb_index] -= fade_amount
                         elif (
-                            self.controller.virtual_led_buffer[i, rgb_index] + fade_amount < self.state.color[rgb_index]
+                            self.controller.virtual_led_buffer[i, rgb_index] + fade_amount
+                            < self.state.color_sequence.pixel[rgb_index]
                         ):
                             self.controller.virtual_led_buffer[i, rgb_index] += fade_amount
                         else:
-                            self.controller.virtual_led_buffer[i, rgb_index] = self.state.color[rgb_index]
-                            self.controller.virtual_led_buffer[i, rgb_index] = self.state.color[rgb_index]
+                            self.controller.virtual_led_buffer[i, rgb_index] = self.state.color_sequence.pixel[
+                                rgb_index
+                            ]

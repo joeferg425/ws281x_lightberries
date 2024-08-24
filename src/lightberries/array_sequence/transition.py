@@ -65,20 +65,21 @@ class SequenceTransition(ArraySequence):
             wrap_offset = 1
         # figure out how many LEDs per color change
         if step_count is None:
-            step_count = led_count // (pixel_array.led_count - wrap_offset)
+            step_count = led_count // (pixel_array.led_count + wrap_offset)
             previous_step_count = step_count
         # create temporary array
-        temp_array = SequenceOff(led_count).ndarray
+        temp_array = SequenceOff(led_count=led_count).ndarray
         # step through color sequence
-        for color_index in range(led_count - wrap_offset):
-            if color_index == led_count - 1 or color_index == led_count - 2:
+        for color_index, pixel_index in enumerate(range(0, led_count, step_count)):
+            if pixel_index == led_count - 1 or pixel_index == led_count - 2:
                 step_count = led_count - count
+            i = color_index * previous_step_count
             # figure out the current and next colors
-            this_color = pixel_array[color_index]
-            next_color = pixel_array[(color_index + 1) % led_count]
+            this_color = pixel_array[color_index % pixel_array.led_count]
+            next_color = pixel_array[(color_index + 1) % pixel_array.led_count]
             # handle red, green, and blue individually
             for rgb_index in range(len(this_color)):
-                i = color_index * previous_step_count
+
                 # linspace creates the array of values from arg1, to arg2, in exactly arg3 steps
                 temp_array[i : (i + step_count), rgb_index] = np.linspace(
                     this_color.array[rgb_index],
@@ -86,4 +87,5 @@ class SequenceTransition(ArraySequence):
                     step_count,
                 )
             count += step_count
-        self._array = [Pixel(temp_array[i]) for i in range(temp_array)]
+        temp_pixels: list[Pixel] = [Pixel(temp_array[i]) for i in range(len(temp_array))]
+        self._array = temp_pixels

@@ -6,7 +6,8 @@ import random
 from typing import Any
 
 from lightberries.array_sequence._array_sequence import ArraySequence
-from lightberries.array_sequence.off import SequenceOff
+from lightberries.pixel import Pixel
+from lightberries.pixel_sequence import PixelSequence
 
 RED = 0
 GREEN = 1
@@ -18,7 +19,8 @@ class SequenceRandom(ArraySequence):
 
     def __init__(
         self,
-        led_count: int,
+        led_count: int | None = None,
+        pixel_array: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
         **kwargs: dict[str, Any],
     ) -> None:
@@ -27,6 +29,7 @@ class SequenceRandom(ArraySequence):
         Args:
         ----
             name: the name of this pattern
+            pixel_array: array of pixels
             led_count: the number of random colors to generate for the array
             kwargs: args for patterns
 
@@ -43,8 +46,14 @@ class SequenceRandom(ArraySequence):
             kwargs=kwargs,
         )
 
-        temp_array = SequenceOff(led_count).ndarray
-        for i in range(led_count):
+        if pixel_array is None:
+            pixel_array = PixelSequence.default_color_sequence_by_month()
+        elif isinstance(pixel_array, list):
+            pixel_array = PixelSequence(pixel_array=pixel_array)
+        if led_count is None:
+            led_count = pixel_array.led_count
+        temp_array: list[Pixel] = []
+        for _ in range(led_count):
             # prevent 255, 255, 255
             exclusion = random.randint(0, 2)
             if exclusion != RED:
@@ -59,5 +68,5 @@ class SequenceRandom(ArraySequence):
                 blue_led = random.randint(0, 255)
             else:
                 blue_led = 0
-            temp_array[i] = [red_led, green_led, blue_led]
+            temp_array.append(Pixel([red_led, green_led, blue_led]))
         self._array = temp_array

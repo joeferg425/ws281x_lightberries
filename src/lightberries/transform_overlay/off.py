@@ -6,7 +6,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from lightberries.pixel_transform import PixelTransform
-from lightberries.transform_overlay.base import OverlayTransform
+from lightberries.transform_overlay._overlay_transform import OverlayTransform
 
 if TYPE_CHECKING:
 
@@ -42,7 +42,7 @@ class TransformOff(OverlayTransform):
 
     def setup(
         self,
-        color_sequence: PixelSequence | None = None,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> list[PixelTransform]:
@@ -60,7 +60,7 @@ class TransformOff(OverlayTransform):
 
         """
         super().setup(
-            color_sequence=color_sequence,
+            pixel_sequence=pixel_sequence,
             state=state,
         )
         self.ACTIVE_TRANSFORMS.clear()

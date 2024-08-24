@@ -113,7 +113,7 @@ class TransformState:
 
     collision: bool = False
     collision_enabled: bool = False
-    collision_intersection: NDArray[np.int32] = field(default_factory=lambda: np.zeros([3, 0], dtype=np.int32))
+    collision_intersection: int = 0
     collision_with: PixelTransform | None = None
     collision_randomizer: bool = False
     collision_private: bool = False

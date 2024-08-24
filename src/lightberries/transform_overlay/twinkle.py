@@ -6,7 +6,7 @@ import random
 from typing import TYPE_CHECKING, Any
 
 from lightberries.state import TransformState
-from lightberries.transform_overlay.base import OverlayTransform
+from lightberries.transform_overlay._overlay_transform import OverlayTransform
 
 if TYPE_CHECKING:
     import lightberries.array_controller
@@ -42,7 +42,7 @@ class TransformTwinkle(OverlayTransform):
 
     def setup(
         self,
-        color_sequence: PixelSequence | None = None,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         twinkle_chance: float | None = None,
     ) -> list[PixelTransform]:
@@ -57,7 +57,7 @@ class TransformTwinkle(OverlayTransform):
         """
         self.ACTIVE_TRANSFORMS.clear()
         self.ACTIVE_TRANSFORMS.append(self)
-        if color_sequence is not None:
+        if pixel_sequence is not None:
             self.state.color_sequence = self.state.color_sequence.copy()
         if state is not None:
             self.state = state

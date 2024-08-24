@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 
-from lightberries.array_transform.base import ArrayTransform
+from lightberries.array_transform._array_transform import ArrayTransform
 from lightberries.constants import MAX_INT8, SHAPE_2D
 from lightberries.state import TransformState
 from lightberries.transform_overlay.fade_off import TransformFadeOff
@@ -50,7 +50,7 @@ class TransformAccelerate(ArrayTransform):
 
     def setup(  # noqa: PLR0913
         self,
-        color_sequence: PixelSequence | None = None,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         delay_count_max: int | None = None,
@@ -76,8 +76,8 @@ class TransformAccelerate(ArrayTransform):
             list of transforms
 
         """
-        if color_sequence is not None:
-            self.state.color_sequence = color_sequence
+        if pixel_sequence is not None:
+            self.state.color_sequence = pixel_sequence
         if state is not None:
             self.state = state
         else:

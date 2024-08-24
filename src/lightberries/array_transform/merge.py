@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from lightberries.array_sequence.reflect import SequenceRepeatedReflected
+from lightberries.array_sequence.reflect import SequenceReflect
 from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
@@ -88,7 +88,7 @@ class TransformMerge(PixelTransform):
         array_length = np.ceil(self.controller.real_led_count / self.color_sequence_count) * self.color_sequence_count
         # update LED buffer with any changes we had to make
         self.controller.set_virtual_led_buffer(
-            SequenceRepeatedReflected(
+            SequenceReflect(
                 arrayLength=array_length,
                 colorSequence=self.color_sequence,
                 foldLength=self.color_sequence_count,

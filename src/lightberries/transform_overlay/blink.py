@@ -6,7 +6,7 @@ import random
 from typing import TYPE_CHECKING, Any
 
 from lightberries.state import TransformState
-from lightberries.transform_overlay.base import OverlayTransform
+from lightberries.transform_overlay._overlay_transform import OverlayTransform
 
 if TYPE_CHECKING:
 
@@ -22,6 +22,7 @@ class TransformBlink(OverlayTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
+        pixel_array: PixelSequence,
         state: TransformState | None = None,
         **kwargs: dict[str, Any],
     ) -> None:
@@ -43,7 +44,7 @@ class TransformBlink(OverlayTransform):
 
     def setup(
         self,
-        color_sequence: PixelSequence | None = None,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         blink_chance: float | None = None,
     ) -> list[PixelTransform]:
@@ -51,14 +52,14 @@ class TransformBlink(OverlayTransform):
 
         Args:
         ----
-            color_sequence: the list of colors to be used when briefly flashing an LED
+            pixel_sequence: the list of colors to be used when briefly flashing an LED
             state: initial state. Defaults to None.
             blink_chance: chance of a blink
 
         """
         self.ACTIVE_TRANSFORMS.clear()
         self.ACTIVE_TRANSFORMS.append(self)
-        if color_sequence is not None:
+        if pixel_sequence is not None:
             self.state.color_sequence = self.state.color_sequence.copy()
         if state is not None:
             self.state = state

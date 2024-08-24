@@ -46,7 +46,7 @@ class TransformCylon(PixelTransform):
 
     def setup(
         self,
-        color_sequence: PixelSequence | None = None,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         fade_amount: int | None = None,
@@ -65,16 +65,16 @@ class TransformCylon(PixelTransform):
             delay_count: number of delays
 
         """
-        if color_sequence is not None:
-            self.color_sequence = color_sequence
+        if pixel_sequence is not None:
+            self.color_sequence = pixel_sequence
         if state is not None:
             self.state = state
         else:
             self.state.set_fade_amount(random.randint(5, 75) / MAX_INT8)
             self.state.delay_count_max = random.randint(10, 60)
 
-            if color_sequence is not None:
-                self.state.color_sequence = color_sequence
+            if pixel_sequence is not None:
+                self.state.color_sequence = pixel_sequence
             if fade_amount is not None:
                 self.state.set_fade_amount(fade_amount=fade_amount)
             if delay_count is not None:

@@ -45,7 +45,7 @@ class TransformAlive(PixelTransform):
 
     def setup(  # noqa: PLR0913
         self,
-        color_sequence: PixelSequence | None = None,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         fade_amount: float | None = None,
@@ -71,8 +71,8 @@ class TransformAlive(PixelTransform):
             list of transforms
 
         """
-        if color_sequence is not None:
-            self.color_sequence = self.color_sequence
+        if pixel_sequence is not None:
+            self.state.color_sequence = pixel_sequence
         if state is not None:
             self.state = state
         else:
@@ -109,7 +109,7 @@ class TransformAlive(PixelTransform):
             # randomize direction
             thing.state.direction = self.get_random_direction()
             # copy color sequence
-            thing.color_sequence = self.state.color_sequence.copy()
+            thing.state.color_sequence = self.state.color_sequence.copy()
             # randomize speed
             thing.state.step = random.randint(1, thing.state.step_size_max)
             # randomize refresh speed

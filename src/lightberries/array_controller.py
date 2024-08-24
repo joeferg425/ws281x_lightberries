@@ -96,7 +96,7 @@ class ArrayController:
 
         """
         try:
-            Pixel.default_pixel_order = list(led_order)
+            Pixel.default_pixel_order = led_order
             # configure logging
             if debug is True or verbose is True:
                 if not LOGGER.handlers:
@@ -758,13 +758,13 @@ class ArrayController:
         if len(function_names) > 0:
             matches: list[str] = []
             for name in function_names:
-                matches.extend([f for f in PixelTransform.ALL_TRANSFORMS if name.lower() in f.lower()])
+                matches.extend([f for f in PixelTransform.ALL_TRANSFORMS if name.lower() == f.lower()])
             functions = matches
         # get methods that match user's string
         if len(color_names) > 0:
             matches: list[str] = []
             for name in color_names:
-                matches.extend([f for f in PixelSequence.ALL_SEQUENCES if name.lower() in f.lower()])
+                matches.extend([f for f in PixelSequence.ALL_SEQUENCES if name.lower() == f.lower()])
             colors = matches
         # remove methods that user requested
         if len(skip_functions) > 0:
@@ -809,7 +809,7 @@ class ArrayController:
                 clr = PixelSequence.ALL_SEQUENCES[color](led_count=self.real_led_count)
                 # configure function
                 PixelTransform.ALL_TRANSFORMS[function](controller=self).setup(
-                    color_sequence=clr,
+                    pixel_sequence=clr,
                     **kwargs,
                 )
 

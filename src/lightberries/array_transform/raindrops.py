@@ -58,7 +58,7 @@ class TransformRaindrop(PixelTransform):
 
     def setup(  # noqa: PGH003, PLR0913 # type: ignore
         self,
-        color_sequence: PixelSequence | None = None,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         max_size: int | None = None,
@@ -82,8 +82,8 @@ class TransformRaindrop(PixelTransform):
             fade_amount: amount to fade LED each refresh
 
         """
-        if color_sequence is not None:
-            self.color_sequence = color_sequence
+        if pixel_sequence is not None:
+            self.color_sequence = pixel_sequence
         if state is not None:
             self.state = state
         else:

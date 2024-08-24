@@ -2,25 +2,22 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-import numpy as np
+from typing import Any
 
 from lightberries.array_sequence._array_sequence import ArraySequence
 from lightberries.array_sequence.off import SequenceOff
+from lightberries.pixel import Pixel, PixelColor
+from lightberries.pixel_sequence import PixelSequence
 
-if TYPE_CHECKING:
-    from numpy.typing import NDArray
 
-
-class SequenceRepeatedReflected(ArraySequence):
+class SequenceReflect(ArraySequence):
     """Generates an array where each repetition of the input. Sequence is reversed from the previous one."""
 
-    def __init__(  # noqa: C901
+    def __init__(  # noqa: C901, PLR0912
         self,
-        led_count: int,
+        led_count: int | None = None,
+        pixel_array: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
-        color_sequence: NDArray[np.int32] | None = None,
         fold_length: int | None = None,
         **kwargs: dict[str, Any],
     ) -> None:
@@ -29,8 +26,9 @@ class SequenceRepeatedReflected(ArraySequence):
         Args:
         ----
             name: the name of this pattern
+            pixel_array: array of pixels
             led_count: the number of LEDs to involve in the rainbow
-            color_sequence: an array of RGB tuples
+            pixel_array: an array of RGB tuples
             fold_length: the length of each segment wto be copied and reflected
             kwargs: args for patterns
 
@@ -40,45 +38,49 @@ class SequenceRepeatedReflected(ArraySequence):
 
         """
         if name is None:
-            name = SequenceRepeatedReflected.__name__
-        super().__init__(
-            led_count=led_count,
-            name=name,
-            kwargs=kwargs,
-        )
+            name = SequenceReflect.__name__
 
         # if user didn't specify otherwise, fold in middle
-        if color_sequence is None:
-            color_sequence = self.default_color_sequence_by_month()
-        color_sequence_length = color_sequence.shape[0]
+        if pixel_array is None:
+            pixel_array = PixelSequence.default_color_sequence_by_month()
+            if fold_length is None and led_count is None:
+                fold_length = pixel_array.led_count // 2
+        elif isinstance(pixel_array, list):
+            pixel_array = PixelSequence(pixel_array=pixel_array)
+
+        if fold_length is None and led_count is not None:
+            fold_length = led_count // 2
+        if led_count is None:
+            led_count = pixel_array.led_count
         if fold_length is None:
             fold_length = led_count // 2
-        if color_sequence_length == 0 or led_count == 0:
-            self._array = np.zeros((0, 3), dtype=np.int32)
+
+        _pixel_array: list[Pixel] = []
+        if pixel_array.led_count == 0 or led_count == 0:
+            _pixel_array = [Pixel(PixelColor.OFF)]
         else:
-            if fold_length > color_sequence_length:
-                temp = SequenceOff(fold_length).ndarray
-                temp[fold_length - color_sequence_length :] = color_sequence
-                color_sequence = temp
-                color_sequence_length = len(color_sequence)
+            # if fold_length > pixel_array.led_count:
+            #     temp = list(SequenceOff(fold_length))
+            #     temp[fold_length - pixel_array.led_count :] = list(pixel_array)
+            #     pixel_array = PixelSequence(pixel_array=temp)
             flip = False
-            temp_array = SequenceOff(led_count).ndarray
+            _pixel_array = list(SequenceOff(led_count=led_count))
             for seg_begin in range(0, led_count, fold_length):
                 overflow = 0
                 seg_end = 0
-                if seg_begin + fold_length <= led_count and seg_begin + fold_length <= color_sequence_length:
+                if seg_begin + fold_length <= led_count and seg_begin + fold_length <= pixel_array.led_count:
                     seg_end = seg_begin + fold_length
                 elif seg_begin + fold_length > led_count:
                     seg_end = seg_begin + fold_length
                     overflow = (seg_begin + fold_length) % led_count
                     seg_end = (seg_begin + fold_length) - overflow
-                elif seg_begin + fold_length > color_sequence_length:
-                    seg_end = seg_begin + color_sequence_length
-                    overflow = (seg_begin + color_sequence_length) % color_sequence_length
-                    seg_end = (seg_begin + color_sequence_length) - overflow
+                elif seg_begin + fold_length > pixel_array.led_count:
+                    seg_end = seg_begin + pixel_array.led_count
+                    overflow = (seg_begin + pixel_array.led_count) % pixel_array.led_count
+                    seg_end = (seg_begin + pixel_array.led_count) - overflow
                 if flip:
-                    temp_array[seg_begin:seg_end] = color_sequence[fold_length - overflow - 1 :: -1]
+                    _pixel_array[seg_begin:seg_end] = pixel_array[fold_length - overflow - 1 :: -1]
                 else:
-                    temp_array[seg_begin:seg_end] = color_sequence[0 : fold_length - overflow]
+                    _pixel_array[seg_begin:seg_end] = pixel_array[0 : fold_length - overflow]
                 flip = not flip
-            self._array = temp_array
+        super().__init__(led_count=led_count, name=name, pixel_array=_pixel_array, kwargs=kwargs)

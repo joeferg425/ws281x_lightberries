@@ -47,7 +47,6 @@ class PixelSequence(Sequence[Pixel]):
         if name is None:
             name = PixelSequence.__name__
         self._name = name
-        LOGGER.debug("Sequence: %s", name)
         if pixel_array is not None:
             if isinstance(pixel_array, PixelSequence):
                 self._array = list(pixel_array)
@@ -69,6 +68,7 @@ class PixelSequence(Sequence[Pixel]):
             self._pixel_next: Pixel = self._array[1].copy()
         else:
             self._pixel_next: Pixel = self._pixel.copy()
+        LOGGER.debug(self)
 
     def __len__(self) -> int:
         return self._led_count
@@ -373,7 +373,7 @@ class PixelSequence(Sequence[Pixel]):
             s += ",..."
         else:
             s += "]"
-        return f"SQX#{self._led_count}[{s}"
+        return f"{self._name}: SQX#{self._led_count}[{s}"
 
     def __repr__(
         self,

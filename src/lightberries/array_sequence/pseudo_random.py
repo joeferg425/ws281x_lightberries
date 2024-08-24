@@ -2,16 +2,12 @@
 
 from __future__ import annotations
 
-import random
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from lightberries.array_sequence._array_sequence import ArraySequence
 from lightberries.array_sequence.off import SequenceOff
-from lightberries.pixel_sequence import PixelSequence
-
-if TYPE_CHECKING:
-
-    from lightberries.pixel import Pixel
+from lightberries.pixel import Pixel
+from lightberries.pixel_sequence import PixelColor, PixelSequence
 
 
 class SequencePseudoRandom(ArraySequence):
@@ -53,7 +49,7 @@ class SequencePseudoRandom(ArraySequence):
             pixel_array = self.default_color_sequence_by_month()
 
         for i in range(led_count):
-            temp_array[i] = pixel_array[random.randint(0, pixel_array.led_count - 1)]
+            temp_array[i] = Pixel(PixelColor.pseudo_random())
 
         super().__init__(
             pixel_array=temp_array,
