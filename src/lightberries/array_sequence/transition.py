@@ -2,25 +2,24 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import numpy as np
 
-from lightberries.array_sequence.base import ArraySequence
+from lightberries.array_sequence._array_sequence import ArraySequence
 from lightberries.array_sequence.off import SequenceOff
-
-if TYPE_CHECKING:
-    from numpy.typing import NDArray
+from lightberries.pixel import Pixel
+from lightberries.pixel_sequence import PixelSequence
 
 
 class SequenceTransition(ArraySequence):
     """A more versatile version of CreateRainbow."""
 
-    def __init__(
+    def __init__(  # noqa: C901
         self,
-        led_count: int,
+        led_count: int | None = None,
+        pixel_array: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
-        color_sequence: NDArray[np.int32] | None = None,
         wrap: bool | None = None,
         **kwargs: dict[str, Any],
     ) -> None:
@@ -35,7 +34,7 @@ class SequenceTransition(ArraySequence):
             led_count: The total totalArrayLength of the final sequence in LEDs. This
                 parameter is optional and defaults to LED_INDEX_COUNT
             wrap: set true to wrap the transition from the last color back to the first
-            color_sequence: a sequence of colors to merge between
+            pixel_array: a sequence of colors to merge between
             kwargs: args for patterns
 
         """
@@ -46,12 +45,14 @@ class SequenceTransition(ArraySequence):
             led_count=led_count,
             kwargs=kwargs,
         )
-        if color_sequence is None:
-            color_sequence = self.default_color_sequence_by_month()
-        # get length of sequence
-        sequence_length = color_sequence.shape[0]
-        if sequence_length == 0 or led_count == 0:
-            color_sequence = np.zeros((0, 3), dtype=np.int32)
+        if pixel_array is None:
+            pixel_array = self.default_color_sequence_by_month()
+        elif isinstance(pixel_array, list):
+            pixel_array = PixelSequence(pixel_array=pixel_array)
+        if pixel_array.led_count == 0 or led_count == 0:
+            pixel_array = self.default_color_sequence_by_month()
+        if led_count is None:
+            led_count = pixel_array.led_count
         count = 0
         step_count = None
         previous_step_count = 0
@@ -64,26 +65,25 @@ class SequenceTransition(ArraySequence):
             wrap_offset = 1
         # figure out how many LEDs per color change
         if step_count is None:
-            step_count = led_count // (sequence_length - wrap_offset)
+            step_count = led_count // (pixel_array.led_count - wrap_offset)
             previous_step_count = step_count
         # create temporary array
         temp_array = SequenceOff(led_count).ndarray
         # step through color sequence
-        for color_index in range(sequence_length - wrap_offset):
-            if color_index == sequence_length - 1 or color_index == sequence_length - 2:
+        for color_index in range(led_count - wrap_offset):
+            if color_index == led_count - 1 or color_index == led_count - 2:
                 step_count = led_count - count
             # figure out the current and next colors
-            this_color = color_sequence[color_index]
-            next_color = color_sequence[(color_index + 1) % sequence_length]
+            this_color = pixel_array[color_index]
+            next_color = pixel_array[(color_index + 1) % led_count]
             # handle red, green, and blue individually
             for rgb_index in range(len(this_color)):
                 i = color_index * previous_step_count
                 # linspace creates the array of values from arg1, to arg2, in exactly arg3 steps
                 temp_array[i : (i + step_count), rgb_index] = np.linspace(
-                    this_color[rgb_index],
-                    next_color[rgb_index],
+                    this_color.array[rgb_index],
+                    next_color.array[rgb_index],
                     step_count,
                 )
             count += step_count
-        self._array = temp_array.astype(int)
-        self._array = temp_array.astype(int)
+        self._array = [Pixel(temp_array[i]) for i in range(temp_array)]

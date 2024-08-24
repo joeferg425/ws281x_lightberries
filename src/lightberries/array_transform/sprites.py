@@ -9,10 +9,10 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from lightberries.array_transform.fade_off import TransformFadeOff
 from lightberries.constants import SHAPE_2D
-from lightberries.pixel import PixelColor
+from lightberries.pixel import PixelColor, pixel_from_color
 from lightberries.pixel_transform import PixelTransform
+from lightberries.transform_overlay.fade_off import TransformFadeOff
 
 if TYPE_CHECKING:
     import lightberries.array_controller
@@ -138,14 +138,11 @@ class TransformSprites(PixelTransform):
             if self.state.current_state == SpriteState.FADING_OFF.value:
                 # fade the color
                 self.state.color_sequence.pixel.fade(
-                    color_next=PixelColor.OFF,
+                    color_next=pixel_from_color(PixelColor.OFF),
                     fade_amount=self.state.fade_amount,
                 )
                 # if we are done fading, then change state
-                if np.array_equal(
-                    self.state.color_sequence.pixel.array,
-                    PixelColor.OFF.array,
-                ):
+                if self.state.color_sequence.pixel == pixel_from_color(PixelColor.OFF):
                     self.state.current_state = SpriteState.OFF.value
             # if we are fading on
             if self.state.current_state == SpriteState.FADING_ON.value:
@@ -176,7 +173,7 @@ class TransformSprites(PixelTransform):
             self.color_sequence.advance_index()
             self.state.color_sequence = self.color_sequence
             # set current color
-            self.state.color_sequence.pixel = PixelColor.OFF
+            self.state.color_sequence.pixel = pixel_from_color(PixelColor.OFF)
         # if we changed the index
         if self.state.index_updated is True:
             # reset flag

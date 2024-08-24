@@ -11,11 +11,11 @@ from typing import Any, Callable, cast
 import numpy as np
 from numpy.typing import NDArray
 
-from lightberries.array_sequence.base import ArraySequence
+from lightberries.array_sequence._array_sequence import ArraySequence
 from lightberries.array_sequence.solid import SequenceSolid
 from lightberries.constants import SHAPE_2D, SHAPE_3D
 from lightberries.exceptions import ControllerError, LightBerryError
-from lightberries.pixel import Pixel, PixelColor
+from lightberries.pixel import LEDOrder, Pixel, PixelColor
 from lightberries.pixel_sequence import PixelSequence
 from lightberries.pixel_transform import PixelTransform
 from lightberries.ws281x_strings import WS281xString
@@ -58,6 +58,7 @@ class ArrayController:
         led_strip_type: Any = None,  # noqa: ANN401
         gamma: Any = None,  # noqa: ANN401
         refresh_callback: Callable[[], None] | None = None,
+        led_order: LEDOrder = LEDOrder.GRB,
         *,
         pwm_invert_signal: bool = False,
         debug: bool = False,
@@ -95,6 +96,7 @@ class ArrayController:
 
         """
         try:
+            Pixel.default_pixel_order = list(led_order)
             # configure logging
             if debug is True or verbose is True:
                 if not LOGGER.handlers:
@@ -123,7 +125,7 @@ class ArrayController:
             self._led_count: int = len(self.ws281xString)
             self.virtual_led_buffer: NDArray[np.int32] = SequenceSolid(
                 led_count=self._led_count,
-                color=PixelColor.OFF.array,
+                color=Pixel(PixelColor.OFF),
             ).ndarray
             self.virtual_led_index_buffer: NDArray[np.int32] = np.array(
                 range(len(self.ws281xString)),
@@ -135,7 +137,7 @@ class ArrayController:
             self._next_mode_change: float = time.time()
             self._refresh_delay: float = 0.001
             self._seconds_per_mode: float = 120.0
-            self._background_color: Pixel = PixelColor.OFF
+            self._background_color: Pixel = Pixel(PixelColor.OFF)
             self._color_sequence: PixelSequence = PixelSequence.default_color_sequence_by_month()
             self._color_sequence_count: int = len(self._color_sequence)
             self._color_sequence_index: int = 0
@@ -458,7 +460,7 @@ class ArrayController:
             elif self.virtual_led_count < self.real_led_count:
                 array = SequenceSolid(
                     led_count=self.real_led_count,
-                    color=PixelColor.OFF,
+                    color=Pixel(PixelColor.OFF),
                 )
                 self.set_virtual_led_buffer(array)
         except SystemExit:  # pragma: no cover
@@ -520,7 +522,7 @@ class ArrayController:
                     (
                         self.virtual_led_buffer,
                         np.array(
-                            [PixelColor.OFF.tuple for _ in range(self.real_led_count - self.virtual_led_count)],
+                            [Pixel(PixelColor.OFF) for _ in range(self.real_led_count - self.virtual_led_count)],
                         ),
                     ),
                 )
@@ -614,7 +616,7 @@ class ArrayController:
             # clear all current values
             self.virtual_led_buffer *= 0
             # set to background color
-            self.virtual_led_buffer[:] += self.background_color.array
+            self.virtual_led_buffer[:] += self.background_color.ordered_array
         except SystemExit:  # pragma: no cover
             raise
         except KeyboardInterrupt:  # pragma: no cover

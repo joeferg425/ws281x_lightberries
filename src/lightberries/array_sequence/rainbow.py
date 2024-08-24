@@ -4,11 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-import numpy as np
-
-from lightberries.array_sequence.base import ArraySequence
+from lightberries.array_sequence._array_sequence import ArraySequence
 from lightberries.array_sequence.transition import SequenceTransition
-from lightberries.pixel import PixelColor
+from lightberries.pixel import PixelColor, pixel_from_color
 
 
 class SequenceRainbow(ArraySequence):
@@ -42,13 +40,11 @@ class SequenceRainbow(ArraySequence):
             wrap = self.get_random_boolean()
         self._array = SequenceTransition(
             led_count=led_count,
-            color_sequence=np.array(
-                [
-                    PixelColor.RED.array,
-                    PixelColor.GREEN.array,
-                    PixelColor.BLUE.array,
-                    PixelColor.VIOLET.array,
-                ],
-            ),
+            color_sequence=[
+                pixel_from_color(PixelColor.RED),
+                pixel_from_color(PixelColor.GREEN),
+                pixel_from_color(PixelColor.BLUE),
+                pixel_from_color(PixelColor.VIOLET),
+            ],
             wrap=wrap,
-        ).ndarray
+        )

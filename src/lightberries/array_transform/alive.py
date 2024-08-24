@@ -8,10 +8,10 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from lightberries.array_transform.fade_off import TransformFadeOff
 from lightberries.constants import SHAPE_2D
 from lightberries.pixel_transform import PixelTransform
 from lightberries.state import ThingColors, ThingMoves, ThingSizes, TransformState
+from lightberries.transform_overlay.fade_off import TransformFadeOff
 
 if TYPE_CHECKING:
     import lightberries.array_controller

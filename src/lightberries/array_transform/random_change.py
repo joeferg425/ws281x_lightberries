@@ -8,11 +8,11 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from lightberries.array_transform.fade_off import TransformFadeOff
 from lightberries.constants import MAX_INT8, SHAPE_2D
 from lightberries.pixel import Pixel
 from lightberries.pixel_transform import PixelTransform
 from lightberries.state import ChangeStates, LEDFadeType, TransformState
+from lightberries.transform_overlay.fade_off import TransformFadeOff
 from lightberries.transform_overlay.off import TransformOff
 
 if TYPE_CHECKING:

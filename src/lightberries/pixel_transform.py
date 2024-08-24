@@ -61,12 +61,12 @@ class PixelTransform:
         else:
             self.state = state
 
-        LOGGER.debug("Transform: %s", name)
+        LOGGER.debug("Transform: %s", self)
 
     def __str__(
         self,
     ) -> str:
-        return f'[{self.state.index}]: "{self._name}" {self.state.color_sequence.pixel.rgb_tuple}'
+        return f'[{self.state.index}]: "{self._name}" {self.state.color_sequence.pixel}'
 
     def __repr__(
         self,

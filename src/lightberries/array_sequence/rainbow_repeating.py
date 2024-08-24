@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from lightberries.array_sequence.base import ArraySequence
+from lightberries.array_sequence._array_sequence import ArraySequence
 from lightberries.array_sequence.rainbow import SequenceRainbow
 from lightberries.array_sequence.sequence_repeating import SequenceRepeating
 

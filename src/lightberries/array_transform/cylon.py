@@ -9,10 +9,10 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from lightberries.array_sequence.solid import SequenceSolid
-from lightberries.array_transform.fade_off import TransformFadeOff
 from lightberries.constants import MAX_INT8, SHAPE_2D
-from lightberries.pixel import Pixel, PixelColor
+from lightberries.pixel import Pixel, PixelColor, pixel_from_color
 from lightberries.pixel_transform import PixelTransform
+from lightberries.transform_overlay.fade_off import TransformFadeOff
 
 if TYPE_CHECKING:
     import lightberries.array_controller
@@ -88,12 +88,12 @@ class TransformCylon(PixelTransform):
         # by this amount
         fade.setup(fade_amount=self.state.fade_amount)
         # shift eye by this much for each update
-        self.state.size = self.state.color_sequence.count
+        self.state.size = self.state.color_sequence.led_count
         # adjust virtual LED buffer if necessary so that the cylon can actually move
         if self.controller.virtual_led_count < self.state.size:
             array = SequenceSolid(
                 led_count=self.state.size + 3,
-                color=PixelColor.OFF,
+                color=pixel_from_color(PixelColor.OFF),
             )
             array[: self.controller.virtual_led_count] = [Pixel(x) for x in self.controller.virtual_led_buffer]
             self.controller.set_virtual_led_buffer(array)

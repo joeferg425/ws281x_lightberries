@@ -9,7 +9,6 @@ from lightberries.array_transform.collision_detection import (
 )
 from lightberries.array_transform.cylon import TransformCylon as TransformCylon
 from lightberries.array_transform.fade import TransformFade as TransformFade
-from lightberries.array_transform.fade_off import TransformFadeOff as TransformFadeOff
 from lightberries.array_transform.marquee import TransformMarquee as TransformMarquee
 from lightberries.array_transform.merge import TransformMerge as TransformMerge
 from lightberries.array_transform.meteors import TransformMeteor as TransformMeteor

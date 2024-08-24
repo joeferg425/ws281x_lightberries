@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING, Any, ClassVar
 import numpy as np
 
 from lightberries.array_transform.base import ArrayTransform
-from lightberries.array_transform.fade_off import TransformFadeOff
 from lightberries.constants import MAX_INT8, SHAPE_2D
 from lightberries.state import TransformState
+from lightberries.transform_overlay.fade_off import TransformFadeOff
 
 LOGGER = logging.getLogger("lightBerries")
 
@@ -77,7 +77,7 @@ class TransformAccelerate(ArrayTransform):
 
         """
         if color_sequence is not None:
-            self.color_sequence = self.color_sequence
+            self.state.color_sequence = color_sequence
         if state is not None:
             self.state = state
         else:

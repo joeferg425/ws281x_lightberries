@@ -9,10 +9,10 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from lightberries.array_transform.collision_detection import TransformCollisionDetect
-from lightberries.array_transform.fade_off import TransformFadeOff
 from lightberries.constants import SHAPE_2D
 from lightberries.pixel_transform import PixelTransform
 from lightberries.state import LEDFadeType, TransformState
+from lightberries.transform_overlay.fade_off import TransformFadeOff
 from lightberries.transform_overlay.off import TransformOff
 
 if TYPE_CHECKING:
@@ -150,10 +150,12 @@ class TransformMeteor(PixelTransform):
             self.ACTIVE_TRANSFORMS.append(fade)
 
         self.state.color_sequence.random_index()
+        LOGGER.debug("Transform: %s", self)
         self.ACTIVE_TRANSFORMS.append(self)
         for _ in range(meteor_count - 1):
-            meteor = TransformMeteor(controller=self.controller, state=self.state.copy())
             self.state.color_sequence.random_index()
+            meteor = TransformMeteor(controller=self.controller, state=self.state.copy())
+            meteor.state.color_sequence.random_index()
             # initialize "previous" index, for math's sake later
             meteor.state.index_previous = random.randint(0, self.controller.virtual_led_count - 1)
             # set the maximum number of LEDs it could move in one step
@@ -196,10 +198,12 @@ class TransformMeteor(PixelTransform):
                 self.state.color_sequence.advance_index()
             # assign LEDs to LED string
             if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
-                self.controller.virtual_led_buffer[self.state.index_range] = self.state.color_sequence.pixel.array
+                self.controller.virtual_led_buffer[self.state.index_range] = (
+                    self.state.color_sequence.pixel.ordered_array
+                )
             else:
                 self.controller.virtual_led_buffer[
                     np.where(
                         self.controller.virtual_led_index_buffer == self.state.index_range,
                     )
-                ] = self.state.color_sequence.pixel.array
+                ] = self.state.color_sequence.pixel.ordered_array

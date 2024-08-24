@@ -25,7 +25,7 @@ class ArraySequence(PixelSequence):
     def __init__(
         self,
         led_count: int | None = None,
-        pixel_array: list[Pixel] | None = None,
+        pixel_array: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
         **kwargs: dict[str, Any],
     ) -> None:
@@ -35,6 +35,7 @@ class ArraySequence(PixelSequence):
         ----
             name: the name of this pattern
             led_count: the number of pixels desired in the returned pixel array
+            pixel_array: array of pixels
             kwargs: args for patterns
 
         """

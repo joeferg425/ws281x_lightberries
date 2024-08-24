@@ -12,9 +12,9 @@ from typing import TYPE_CHECKING, Any, overload
 import numpy as np
 from numpy.typing import NDArray
 
-from lightberries.array_sequence.base import ArraySequence
+from lightberries.array_sequence._array_sequence import ArraySequence
 from lightberries.exceptions import PermissionsError
-from lightberries.pixel import Pixel, PixelColor
+from lightberries.pixel import Pixel, PixelColor, pixel_from_color
 from lightberries.rpiws281x import rpi_ws281x
 
 if TYPE_CHECKING:
@@ -325,7 +325,7 @@ class WS281xString(Sequence[NDArray[np.int32]]):
 
         """
         for index in range(len(self)):
-            self[index] = PixelColor.OFF.array
+            self[index] = pixel_from_color(PixelColor.OFF).array
         self.refresh()
         self.refresh()
         self.refresh()
