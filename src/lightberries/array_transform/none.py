@@ -22,6 +22,7 @@ class TransformNone(PixelTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
     ) -> None:
         """Do nothing.
@@ -30,11 +31,13 @@ class TransformNone(PixelTransform):
         ----
             controller: array controller instance
             state: the initial or previous state of the light string
+            pixel_sequence: a sequence of pixels
 
         """
         super().__init__(
             name=TransformNone.__name__,
             controller=controller,
+            pixel_sequence=pixel_sequence,
             state=state,
         )
 
@@ -48,7 +51,7 @@ class TransformNone(PixelTransform):
 
         Args:
         ----
-            color_sequence: color sequence. Defaults to None.
+            pixel_sequence: color sequence. Defaults to None.
             state: initial state. Defaults to None.
             kwargs: extra args to the state object
 
@@ -63,7 +66,7 @@ class TransformNone(PixelTransform):
             state=state,
         )
         if pixel_sequence is not None:
-            self.state.color_sequence = pixel_sequence
+            self.state.pixel_sequence = pixel_sequence
         if state is not None:
             self.state = state
         self.ran_once = False
@@ -74,7 +77,7 @@ class TransformNone(PixelTransform):
         """Do nothing."""
         if not self.ran_once:
             self.ran_once = True
-            if self.state.color_sequence.led_count <= self.controller.virtual_led_count:
-                self.controller.virtual_led_buffer[: self.state.color_sequence.led_count] = self.state.color_sequence
+            if self.state.pixel_sequence.led_count <= self.controller.virtual_led_count:
+                self.controller.virtual_led_buffer[: self.state.pixel_sequence.led_count] = self.state.pixel_sequence
             else:
-                self.controller.virtual_led_buffer[: self.controller.virtual_led_count] = self.state.color_sequence
+                self.controller.virtual_led_buffer[: self.controller.virtual_led_count] = self.state.pixel_sequence

@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformMarquee(PixelTransform):
+class TransformShift(PixelTransform):
     """Move the LEDs in the color sequence from one end of the LED string to the other continuously."""
 
     def __init__(
@@ -40,7 +40,7 @@ class TransformMarquee(PixelTransform):
 
         """
         super().__init__(
-            name=TransformMarquee.__name__,
+            name=TransformShift.__name__,
             controller=controller,
             pixel_sequence=pixel_sequence,
             state=state,
@@ -51,7 +51,7 @@ class TransformMarquee(PixelTransform):
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
-        fade_amount: float | None = None,
+        fade_amount: float | None = 0.0,
         shift_amount: int | None = None,
         delay_count: int | None = None,
         initial_direction: int | None = None,
@@ -80,7 +80,7 @@ class TransformMarquee(PixelTransform):
             self.state = state
         else:
             self.state.step = random.randint(1, 2)
-            self.state.delay_count_max = random.randint(0, 6)
+            self.state.delay_count_max = random.randint(10, 50)
             self.state.direction = self.get_random_direction()
 
         if shift_amount is not None:
@@ -91,25 +91,23 @@ class TransformMarquee(PixelTransform):
             self.state.direction = 1 if (initial_direction >= 1) else -1
         if fade_amount is None:
             self.state.set_fade_amount(random.uniform(0.01, 0.1))
-        # store the size of the color sequence being shifted back and forth
-        self.state.size = self.state.pixel_sequence.led_count
+
         # this function just shifts the existing virtual LED buffer,
         # so make sure the virtual LED buffer is initialized here
-        if self.state.pixel_sequence.led_count >= self.controller.virtual_led_count - 10:
+        if self.state.pixel_sequence.led_count > self.controller.virtual_led_count:
             array = SequenceSolid(
-                led_count=self.state.pixel_sequence.led_count + 10,
+                led_count=self.state.pixel_sequence.led_count,
                 color=Pixel(PixelColor.OFF),
             )
             array[: self.state.pixel_sequence.led_count] = list(self.state.pixel_sequence)
-            self.controller.set_virtual_led_buffer(array)
+            self.controller.virtual_led_buffer[:] = array
         else:
-            self.controller.set_virtual_led_buffer(self.state.pixel_sequence)
-        # turn off all LEDs every time so we can turn on new ones
-        transform_off = TransformFadeOff(controller=self.controller)
-        transform_off.setup(
-            pixel_sequence=self.state.pixel_sequence,
-            state=self.state,
-        )
+            self.controller.virtual_led_buffer[:] = self.state.pixel_sequence
+
+        # if self.state.fade_amount > 0.0:
+        #     # turn off all LEDs every time so we can turn on new ones
+        #     fade_off = TransformFadeOff(controller=self.controller, state=state)
+        #     self.ACTIVE_TRANSFORMS.append(fade_off)
         self.ACTIVE_TRANSFORMS.append(self)
         return self.ACTIVE_TRANSFORMS
 
@@ -119,40 +117,7 @@ class TransformMarquee(PixelTransform):
         self.state.delay_counter += 1
         # wait for several LED cycles to change LEDs
         if self.state.delay_counter >= self.state.delay_count_max:
-            # reset delay counter
             self.state.delay_counter = 0
-            # calculate possible next index
-            self.state.index_next = self.state.index + (self.state.step * self.state.direction)
-            # calculate max index we will update
-            self.state.index_max = self.state.index_next + self.state.size
-            # if we are going to overshoot
-            if self.state.index_max >= self.controller.virtual_led_count:
-                # switch direction
-                self.state.direction *= -1
-                # set index to either the next step or the max possible
-                # (accounts for step sizes > 1)
-                self.state.index = max(
-                    self.state.index + (self.state.step * self.state.direction),
-                    self.controller.virtual_led_count - self.state.size,
-                )
-            # if we will undershoot
-            elif self.state.index_max < self.state.size:
-                # TODO: should make a wrap-around version
-                # switch direction
-                self.state.direction *= -1
-                # set index to either the next step or zero
-                # (accounts for step sizes > 1)
-                self.state.index = max(
-                    self.state.index + (self.state.step * self.state.direction),
-                    0,
-                )
-            else:
-                # next index is valid, use it
-                self.state.index = self.state.index_next
-        # calculate color sequence range
-        self.state.index_range = np.arange(
-            self.state.index,
-            self.state.index + self.state.size,
-        )
-        # update LEDs with new values
-        self.controller.virtual_led_buffer[np.sort(self.state.index_range)] = self.state.pixel_sequence
+            # reset delay counter
+            # update LEDs with new values
+            self.controller.virtual_led_buffer = np.roll(self.controller.virtual_led_buffer, self.state.step, 0)

@@ -30,7 +30,7 @@ class PixelSequence(Sequence[Pixel]):
     def __init__(
         self,
         led_count: int | None = None,
-        pixel_array: PixelSequence | list[Pixel] | None = None,
+        pixel_sequence: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> None:
@@ -41,18 +41,18 @@ class PixelSequence(Sequence[Pixel]):
             name: the name of this pattern
             led_count: the number of pixels desired in the returned pixel array
             kwargs: args for patterns
-            pixel_array: a list of pixels
+            pixel_sequence: a list of pixels
 
         """
         if name is None:
             name = PixelSequence.__name__
         self._name = name
-        if pixel_array is not None:
-            if isinstance(pixel_array, PixelSequence):
-                self._array = list(pixel_array)
+        if pixel_sequence is not None:
+            if isinstance(pixel_sequence, PixelSequence):
+                self._array = list(pixel_sequence)
             else:
-                self._array = pixel_array
-            self._led_count = len(pixel_array)
+                self._array = pixel_sequence
+            self._led_count = len(pixel_sequence)
         elif led_count is not None:
             self._led_count = led_count
             self._array: list[Pixel] = [Pixel(PixelColor.OFF) for _ in range(int(self._led_count))]
@@ -229,7 +229,7 @@ class PixelSequence(Sequence[Pixel]):
             the light sequence
 
         """
-        return np.array([p.array for p in self._array], dtype=np.int32)
+        return np.array([p.rgb_array for p in self._array], dtype=np.int32)
 
     def count(self, value: Pixel) -> int:
         """Count instances of the pixel value.
@@ -326,7 +326,7 @@ class PixelSequence(Sequence[Pixel]):
             a copy of the sequence
 
         """
-        sequence = PixelSequence(name=self._name, pixel_array=self._array)
+        sequence = PixelSequence(name=self._name, pixel_sequence=self._array)
         sequence._led_index = self.led_index  # noqa: SLF001
         sequence._pixel = self._pixel  # noqa: SLF001
         sequence._pixel_next = self._pixel_next  # noqa: SLF001

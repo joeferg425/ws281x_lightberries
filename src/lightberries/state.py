@@ -11,12 +11,12 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from lightberries.constants import MAX_INT8
-from lightberries.pixel_sequence import PixelSequence
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     import lightberries.array_controller
+    from lightberries.pixel_sequence import PixelSequence
     from lightberries.pixel_transform import PixelTransform
 
 LOGGER = logging.getLogger("lightBerries")
@@ -81,7 +81,7 @@ class TransformState:
 
     controller: lightberries.array_controller.ArrayController
 
-    color_sequence: PixelSequence = field(default_factory=PixelSequence)
+    pixel_sequence: PixelSequence
     color_cycle: bool = False
     color_scaler: float = 0.5
 
@@ -137,8 +137,6 @@ class TransformState:
     period_short: int = 10
 
     def __post_init__(self) -> None:
-        self.color_sequence = PixelSequence.default_color_sequence_by_month()
-
         self.index_next: int = self.index
         self.index_previous: int = (self.index - 1) % self.controller.real_led_count
         self.index_min: int = self.index
@@ -171,7 +169,7 @@ class TransformState:
 
         """
         t = TransformState(**self.__dict__)
-        t.color_sequence = self.color_sequence.copy()
+        t.pixel_sequence = self.pixel_sequence.copy()
         return t
 
     def fade_color(
@@ -191,7 +189,7 @@ class TransformState:
 
         """
         # copy it to make sure we don't change the original by reference
-        return self.color_sequence.pixel.fade(
-            color_next=self.color_sequence.pixel_next,
+        return self.pixel_sequence.pixel.fade(
+            color_next=self.pixel_sequence.pixel_next,
             fade_amount=self.fade_amount,
         )

@@ -8,6 +8,7 @@ from lightberries.pixel_transform import PixelTransform, TransformState
 
 if TYPE_CHECKING:
     from lightberries.array_controller import ArrayController
+    from lightberries.pixel_sequence import PixelSequence
 
 
 class OverlayTransform(PixelTransform):
@@ -23,6 +24,7 @@ class OverlayTransform(PixelTransform):
         self,
         name: str,
         controller: ArrayController,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         **kwargs: dict[str, Any],
     ) -> None:
@@ -32,6 +34,7 @@ class OverlayTransform(PixelTransform):
         ----
             name: name of transform
             controller: Array controller instance
+            pixel_sequence: a sequence of pixels
             state: initial state. Defaults to None.
             kwargs: extra args to the state object
 
@@ -39,6 +42,7 @@ class OverlayTransform(PixelTransform):
         super().__init__(
             name=name,
             controller=controller,
+            pixel_sequence=pixel_sequence,
             state=state,
             kwargs=kwargs,
         )

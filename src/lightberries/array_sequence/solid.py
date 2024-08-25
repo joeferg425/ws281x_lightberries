@@ -25,7 +25,7 @@ class SequenceSolid(ArraySequence):
     def __init__(
         self,
         led_count: int | None = None,
-        pixel_array: PixelSequence | list[Pixel] | None = None,
+        pixel_sequence: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
         color: Pixel | PixelColor | NDArray[np.int32] | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
@@ -36,7 +36,7 @@ class SequenceSolid(ArraySequence):
         ----
             name: the name of this pattern
             led_count: the total desired length of the return array
-            pixel_array: array of pixels
+            pixel_sequence: array of pixels
             color: a pixel object defining the rgb values you want in the pattern
             kwargs: args for patterns
 
@@ -52,15 +52,15 @@ class SequenceSolid(ArraySequence):
             pixel = Pixel(color)
         else:
             pixel = color
-        if pixel_array is None:
+        if pixel_sequence is None:
             if led_count is not None:
-                pixel_array = [pixel for _ in range(int(led_count))]
+                pixel_sequence = [pixel for _ in range(int(led_count))]
             else:
-                pixel_array = [pixel]
+                pixel_sequence = [pixel]
         else:
-            pixel_array = [pixel]
+            pixel_sequence = [pixel]
         super().__init__(
             name=name,
-            pixel_array=pixel_array,
+            pixel_sequence=pixel_sequence,
         )
         LOGGER.debug("%s %d : %s", SequenceSolid.__name__, led_count, pixel)

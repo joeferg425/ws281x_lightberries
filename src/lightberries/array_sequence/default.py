@@ -18,7 +18,7 @@ class SequenceDefault(ArraySequence):
     def __init__(
         self,
         led_count: int | None = None,
-        pixel_array: PixelSequence | list[Pixel] | None = None,
+        pixel_sequence: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
         **kwargs: dict[str, Any],
     ) -> None:
@@ -28,7 +28,7 @@ class SequenceDefault(ArraySequence):
         ----
             name: the name of this pattern
             led_count: the number of pixels desired in the returned pixel array
-            pixel_array: array of pixels
+            pixel_sequence: array of pixels
             kwargs: args for patterns
 
         Returns:
@@ -38,10 +38,10 @@ class SequenceDefault(ArraySequence):
         """
         if name is None:
             name = SequenceDefault.__name__
-        if pixel_array is None:
-            pixel_array = self.default_color_sequence_by_month()
+        if pixel_sequence is None:
+            pixel_sequence = self.default_color_sequence_by_month()
         super().__init__(
-            pixel_array=pixel_array,
+            pixel_sequence=pixel_sequence,
             led_count=led_count,
             name=name,
             **kwargs,

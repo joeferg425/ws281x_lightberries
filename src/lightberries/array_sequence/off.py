@@ -17,7 +17,7 @@ class SequenceOff(ArraySequence):
     def __init__(
         self,
         led_count: int | None = None,
-        pixel_array: PixelSequence | list[Pixel] | None = None,
+        pixel_sequence: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
         **kwargs: dict[str, Any],
     ) -> None:
@@ -27,7 +27,7 @@ class SequenceOff(ArraySequence):
         ----
             name: the name of this pattern
             led_count: the number of pixels desired in the returned pixel array
-            pixel_array: array of pixels
+            pixel_sequence: array of pixels
             kwargs: args for patterns
 
         """
@@ -35,11 +35,11 @@ class SequenceOff(ArraySequence):
             name = SequenceOff.__name__
         if led_count is None:
             led_count = 1
-        if pixel_array is None:
+        if pixel_sequence is None:
             self._array = [pixel_from_color(PixelColor.OFF) for _ in range(int(led_count))]
         super().__init__(
             name=name,
-            pixel_array=pixel_array,
+            pixel_sequence=pixel_sequence,
             led_count=led_count,
             **kwargs,
         )

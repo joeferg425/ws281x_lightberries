@@ -25,6 +25,7 @@ class TransformCollisionDetect(PixelTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
     ) -> None:
         """Perform collision detection on the list of light function objects.
@@ -33,11 +34,13 @@ class TransformCollisionDetect(PixelTransform):
         ----
             controller: Array controller instance
             state: initial state. Defaults to None.
+            pixel_sequence: a sequence of pixels
 
         """
         super().__init__(
             name=TransformCollisionDetect.__name__,
             controller=controller,
+            pixel_sequence=pixel_sequence,
             state=state,
         )
 
@@ -51,7 +54,7 @@ class TransformCollisionDetect(PixelTransform):
 
         Args:
         ----
-            color_sequence: _description_. Defaults to None.
+            pixel_sequence: _description_. Defaults to None.
             state: initial state. Defaults to None.
             kwargs: extra args to the state object
 
@@ -61,7 +64,7 @@ class TransformCollisionDetect(PixelTransform):
 
         """
         if pixel_sequence is not None:
-            self.state.color_sequence = pixel_sequence
+            self.state.pixel_sequence = pixel_sequence
         if state is not None:
             self.state = state
         self.ACTIVE_TRANSFORMS.append(self)

@@ -28,6 +28,7 @@ class TransformMeteor(PixelTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
     ) -> None:
         """Do meteor function things.
@@ -36,11 +37,13 @@ class TransformMeteor(PixelTransform):
         ----
             controller: Array controller instance
             state: the initial or previous state of the light string
+            pixel_sequence: a sequence of pixels
 
         """
         super().__init__(
             name=TransformMeteor.__name__,
             controller=controller,
+            pixel_sequence=pixel_sequence,
             state=state,
         )
 
@@ -63,7 +66,7 @@ class TransformMeteor(PixelTransform):
 
         Args:
         ----
-            color_sequence: _description_. Defaults to None.
+            pixel_sequence: _description_. Defaults to None.
             state: _description_. Defaults to None.
             kwargs: extra args to the state object
             fade_amount: the amount by which meteors are faded
@@ -82,7 +85,7 @@ class TransformMeteor(PixelTransform):
         """
         self.ACTIVE_TRANSFORMS.clear()
         if pixel_sequence is not None:
-            self.state.color_sequence = pixel_sequence
+            self.state.pixel_sequence = pixel_sequence
         if state is not None:
             self.state = state
         else:
@@ -126,8 +129,8 @@ class TransformMeteor(PixelTransform):
             self.state.fade_type = fade_type
 
         if meteor_count is None or isinstance(meteor_count, int) and meteor_count < 1:
-            if self.state.color_sequence.led_count >= 2 and self.state.color_sequence.led_count <= 6:  # noqa: PLR2004
-                meteor_count = self.state.color_sequence.led_count
+            if self.state.pixel_sequence.led_count >= 2 and self.state.pixel_sequence.led_count <= 6:  # noqa: PLR2004
+                meteor_count = self.state.pixel_sequence.led_count
             else:
                 meteor_count = random.randint(1, 3)
         elif isinstance(meteor_count, str):
@@ -144,18 +147,18 @@ class TransformMeteor(PixelTransform):
         elif self.state.fade_type == LEDFadeType.INSTANT_OFF:
             fade = TransformOff(controller=self.controller)
             fade.setup(
-                pixel_sequence=self.state.color_sequence,
+                pixel_sequence=self.state.pixel_sequence,
                 state=self.state,
             )
             self.ACTIVE_TRANSFORMS.append(fade)
 
-        self.state.color_sequence.random_index()
+        self.state.pixel_sequence.random_index()
         LOGGER.debug("Transform: %s", self)
         self.ACTIVE_TRANSFORMS.append(self)
         for _ in range(meteor_count - 1):
-            self.state.color_sequence.random_index()
+            self.state.pixel_sequence.random_index()
             meteor = TransformMeteor(controller=self.controller, state=self.state.copy())
-            meteor.state.color_sequence.random_index()
+            meteor.state.pixel_sequence.random_index()
             # initialize "previous" index, for math's sake later
             meteor.state.index_previous = random.randint(0, self.controller.virtual_led_count - 1)
             # set the maximum number of LEDs it could move in one step
@@ -195,15 +198,13 @@ class TransformMeteor(PixelTransform):
             self.update_array_index()
             if self.state.color_cycle:
                 # assign the next color
-                self.state.color_sequence.advance_index()
+                self.state.pixel_sequence.advance_index()
             # assign LEDs to LED string
             if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
-                self.controller.virtual_led_buffer[self.state.index_range] = (
-                    self.state.color_sequence.pixel.ordered_array
-                )
+                self.controller.virtual_led_buffer[self.state.index_range] = self.state.pixel_sequence.pixel.rgb_array
             else:
                 self.controller.virtual_led_buffer[
                     np.where(
                         self.controller.virtual_led_index_buffer == self.state.index_range,
                     )
-                ] = self.state.color_sequence.pixel.ordered_array
+                ] = self.state.pixel_sequence.pixel.rgb_array

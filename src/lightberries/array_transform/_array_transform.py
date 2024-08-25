@@ -10,6 +10,7 @@ from lightberries.pixel_transform import PixelTransform
 if TYPE_CHECKING:
 
     import lightberries.array_controller
+    from lightberries.pixel_sequence import PixelSequence
     from lightberries.state import TransformState
 
 
@@ -32,6 +33,7 @@ class ArrayTransform(PixelTransform):
         self,
         name: str,
         controller: lightberries.array_controller.ArrayController,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
     ) -> None:
         """Initialize the Light Function tracking object.
@@ -40,11 +42,13 @@ class ArrayTransform(PixelTransform):
         ----
             name: name of the function
             controller: Array controller instance
+            pixel_sequence: a sequence of pixels
             state: initial state. Defaults to None.
 
         """
         super().__init__(
             name=name,
             controller=controller,
+            pixel_sequence=pixel_sequence,
             state=state,
         )

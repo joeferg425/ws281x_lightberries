@@ -28,6 +28,7 @@ class TransformRandomChange(PixelTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
     ) -> None:
         """Do random change function things.
@@ -36,11 +37,13 @@ class TransformRandomChange(PixelTransform):
         ----
             controller: Array controller instance
             state: the initial or previous state of the light string
+            pixel_sequence: a sequence of pixels
 
         """
         super().__init__(
             name=TransformRandomChange.__name__,
             controller=controller,
+            pixel_sequence=pixel_sequence,
             state=state,
         )
 
@@ -59,7 +62,7 @@ class TransformRandomChange(PixelTransform):
 
         Args:
         ----
-            color_sequence: color sequence. Defaults to None.
+            pixel_sequence: color sequence. Defaults to None.
             state: initial state. Defaults to None.
             kwargs: extra args to the state object
             delay_count: refresh delay
@@ -69,7 +72,7 @@ class TransformRandomChange(PixelTransform):
 
         """
         if pixel_sequence is not None:
-            self.state.color_sequence = pixel_sequence
+            self.state.pixel_sequence = pixel_sequence
         if state is not None:
             self.state = state
         else:
@@ -115,9 +118,9 @@ class TransformRandomChange(PixelTransform):
                 change.state.index = int(index)
                 # copy the current color of this LED index
                 if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
-                    change.state.color_sequence.pixel = Pixel(self.controller.virtual_led_buffer[change.state.index])
+                    change.state.pixel_sequence.pixel = Pixel(self.controller.virtual_led_buffer[change.state.index])
                 else:
-                    change.state.color_sequence.pixel = Pixel(
+                    change.state.pixel_sequence.pixel = Pixel(
                         self.controller.virtual_led_buffer[
                             np.where(
                                 self.controller.virtual_led_index_buffer == change.state.index,
@@ -126,7 +129,7 @@ class TransformRandomChange(PixelTransform):
                     )
                 # randomly set the color we are fading toward
                 if random.randint(0, 1) == 1:
-                    change.state.color_sequence.pixel_next = self.state.color_sequence.advance_index(keep_current=True)
+                    change.state.pixel_sequence.pixel_next = self.state.pixel_sequence.advance_index(keep_current=True)
                 # we want all the delays random, so don't start them all at zero
                 change.state.delay_count_max = random.randint(0, change.state.delay_count_limit)
                 # add function to list
@@ -136,7 +139,7 @@ class TransformRandomChange(PixelTransform):
     def transform(self) -> None:  # noqa: C901, PLR0912
         """Randomly changes pixels from one color to the next."""
         # if the random change has completed
-        if self.state.color_sequence.pixel == self.state.color_sequence.pixel_next:
+        if self.state.pixel_sequence.pixel == self.state.pixel_sequence.pixel_next:
             # if the state is "fading on"
             if self.state.current_state == ChangeStates.FADING_ON.value:
                 # just set next state to "on"
@@ -156,7 +159,7 @@ class TransformRandomChange(PixelTransform):
                     # randomly fading some LEDs to background color
                     if random.randint(0, 3) == 3:  # noqa: PLR2004
                         # set next color to background color
-                        self.state.color_sequence.pixel_next = Pixel(self.controller.background_color)
+                        self.state.pixel_sequence.pixel_next = Pixel(self.controller.background_color)
                         # set state to "fading off"
                         self.state.current_state = ChangeStates.FADING_OFF.value
                         self.state.index = self.get_random_index()
@@ -188,9 +191,9 @@ class TransformRandomChange(PixelTransform):
                     self.state.index = self.get_random_index()
                     # get color of current LED index
                     if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
-                        self.state.color_sequence.pixel = Pixel(self.controller.virtual_led_buffer[self.state.index])
+                        self.state.pixel_sequence.pixel = Pixel(self.controller.virtual_led_buffer[self.state.index])
                     else:
-                        self.state.color_sequence.pixel = Pixel(
+                        self.state.pixel_sequence.pixel = Pixel(
                             self.controller.virtual_led_buffer[
                                 np.where(
                                     self.controller.virtual_led_index_buffer == self.state.index,
@@ -199,7 +202,7 @@ class TransformRandomChange(PixelTransform):
                         )
                     # get next color
                     for _ in range(random.randint(1, 5)):
-                        self.state.color_sequence.advance_index(keep_current=True)
+                        self.state.pixel_sequence.advance_index(keep_current=True)
                     # set state to "fading on"
                     self.state.current_state = ChangeStates.FADING_ON.value
                     # randomize delay counter so they aren't synchronized
@@ -211,18 +214,18 @@ class TransformRandomChange(PixelTransform):
         # if fading LEDs
         if self.state.fade_type == LEDFadeType.FADE_OFF:
             # fade the color
-            self.state.color_sequence.pixel.fade(
-                color_next=self.state.color_sequence.pixel_next,
+            self.state.pixel_sequence.pixel.fade(
+                color_next=self.state.pixel_sequence.pixel_next,
                 fade_amount=self.state.fade_amount,
             )
         # if instant on/off
         else:
             # set the color
-            self.state.color_sequence.pixel = self.state.color_sequence.pixel_next
+            self.state.pixel_sequence.pixel = self.state.pixel_sequence.pixel_next
         # assign LED color to LED string
         if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
-            self.controller.virtual_led_buffer[self.state.index] = self.state.color_sequence.pixel.array
+            self.controller.virtual_led_buffer[self.state.index] = self.state.pixel_sequence.pixel.array
         else:
             self.controller.virtual_led_buffer[
                 np.where(self.controller.virtual_led_index_buffer == self.state.index)
-            ] = self.state.color_sequence.pixel.array
+            ] = self.state.pixel_sequence.pixel.array

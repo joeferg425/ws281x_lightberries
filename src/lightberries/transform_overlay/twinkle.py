@@ -21,6 +21,7 @@ class TransformTwinkle(OverlayTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         **kwargs: dict[str, Any],
     ) -> None:
@@ -30,6 +31,7 @@ class TransformTwinkle(OverlayTransform):
         ----
             controller: Array controller instance
             state: the initial or previous state of the light string
+            pixel_sequence: a pixel sequence
             kwargs: extra args to the state object
 
         """
@@ -37,6 +39,7 @@ class TransformTwinkle(OverlayTransform):
             name=TransformTwinkle.__name__,
             controller=controller,
             state=state,
+            pixel_sequence=pixel_sequence,
             kwargs=kwargs,
         )
 
@@ -50,7 +53,7 @@ class TransformTwinkle(OverlayTransform):
 
         Args:
         ----
-            color_sequence: the list of colors to be used when briefly flashing an LED
+            pixel_sequence: the list of colors to be used when briefly flashing an LED
             state: initial state. Defaults to None.
             twinkle_chance: chance of a twinkle
 
@@ -58,7 +61,7 @@ class TransformTwinkle(OverlayTransform):
         self.ACTIVE_TRANSFORMS.clear()
         self.ACTIVE_TRANSFORMS.append(self)
         if pixel_sequence is not None:
-            self.state.color_sequence = self.state.color_sequence.copy()
+            self.state.pixel_sequence = self.state.pixel_sequence.copy()
         if state is not None:
             self.state = state
         else:
@@ -80,5 +83,5 @@ class TransformTwinkle(OverlayTransform):
         """
         for index in range(self.controller.real_led_count):
             if random.random() > self.state.random:
-                self.state.color_sequence.advance_index()
-                self.controller.overlay_dictionary[index] = self.state.color_sequence.pixel.array
+                self.state.pixel_sequence.advance_index()
+                self.controller.overlay_dictionary[index] = self.state.pixel_sequence.pixel.array

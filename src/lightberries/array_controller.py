@@ -12,6 +12,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from lightberries.array_sequence._array_sequence import ArraySequence
+from lightberries.array_sequence.named import SequenceName, get_named_sequence
 from lightberries.array_sequence.solid import SequenceSolid
 from lightberries.constants import SHAPE_2D, SHAPE_3D
 from lightberries.exceptions import ControllerError, LightBerryError
@@ -616,7 +617,7 @@ class ArrayController:
             # clear all current values
             self.virtual_led_buffer *= 0
             # set to background color
-            self.virtual_led_buffer[:] += self.background_color.ordered_array
+            self.virtual_led_buffer[:] += self.background_color.rgb_array
         except SystemExit:  # pragma: no cover
             raise
         except KeyboardInterrupt:  # pragma: no cover
@@ -742,6 +743,8 @@ class ArrayController:
         if seconds_per_mode is not None:
             _seconds_per_mode = int(seconds_per_mode)
         self.seconds_per_mode = _seconds_per_mode
+        if seconds_per_mode == 0.0:
+            self._loop_forever = True
 
         if function_names is None:
             function_names = []
@@ -752,64 +755,89 @@ class ArrayController:
         if skip_colors is None:
             skip_colors = []
 
-        functions = list(PixelTransform.ALL_TRANSFORMS)
-        colors = list(PixelSequence.ALL_SEQUENCES)
+        transform_functions = list(PixelTransform.ALL_TRANSFORMS)
+        color_functions = list(PixelSequence.ALL_SEQUENCES)
+        color_sequences = list(SequenceName._member_names_)
         # get methods that match user's string
         if len(function_names) > 0:
             matches: list[str] = []
             for name in function_names:
                 matches.extend([f for f in PixelTransform.ALL_TRANSFORMS if name.lower() == f.lower()])
-            functions = matches
+            transform_functions = matches
         # get methods that match user's string
         if len(color_names) > 0:
             matches: list[str] = []
             for name in color_names:
                 matches.extend([f for f in PixelSequence.ALL_SEQUENCES if name.lower() == f.lower()])
-            colors = matches
+            color_functions = matches
+        # get methods that match user's string
+        if len(color_names) > 0:
+            matches: list[str] = []
+            for name in color_names:
+                matches.extend([f for f in SequenceName._member_names_ if name.lower() == f.lower()])
+            color_sequences = matches
         # remove methods that user requested
         if len(skip_functions) > 0:
             matches = []
             for name in skip_functions:
-                for function in functions:
-                    if name.lower() in function.lower():
-                        functions.remove(function)
+                for transform_function in transform_functions:
+                    if name.lower() in transform_function.lower():
+                        transform_functions.remove(transform_function)
         # remove methods that user requested
         if len(skip_colors) > 0:
             matches = []
             for name in skip_colors:
-                for color in colors:
-                    if name.lower() in color.lower():
-                        colors.remove(color)
+                for color_function in color_functions:
+                    if name.lower() in color_function.lower():
+                        color_functions.remove(color_function)
 
-        if len(functions) == 0:
+        if len(transform_functions) == 0:
             msg = "No functions selected in demo"
             raise ControllerError(msg)
-        if len(colors) == 0:
+        if len(color_functions) == 0 and len(color_sequences) == 0:
             msg = "No colors selected in demo"
             raise ControllerError(msg)
         while True:
             # make a temporary copy (so we can go through each one)
-            functions_copy = functions.copy()
-            colors_copy = colors.copy()
-            function = functions_copy[random.randint(0, len(functions_copy) - 1)]
-            color = colors_copy[random.randint(0, len(colors_copy) - 1)]
+            transform_functions_copy = transform_functions.copy()
+            color_functions_copy = color_functions.copy()
+            color_sequences_copy = color_sequences.copy()
+            transform_function = transform_functions_copy[random.randint(0, len(transform_functions_copy) - 1)]
+            color_function = None
+            color_sequence = None
+            if color_functions:
+                color_function = color_functions_copy[random.randint(0, len(color_functions_copy) - 1)]
+            if color_sequences:
+                color_sequence = color_sequences_copy[random.randint(0, len(color_sequences_copy) - 1)]
+            # if not color_function and any(name.lower() in SequenceName._member_names_ for name in color_names):
+            #     color_functions_copy = color_names
+            #     color_function = color_names[0]
             # loop while we still have a color and a function
-            while (len(functions_copy) * len(colors_copy)) > 0:
+            while len(transform_functions_copy) > 0 and (len(color_functions_copy) or len(color_sequences_copy) > 0):
                 # get a new function if there is one
-                if len(functions_copy) > 0:
-                    function = functions_copy[random.randint(0, len(functions_copy) - 1)]
-                    functions_copy.remove(function)
+                if len(transform_functions_copy) > 0:
+                    transform_function = transform_functions_copy[random.randint(0, len(transform_functions_copy) - 1)]
+                    transform_functions_copy.remove(transform_function)
                 # get a new color pattern if there is one
-                if len(colors_copy) > 0:
-                    color = colors_copy[random.randint(0, len(colors_copy) - 1)]
-                    colors_copy.remove(color)
+                if len(color_functions_copy) > 0:
+                    color_function = color_functions_copy[random.randint(0, len(color_functions_copy) - 1)]
+                    color_functions_copy.remove(color_function)
+                # get a new color pattern if there is one
+                if len(color_sequences_copy) > 0:
+                    color_sequence = color_sequences_copy[random.randint(0, len(color_sequences_copy) - 1)]
+                    color_sequences_copy.remove(color_sequence)
                 # reset
                 self.reset()
                 # apply color
-                clr = PixelSequence.ALL_SEQUENCES[color](led_count=self.real_led_count)
+                if color_function:
+                    clr = PixelSequence.ALL_SEQUENCES[color_function](led_count=self.real_led_count)
+                else:
+                    clr = get_named_sequence(name=SequenceName[color_sequence], led_count=self.real_led_count)
                 # configure function
-                PixelTransform.ALL_TRANSFORMS[function](controller=self).setup(
+                PixelTransform.ALL_TRANSFORMS[transform_function](
+                    controller=self,
                     pixel_sequence=clr,
+                ).setup(
                     **kwargs,
                 )
 

@@ -14,6 +14,7 @@ from lightberries.array_sequence.all_sequences import *
 from lightberries.array_transform.all_functions import *
 from lightberries.exceptions import LightBerryError, PermissionsError
 from lightberries.pixel_sequence import PixelSequence
+from lightberries.array_sequence.named import SequenceName
 from lightberries.pixel_transform import PixelTransform
 
 LOGGER = logging.getLogger("lightBerries")
@@ -64,7 +65,8 @@ if __name__ == "__main__":  # pylint: disable=invalid-name
     parser.add_argument(
         "-c",
         "--color",
-        choices=[name.lower() for name in PixelSequence.ALL_SEQUENCES],
+        choices=[name.lower() for name in PixelSequence.ALL_SEQUENCES]
+        + [name.lower() for name in SequenceName._member_names_],
         help="the name of the color pattern to demo using randomized parameters",
     )
     parser.add_argument(

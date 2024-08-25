@@ -27,6 +27,7 @@ class TransformAlive(PixelTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
     ) -> None:
         """Do alive function things.
@@ -35,11 +36,13 @@ class TransformAlive(PixelTransform):
         ----
             controller: Array controller instance
             state: initial state. Defaults to None.
+            pixel_sequence: a sequence of pixels
 
         """
         super().__init__(
             name=TransformAlive.__name__,
             controller=controller,
+            pixel_sequence=pixel_sequence,
             state=state,
         )
 
@@ -58,7 +61,7 @@ class TransformAlive(PixelTransform):
 
         Args:
         ----
-            color_sequence: _description_. Defaults to None.
+            pixel_sequence: _description_. Defaults to None.
             state: initial state. Defaults to None.
             kwargs: extra args to the state object
             fade_amount: amount of fade
@@ -72,7 +75,7 @@ class TransformAlive(PixelTransform):
 
         """
         if pixel_sequence is not None:
-            self.state.color_sequence = pixel_sequence
+            self.state.pixel_sequence = pixel_sequence
         if state is not None:
             self.state = state
         else:
@@ -109,7 +112,7 @@ class TransformAlive(PixelTransform):
             # randomize direction
             thing.state.direction = self.get_random_direction()
             # copy color sequence
-            thing.state.color_sequence = self.state.color_sequence.copy()
+            thing.state.pixel_sequence = self.state.pixel_sequence.copy()
             # randomize speed
             thing.state.step = random.randint(1, thing.state.step_size_max)
             # randomize refresh speed
@@ -215,7 +218,7 @@ class TransformAlive(PixelTransform):
                     # randomly cycle through assign colors
                     if random.randint(0, 99) > 90:  # noqa: PLR2004
                         for _ in range(random.randint(1, 3)):
-                            self.state.color_sequence.advance_index()
+                            self.state.pixel_sequence.advance_index()
                 # increment step counter
                 self.state.step_counter += 1
             # we hit our step goal, randomize next state
@@ -255,10 +258,10 @@ class TransformAlive(PixelTransform):
         self.state.delay_counter += 1
         # assign colors to indices
         if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
-            self.controller.virtual_led_buffer[self.state.index_range] = self.state.color_sequence.pixel
+            self.controller.virtual_led_buffer[self.state.index_range] = self.state.pixel_sequence.pixel
         else:
             self.controller.virtual_led_buffer[
                 np.where(
                     self.controller.virtual_led_index_buffer == self.state.index_range,
                 )
-            ] = self.state.color_sequence.pixel
+            ] = self.state.pixel_sequence.pixel

@@ -22,7 +22,7 @@ class TransformBlink(OverlayTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        pixel_array: PixelSequence,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         **kwargs: dict[str, Any],
     ) -> None:
@@ -32,12 +32,14 @@ class TransformBlink(OverlayTransform):
         ----
             controller: Array controller instance
             state: the initial or previous state of the light string
+            pixel_sequence: a sequence of pixels
             kwargs: extra args to the state object
 
         """
         super().__init__(
             name=TransformBlink.__name__,
             controller=controller,
+            pixel_sequence=pixel_sequence,
             state=state,
             kwargs=kwargs,
         )
@@ -60,7 +62,7 @@ class TransformBlink(OverlayTransform):
         self.ACTIVE_TRANSFORMS.clear()
         self.ACTIVE_TRANSFORMS.append(self)
         if pixel_sequence is not None:
-            self.state.color_sequence = self.state.color_sequence.copy()
+            self.state.pixel_sequence = self.state.pixel_sequence.copy()
         if state is not None:
             self.state = state
         else:
@@ -82,6 +84,6 @@ class TransformBlink(OverlayTransform):
 
         """
         if random.random() > self.state.random:
-            self.state.color_sequence.advance_index()
+            self.state.pixel_sequence.advance_index()
             for index in range(self.controller.real_led_count):
-                self.controller.overlay_dictionary[index] = self.state.color_sequence.pixel.array
+                self.controller.overlay_dictionary[index] = self.state.pixel_sequence.pixel.array

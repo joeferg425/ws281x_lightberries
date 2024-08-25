@@ -36,6 +36,7 @@ class PixelTransform:
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
+        pixel_sequence: PixelSequence | None = None,
         name: str | None = None,
         state: TransformState | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
@@ -46,6 +47,7 @@ class PixelTransform:
         ----
             name: name of the function
             controller: Array controller instance
+            pixel_sequence: a pixel sequence
             state: initial state. Defaults to None.
             kwargs: args for patterns
 
@@ -56,8 +58,10 @@ class PixelTransform:
         name = f"{name}[{self._instance_count}]"
         self.controller = controller
         self._name = name
+        if pixel_sequence is None:
+            pixel_sequence = PixelSequence.default_color_sequence_by_month()
         if state is None:
-            self.state = TransformState(controller=self.controller)
+            self.state = TransformState(controller=self.controller, pixel_sequence=pixel_sequence)
         else:
             self.state = state
 
@@ -66,7 +70,7 @@ class PixelTransform:
     def __str__(
         self,
     ) -> str:
-        return f'[{self.state.index}]: "{self._name}" {self.state.color_sequence.pixel}'
+        return f'[{self.state.index}]: "{self._name}" {self.state.pixel_sequence.pixel}'
 
     def __repr__(
         self,
@@ -99,9 +103,8 @@ class PixelTransform:
         """
         if state is not None:
             self.state = state
-        self.state.color_sequence = PixelSequence.default_color_sequence_by_month()
         if pixel_sequence is not None:
-            self.state.color_sequence = pixel_sequence
+            self.state.pixel_sequence = pixel_sequence
         return []
 
     def transform(self) -> None:

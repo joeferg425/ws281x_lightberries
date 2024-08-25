@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from lightberries.array_sequence.reflect import SequenceReflect
+from lightberries.pixel_sequence import PixelSequence
 from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
@@ -24,6 +25,7 @@ class TransformMerge(PixelTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
     ) -> None:
         """Do merge function things.
@@ -32,17 +34,19 @@ class TransformMerge(PixelTransform):
         ----
             controller: Array controller instance
             state: the initial or previous state of the light string
+            pixel_sequence: a sequence of pixels
 
         """
         super().__init__(
             name=TransformMerge.__name__,
             controller=controller,
+            pixel_sequence=pixel_sequence,
             state=state,
         )
 
     def setup(
         self,
-        color_sequence: np.ndarray[Any, np.int32] | None = None,
+        pixel_sequence: np.ndarray[Any, np.int32] | None = None,
         state: TransformState | None = None,
         *,
         shift_amount: int | None = None,
@@ -53,15 +57,15 @@ class TransformMerge(PixelTransform):
 
         Args:
         ----
-            color_sequence: color sequence. Defaults to None.
+            pixel_sequence: color sequence. Defaults to None.
             state: the initial or previous state of the light string
             kwargs: extra args to the state object
             shift_amount: amount the merge will shift in each update
             delay_count: length of reflected segments
 
         """
-        if color_sequence is not None:
-            self.color_sequence = self.color_sequence
+        if pixel_sequence is not None:
+            self.pixel_sequence = self.pixel_sequence
         if state is not None:
             self.state = state
         else:
@@ -74,23 +78,23 @@ class TransformMerge(PixelTransform):
         # make sure doing a merge function would be visible
         if self.color_sequence_count >= self.controller.real_led_count:
             # if sequence is too long, cut it in half
-            self.color_sequence = self.color_sequence[: int(self.color_sequence_count // 2)]
+            self.pixel_sequence = self.pixel_sequence[: int(self.color_sequence_count // 2)]
             # don't remember offhand why this is here
             if self.color_sequence_count % 2 == 1:
                 if self.color_sequence_count == 1:
-                    self.color_sequence = np.concatenate(
-                        self.color_sequence,
-                        self.color_sequence,
+                    self.pixel_sequence = np.concatenate(
+                        self.pixel_sequence,
+                        self.pixel_sequence,
                     )
                 else:
-                    self.color_sequence = self.color_sequence[:-1]
+                    self.pixel_sequence = self.pixel_sequence[:-1]
         # calculate modulo length
         array_length = np.ceil(self.controller.real_led_count / self.color_sequence_count) * self.color_sequence_count
         # update LED buffer with any changes we had to make
         self.controller.set_virtual_led_buffer(
             SequenceReflect(
                 arrayLength=array_length,
-                colorSequence=self.color_sequence,
+                colorSequence=self.pixel_sequence,
                 foldLength=self.color_sequence_count,
             ),
         )
@@ -127,7 +131,7 @@ class TransformMerge(PixelTransform):
             # the matrixification of the array
             if temp[0][0] != temp[1][-1]:
                 temp[1] = np.flip(temp[0])
-                self.controller.virtual_led_buffer[range(self.state.size)] = self.state.color_sequence[
+                self.controller.virtual_led_buffer[range(self.state.size)] = self.state.pixel_sequence[
                     range(self.state.size)
                 ]
             temp[0] = np.roll(temp[0], self.state.step, 0)

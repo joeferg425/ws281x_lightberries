@@ -28,6 +28,7 @@ class TransformCylon(PixelTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
     ) -> None:
         """Do cylon eye things.
@@ -36,11 +37,13 @@ class TransformCylon(PixelTransform):
         ----
             controller: Array controller instance
             state: initial state. Defaults to None.
+            pixel_sequence: a sequence of pixels
 
         """
         super().__init__(
             name=TransformCylon.__name__,
             controller=controller,
+            pixel_sequence=pixel_sequence,
             state=state,
         )
 
@@ -57,7 +60,7 @@ class TransformCylon(PixelTransform):
 
         Args:
         ----
-            color_sequence: color sequence. Defaults to None.
+            pixel_sequence: color sequence. Defaults to None.
             state: the initial or previous state of the light string
             kwargs: extra args to the state object
             fade_amount: how much each pixel fades per refresh
@@ -66,7 +69,7 @@ class TransformCylon(PixelTransform):
 
         """
         if pixel_sequence is not None:
-            self.color_sequence = pixel_sequence
+            self.pixel_sequence = pixel_sequence
         if state is not None:
             self.state = state
         else:
@@ -74,7 +77,7 @@ class TransformCylon(PixelTransform):
             self.state.delay_count_max = random.randint(10, 60)
 
             if pixel_sequence is not None:
-                self.state.color_sequence = pixel_sequence
+                self.state.pixel_sequence = pixel_sequence
             if fade_amount is not None:
                 self.state.set_fade_amount(fade_amount=fade_amount)
             if delay_count is not None:
@@ -88,7 +91,7 @@ class TransformCylon(PixelTransform):
         # by this amount
         fade.setup(fade_amount=self.state.fade_amount)
         # shift eye by this much for each update
-        self.state.size = self.state.color_sequence.led_count
+        self.state.size = self.state.pixel_sequence.led_count
         # adjust virtual LED buffer if necessary so that the cylon can actually move
         if self.controller.virtual_led_count < self.state.size:
             array = SequenceSolid(
@@ -164,10 +167,10 @@ class TransformCylon(PixelTransform):
         # update index
         self.state.index = self.state.index_next
         if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
-            self.controller.virtual_led_buffer[self.state.index_range] = self.state.color_sequence.pixel.array
+            self.controller.virtual_led_buffer[self.state.index_range] = self.state.pixel_sequence.pixel.array
         else:
             self.controller.virtual_led_buffer[
                 np.where(
                     self.controller.virtual_led_index_buffer == self.state.index_range,
                 )
-            ] = self.state.color_sequence.pixel.array
+            ] = self.state.pixel_sequence.pixel.array

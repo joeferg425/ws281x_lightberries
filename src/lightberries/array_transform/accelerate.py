@@ -31,6 +31,7 @@ class TransformAccelerate(ArrayTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
     ) -> None:
         """Accelerate across the string of lights repeatedly.
@@ -39,11 +40,13 @@ class TransformAccelerate(ArrayTransform):
         ----
             controller: Array controller instance
             state: initial state. Defaults to None.
+            pixel_sequence: a sequence of pixels
 
         """
         super().__init__(
             name=TransformAccelerate.__name__,
             controller=controller,
+            pixel_sequence=pixel_sequence,
             state=state,
         )
         self.INSTANCES[len(self.INSTANCES)] = self
@@ -63,7 +66,7 @@ class TransformAccelerate(ArrayTransform):
 
         Args:
         ----
-            color_sequence: _description_. Defaults to None.
+            pixel_sequence: _description_. Defaults to None.
             state: initial state. Defaults to None.
             kwargs: extra args to the state object
             delay_count_max: maximum number of iterations to delay for
@@ -77,7 +80,7 @@ class TransformAccelerate(ArrayTransform):
 
         """
         if pixel_sequence is not None:
-            self.state.color_sequence = pixel_sequence
+            self.state.pixel_sequence = pixel_sequence
         if state is not None:
             self.state = state
         else:
@@ -141,7 +144,7 @@ class TransformAccelerate(ArrayTransform):
             )
             self.state.index_range[modulo] -= self.controller.real_led_count
             if self.state.color_cycle is True:
-                self.state.color_sequence.advance_index()
+                self.state.pixel_sequence.advance_index()
         # check index step counter, update speed state when it hits step count max
         if self.state.step_counter >= self.state.step_count_max:
             # reset step counter
@@ -201,12 +204,12 @@ class TransformAccelerate(ArrayTransform):
                 self.state.index + 1,
             )
         if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
-            self.controller.virtual_led_buffer[self.state.index_range] = self.state.color_sequence.pixel
+            self.controller.virtual_led_buffer[self.state.index_range] = self.state.pixel_sequence.pixel
         else:
             self.controller.virtual_led_buffer[
                 np.where(
                     self.controller.virtual_led_index_buffer == self.state.index_range,
                 )
-            ] = self.state.color_sequence.pixel
+            ] = self.state.pixel_sequence.pixel
         if splash is True:
             self.controller.virtual_led_buffer[splash_range, :] = self.state.fade_color()

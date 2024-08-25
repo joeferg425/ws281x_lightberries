@@ -20,7 +20,7 @@ class SequenceRandom(ArraySequence):
     def __init__(
         self,
         led_count: int | None = None,
-        pixel_array: PixelSequence | list[Pixel] | None = None,
+        pixel_sequence: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
         **kwargs: dict[str, Any],
     ) -> None:
@@ -29,7 +29,7 @@ class SequenceRandom(ArraySequence):
         Args:
         ----
             name: the name of this pattern
-            pixel_array: array of pixels
+            pixel_sequence: array of pixels
             led_count: the number of random colors to generate for the array
             kwargs: args for patterns
 
@@ -46,12 +46,12 @@ class SequenceRandom(ArraySequence):
             kwargs=kwargs,
         )
 
-        if pixel_array is None:
-            pixel_array = PixelSequence.default_color_sequence_by_month()
-        elif isinstance(pixel_array, list):
-            pixel_array = PixelSequence(pixel_array=pixel_array)
+        if pixel_sequence is None:
+            pixel_sequence = PixelSequence.default_color_sequence_by_month()
+        elif isinstance(pixel_sequence, list):
+            pixel_sequence = PixelSequence(pixel_sequence=pixel_sequence)
         if led_count is None:
-            led_count = pixel_array.led_count
+            led_count = pixel_sequence.led_count
         temp_array: list[Pixel] = []
         for _ in range(led_count):
             # prevent 255, 255, 255

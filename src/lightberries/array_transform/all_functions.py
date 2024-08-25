@@ -19,6 +19,7 @@ from lightberries.array_transform.raindrops import (
 from lightberries.array_transform.random_change import (
     TransformRandomChange as TransformRandomChange,
 )
+from lightberries.array_transform.shift import TransformShift as TransformShift
 from lightberries.array_transform.solid_color_cycle import (
     TransformSolidColorCycle as TransformSolidColorCycle,
 )

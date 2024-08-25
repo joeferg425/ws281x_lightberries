@@ -51,7 +51,7 @@ class TransformFadeOff(OverlayTransform):
 
         Args:
         ----
-            color_sequence: color sequence. Defaults to None.
+            pixel_sequence: color sequence. Defaults to None.
             state: the initial or previous state of the light string
             kwargs: extra args to the state object
             fade_amount: amount to fade on each iteration
@@ -63,7 +63,7 @@ class TransformFadeOff(OverlayTransform):
         """
         self.ACTIVE_TRANSFORMS.clear()
         if pixel_sequence is not None:
-            self.state.color_sequence = pixel_sequence.copy()
+            self.state.pixel_sequence = pixel_sequence.copy()
         if state is not None:
             self.state = state
         else:

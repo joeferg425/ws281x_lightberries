@@ -25,6 +25,7 @@ class TransformFade(PixelTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
     ) -> None:
         """Fade all Pixels.
@@ -33,11 +34,13 @@ class TransformFade(PixelTransform):
         ----
             controller: Array controller instance
             state: initial state. Defaults to None.
+            pixel_sequence: a sequence of pixels
 
         """
         super().__init__(
             name="Fade",
             controller=controller,
+            pixel_sequence=pixel_sequence,
             state=state,
         )
 
@@ -53,7 +56,7 @@ class TransformFade(PixelTransform):
 
         Args:
         ----
-            color_sequence: color sequence. Defaults to None.
+            pixel_sequence: color sequence. Defaults to None.
             state: the initial or previous state of the light string
             kwargs: extra args to the state object
             fade_amount: amount to fade on each iteration
@@ -64,7 +67,7 @@ class TransformFade(PixelTransform):
 
         """
         if pixel_sequence is not None:
-            self.state.color_sequence = pixel_sequence
+            self.state.pixel_sequence = pixel_sequence
         if state is not None:
             self.state = state
         else:
@@ -86,19 +89,19 @@ class TransformFade(PixelTransform):
             elif fade_amount > MAX_INT8:
                 fade_amount = MAX_INT8
             for i in range(self.controller.real_led_count):
-                for rgb_index in range(len(self.state.color_sequence.pixel)):
-                    if self.controller.virtual_led_buffer[i, rgb_index] != self.state.color_sequence.pixel[rgb_index]:
+                for rgb_index in range(len(self.state.pixel_sequence.pixel)):
+                    if self.controller.virtual_led_buffer[i, rgb_index] != self.state.pixel_sequence.pixel[rgb_index]:
                         if (
                             self.controller.virtual_led_buffer[i, rgb_index] - fade_amount
-                            > self.state.color_sequence.pixel[rgb_index]
+                            > self.state.pixel_sequence.pixel[rgb_index]
                         ):
                             self.controller.virtual_led_buffer[i, rgb_index] -= fade_amount
                         elif (
                             self.controller.virtual_led_buffer[i, rgb_index] + fade_amount
-                            < self.state.color_sequence.pixel[rgb_index]
+                            < self.state.pixel_sequence.pixel[rgb_index]
                         ):
                             self.controller.virtual_led_buffer[i, rgb_index] += fade_amount
                         else:
-                            self.controller.virtual_led_buffer[i, rgb_index] = self.state.color_sequence.pixel[
+                            self.controller.virtual_led_buffer[i, rgb_index] = self.state.pixel_sequence.pixel[
                                 rgb_index
                             ]

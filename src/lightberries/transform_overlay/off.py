@@ -50,7 +50,7 @@ class TransformOff(OverlayTransform):
 
         Args:
         ----
-            color_sequence: color sequence. Defaults to None.
+            pixel_sequence: color sequence. Defaults to None.
             state: initial state. Defaults to None.
             kwargs: extra args to the state object
 

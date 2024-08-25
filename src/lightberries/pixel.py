@@ -250,7 +250,7 @@ class Pixel:
         return np.array(self.tuple)
 
     @property
-    def ordered_array(
+    def rgb_array(
         self,
     ) -> NDArray[np.int32]:
         """Return Pixel value as a numpy array.
@@ -262,9 +262,9 @@ class Pixel:
         """
         return np.array(
             [
-                self.array[self._order[0]],
-                self.array[self._order[1]],
-                self.array[self._order[2]],
+                self.array[self._order.red],
+                self.array[self._order.green],
+                self.array[self._order.blue],
             ],
         )
 

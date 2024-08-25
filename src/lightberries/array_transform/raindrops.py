@@ -34,6 +34,7 @@ class TransformRaindrop(PixelTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
     ) -> None:
         """Do raindrop function things.
@@ -42,17 +43,13 @@ class TransformRaindrop(PixelTransform):
         ----
             controller: Array controller instance
             state: the initial or previous state of the light string
-
-        Raises:
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightFunctionException: if something bad happens
+            pixel_sequence: a sequence of pixels
 
         """
         super().__init__(
             name=TransformRaindrop.__name__,
             controller=controller,
+            pixel_sequence=pixel_sequence,
             state=state,
         )
 
@@ -72,7 +69,7 @@ class TransformRaindrop(PixelTransform):
 
         Args:
         ----
-            color_sequence: color sequence. Defaults to None.
+            pixel_sequence: color sequence. Defaults to None.
             state: initial state. Defaults to None.
             kwargs: extra args to the state object
             max_size: max splash size
@@ -83,7 +80,7 @@ class TransformRaindrop(PixelTransform):
 
         """
         if pixel_sequence is not None:
-            self.color_sequence = pixel_sequence
+            self.pixel_sequence = pixel_sequence
         if state is not None:
             self.state = state
         else:
@@ -94,7 +91,7 @@ class TransformRaindrop(PixelTransform):
         if max_size is not None:
             self.state.size_max = max_size
         if max_raindrops is None:
-            max_raindrops = max(min(self.state.color_sequence.led_count, 10), 2)
+            max_raindrops = max(min(self.state.pixel_sequence.led_count, 10), 2)
         if step_size is not None:
             self.state.step_size_max = step_size
         if self.state.step_size_max > 3:  # noqa: PLR2004
@@ -174,33 +171,33 @@ class TransformRaindrop(PixelTransform):
                 if (index_lower_max - index_lower_min) > 0:
                     index_range = list(range(index_lower_min, index_lower_max))
                     self.controller.virtual_led_buffer[index_lower_min:index_lower_max] = [
-                        self.state.color_sequence[self.color_sequence.led_index].array,
+                        self.state.pixel_sequence[self.pixel_sequence.led_index].array,
                     ] * (index_lower_max - index_lower_min)
                     if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
-                        self.controller.virtual_led_buffer[index_range] = self.state.color_sequence[
-                            self.color_sequence.led_index
+                        self.controller.virtual_led_buffer[index_range] = self.state.pixel_sequence[
+                            self.pixel_sequence.led_index
                         ].array
                     else:
                         self.controller.virtual_led_buffer[
                             np.where(
                                 self.controller.virtual_led_index_buffer == index_range,
                             )
-                        ] = self.state.color_sequence[self.color_sequence.led_index].array
+                        ] = self.state.pixel_sequence[self.pixel_sequence.led_index].array
                 if (index_higher_max - index_higher_min) > 0:
                     index_range = list(range(index_higher_min, index_higher_max))
                     if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
-                        self.controller.virtual_led_buffer[index_range] = self.state.color_sequence[
-                            self.color_sequence.led_index
+                        self.controller.virtual_led_buffer[index_range] = self.state.pixel_sequence[
+                            self.pixel_sequence.led_index
                         ].array
                     else:
                         self.controller.virtual_led_buffer[
                             np.where(
                                 self.controller.virtual_led_index_buffer == index_range,
                             )
-                        ] = self.state.color_sequence[self.color_sequence.led_index].array
+                        ] = self.state.pixel_sequence[self.pixel_sequence.led_index].array
                 # scaled fading as splash grows
-                self.state.color_sequence.pixel[:] = (
-                    self.state.color_sequence[self.color_sequence.led_index].array * self.state.color_scaler
+                self.state.pixel_sequence.pixel[:] = (
+                    self.state.pixel_sequence[self.pixel_sequence.led_index].array * self.state.color_scaler
                 )
                 # increment splash growth counter
                 self.state.step_counter += self.state.step
@@ -215,6 +212,6 @@ class TransformRaindrop(PixelTransform):
                 self.state.step_counter = 0
                 # semi-randomize next color
                 for _ in range(1, random.randint(2, 4)):
-                    self.state.color_sequence.advance_index()
+                    self.state.pixel_sequence.advance_index()
                 # set state to off
                 self.state.current_state = RaindropStates.OFF
