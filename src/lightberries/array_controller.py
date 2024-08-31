@@ -829,16 +829,17 @@ class ArrayController:
                 # reset
                 self.reset()
                 # apply color
+                clr = None
                 if color_function:
                     clr = PixelSequence.ALL_SEQUENCES[color_function](led_count=self.real_led_count)
-                else:
+                elif color_sequence:
                     clr = get_named_sequence(name=SequenceName[color_sequence], led_count=self.real_led_count)
+                else:
+                    clr = PixelSequence.default_color_sequence_by_month()
                 # configure function
-                PixelTransform.ALL_TRANSFORMS[transform_function](
+                PixelTransform.ALL_TRANSFORMS[transform_function].setup(
                     controller=self,
                     pixel_sequence=clr,
-                ).setup(
-                    **kwargs,
                 )
 
                 # run the combination

@@ -13,8 +13,11 @@ from hashlib import sha256
 from lightberries.array_controller import ArrayController as ArrayController
 
 random.seed(
-    int.from_bytes(sha256(str(datetime.datetime.now(tz=None)).encode(), usedforsecurity=False).digest(), "big")
-)  # noqa: DTZ005
+    int.from_bytes(
+        sha256(str(datetime.datetime.now(tz=None)).encode(), usedforsecurity=False).digest(),  # noqa: DTZ005
+        "big",
+    ),
+)
 # from lightberries.matrix_controller import MatrixController as MatrixController
 
 # setup logging

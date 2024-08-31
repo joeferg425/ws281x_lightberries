@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import random
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -28,8 +28,6 @@ class TransformCylon(PixelTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        pixel_sequence: PixelSequence | None = None,
-        state: TransformState | None = None,
     ) -> None:
         """Do cylon eye things.
 
@@ -43,23 +41,22 @@ class TransformCylon(PixelTransform):
         super().__init__(
             name=TransformCylon.__name__,
             controller=controller,
-            pixel_sequence=pixel_sequence,
-            state=state,
         )
 
+    @staticmethod
     def setup(
-        self,
+        controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         fade_amount: int | None = None,
         delay_count: int | None = None,
-        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> list[PixelTransform]:
         """Shift a pixel across the LED string marquee style and then bounce back leaving a comet tail.
 
         Args:
         ----
+            controller: Array controller instance
             pixel_sequence: color sequence. Defaults to None.
             state: the initial or previous state of the light string
             kwargs: extra args to the state object
@@ -68,42 +65,44 @@ class TransformCylon(PixelTransform):
             delay_count: number of delays
 
         """
-        if pixel_sequence is not None:
-            self.pixel_sequence = pixel_sequence
+        transform = TransformCylon(controller=controller)
         if state is not None:
-            self.state = state
+            transform.state = state
         else:
-            self.state.set_fade_amount(random.randint(5, 75) / MAX_INT8)
-            self.state.delay_count_max = random.randint(10, 60)
+            transform.state.set_fade_amount(random.randint(5, 75) / MAX_INT8)
+            transform.state.delay_count_max = random.randint(10, 60)
 
-            if pixel_sequence is not None:
-                self.state.pixel_sequence = pixel_sequence
-            if fade_amount is not None:
-                self.state.set_fade_amount(fade_amount=fade_amount)
-            if delay_count is not None:
-                self.state.delay_count_max = delay_count
+        if pixel_sequence is not None:
+            transform.state.pixel_sequence = pixel_sequence
+        if fade_amount is not None:
+            transform.state.set_fade_amount(fade_amount=fade_amount)
+        if delay_count is not None:
+            transform.state.delay_count_max = delay_count
 
         # fade the whole LED strand
-        fade = TransformFadeOff(
-            controller=self.controller,
-            state=state,
+        TransformFadeOff.setup(
+            controller=controller,
+            fade_amount=transform.state.fade_amount,
         )
-        # by this amount
-        fade.setup(fade_amount=self.state.fade_amount)
+
         # shift eye by this much for each update
-        self.state.size = self.state.pixel_sequence.led_count
+        transform.state.size = transform.state.pixel_sequence.led_count
         # adjust virtual LED buffer if necessary so that the cylon can actually move
-        if self.controller.virtual_led_count < self.state.size:
+        if transform.controller.virtual_led_count < transform.state.size:
             array = SequenceSolid(
-                led_count=self.state.size + 3,
+                led_count=transform.state.size + 3,
                 color=pixel_from_color(PixelColor.OFF),
             )
-            array[: self.controller.virtual_led_count] = [Pixel(x) for x in self.controller.virtual_led_buffer]
-            self.controller.set_virtual_led_buffer(array)
+            array[: transform.controller.virtual_led_count] = [
+                Pixel(x) for x in transform.controller.virtual_led_buffer
+            ]
+            transform.controller.set_virtual_led_buffer(array)
         # set start and next indices
-        self.state.index = self.controller.virtual_led_count - self.state.size - 3
-        self.state.index_next = self.state.index
-        return [fade, self]
+        transform.state.index = transform.controller.virtual_led_count - transform.state.size - 3
+        transform.state.index_next = transform.state.index
+
+        TransformCylon.ACTIVE_TRANSFORMS.append(transform)
+        return TransformCylon.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
         """Do alive function things."""

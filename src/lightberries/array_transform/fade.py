@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import random
 from math import ceil
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from lightberries.constants import MAX_INT8
 from lightberries.pixel_transform import PixelTransform
@@ -25,8 +25,6 @@ class TransformFade(PixelTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        pixel_sequence: PixelSequence | None = None,
-        state: TransformState | None = None,
     ) -> None:
         """Fade all Pixels.
 
@@ -40,22 +38,21 @@ class TransformFade(PixelTransform):
         super().__init__(
             name="Fade",
             controller=controller,
-            pixel_sequence=pixel_sequence,
-            state=state,
         )
 
+    @staticmethod
     def setup(
-        self,
+        controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         fade_amount: float | None = None,
-        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:
         ----
+            controller: Array controller instance
             pixel_sequence: color sequence. Defaults to None.
             state: the initial or previous state of the light string
             kwargs: extra args to the state object
@@ -66,18 +63,19 @@ class TransformFade(PixelTransform):
             list of transforms
 
         """
-        if pixel_sequence is not None:
-            self.state.pixel_sequence = pixel_sequence
+        transform = TransformFade(controller=controller)
         if state is not None:
-            self.state = state
+            transform.state = state
         else:
-            self.state.set_fade_amount(fade_amount=random.uniform(0.01, 0.5))
+            transform.state.set_fade_amount(fade_amount=random.uniform(0.01, 0.5))
 
+        if pixel_sequence is not None:
+            transform.state.pixel_sequence = pixel_sequence
         if fade_amount is not None:
-            self.state.set_fade_amount(fade_amount=fade_amount)
+            transform.state.set_fade_amount(fade_amount=fade_amount)
 
-        self.ACTIVE_TRANSFORMS.append(self)
-        return self.ACTIVE_TRANSFORMS
+        TransformFade.ACTIVE_TRANSFORMS.append(transform)
+        return TransformFade.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
         """Fade all Pixels."""

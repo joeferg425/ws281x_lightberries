@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import random
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -28,8 +28,6 @@ class TransformRandomChange(PixelTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        pixel_sequence: PixelSequence | None = None,
-        state: TransformState | None = None,
     ) -> None:
         """Do random change function things.
 
@@ -43,12 +41,11 @@ class TransformRandomChange(PixelTransform):
         super().__init__(
             name=TransformRandomChange.__name__,
             controller=controller,
-            pixel_sequence=pixel_sequence,
-            state=state,
         )
 
+    @staticmethod
     def setup(  # noqa: C901, PLR0912, PLR0913
-        self,
+        controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
@@ -56,12 +53,12 @@ class TransformRandomChange(PixelTransform):
         change_count: int | None = None,
         fade_step_count: int | None = None,
         fade_type: LEDFadeType | None = None,
-        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> list[PixelTransform]:
         """Randomly changes pixels from one color to the next.
 
         Args:
         ----
+            controller: Array controller instance
             pixel_sequence: color sequence. Defaults to None.
             state: initial state. Defaults to None.
             kwargs: extra args to the state object
@@ -71,70 +68,68 @@ class TransformRandomChange(PixelTransform):
             fade_type: set to fade colors, or instant on/off
 
         """
-        if pixel_sequence is not None:
-            self.state.pixel_sequence = pixel_sequence
+        transform = TransformRandomChange(controller=controller)
         if state is not None:
-            self.state = state
+            transform.state = state
         else:
-            self.state.delay_count_limit = random.randint(50, 100)
-            self.state.fade_type = LEDFadeType.get_random()
+            transform.state.delay_count_limit = random.randint(50, 100)
+            transform.state.fade_type = LEDFadeType.get_random()
+
+        if pixel_sequence is not None:
+            transform.state.pixel_sequence = pixel_sequence
 
         if change_count is None:
             change_count = random.randint(
-                self.controller.virtual_led_count // 5,
-                self.controller.virtual_led_count,
+                transform.controller.virtual_led_count // 5,
+                transform.controller.virtual_led_count,
             )
 
         if fade_step_count is None:
             fade_step_count = random.randint(1, 5)
-        self.state.set_fade_amount(fade_step_count / MAX_INT8)
+        transform.state.set_fade_amount(fade_step_count / MAX_INT8)
         if delay_count is not None:
-            self.state.delay_count_limit = delay_count
+            transform.state.delay_count_limit = delay_count
         if fade_type is not None:
-            self.state.fade_type = fade_type
+            transform.state.fade_type = fade_type
         # make comet trails
-        fade = None
-        if self.state.fade_type == LEDFadeType.FADE_OFF:
-            fade = TransformOff(
-                controller=self.controller,
-                state=self.state.copy(),
+        if transform.state.fade_type == LEDFadeType.FADE_OFF:
+            TransformOff.setup(
+                controller=controller,
             )
-        elif self.state.fade_type == LEDFadeType.INSTANT_OFF:
-            fade = TransformFadeOff(
-                controller=self.controller,
-                state=self.state.copy(),
+        elif transform.state.fade_type == LEDFadeType.INSTANT_OFF:
+            TransformFadeOff.setup(
+                controller=controller,
+                fade_amount=transform.state.fade_amount,
             )
-        drops: list[PixelTransform] = []
-        if fade is not None:
-            drops.append(fade)
         # create a bunch of tracking objects
-        for index in self.get_random_indices(int(change_count)):
-            if index < self.controller.virtual_led_count:
-                change = TransformRandomChange(
-                    controller=self.controller,
-                    state=self.state.copy(),
-                )
+        for index in transform.get_random_indices(int(change_count)):
+            if index < transform.controller.virtual_led_count:
+                change = transform.copy()
                 # set the index from our random number
                 change.state.index = int(index)
                 # copy the current color of this LED index
-                if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
-                    change.state.pixel_sequence.pixel = Pixel(self.controller.virtual_led_buffer[change.state.index])
+                if len(transform.controller.virtual_led_buffer.shape) == SHAPE_2D:
+                    change.state.pixel_sequence.pixel = Pixel(
+                        transform.controller.virtual_led_buffer[change.state.index],
+                    )
                 else:
                     change.state.pixel_sequence.pixel = Pixel(
-                        self.controller.virtual_led_buffer[
+                        transform.controller.virtual_led_buffer[
                             np.where(
-                                self.controller.virtual_led_index_buffer == change.state.index,
+                                transform.controller.virtual_led_index_buffer == change.state.index,
                             )
                         ],
                     )
                 # randomly set the color we are fading toward
                 if random.randint(0, 1) == 1:
-                    change.state.pixel_sequence.pixel_next = self.state.pixel_sequence.advance_index(keep_current=True)
+                    change.state.pixel_sequence.pixel_next = transform.state.pixel_sequence.advance_index(
+                        keep_current=True,
+                    )
                 # we want all the delays random, so don't start them all at zero
                 change.state.delay_count_max = random.randint(0, change.state.delay_count_limit)
                 # add function to list
-                drops.append(change)
-        return drops
+                TransformRandomChange.ACTIVE_TRANSFORMS.append(change)
+        return TransformRandomChange.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:  # noqa: C901, PLR0912
         """Randomly changes pixels from one color to the next."""

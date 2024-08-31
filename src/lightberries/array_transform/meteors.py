@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import random
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -28,8 +28,6 @@ class TransformMeteor(PixelTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        pixel_sequence: PixelSequence | None = None,
-        state: TransformState | None = None,
     ) -> None:
         """Do meteor function things.
 
@@ -43,12 +41,11 @@ class TransformMeteor(PixelTransform):
         super().__init__(
             name=TransformMeteor.__name__,
             controller=controller,
-            pixel_sequence=pixel_sequence,
-            state=state,
         )
 
+    @staticmethod
     def setup(  # noqa: C901, PGH003, PLR0912, PLR0913, PLR0915, RUF100 # type: ignore
-        self,
+        controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
@@ -60,12 +57,12 @@ class TransformMeteor(PixelTransform):
         cycle_colors: bool | str | None = None,
         delay_count: int | str | None = None,
         fade_type: LEDFadeType | str | None = None,
-        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:
         ----
+            controller: Array controller instance
             pixel_sequence: _description_. Defaults to None.
             state: _description_. Defaults to None.
             kwargs: extra args to the state object
@@ -83,108 +80,111 @@ class TransformMeteor(PixelTransform):
             list of transforms
 
         """
-        self.ACTIVE_TRANSFORMS.clear()
+        transform = TransformMeteor(controller=controller)
         if pixel_sequence is not None:
-            self.state.pixel_sequence = pixel_sequence
+            transform.state.pixel_sequence = pixel_sequence
         if state is not None:
-            self.state = state
+            transform.state = state
         else:
-            self.state.set_fade_amount(random.randint(20, 40) / 100.0)
-            self.state.explode = self.get_random_boolean()
-            self.state.collision_enabled = self.get_random_boolean()
-            self.state.step_size_max = random.randint(1, 3)
-            self.state.step = self.state.step_size_max
-            self.state.delay_count_max = random.randint(1, 3)
-            self.state.explode = self.get_random_boolean()
-            self.state.color_cycle = self.get_random_boolean()
-            self.state.fade_type = LEDFadeType.FADE_OFF
+            transform.state.set_fade_amount(random.randint(20, 40) / 100.0)
+            transform.state.explode = transform.get_random_boolean()
+            transform.state.collision_enabled = transform.get_random_boolean()
+            transform.state.step_size_max = random.randint(1, 3)
+            transform.state.step = transform.state.step_size_max
+            transform.state.delay_count_max = random.randint(1, 3)
+            transform.state.explode = transform.get_random_boolean()
+            transform.state.color_cycle = transform.get_random_boolean()
+            transform.state.fade_type = LEDFadeType.FADE_OFF
 
         if fade_amount is not None:
             if isinstance(fade_amount, str):
                 fade_amount = float(fade_amount)
-            self.state.set_fade_amount(fade_amount=fade_amount)
+            transform.state.set_fade_amount(fade_amount=fade_amount)
+            LOGGER.debug("fade_amount: %s", transform.state.fade_amount)
         if max_speed is not None:
             if isinstance(max_speed, str):
                 max_speed = int(max_speed)
-            self.state.step_size_max = max_speed
+            transform.state.step_size_max = max_speed
+            LOGGER.debug("max_step: %s", transform.state.step_size_max)
         if explode is not None:
             if isinstance(explode, str):
                 explode = bool(explode)
-            self.state.explode = explode
+            transform.state.explode = explode
+            LOGGER.debug("explode: %s", transform.state.explode)
         if collide is not None:
             if isinstance(collide, str):
                 collide = bool(collide)
-            self.state.collision_enabled = collide
+            transform.state.collision_enabled = collide
+            LOGGER.debug("collide: %s", transform.state.collision_enabled)
         if cycle_colors is not None:
             if isinstance(cycle_colors, str):
                 cycle_colors = bool(cycle_colors)
-            self.state.color_cycle = cycle_colors
+            transform.state.color_cycle = cycle_colors
+            LOGGER.debug("cycle: %s", transform.state.color_cycle)
         if delay_count is not None:
             if isinstance(delay_count, str):
                 delay_count = int(delay_count)
-            self.state.delay_count_max = delay_count
+            transform.state.delay_count_max = delay_count
+            LOGGER.debug("max speed: %s", 1 / transform.state.delay_count_max)
         if fade_type is not None:
             if isinstance(fade_type, str):
                 fade_type = LEDFadeType(fade_type)
-            self.state.fade_type = fade_type
+            transform.state.fade_type = fade_type
 
         if meteor_count is None or isinstance(meteor_count, int) and meteor_count < 1:
-            if self.state.pixel_sequence.led_count >= 2 and self.state.pixel_sequence.led_count <= 6:  # noqa: PLR2004
-                meteor_count = self.state.pixel_sequence.led_count
+            if (transform.state.pixel_sequence.led_count >= 2) and (  # noqa: PLR2004
+                transform.state.pixel_sequence.led_count <= 6  # noqa: PLR2004
+            ):
+                meteor_count = transform.state.pixel_sequence.led_count
             else:
                 meteor_count = random.randint(1, 3)
         elif isinstance(meteor_count, str):
             meteor_count = int(meteor_count)
 
         # make comet trails
-        if self.state.fade_type == LEDFadeType.FADE_OFF:
-            fade = TransformFadeOff(controller=self.controller)
-            fade.setup(
-                state=self.state,
+        if transform.state.fade_type == LEDFadeType.FADE_OFF:
+            TransformFadeOff.setup(
+                controller=transform.controller,
                 fade_amount=fade_amount,
             )
-            self.ACTIVE_TRANSFORMS.append(fade)
-        elif self.state.fade_type == LEDFadeType.INSTANT_OFF:
-            fade = TransformOff(controller=self.controller)
-            fade.setup(
-                pixel_sequence=self.state.pixel_sequence,
-                state=self.state,
-            )
-            self.ACTIVE_TRANSFORMS.append(fade)
+        elif transform.state.fade_type == LEDFadeType.INSTANT_OFF:
+            TransformOff.setup(controller=transform.controller)
 
-        self.state.pixel_sequence.random_index()
-        LOGGER.debug("Transform: %s", self)
-        self.ACTIVE_TRANSFORMS.append(self)
+        # this object calculates collisions between other objects based on index and previous/next index
+        if collide is True:
+            # make sure there are at least two going to collide
+            if (
+                meteor_count > 1
+                and transform.ACTIVE_TRANSFORMS[0].state.direction * transform.ACTIVE_TRANSFORMS[1].state.direction > 0
+            ):
+                transform.ACTIVE_TRANSFORMS[1].state.direction *= -1
+            TransformCollisionDetect.setup(controller=transform.controller)
+
+        transform.state.pixel_sequence.random_index()
+        LOGGER.debug("Transform: %s", transform)
+        meteor = None
         for _ in range(meteor_count - 1):
-            self.state.pixel_sequence.random_index()
-            meteor = TransformMeteor(controller=self.controller, state=self.state.copy())
+            if meteor is None:
+                meteor = transform
+            else:
+                meteor = transform.copy()
             meteor.state.pixel_sequence.random_index()
             # initialize "previous" index, for math's sake later
-            meteor.state.index_previous = random.randint(0, self.controller.virtual_led_count - 1)
+            meteor.state.index_previous = random.randint(0, transform.controller.virtual_led_count - 1)
             # set the maximum number of LEDs it could move in one step
             speed = 1
             for _ in range(5):
                 speed = random.randint(1, max(2, meteor.state.step_size_max))
             meteor.state.step = speed
             # randomly initialize the direction
-            meteor.state.direction = self.get_random_direction()
+            meteor.state.direction = transform.get_random_direction()
             # randomly assign starting index
             meteor.state.index = (
                 meteor.state.index + (meteor.state.step * meteor.state.direction)
-            ) % self.controller.virtual_led_count
+            ) % transform.controller.virtual_led_count
             # add function to list
-            self.ACTIVE_TRANSFORMS.append(meteor)
-        # this object calculates collisions between other objects based on index and previous/next index
-        if collide is True:
-            # make sure there are at least two going to collide
-            if (
-                meteor_count > 1
-                and self.ACTIVE_TRANSFORMS[0].state.direction * self.ACTIVE_TRANSFORMS[1].state.direction > 0
-            ):
-                self.ACTIVE_TRANSFORMS[1].state.direction *= -1
-            collision = TransformCollisionDetect(controller=self.controller, state=self.state.copy())
-            self.ACTIVE_TRANSFORMS.insert(0, collision)
-        return self.ACTIVE_TRANSFORMS
+            transform.ACTIVE_TRANSFORMS.append(meteor)
+        return transform.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
         """Do meteor function things."""

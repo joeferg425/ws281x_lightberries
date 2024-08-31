@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import random
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
 
@@ -31,8 +31,6 @@ class TransformAccelerate(ArrayTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        pixel_sequence: PixelSequence | None = None,
-        state: TransformState | None = None,
     ) -> None:
         """Accelerate across the string of lights repeatedly.
 
@@ -46,13 +44,12 @@ class TransformAccelerate(ArrayTransform):
         super().__init__(
             name=TransformAccelerate.__name__,
             controller=controller,
-            pixel_sequence=pixel_sequence,
-            state=state,
         )
         self.INSTANCES[len(self.INSTANCES)] = self
 
+    @staticmethod
     def setup(  # noqa: PLR0913
-        self,
+        controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
@@ -60,12 +57,12 @@ class TransformAccelerate(ArrayTransform):
         step_count_max: int | None = None,
         fade_amount: float | None = None,
         color_cycle: bool | None = None,
-        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:
         ----
+            controller: Array controller instance
             pixel_sequence: _description_. Defaults to None.
             state: initial state. Defaults to None.
             kwargs: extra args to the state object
@@ -79,43 +76,46 @@ class TransformAccelerate(ArrayTransform):
             list of transforms
 
         """
-        if pixel_sequence is not None:
-            self.state.pixel_sequence = pixel_sequence
+        transform = TransformAccelerate(controller=controller)
         if state is not None:
-            self.state = state
+            transform.state = state
         else:
             # set the number of updates during which the lights will stay constant
-            self.state.delay_count_max = random.randint(5, 10)
+            transform.state.delay_count_max = random.randint(5, 10)
             # this determines the maximum that the LED can jump in a single step as it speeds up
-            self.state.step_count_max = random.randint(4, 10)
+            transform.state.step_count_max = random.randint(4, 10)
             # this determines the length of comet tails
-            self.state.set_fade_amount(random.randint(15, 35) / MAX_INT8)
+            transform.state.set_fade_amount(random.randint(15, 35) / MAX_INT8)
             # whether to cycle through colors
-            self.state.color_cycle = self.get_random_boolean()
+            transform.state.color_cycle = transform.get_random_boolean()
             # the number of times the comet will accelerate
-            self.state.state_max = random.randint(5, 10)
+            transform.state.state_max = random.randint(5, 10)
             # randomize direction
-            self.state.direction = self.get_random_direction()
+            transform.state.direction = transform.get_random_direction()
             # randomize start index
-            self.state.index = self.get_random_index()
+            transform.state.index = transform.get_random_index()
+
+        if pixel_sequence is not None:
+            transform.state.pixel_sequence = pixel_sequence
 
         if delay_count_max is not None:
-            self.state.delay_count_max = delay_count_max
+            transform.state.delay_count_max = delay_count_max
         if step_count_max is not None:
-            self.state.step_count_max = step_count_max
+            transform.state.step_count_max = step_count_max
         if fade_amount is not None:
-            self.state.set_fade_amount(fade_amount)
+            transform.state.set_fade_amount(fade_amount)
         # make sure fade amount is valid
 
         if color_cycle is not None:
-            self.state.color_cycle = color_cycle
+            transform.state.color_cycle = color_cycle
 
-        fade = TransformFadeOff(
-            controller=self.controller,
-            state=self.state,
+        TransformFadeOff.setup(
+            controller=controller,
+            state=transform.state,
+            fade_amount=transform.state.fade_amount,
         )
-        fade.setup(fade_amount=self.state.fade_amount)
-        return [fade, self]
+        TransformAccelerate.ACTIVE_TRANSFORMS.append(transform)
+        return TransformAccelerate.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
         """Accelerate across the string of lights repeatedly."""

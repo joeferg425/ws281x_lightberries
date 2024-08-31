@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import random
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -27,8 +27,6 @@ class TransformAlive(PixelTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        pixel_sequence: PixelSequence | None = None,
-        state: TransformState | None = None,
     ) -> None:
         """Do alive function things.
 
@@ -42,12 +40,11 @@ class TransformAlive(PixelTransform):
         super().__init__(
             name=TransformAlive.__name__,
             controller=controller,
-            pixel_sequence=pixel_sequence,
-            state=state,
         )
 
+    @staticmethod
     def setup(  # noqa: PLR0913
-        self,
+        controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
@@ -55,12 +52,12 @@ class TransformAlive(PixelTransform):
         size_max: int | None = None,
         step_count_max: int | None = None,
         step_size_max: int | None = None,
-        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:
         ----
+            controller: Array controller instance
             pixel_sequence: _description_. Defaults to None.
             state: initial state. Defaults to None.
             kwargs: extra args to the state object
@@ -74,45 +71,49 @@ class TransformAlive(PixelTransform):
             list of transforms
 
         """
-        if pixel_sequence is not None:
-            self.state.pixel_sequence = pixel_sequence
+        transform = TransformAlive(controller=controller)
         if state is not None:
-            self.state = state
+            transform.state = state
         else:
-            self.state.set_fade_amount(random.uniform(0.20, 0.75))
-            self.state.size_max = random.randint(
-                self.controller.virtual_led_count // 6,
-                self.controller.virtual_led_count // 3,
+            transform.state.set_fade_amount(random.uniform(0.20, 0.75))
+            transform.state.size_max = random.randint(
+                transform.controller.virtual_led_count // 6,
+                transform.controller.virtual_led_count // 3,
             )
-            self.state.step_count_max = random.randint(
-                self.controller.virtual_led_count // 10,
-                self.controller.virtual_led_count,
+            transform.state.step_count_max = random.randint(
+                transform.controller.virtual_led_count // 10,
+                transform.controller.virtual_led_count,
             )
-            self.state.step_size_max = random.randint(6, 10)
+            transform.state.step_size_max = random.randint(6, 10)
+
+        if pixel_sequence is not None:
+            transform.state.pixel_sequence = pixel_sequence
 
         if fade_amount is not None:
-            self.state.set_fade_amount(fade_amount)
+            transform.state.set_fade_amount(fade_amount)
         if size_max is not None:
-            self.state.size_max = size_max
+            transform.state.size_max = size_max
         if step_size_max is not None:
-            self.state.step_count_max = step_size_max
+            transform.state.step_count_max = step_size_max
         if fade_amount is not None:
-            self.state.set_fade_amount(fade_amount=fade_amount)
+            transform.state.set_fade_amount(fade_amount=fade_amount)
         if step_count_max is not None:
             step_count_max = int(step_count_max)
 
-        things: list[PixelTransform] = []
+        TransformFadeOff.setup(controller=controller, fade_amount=transform.state.fade_amount)
+        thing = None
         for _ in range(random.randint(2, 5)):
-            thing = TransformAlive(
-                controller=self.controller,
-                state=self.state.copy(),
-            )
+            if thing is None:
+                thing = transform
+            else:
+                thing = transform.copy()
+
             # randomize start index
-            thing.state.index = self.get_random_index()
+            thing.state.index = transform.get_random_index()
             # randomize direction
-            thing.state.direction = self.get_random_direction()
+            thing.state.direction = transform.get_random_direction()
             # copy color sequence
-            thing.state.pixel_sequence = self.state.pixel_sequence.copy()
+            thing.state.pixel_sequence = transform.state.pixel_sequence.copy()
             # randomize speed
             thing.state.step = random.randint(1, thing.state.step_size_max)
             # randomize refresh speed
@@ -124,13 +125,10 @@ class TransformAlive(PixelTransform):
             # calculate random next state immediately
             thing.state.step_counter = 1000
             thing.state.delay_counter = 1000
-            things.append(thing)
-        things[0].state.active = True
+            TransformAlive.ACTIVE_TRANSFORMS.append(thing)
+        TransformAlive.ACTIVE_TRANSFORMS[0].state.active = True
         # add a fade
-        fade = TransformFadeOff(controller=self.controller)
-        fade.state.set_fade_amount(self.state.fade_amount)
-        things.insert(0, fade)
-        return things
+        return TransformAlive.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:  # noqa: C901, PLR0912, PLR0915
         """Do alive function things."""
@@ -151,8 +149,7 @@ class TransformAlive(PixelTransform):
                 # if in fast meteor mode
                 elif self.state.current_state & ThingMoves.LIGHT_SPEED.value:
                     # artificially limit duration of this mode
-                    if self.state.step_count_max >= self.state.period_short:
-                        self.state.step_count_max = self.state.period_short
+                    self.state.step_count_max = min(self.state.period_short, self.state.step_count_max)
                     # randomize step size
                     self.state.step = random.randint(7, 12)
                     # set next index
@@ -172,8 +169,7 @@ class TransformAlive(PixelTransform):
                 # if we are growing
                 if self.state.current_state & ThingSizes.GROW.value:
                     # artificially limit duration
-                    if self.state.step_count_max > self.state.period_short:
-                        self.state.step_count_max = self.state.period_short
+                    self.state.step_count_max = min(self.state.period_short, self.state.step_count_max)
                     # if we can still grow
                     if self.state.size < self.state.size_max:
                         # randomly grow
@@ -194,8 +190,7 @@ class TransformAlive(PixelTransform):
                 # if we are shrinking
                 elif self.state.current_state & ThingSizes.SHRINK.value:
                     # artificially limit duration
-                    if self.state.step_count_max > self.state.period_short:
-                        self.state.step_count_max = self.state.period_short
+                    self.state.step_count_max = min(self.state.period_short, self.state.step_count_max)
                     # if we can shrink
                     if self.state.size > 0:
                         # randomly shrink
@@ -213,8 +208,7 @@ class TransformAlive(PixelTransform):
                 # if we are cycling through colors
                 if self.state.current_state & ThingColors.CYCLE.value:
                     # artificially limit duration
-                    if self.state.step_count_max >= self.state.period_short:
-                        self.state.step_count_max = self.state.period_short
+                    self.state.step_count_max = min(self.state.period_short, self.state.step_count_max)
                     # randomly cycle through assign colors
                     if random.randint(0, 99) > 90:  # noqa: PLR2004
                         for _ in range(random.randint(1, 3)):

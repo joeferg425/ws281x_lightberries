@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import random
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from lightberries.transform_overlay._overlay_transform import OverlayTransform
 
@@ -23,7 +23,6 @@ class TransformFadeOff(OverlayTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        state: TransformState | None = None,
     ) -> None:
         """Fade all Pixels toward OFF.
 
@@ -36,21 +35,21 @@ class TransformFadeOff(OverlayTransform):
         super().__init__(
             name=TransformFadeOff.__name__,
             controller=controller,
-            state=state,
         )
 
+    @staticmethod
     def setup(
-        self,
+        controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         fade_amount: float | None = None,
-        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:
         ----
+            controller: Array controller instance
             pixel_sequence: color sequence. Defaults to None.
             state: the initial or previous state of the light string
             kwargs: extra args to the state object
@@ -61,18 +60,20 @@ class TransformFadeOff(OverlayTransform):
             list of transforms
 
         """
-        self.ACTIVE_TRANSFORMS.clear()
+        transform = TransformFadeOff(controller=controller)
         if pixel_sequence is not None:
-            self.state.pixel_sequence = pixel_sequence.copy()
+            transform.state.pixel_sequence = pixel_sequence.copy()
         if state is not None:
-            self.state = state
+            transform.state = state
         else:
-            self.state.set_fade_amount(fade_amount=random.uniform(0.01, 0.5))
+            transform.state.set_fade_amount(fade_amount=random.uniform(0.01, 0.5))
             if fade_amount is not None:
-                self.state.set_fade_amount(fade_amount=fade_amount)
+                transform.state.set_fade_amount(fade_amount=fade_amount)
+        if pixel_sequence is not None:
+            transform.state.pixel_sequence = pixel_sequence
 
-        self.ACTIVE_TRANSFORMS.append(self)
-        return self.ACTIVE_TRANSFORMS
+        TransformFadeOff.ACTIVE_TRANSFORMS.append(transform)
+        return TransformFadeOff.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
         """Fade all Pixels toward OFF."""

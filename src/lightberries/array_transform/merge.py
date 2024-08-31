@@ -25,8 +25,6 @@ class TransformMerge(PixelTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        pixel_sequence: PixelSequence | None = None,
-        state: TransformState | None = None,
     ) -> None:
         """Do merge function things.
 
@@ -40,23 +38,22 @@ class TransformMerge(PixelTransform):
         super().__init__(
             name=TransformMerge.__name__,
             controller=controller,
-            pixel_sequence=pixel_sequence,
-            state=state,
         )
 
+    @staticmethod
     def setup(
-        self,
-        pixel_sequence: np.ndarray[Any, np.int32] | None = None,
+        controller: lightberries.array_controller.ArrayController,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         shift_amount: int | None = None,
         delay_count: int | None = None,
-        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> None:
         """Reflect a color sequence and shift the reflections toward each other in the middle.
 
         Args:
         ----
+            controller: Array controller instance
             pixel_sequence: color sequence. Defaults to None.
             state: the initial or previous state of the light string
             kwargs: extra args to the state object
@@ -64,46 +61,50 @@ class TransformMerge(PixelTransform):
             delay_count: length of reflected segments
 
         """
-        if pixel_sequence is not None:
-            self.pixel_sequence = self.pixel_sequence
+        transform = TransformMerge(controller=controller)
         if state is not None:
-            self.state = state
+            transform.state = state
         else:
-            self.state.delay_count_max = random.randint(6, 12)
-            self.state.step = 1
+            transform.state.delay_count_max = random.randint(6, 12)
+            transform.state.step = 1
+        if pixel_sequence is not None:
+            transform.state.pixel_sequence = pixel_sequence.copy()
         if delay_count is not None:
-            self.state.delay_count_max = delay_count
+            transform.state.delay_count_max = delay_count
         if shift_amount is not None:
-            self.state.step = shift_amount
+            transform.state.step = shift_amount
         # make sure doing a merge function would be visible
-        if self.color_sequence_count >= self.controller.real_led_count:
+        if transform.color_sequence_count >= transform.controller.real_led_count:
             # if sequence is too long, cut it in half
-            self.pixel_sequence = self.pixel_sequence[: int(self.color_sequence_count // 2)]
+            transform.pixel_sequence = transform.pixel_sequence[: int(transform.color_sequence_count // 2)]
             # don't remember offhand why this is here
-            if self.color_sequence_count % 2 == 1:
-                if self.color_sequence_count == 1:
-                    self.pixel_sequence = np.concatenate(
-                        self.pixel_sequence,
-                        self.pixel_sequence,
+            if transform.color_sequence_count % 2 == 1:
+                if transform.color_sequence_count == 1:
+                    transform.pixel_sequence = np.concatenate(
+                        transform.pixel_sequence,
+                        transform.pixel_sequence,
                     )
                 else:
-                    self.pixel_sequence = self.pixel_sequence[:-1]
+                    transform.pixel_sequence = transform.pixel_sequence[:-1]
         # calculate modulo length
-        array_length = np.ceil(self.controller.real_led_count / self.color_sequence_count) * self.color_sequence_count
+        array_length = (
+            np.ceil(transform.controller.real_led_count / transform.color_sequence_count)
+            * transform.color_sequence_count
+        )
         # update LED buffer with any changes we had to make
-        self.controller.set_virtual_led_buffer(
+        transform.controller.set_virtual_led_buffer(
             SequenceReflect(
                 arrayLength=array_length,
-                colorSequence=self.pixel_sequence,
-                foldLength=self.color_sequence_count,
+                colorSequence=transform.pixel_sequence,
+                foldLength=transform.color_sequence_count,
             ),
         )
         # set merge size
-        self.state.size = self.color_sequence_count
+        transform.state.size = transform.color_sequence_count
         # set shift amount
-        self.state.step = shift_amount
+        transform.state.step = shift_amount
         # set the number of LED refreshes to skip
-        self.state.delay_count_max = delay_count
+        transform.state.delay_count_max = delay_count
         # add function to list
         return [self]
 

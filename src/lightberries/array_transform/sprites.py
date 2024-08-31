@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import random
 from enum import IntEnum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -37,8 +37,6 @@ class TransformSprites(PixelTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        pixel_sequence: PixelSequence | None = None,
-        state: TransformState | None = None,
     ) -> None:
         """Do sprite function things.
 
@@ -52,23 +50,22 @@ class TransformSprites(PixelTransform):
         super().__init__(
             name=f"{TransformSprites.__name__}[{len(self.ACTIVE_TRANSFORMS)}]",
             controller=controller,
-            pixel_sequence=pixel_sequence,
-            state=state,
         )
 
+    @staticmethod
     def setup(
-        self,
+        controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         fade_steps: int | None = None,
         sprite_count: int | None = None,
-        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> list[PixelTransform]:
         """Meteors fade in and out in short bursts of random length and direction.
 
         Args:
         ----
+            controller: Array controller instance
             pixel_sequence: color sequence. Defaults to None.
             state: the initial or previous state of the light string
             kwargs: extra args to the state object
@@ -76,47 +73,47 @@ class TransformSprites(PixelTransform):
             sprite_count:the number of sprites to render
 
         """
-        self.ACTIVE_TRANSFORMS.clear()
-        if pixel_sequence is not None:
-            self.pixel_sequence = pixel_sequence.copy()
+        transform = TransformSprites(controller=controller)
         if state is not None:
-            self.state = state
+            transform.state = state
         else:
-            self.state.set_fade_amount(np.ceil(255 / random.randint(1, 6)))
+            transform.state.set_fade_amount(np.ceil(255 / random.randint(1, 6)))
+
+        if pixel_sequence is not None:
+            transform.state.pixel_sequence = pixel_sequence.copy()
 
         if sprite_count is None or sprite_count < 1 or sprite_count > 10:  # noqa: PLR2004
-            sprite_count = max(min(self.pixel_sequence.led_count, 10), 2)
+            sprite_count = max(min(transform.state.pixel_sequence.led_count, 10), 2)
 
         if fade_steps is not None:
-            self.state.set_fade_amount(np.ceil(255 / fade_steps))
+            transform.state.set_fade_amount(np.ceil(255 / fade_steps))
 
-        fade = TransformFadeOff(
-            controller=self.controller,
-            state=self.state.copy(),
+        TransformFadeOff.setup(
+            controller=transform.controller,
+            fade_amount=transform.state.fade_amount,
         )
-        self.ACTIVE_TRANSFORMS.append(fade)
-        self.ACTIVE_TRANSFORMS.append(self)
+        sprite = None
         for _ in range(sprite_count - 1):
-            sprite = TransformSprites(
-                controller=self.controller,
-                state=self.state.copy(),
-            )
+            if sprite is None:
+                sprite = transform
+            else:
+                sprite = transform.copy()
             # randomize index
-            sprite.state.index = random.randint(0, self.controller.virtual_led_count - 1)
+            sprite.state.index = random.randint(0, transform.controller.virtual_led_count - 1)
             # initialize previous index
-            sprite.state.index_previous = random.randint(0, self.controller.virtual_led_count - 1)
+            sprite.state.index_previous = random.randint(0, transform.controller.virtual_led_count - 1)
             # randomize direction
-            sprite.state.direction = self.get_random_direction()
+            sprite.state.direction = transform.get_random_direction()
             # copy color sequence
-            sprite.state.pixel_sequence = self.pixel_sequence.copy()
+            sprite.state.pixel_sequence = transform.state.pixel_sequence.copy()
             # advance the color sequence
-            self.pixel_sequence.advance_index()
+            transform.state.pixel_sequence.advance_index()
             sprite.state.current_state = SpriteState.OFF.value
-            self.ACTIVE_TRANSFORMS.append(sprite)
+            transform.ACTIVE_TRANSFORMS.append(sprite)
         # set one sprite to "fading on"
-        self.ACTIVE_TRANSFORMS[0].state.current_state = SpriteState.FADING_ON.value
+        transform.ACTIVE_TRANSFORMS[0].state.current_state = SpriteState.FADING_ON.value
         # add LED fading for comet trails
-        return self.ACTIVE_TRANSFORMS
+        return transform.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:  # noqa: C901
         """Meteors fade in and out in short bursts of random length and direction."""
@@ -173,8 +170,8 @@ class TransformSprites(PixelTransform):
             # set previous (prevent artifacts)
             self.state.index_previous = self.state.index
             # set target color
-            self.pixel_sequence.advance_index()
-            self.state.pixel_sequence = self.pixel_sequence
+            self.state.pixel_sequence.advance_index()
+            self.state.pixel_sequence = self.state.pixel_sequence
             # set current color
             self.state.pixel_sequence.pixel = pixel_from_color(PixelColor.OFF)
         # if we changed the index

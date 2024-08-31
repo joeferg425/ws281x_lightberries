@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import random
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from lightberries.pixel_transform import PixelTransform
 
@@ -23,8 +23,6 @@ class TransformSolidColorCycle(PixelTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        pixel_sequence: PixelSequence | None = None,
-        state: TransformState | None = None,
     ) -> None:
         """Cycle the entire light string's color at once.
 
@@ -38,22 +36,21 @@ class TransformSolidColorCycle(PixelTransform):
         super().__init__(
             name=TransformSolidColorCycle.__name__,
             controller=controller,
-            pixel_sequence=pixel_sequence,
-            state=state,
         )
 
+    @staticmethod
     def setup(
-        self,
+        controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         delay_count: int | None = None,
-        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:
         ----
+            controller: Array controller instance
             pixel_sequence: color sequence. Defaults to None.
             state: the initial or previous state of the light string
             kwargs: extra args to the state object
@@ -64,18 +61,21 @@ class TransformSolidColorCycle(PixelTransform):
             list of transforms
 
         """
-        if pixel_sequence is not None:
-            self.state.pixel_sequence = pixel_sequence
+        transform = TransformSolidColorCycle(controller=controller)
         if state is not None:
-            self.state = state
+            transform.state = state
         else:
-            self.state.delay_count_max = random.randint(50, 100)
-            self.state.delay_counter = self.state.delay_count_max
+            transform.state.delay_count_max = random.randint(50, 100)
+            transform.state.delay_counter = transform.state.delay_count_max
+
+        if pixel_sequence is not None:
+            transform.state.pixel_sequence = pixel_sequence
 
         if delay_count is not None:
-            self.state.delay_count_max = delay_count
-            self.state.delay_counter = self.state.delay_count_max
-        return [self]
+            transform.state.delay_count_max = delay_count
+            transform.state.delay_counter = transform.state.delay_count_max
+        TransformSolidColorCycle.ACTIVE_TRANSFORMS.append(transform)
+        return TransformSolidColorCycle.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
         """Set all pixels to the next color.

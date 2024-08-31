@@ -21,11 +21,8 @@ def get_named_sequence(name: SequenceName, led_count: int) -> PixelSequence:
             name="SequenceSunset",
             led_count=led_count,
             pixel_sequence=[
-                Pixel(PixelColor.SKY),
                 Pixel(PixelColor.ORANGE3),
                 Pixel(PixelColor.RED),
-                Pixel(PixelColor.MIDNIGHT),
-                Pixel(PixelColor.OFF),
                 Pixel(PixelColor.MIDNIGHT),
                 Pixel(PixelColor.RED),
                 Pixel(PixelColor.ORANGE3),

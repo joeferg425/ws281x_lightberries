@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from math import ceil
 from typing import Any
 
 import numpy as np
@@ -15,7 +16,7 @@ from lightberries.pixel_sequence import PixelSequence
 class SequenceTransition(ArraySequence):
     """A more versatile version of CreateRainbow."""
 
-    def __init__(  # noqa: C901
+    def __init__(  # noqa: C901, PLR0912
         self,
         led_count: int | None = None,
         pixel_sequence: PixelSequence | list[Pixel] | None = None,
@@ -56,19 +57,23 @@ class SequenceTransition(ArraySequence):
         if wrap is True:
             wrap_offset = 0
         else:
-            wrap_offset = 1
+            wrap_offset = -1
         # figure out how many LEDs per color change
         if transition_count is None:
-            transition_count = led_count // (pixel_sequence.led_count + wrap_offset)
+            transition_count = ceil(led_count / (pixel_sequence.led_count + wrap_offset))
         # create temporary array
         temp_array = SequenceOff(led_count=led_count).ndarray
+        this_color = pixel_sequence[0]
+        next_color = pixel_sequence[1 % pixel_sequence.led_count]
         # step through color sequence
         for input_index, output_index in enumerate(range(0, led_count, transition_count)):
             if (output_index + transition_count) >= led_count:
                 transition_count = led_count - output_index
             # figure out the current and next colors
-            this_color = pixel_sequence[input_index % pixel_sequence.led_count]
-            next_color = pixel_sequence[(input_index + 1) % pixel_sequence.led_count]
+            if input_index < pixel_sequence.led_count or (wrap and input_index < pixel_sequence.led_count):
+                this_color = pixel_sequence[input_index % pixel_sequence.led_count]
+            if (input_index + 1) < pixel_sequence.led_count or (wrap and input_index < pixel_sequence.led_count):
+                next_color = pixel_sequence[(input_index + 1) % pixel_sequence.led_count]
             # handle red, green, and blue individually
             for rgb_index in range(len(this_color)):
                 # linspace creates the array of values from arg1, to arg2, in exactly arg3 steps

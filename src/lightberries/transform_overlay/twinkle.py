@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from lightberries.state import TransformState
 from lightberries.transform_overlay._overlay_transform import OverlayTransform
@@ -21,9 +21,6 @@ class TransformTwinkle(OverlayTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        pixel_sequence: PixelSequence | None = None,
-        state: TransformState | None = None,
-        **kwargs: dict[str, Any],
     ) -> None:
         """Do temporary twinkle modifications.
 
@@ -38,13 +35,11 @@ class TransformTwinkle(OverlayTransform):
         super().__init__(
             name=TransformTwinkle.__name__,
             controller=controller,
-            state=state,
-            pixel_sequence=pixel_sequence,
-            kwargs=kwargs,
         )
 
+    @staticmethod
     def setup(
-        self,
+        controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         twinkle_chance: float | None = None,
@@ -53,23 +48,24 @@ class TransformTwinkle(OverlayTransform):
 
         Args:
         ----
+            controller: Array controller instance
             pixel_sequence: the list of colors to be used when briefly flashing an LED
             state: initial state. Defaults to None.
             twinkle_chance: chance of a twinkle
 
         """
-        self.ACTIVE_TRANSFORMS.clear()
-        self.ACTIVE_TRANSFORMS.append(self)
-        if pixel_sequence is not None:
-            self.state.pixel_sequence = self.state.pixel_sequence.copy()
+        transform = TransformTwinkle(controller=controller)
         if state is not None:
-            self.state = state
+            transform.state = state
         else:
-            self.state.random = random.uniform(0.991, 0.995)
+            transform.state.random = random.uniform(0.991, 0.995)
+        if pixel_sequence is not None:
+            transform.state.pixel_sequence = pixel_sequence.copy()
 
         if twinkle_chance is not None:
-            self.state.random = twinkle_chance
-        return self.ACTIVE_TRANSFORMS
+            transform.state.random = twinkle_chance
+        TransformTwinkle.ACTIVE_TRANSFORMS.append(transform)
+        return TransformTwinkle.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
         """Do temporary twinkle modifications.

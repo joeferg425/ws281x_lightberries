@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
-from lightberries.pixel_transform import PixelTransform, TransformState
+from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
     from lightberries.array_controller import ArrayController
-    from lightberries.pixel_sequence import PixelSequence
 
 
 class OverlayTransform(PixelTransform):
@@ -24,9 +23,6 @@ class OverlayTransform(PixelTransform):
         self,
         name: str,
         controller: ArrayController,
-        pixel_sequence: PixelSequence | None = None,
-        state: TransformState | None = None,
-        **kwargs: dict[str, Any],
     ) -> None:
         """Overlay transform that doesn't permanently modify anything.
 
@@ -42,7 +38,4 @@ class OverlayTransform(PixelTransform):
         super().__init__(
             name=name,
             controller=controller,
-            pixel_sequence=pixel_sequence,
-            state=state,
-            kwargs=kwargs,
         )

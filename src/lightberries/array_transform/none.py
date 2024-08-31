@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from lightberries.pixel_transform import PixelTransform
 
@@ -22,8 +22,6 @@ class TransformNone(PixelTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        pixel_sequence: PixelSequence | None = None,
-        state: TransformState | None = None,
     ) -> None:
         """Do nothing.
 
@@ -37,20 +35,19 @@ class TransformNone(PixelTransform):
         super().__init__(
             name=TransformNone.__name__,
             controller=controller,
-            pixel_sequence=pixel_sequence,
-            state=state,
         )
 
+    @staticmethod
     def setup(
-        self,
+        controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
-        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:
         ----
+            controller: array controller instance
             pixel_sequence: color sequence. Defaults to None.
             state: initial state. Defaults to None.
             kwargs: extra args to the state object
@@ -61,17 +58,14 @@ class TransformNone(PixelTransform):
 
         """
         # create an object to put in the light data list so we don't just abort the run
-        super().setup(
-            pixel_sequence=pixel_sequence,
-            state=state,
-        )
-        if pixel_sequence is not None:
-            self.state.pixel_sequence = pixel_sequence
+        transform = TransformNone(controller=controller)
         if state is not None:
-            self.state = state
-        self.ran_once = False
-        self.ACTIVE_TRANSFORMS.append(self)
-        return self.ACTIVE_TRANSFORMS
+            transform.state = state
+        if pixel_sequence is not None:
+            transform.state.pixel_sequence = pixel_sequence
+        transform.ran_once = False
+        TransformNone.ACTIVE_TRANSFORMS.append(transform)
+        return TransformNone.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
         """Do nothing."""

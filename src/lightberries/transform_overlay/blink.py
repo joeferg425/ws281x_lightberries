@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from lightberries.state import TransformState
 from lightberries.transform_overlay._overlay_transform import OverlayTransform
@@ -22,9 +22,6 @@ class TransformBlink(OverlayTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        pixel_sequence: PixelSequence | None = None,
-        state: TransformState | None = None,
-        **kwargs: dict[str, Any],
     ) -> None:
         """Randomly set all lights in the string to the same color without changing the virtual LED buffer.
 
@@ -39,13 +36,11 @@ class TransformBlink(OverlayTransform):
         super().__init__(
             name=TransformBlink.__name__,
             controller=controller,
-            pixel_sequence=pixel_sequence,
-            state=state,
-            kwargs=kwargs,
         )
 
+    @staticmethod
     def setup(
-        self,
+        controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         blink_chance: float | None = None,
@@ -54,24 +49,25 @@ class TransformBlink(OverlayTransform):
 
         Args:
         ----
+            controller: Array controller instance
             pixel_sequence: the list of colors to be used when briefly flashing an LED
             state: initial state. Defaults to None.
             blink_chance: chance of a blink
 
         """
-        self.ACTIVE_TRANSFORMS.clear()
-        self.ACTIVE_TRANSFORMS.append(self)
-        if pixel_sequence is not None:
-            self.state.pixel_sequence = self.state.pixel_sequence.copy()
+        transform = TransformBlink(controller=controller)
         if state is not None:
-            self.state = state
+            transform.state = state
         else:
-            self.state.random = random.uniform(0.991, 0.995)
+            transform.state.random = random.uniform(0.991, 0.995)
+        if pixel_sequence is not None:
+            transform.state.pixel_sequence = transform.state.pixel_sequence.copy()
 
         if blink_chance is not None:
-            self.state.random = blink_chance
+            transform.state.random = blink_chance
 
-        return self.ACTIVE_TRANSFORMS
+        TransformBlink.ACTIVE_TRANSFORMS.append(transform)
+        return TransformBlink.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
         """Randomly set all lights in the string to the same color without changing the virtual LED buffer.

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import random
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -25,8 +25,6 @@ class TransformCollisionDetect(PixelTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        pixel_sequence: PixelSequence | None = None,
-        state: TransformState | None = None,
     ) -> None:
         """Perform collision detection on the list of light function objects.
 
@@ -40,20 +38,19 @@ class TransformCollisionDetect(PixelTransform):
         super().__init__(
             name=TransformCollisionDetect.__name__,
             controller=controller,
-            pixel_sequence=pixel_sequence,
-            state=state,
         )
 
+    @staticmethod
     def setup(
-        self,
+        controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
-        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:
         ----
+            controller: Array controller instance
             pixel_sequence: _description_. Defaults to None.
             state: initial state. Defaults to None.
             kwargs: extra args to the state object
@@ -63,12 +60,13 @@ class TransformCollisionDetect(PixelTransform):
             list of transforms
 
         """
-        if pixel_sequence is not None:
-            self.state.pixel_sequence = pixel_sequence
+        transform = TransformCollisionDetect(controller=controller)
         if state is not None:
-            self.state = state
-        self.ACTIVE_TRANSFORMS.append(self)
-        return self.ACTIVE_TRANSFORMS
+            transform.state = state
+        if pixel_sequence is not None:
+            transform.state.pixel_sequence = pixel_sequence
+        TransformCollisionDetect.ACTIVE_TRANSFORMS.append(transform)
+        return TransformCollisionDetect.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:  # noqa: C901, PLR0912, PLR0915
         """Perform collision detection on the list of light function objects."""

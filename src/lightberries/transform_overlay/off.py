@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from lightberries.pixel_transform import PixelTransform
 from lightberries.transform_overlay._overlay_transform import OverlayTransform
@@ -24,7 +24,6 @@ class TransformOff(OverlayTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        state: TransformState | None = None,
     ) -> None:
         """Turn all Pixels OFF.
 
@@ -37,19 +36,19 @@ class TransformOff(OverlayTransform):
         super().__init__(
             name=TransformOff.__name__,
             controller=controller,
-            state=state,
         )
 
+    @staticmethod
     def setup(
-        self,
+        controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
-        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:
         ----
+            controller: Array controller instance
             pixel_sequence: color sequence. Defaults to None.
             state: initial state. Defaults to None.
             kwargs: extra args to the state object
@@ -59,13 +58,16 @@ class TransformOff(OverlayTransform):
             list of transforms
 
         """
-        super().setup(
-            pixel_sequence=pixel_sequence,
-            state=state,
-        )
-        self.ACTIVE_TRANSFORMS.clear()
-        self.ACTIVE_TRANSFORMS.append(self)
-        return self.ACTIVE_TRANSFORMS
+        transform = TransformOff(controller=controller)
+        if pixel_sequence is not None:
+            transform.state.pixel_sequence = pixel_sequence.copy()
+        if state is not None:
+            transform.state = state
+        if pixel_sequence is not None:
+            transform.state.pixel_sequence = pixel_sequence
+
+        TransformOff.ACTIVE_TRANSFORMS.append(transform)
+        return TransformOff.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
         """Turn all Pixels OFF."""
