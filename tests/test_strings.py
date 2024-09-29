@@ -5,17 +5,16 @@ from __future__ import annotations
 from typing import Any
 from unittest import mock
 
-import numpy as np
-import pytest
-from numpy.testing import assert_array_equal
-from numpy.typing import NDArray
-
 import lightberries.rpiws281x
 import lightberries.rpiws281x_patch
-from lightberries.array_sequence.base import pixel_array_to_numpy_array
+import numpy as np
+import pytest
+from lightberries.array_sequence._array_sequence import pixel_array_to_numpy_array
 from lightberries.exceptions import WS281xStringError
 from lightberries.pixel import PixelColor
 from lightberries.ws281x_strings import WS281xString
+from numpy.testing import assert_array_equal
+from numpy.typing import NDArray
 
 
 def new_instantiate_pixelstrip(

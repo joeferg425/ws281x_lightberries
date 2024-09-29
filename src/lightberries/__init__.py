@@ -1,4 +1,7 @@
-"""Color patterns and sequences."""
+"""Wraps rpi_ws281x module and provides a bunch of helpers.
+
+See https://github.com/rpi-ws281x/rpi-ws281x-python for referenced module.
+"""
 
 from lightberries.array_sequence.off import SequenceOff as SequenceOff
 from lightberries.array_sequence.pseudo_random import (
@@ -9,12 +12,8 @@ from lightberries.array_sequence.rainbow_repeating import (
     SequenceRainbowRepeating as SequenceRainbowRepeating,
 )
 from lightberries.array_sequence.random import SequenceRandom as SequenceRandom
-from lightberries.array_sequence.reflect import (
-    SequenceReflect as SequenceReflect,
-)
-from lightberries.array_sequence.repeat import (
-    SequenceRepeat as SequenceRepeat,
-)
+from lightberries.array_sequence.reflect import SequenceReflect as SequenceReflect
+from lightberries.array_sequence.repeat import SequenceRepeat as SequenceRepeat
 from lightberries.array_sequence.solid import SequenceSolid as SequenceSolid
 from lightberries.array_sequence.stretch import SequenceStretch as SequenceStretch
 from lightberries.array_sequence.transition import (

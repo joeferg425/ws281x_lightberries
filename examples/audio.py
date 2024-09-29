@@ -9,9 +9,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pyaudio
-
 from lightberries.array_controller import ArrayController
-from lightberries.array_sequence.base import ArraySequence
+from lightberries.array_sequence._array_sequence import ArraySequence
 from lightberries.pixel import Pixel
 
 matplotlib.use("Qt5Agg")
