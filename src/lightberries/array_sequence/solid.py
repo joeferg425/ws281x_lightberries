@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
 from lightberries.array_sequence._array_sequence import ArraySequence
+from lightberries.logger import LOGGER
 from lightberries.pixel import Pixel, PixelColor
 
 if TYPE_CHECKING:
@@ -15,8 +15,6 @@ if TYPE_CHECKING:
 
     from lightberries.pixel_sequence import PixelSequence
 
-
-LOGGER = logging.getLogger("lightBerries")
 
 
 class SequenceSolid(ArraySequence):

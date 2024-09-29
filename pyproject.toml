@@ -5,11 +5,11 @@ version = "1.0.2"
 dependencies = [
     "Adafruit-Blinka>=3.0.0",
     "adafruit-circuitpython-neopixel==3.4.0",
-    "numpy>=1.15.1",
-    "rpi_ws281x==4.2.2",
+    "numpy>=2.0.0",
+    "rpi_ws281x>=5.0.0",
     "RPi.GPIO>=0.7.0",
     "numpy<3.0,>=2.0",
-    "pygame[examples]<3.0.0,>=2.1.2",
+    "pygame<3.0.0,>=2.1.2",
     "typer>=0.12.5",
     "strenum>=0.4.15",
 ]

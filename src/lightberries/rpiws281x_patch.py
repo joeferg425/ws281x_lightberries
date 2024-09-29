@@ -5,12 +5,9 @@ This allows easier interaction from the rest of LightBerries
 
 from __future__ import annotations
 
-import logging
 from typing import cast
 
 import numpy as np
-
-LOGGER = logging.getLogger("LightBerries")
 
 
 class FakePixelStrip:

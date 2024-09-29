@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 import random
 from dataclasses import dataclass, field
 from enum import IntEnum
@@ -19,7 +18,6 @@ if TYPE_CHECKING:
     from lightberries.pixel_sequence import PixelSequence
     from lightberries.pixel_transform import PixelTransform
 
-LOGGER = logging.getLogger("lightBerries")
 
 
 class LEDFadeType(IntEnum):

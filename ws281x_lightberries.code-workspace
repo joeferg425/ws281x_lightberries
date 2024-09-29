@@ -8,10 +8,10 @@
 		"python.terminal.activateEnvInCurrentTerminal": true,
 		"autoDocstring.docstringFormat": "google-notypes",
 		"[python]": {
-			"editor.formatOnSave": true,
+			"editor.formatOnSave": false,
 			"editor.defaultFormatter": "ms-python.black-formatter",
 			"editor.codeActionsOnSave": {
-				"source.organizeImports.ruff": "explicit"
+				"source.organizeImports": "explicit"
 			}
 		},
 		"isort.args": [
@@ -49,7 +49,6 @@
 			"lightberries",
 			"matplotlib",
 			"matrixification",
-			"multiprocess",
 			"ndarray",
 			"numpy",
 			"pyaudio",
@@ -64,7 +63,6 @@
 			"scipy",
 			"sinx",
 			"testpaths",
-			"typer",
 			"VIDEODRIVER",
 			"Xaxis",
 			"xscrollcommand",
@@ -85,166 +83,302 @@
 	"launch": {
 		"configurations": [
 			{
-				"name": "Python: main",
+				"name": "lightberries: help",
 				"type": "debugpy",
 				"request": "launch",
 				"module": "lightberries",
-				// "program": "${workspaceFolder}/src/lightberries/__main__.py",
 				"console": "integratedTerminal",
-				// "linux": {
-				// "sudo": true
-				// },
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false,
+				"args": [
+					"--help"
+				]
+			},
+			{
+				"name": "lightberries: demo",
+				"type": "debugpy",
+				"request": "launch",
+				"module": "lightberries",
+				"console": "integratedTerminal",
+				"linux": {
+					"sudo": true
+				},
 				"justMyCode": false,
 				"args": [
 					"--brightness",
 					"0.1",
 					"--led-count",
-					"100",
-					"--function",
+					"197",
+					// "--function",
 					// "sprites",
 					// "solidcolorcycle",
 					// "cylon",
-					// "raindrop",
 					// "meteor",
+					// "marquee",
+					// "shift",
 					// "none",
-					"shift",
-					"--color",
-					// "solid",
+					// "--color",
 					// "default",
+					// "pseudorandom",
+					// "random",
 					// "repeat",
 					// "stretch",
+					// "sunset",
 					// "transition",
-					"sunset",
-					// "reflect",
 					// "rainbow",
-					"--debug",
+					// "solid",
+					"--verbose",
 					// "meteor_count",
-					// "5"
+					// "5",
+					// "--d",
+					// "0.0"
+					"--duration",
+					"10"
 				]
 			},
 			{
-				"name": "example: basic array",
+				"name": "lightberries: accelerate",
 				"type": "debugpy",
 				"request": "launch",
-				"program": "${workspaceFolder}/examples/basic_array.py",
-				"console": "integratedTerminal",
-				"linux": {
-					"sudo": true
-				},
-				"justMyCode": false
-			},
-			{
-				"name": "example: basic matrix",
-				"type": "debugpy",
-				"request": "launch",
-				"program": "${workspaceFolder}/examples/basic_matrix.py",
-				"console": "integratedTerminal",
-				"linux": {
-					"sudo": true
-				},
-				"justMyCode": false
-			},
-			{
-				"name": "example: basic multi matrix",
-				"type": "debugpy",
-				"request": "launch",
-				"program": "${workspaceFolder}/examples/basic_multi_matrix.py",
-				"console": "integratedTerminal",
-				"linux": {
-					"sudo": true
-				},
-				"justMyCode": false
-			},
-			{
-				"name": "example: demo array",
-				"type": "debugpy",
-				"request": "launch",
-				"program": "${workspaceFolder}/examples/demo_array.py",
-				"console": "integratedTerminal",
-				"linux": {
-					"sudo": true
-				},
-				"justMyCode": false
-			},
-			{
-				"name": "example: demo matrix",
-				"type": "debugpy",
-				"request": "launch",
-				"program": "${workspaceFolder}/examples/demo_matrix.py",
-				"console": "integratedTerminal",
-				"linux": {
-					"sudo": true
-				},
-				"justMyCode": false
-			},
-			{
-				"name": "example: audio",
-				"type": "debugpy",
-				"request": "launch",
-				"program": "${workspaceFolder}/examples/audio.py",
-				"console": "integratedTerminal",
-				"linux": {
-					"sudo": true
-				},
-				"justMyCode": false
-			},
-			{
-				"name": "example: GUI functions",
-				"type": "debugpy",
-				"request": "launch",
-				"program": "${workspaceFolder}/examples/gui_functions.py",
-				"console": "integratedTerminal",
-				"linux": {
-					"sudo": true
-				},
-				"justMyCode": false
-			},
-			{
-				"name": "example: GUI pixels",
-				"type": "debugpy",
-				"request": "launch",
-				"program": "${workspaceFolder}/examples/gui_pixels.py",
-				"console": "integratedTerminal",
-				"linux": {
-					"sudo": true
-				},
-				"justMyCode": false
-			},
-			{
-				"name": "example: simulate",
-				"type": "debugpy",
-				"request": "launch",
-				"program": "${workspaceFolder}/examples/simulate.py",
-				"console": "integratedTerminal",
-				"linux": {
-					"sudo": true
-				},
-				"justMyCode": false
-			},
-			{
-				"name": "example: image",
-				"type": "debugpy",
-				"request": "launch",
-				"program": "${workspaceFolder}/examples/image.py",
+				"module": "lightberries",
 				"console": "integratedTerminal",
 				"linux": {
 					"sudo": true
 				},
 				"justMyCode": false,
 				"args": [
-					"../eyes.bmp"
+					"--brightness",
+					"0.1",
+					"--led-count",
+					"197",
+					"--function",
+					"accelerate",
+					"--verbose",
+					"--duration",
+					"10"
 				]
 			},
 			{
-				"name": "example: dot matrix",
+				"name": "lightberries: alive",
 				"type": "debugpy",
 				"request": "launch",
-				"program": "${workspaceFolder}/examples/dot_matrix.py",
+				"module": "lightberries",
 				"console": "integratedTerminal",
 				"linux": {
 					"sudo": true
 				},
-				"justMyCode": false
+				"justMyCode": false,
+				"args": [
+					"--brightness",
+					"0.1",
+					"--led-count",
+					"197",
+					"--function",
+					"alive",
+					"--verbose",
+					"--duration",
+					"10"
+				]
+			},
+			{
+				"name": "lightberries: cylon",
+				"type": "debugpy",
+				"request": "launch",
+				"module": "lightberries",
+				"console": "integratedTerminal",
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false,
+				"args": [
+					"--brightness",
+					"0.1",
+					"--led-count",
+					"197",
+					"--function",
+					"cylon",
+					"--verbose",
+					"--duration",
+					"10"
+				]
+			},
+			{
+				"name": "lightberries: marquee",
+				"type": "debugpy",
+				"request": "launch",
+				"module": "lightberries",
+				"console": "integratedTerminal",
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false,
+				"args": [
+					"--brightness",
+					"0.1",
+					"--led-count",
+					"197",
+					"--function",
+					"marquee",
+					"--verbose",
+					"--duration",
+					"10"
+				]
+			},
+			{
+				"name": "lightberries: merge",
+				"type": "debugpy",
+				"request": "launch",
+				"module": "lightberries",
+				"console": "integratedTerminal",
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false,
+				"args": [
+					"--brightness",
+					"0.1",
+					"--led-count",
+					"197",
+					"--function",
+					"merge",
+					"--verbose",
+					"--duration",
+					"10"
+				]
+			},
+			{
+				"name": "lightberries: meteor",
+				"type": "debugpy",
+				"request": "launch",
+				"module": "lightberries",
+				"console": "integratedTerminal",
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false,
+				"args": [
+					"--brightness",
+					"0.1",
+					"--led-count",
+					"197",
+					"--function",
+					"meteor",
+					"--verbose",
+					"--duration",
+					"10"
+				]
+			},
+			{
+				"name": "lightberries: raindrop",
+				"type": "debugpy",
+				"request": "launch",
+				"module": "lightberries",
+				"console": "integratedTerminal",
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false,
+				"args": [
+					"--brightness",
+					"0.1",
+					"--led-count",
+					"197",
+					"--function",
+					"raindrop",
+					"--verbose",
+					"--duration",
+					"10"
+				]
+			},
+			{
+				"name": "lightberries: random",
+				"type": "debugpy",
+				"request": "launch",
+				"module": "lightberries",
+				"console": "integratedTerminal",
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false,
+				"args": [
+					"--brightness",
+					"0.1",
+					"--led-count",
+					"197",
+					"--function",
+					"random",
+					"--verbose",
+					"--duration",
+					"10"
+				]
+			},
+			{
+				"name": "lightberries: shift",
+				"type": "debugpy",
+				"request": "launch",
+				"module": "lightberries",
+				"console": "integratedTerminal",
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false,
+				"args": [
+					"--brightness",
+					"0.1",
+					"--led-count",
+					"197",
+					"--function",
+					"shift",
+					"--verbose",
+					"--duration",
+					"10"
+				]
+			},
+			{
+				"name": "lightberries: cycle",
+				"type": "debugpy",
+				"request": "launch",
+				"module": "lightberries",
+				"console": "integratedTerminal",
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false,
+				"args": [
+					"--brightness",
+					"0.1",
+					"--led-count",
+					"197",
+					"--function",
+					"cycle",
+					"--verbose",
+					"--duration",
+					"10"
+				]
+			},
+			{
+				"name": "lightberries: sprite",
+				"type": "debugpy",
+				"request": "launch",
+				"module": "lightberries",
+				"console": "integratedTerminal",
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false,
+				"args": [
+					"--brightness",
+					"0.1",
+					"--led-count",
+					"197",
+					"--function",
+					"sprite",
+					"--verbose",
+					"--duration",
+					"10"
+				]
 			},
 			{
 				"name": "example: dot array",

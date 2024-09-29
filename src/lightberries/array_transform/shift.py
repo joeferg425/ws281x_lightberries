@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 import random
 from typing import TYPE_CHECKING
 
@@ -12,14 +11,11 @@ from lightberries.array_sequence.solid import SequenceSolid
 from lightberries.pixel import Pixel, PixelColor
 from lightberries.pixel_transform import PixelTransform
 
-# from lightberries.transform_overlay.fade_off import TransformFadeOff
-
 if TYPE_CHECKING:
     import lightberries.array_controller
     from lightberries.pixel_sequence import PixelSequence
     from lightberries.state import TransformState
 
-LOGGER = logging.getLogger("lightBerries")
 
 
 class TransformShift(PixelTransform):
@@ -102,12 +98,11 @@ class TransformShift(PixelTransform):
             array[: transform.state.pixel_sequence.led_count] = list(transform.state.pixel_sequence)
             transform.controller.virtual_led_buffer[:] = array
         else:
-            transform.controller.virtual_led_buffer[:] = transform.state.pixel_sequence
+            transform.controller.virtual_led_buffer[: transform.state.pixel_sequence.count] = (
+                transform.state.pixel_sequence
+            )
 
-        # if transform.state.fade_amount > 0.0:
-        #     # turn off all LEDs every time so we can turn on new ones
-        #     fade_off = TransformFadeOff(controller=transform.controller, state=state)
-        #     transform.ACTIVE_TRANSFORMS.append(fade_off)
+
         transform.ACTIVE_TRANSFORMS.append(transform)
         return transform.ACTIVE_TRANSFORMS
 

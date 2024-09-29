@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import enum
-import logging
 import random
 from typing import TYPE_CHECKING, Any, Callable, NamedTuple, Union, cast, overload
 
@@ -15,7 +14,6 @@ from lightberries.exceptions import PixelError
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-LOGGER = logging.getLogger("lightBerries")
 
 
 class Order(NamedTuple):

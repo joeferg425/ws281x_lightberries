@@ -5,7 +5,7 @@ import datetime
 import numpy as np
 from numpy.testing import assert_array_equal
 
-from lightberries.array_sequence.base import ArraySequence, pixel_array_to_numpy_array
+from lightberries.array_sequence._array_sequence import ArraySequence, pixel_array_to_numpy_array
 from lightberries.pixel import Pixel, PixelColor
 
 
@@ -17,7 +17,7 @@ def test_default_color_sequence():
         date = now + datetime.timedelta(weeks=i)
         month = date.month
         if month != last_month:
-            default_colors = ArraySequence.default_color_sequence_by_month(date)
+            default_colors = self.default_color_sequence_by_month()_by_month(date)
             assert not np.array_equal(default_colors, last)
             assert len(default_colors.shape) > 1
             last = default_colors
@@ -57,7 +57,7 @@ def test_solid_color_array():
         assert ary.shape[1] == 3
         for j in range(i):
             assert np.array_equal(ary[j], color)
-    color = ArraySequence.default_color_sequence_by_month()[0]
+    color = self.default_color_sequence_by_month()[0]
     ary = ArraySequence.SolidSequence(i)
     assert ary is not None
     assert len(ary.shape) == 2
@@ -68,7 +68,7 @@ def test_solid_color_array():
 
 
 def test_color_transition_array():
-    colors = ArraySequence.default_color_sequence_by_month()
+    colors = self.default_color_sequence_by_month()
     i = 10
     ary1 = ArraySequence.ColorTransitionArray(i)
     assert ary1 is not None
@@ -100,7 +100,7 @@ def test_rainbow_array():
 
 def test_repeating_color_sequence_array():
     i = 10
-    colors = ArraySequence.default_color_sequence_by_month()
+    colors = self.default_color_sequence_by_month()
     ary = ArraySequence.RepeatingColorSequenceArray(i)
     assert ary is not None
     assert len(ary.shape) == 2
@@ -132,7 +132,7 @@ def test_repeating_rainbow_array():
 
 def test_reflect_array():
     i = 20
-    colors = ArraySequence.default_color_sequence_by_month()
+    colors = self.default_color_sequence_by_month()
     ary = ArraySequence.ReflectArray(i)
     assert ary is not None
     assert len(ary.shape) == 2
@@ -187,7 +187,7 @@ def test_pseudorandom_array():
 
 def test_colorstretch_array():
     i = 10
-    colors = ArraySequence.default_color_sequence_by_month()
+    colors = self.default_color_sequence_by_month()
     ary = ArraySequence.ColorStretchArray(i)
     assert ary is not None
     assert len(ary.shape) == 2

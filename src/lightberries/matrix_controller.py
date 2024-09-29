@@ -23,7 +23,7 @@
 # from lightberries.pixel_transform import PixelTransform
 # from lightberries.ws281x_strings import WS281xString
 
-# LOGGER = logging.getLogger("lightBerries")
+# from lightberries.logger import LOGGER
 
 
 # class MatrixController(ArrayController):

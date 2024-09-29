@@ -6,17 +6,16 @@ from typing import Callable
 
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal
-
 from lightberries.exceptions import PixelError
 
 # import lightberries.pixel
 from lightberries.pixel import LEDOrder, Pixel, PixelColor
+from numpy.testing import assert_array_equal
 
 
 def test_pixel_creation_default():
     """Test default pixel creation and attributes."""
-    Pixel.DEFAULT_PIXEL_ORDER = LEDOrder.GRB.value
+    Pixel.default_pixel_order = LEDOrder.GRB.value
     p = Pixel()
     assert isinstance(p, Pixel), f"Pixel: {p} is not {type(Pixel)}"
     exp = 0x000000
@@ -41,7 +40,7 @@ def test_pixel_creation_default():
 
 def test_pixel_creation_None():
     """Test default pixel creation and attributes."""
-    Pixel.DEFAULT_PIXEL_ORDER = LEDOrder.GRB.value
+    Pixel.default_pixel_order = LEDOrder.GRB.value
     p = Pixel(None)
     assert isinstance(p, Pixel), f"Pixel: {p} is not {type(Pixel)}"
     exp = 0x000000
@@ -134,7 +133,7 @@ def test_pixel_creationint_args(arg: int | np.ndarray[(3), np.float32] | Pixel):
         arg: initial pixel value
 
     """
-    Pixel.DEFAULT_PIXEL_ORDER = LEDOrder.RGB.value
+    Pixel.default_pixel_order = LEDOrder.RGB.value
     p = Pixel(arg)
     assert isinstance(p, Pixel), f"Pixel: {p} is not {type(Pixel)}"
     exp = 0x010000
@@ -169,7 +168,7 @@ def test_pixel_creation_pixel_order(arg: int | np.ndarray[(3), np.float32] | Pix
         arg: initial pixel value
 
     """
-    Pixel.DEFAULT_PIXEL_ORDER = LEDOrder.GRB.value
+    Pixel.default_pixel_order = LEDOrder.GRB.value
     p = Pixel(arg)
     assert isinstance(p, Pixel), f"Pixel: {p} is not {type(Pixel)}"
     exp = 0x000100
@@ -201,7 +200,7 @@ def test_pixel_creation_pixel_order_invalid():
 
     """
     with pytest.raises(PixelError):
-        Pixel(rgb=1, order=(1, 12, 34))
+        Pixel(colors=1, order=(1, 12, 34))
 
 
 def test_pixelcolors():

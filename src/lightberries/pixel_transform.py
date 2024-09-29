@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import logging
 import random
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 
 from lightberries.exceptions import ControllerError, LightBerryError
+from lightberries.logger import LOGGER
 from lightberries.pixel_sequence import PixelSequence
 from lightberries.state import TransformState
 
@@ -16,8 +16,6 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     import lightberries.array_controller
-
-LOGGER = logging.getLogger("lightBerries")
 
 
 class PixelTransform:
@@ -31,7 +29,19 @@ class PixelTransform:
         cls,
         **kwargs: dict[str, Any],
     ) -> None:
-        cls.ALL_TRANSFORMS[cls.__name__.replace("Transform", "")] = cls
+        cls_name = cls.__name__.replace("Transform", "")
+        if cls_name not in (
+            "Overlay",
+            "Array",
+            "Off",
+            "FadeOff",
+            "CollisionDetect",
+            "None",
+            "Fade",
+            "Blink",
+            "Twinkle",
+        ):
+            cls.ALL_TRANSFORMS[cls_name] = cls
 
     def __init__(
         self,

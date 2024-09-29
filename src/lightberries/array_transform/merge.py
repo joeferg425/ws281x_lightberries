@@ -2,21 +2,18 @@
 
 from __future__ import annotations
 
-import logging
 import random
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from lightberries.array_sequence.reflect import SequenceReflect
-from lightberries.pixel_sequence import PixelSequence
 from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
     import lightberries.array_controller
+    from lightberries.pixel_sequence import PixelSequence
     from lightberries.state import TransformState
-
-LOGGER = logging.getLogger("lightBerries")
 
 
 class TransformMerge(PixelTransform):

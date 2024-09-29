@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 import random
 from typing import TYPE_CHECKING
 
@@ -17,8 +16,6 @@ if TYPE_CHECKING:
     import lightberries.array_controller
     from lightberries.pixel_sequence import PixelSequence
     from lightberries.state import TransformState
-
-LOGGER = logging.getLogger("lightBerries")
 
 
 class TransformMarquee(PixelTransform):
@@ -93,15 +90,18 @@ class TransformMarquee(PixelTransform):
         transform.state.size = transform.state.pixel_sequence.led_count
         # this function just shifts the existing virtual LED buffer,
         # so make sure the virtual LED buffer is initialized here
-        if transform.state.pixel_sequence.led_count >= transform.controller.virtual_led_count - 10:
+        if transform.controller.real_led_count <= transform.controller.virtual_led_count + 10:
             array = SequenceSolid(
-                led_count=transform.state.pixel_sequence.led_count + 10,
+                led_count=transform.controller.real_led_count + 10,
                 color=Pixel(PixelColor.OFF),
             )
-            array[: transform.state.pixel_sequence.led_count] = list(transform.state.pixel_sequence)
-            transform.controller.set_virtual_led_buffer(array)
         else:
-            transform.controller.set_virtual_led_buffer(transform.state.pixel_sequence)
+            array = SequenceSolid(
+                led_count=transform.controller.real_led_count + 10,
+                color=Pixel(PixelColor.OFF),
+            )
+        array[: transform.state.pixel_sequence.led_count] = [Pixel(x) for x in transform.state.pixel_sequence]
+        transform.controller.set_virtual_led_buffer(array)
         # turn off all LEDs every time so we can turn on new ones
         TransformFadeOff.setup(
             controller=controller,

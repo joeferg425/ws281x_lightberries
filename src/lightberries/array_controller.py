@@ -16,12 +16,12 @@ from lightberries.array_sequence.named import SequenceName, get_named_sequence
 from lightberries.array_sequence.solid import SequenceSolid
 from lightberries.constants import SHAPE_2D, SHAPE_3D
 from lightberries.exceptions import ControllerError, LightBerryError
+from lightberries.logger import LOGGER
 from lightberries.pixel import LEDOrder, Pixel, PixelColor
 from lightberries.pixel_sequence import PixelSequence
 from lightberries.pixel_transform import PixelTransform
 from lightberries.ws281x_strings import WS281xString
 
-LOGGER = logging.getLogger("lightBerries")
 DEFAULT_REFRESH_DELAY = 50
 
 
@@ -739,6 +739,7 @@ class ArrayController:
             LightControlException: if something bad happens
 
         """
+        LOGGER.info("Running demo")
         _seconds_per_mode: int = 60
         if seconds_per_mode is not None:
             _seconds_per_mode = int(seconds_per_mode)
@@ -831,12 +832,27 @@ class ArrayController:
                 # apply color
                 clr = None
                 if color_function:
-                    clr = PixelSequence.ALL_SEQUENCES[color_function](led_count=self.real_led_count)
+                    LOGGER.info("Color: %s", color_function)
+                    clr = PixelSequence.ALL_SEQUENCES[color_function](
+                        led_count=random.randint(
+                            1,
+                            self.real_led_count,
+                        ),
+                    )
                 elif color_sequence:
-                    clr = get_named_sequence(name=SequenceName[color_sequence], led_count=self.real_led_count)
+                    LOGGER.info("Color: %s", color_sequence)
+                    clr = get_named_sequence(
+                        name=SequenceName[color_sequence],
+                        led_count=random.randint(
+                            1,
+                            self.real_led_count,
+                        ),
+                    )
                 else:
+                    LOGGER.info("Color: %s", "default monthly sequence")
                     clr = PixelSequence.default_color_sequence_by_month()
                 # configure function
+                LOGGER.info("Function: %s", transform_function)
                 PixelTransform.ALL_TRANSFORMS[transform_function].setup(
                     controller=self,
                     pixel_sequence=clr,

@@ -5,8 +5,7 @@ import os
 
 import numpy as np
 import pygame
-
-from lightberries.array_sequence.base import ArraySequence
+from lightberries.array_sequence._array_sequence import ArraySequence
 from lightberries.matrix_controller import MatrixController
 from lightberries.matrix_functions import MatrixFunction
 from lightberries.pixel import Pixel, PixelColor
@@ -209,7 +208,7 @@ THRESHOLD = 0.05
 fade = PixelTransform(
     lightControl,
     MatrixFunction.functionFadeOff,
-    ArraySequence.default_color_sequence_by_month(),
+    self.default_color_sequence_by_month(),
 )
 fade._fade_amount = 0.3
 fade.colorFade = int(0.3 * 256)

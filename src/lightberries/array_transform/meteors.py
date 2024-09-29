@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 import random
 from typing import TYPE_CHECKING
 
@@ -10,6 +9,7 @@ import numpy as np
 
 from lightberries.array_transform.collision_detection import TransformCollisionDetect
 from lightberries.constants import SHAPE_2D
+from lightberries.logger import LOGGER
 from lightberries.pixel_transform import PixelTransform
 from lightberries.state import LEDFadeType, TransformState
 from lightberries.transform_overlay.fade_off import TransformFadeOff
@@ -19,7 +19,6 @@ if TYPE_CHECKING:
     import lightberries.array_controller
     from lightberries.pixel_sequence import PixelSequence
 
-LOGGER = logging.getLogger("lightBerries")
 
 
 class TransformMeteor(PixelTransform):

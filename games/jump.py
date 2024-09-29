@@ -18,7 +18,6 @@ from game_objects import (
     SpriteShape,
 )
 from light_game import LightEvent, LightEventId, LightGame
-
 from lightberries.matrix_controller import MatrixController
 from lightberries.pixel import PixelColor
 

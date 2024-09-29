@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 from lightberries.pixel_transform import PixelTransform
@@ -15,7 +14,6 @@ if TYPE_CHECKING:
     from lightberries.pixel_transform import PixelTransform
     from lightberries.state import TransformState
 
-LOGGER = logging.getLogger("lightBerries")
 
 
 class TransformOff(OverlayTransform):

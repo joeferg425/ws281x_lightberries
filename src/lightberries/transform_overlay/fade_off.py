@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 import random
 from typing import TYPE_CHECKING
 
@@ -14,7 +13,6 @@ if TYPE_CHECKING:
     from lightberries.pixel_transform import PixelTransform
     from lightberries.state import TransformState
 
-LOGGER = logging.getLogger("lightBerries")
 
 
 class TransformFadeOff(OverlayTransform):

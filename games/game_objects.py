@@ -7,7 +7,6 @@ from enum import IntEnum
 from typing import Optional
 
 import numpy as np
-
 from lightberries.matrix_controller import MatrixController
 from lightberries.pixel import Pixel, PixelColor
 

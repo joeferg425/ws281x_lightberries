@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import atexit
-import logging
 import os
 import sys
 from collections.abc import Sequence
@@ -14,10 +13,9 @@ from numpy.typing import NDArray
 
 from lightberries.array_sequence._array_sequence import ArraySequence
 from lightberries.exceptions import PermissionsError
+from lightberries.logger import LOGGER
 from lightberries.pixel import Pixel, PixelColor, pixel_from_color
 from lightberries.rpiws281x import PixelStrip
-
-LOGGER = logging.getLogger("lightBerries")
 
 
 class WS281xString(Sequence[NDArray[np.int32]]):

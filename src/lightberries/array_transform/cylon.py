@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 import random
 from typing import TYPE_CHECKING
 
@@ -19,7 +18,6 @@ if TYPE_CHECKING:
     from lightberries.pixel_sequence import PixelSequence
     from lightberries.state import TransformState
 
-LOGGER = logging.getLogger("lightBerries")
 
 
 class TransformCylon(PixelTransform):
@@ -88,14 +86,19 @@ class TransformCylon(PixelTransform):
         # shift eye by this much for each update
         transform.state.size = transform.state.pixel_sequence.led_count
         # adjust virtual LED buffer if necessary so that the cylon can actually move
-        if transform.controller.virtual_led_count < transform.state.size:
+        if transform.controller.virtual_led_count <= controller.real_led_count :
             array = SequenceSolid(
-                led_count=transform.state.size + 3,
+                led_count=controller.real_led_count + 3,
                 color=pixel_from_color(PixelColor.OFF),
             )
-            array[: transform.controller.virtual_led_count] = [
-                Pixel(x) for x in transform.controller.virtual_led_buffer
-            ]
+            array[: transform.state.pixel_sequence.led_count] = [Pixel(x) for x in transform.state.pixel_sequence]
+            transform.controller.set_virtual_led_buffer(array)
+        if transform.controller.virtual_led_count <= transform.state.pixel_sequence.led_count :
+            array = SequenceSolid(
+                led_count=transform.state.pixel_sequence.led_count+ 3,
+                color=pixel_from_color(PixelColor.OFF),
+            )
+            array[: transform.state.pixel_sequence.led_count] = [Pixel(x) for x in transform.state.pixel_sequence]
             transform.controller.set_virtual_led_buffer(array)
         # set start and next indices
         transform.state.index = transform.controller.virtual_led_count - transform.state.size - 3

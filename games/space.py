@@ -9,7 +9,6 @@ from typing import Optional
 import numpy as np
 from game_objects import Enemy, GameObject, Player, Projectile
 from light_game import LightEvent, LightEventId, LightGame
-
 from lightberries.matrix_controller import MatrixController
 from lightberries.pixel import PixelColor
 

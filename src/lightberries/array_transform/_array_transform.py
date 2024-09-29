@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from lightberries.pixel_transform import PixelTransform
@@ -10,9 +9,6 @@ from lightberries.pixel_transform import PixelTransform
 if TYPE_CHECKING:
 
     import lightberries.array_controller
-
-
-LOGGER = logging.getLogger("lightBerries")
 
 
 class ArrayTransform(PixelTransform):
@@ -25,7 +21,19 @@ class ArrayTransform(PixelTransform):
         **kwargs: dict[str, Any],
     ) -> None:
         super().__init_subclass__(kwargs=kwargs)
-        cls.ALL_ARRAY_TRANSFORMS[cls.__name__.replace("Transform", "")] = cls
+        cls_name = cls.__name__.replace("Transform", "")
+        if cls_name not in (
+            "Overlay",
+            "Array",
+            "Off",
+            "FadeOff",
+            "CollisionDetect",
+            "None",
+            "Fade",
+            "Blink",
+            "Twinkle",
+        ):
+            cls.ALL_ARRAY_TRANSFORMS[cls_name] = cls
 
     def __init__(
         self,

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import datetime
-import logging
 import random
 from collections.abc import Sequence
 from enum import IntEnum
@@ -11,12 +10,12 @@ from typing import TYPE_CHECKING, Any, ClassVar, overload
 
 import numpy as np
 
+from lightberries.logger import LOGGER
 from lightberries.pixel import Pixel, PixelColor
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-LOGGER = logging.getLogger("lightBerries")
 
 
 class PixelSequence(Sequence[Pixel]):
@@ -25,7 +24,9 @@ class PixelSequence(Sequence[Pixel]):
     ALL_SEQUENCES: ClassVar[dict[str, type[PixelSequence]]] = {}
 
     def __init_subclass__(cls) -> None:
-        cls.ALL_SEQUENCES[cls.__name__.replace("Sequence", "")] = cls
+        cls_name = cls.__name__.replace("Sequence", "")
+        if cls_name not in ("Pixel", "Array", "Off"):
+            cls.ALL_SEQUENCES[cls_name] = cls
 
     def __init__(
         self,

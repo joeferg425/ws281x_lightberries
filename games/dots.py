@@ -5,7 +5,6 @@ import time
 import numpy as np
 from game_objects import GameObject, Player, Projectile, SpriteShape
 from light_game import LightEvent, LightEventId, LightGame
-
 from lightberries.matrix_controller import MatrixController
 from lightberries.pixel import PixelColor
 

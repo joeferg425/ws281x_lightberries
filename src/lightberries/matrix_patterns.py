@@ -10,7 +10,7 @@
 # from lightberries.exceptions import LightBerryError, PatternError
 # from lightberries.pixel import Pixel
 
-# LOGGER = logging.getLogger("lightBerries")
+# from lightberries.logger import LOGGER
 
 
 # class MatrixOrder(IntEnum):

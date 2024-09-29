@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from lightberries.pixel_sequence import PixelSequence
@@ -10,7 +9,6 @@ from lightberries.pixel_sequence import PixelSequence
 if TYPE_CHECKING:
     from lightberries.pixel import Pixel
 
-LOGGER = logging.getLogger("lightBerries")
 
 
 class ArraySequence(PixelSequence):
@@ -20,7 +18,9 @@ class ArraySequence(PixelSequence):
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
-        cls.ALL_ARRAY_SEQUENCES[cls.__name__.replace("Sequence", "")] = cls
+        cls_name = cls.__name__.replace("Sequence", "")
+        if cls_name not in ("Array", "Off"):
+            cls.ALL_ARRAY_SEQUENCES[cls_name] = cls
 
     def __init__(
         self,

@@ -3,14 +3,11 @@ from __future__ import annotations
 from typing import Any
 from unittest import mock
 
-import numpy as np
-from numpy.testing import assert_array_equal
-from numpy.typing import NDArray
-
 import lightberries.rpiws281x_patch
+import numpy as np
 from lightberries.array_controller import ArrayController
-from lightberries.array_sequence.base import ArraySequence, pixel_array_to_numpy_array
-from lightberries.array_transform.base import (
+from lightberries.array_sequence._array_sequence import ArraySequence, pixel_array_to_numpy_array
+from lightberries.array_transform._array_transform import (
     ArrayTransform,
     LEDFadeType,
     RaindropStates,
@@ -21,6 +18,8 @@ from lightberries.array_transform.base import (
 )
 from lightberries.pixel import PixelColor
 from lightberries.ws281x_strings import WS281xString, WS281xStringError
+from numpy.testing import assert_array_equal
+from numpy.typing import NDArray
 
 
 def new_instantiate_pixelstrip(
@@ -136,7 +135,7 @@ def test_creation_simple():
 
 def test_creation_with_colors():
     control = newController()
-    pattern = ArraySequence.default_color_sequence_by_month()
+    pattern = self.default_color_sequence_by_month()
     function = ArrayTransform(control, assert_func, pattern)
     control.function_list.append(function)
     assert function is not None
