@@ -11,16 +11,17 @@ from typing import Any, Callable, cast
 import numpy as np
 from numpy.typing import NDArray
 
-from lightberries.array_sequence.base import ArraySequence
+from lightberries.array_sequence._array_sequence import ArraySequence
+from lightberries.array_sequence.named import SequenceName, get_named_sequence
 from lightberries.array_sequence.solid import SequenceSolid
 from lightberries.constants import SHAPE_2D, SHAPE_3D
 from lightberries.exceptions import ControllerError, LightBerryError
-from lightberries.pixel import Pixel, PixelColor
+from lightberries.logger import LOGGER
+from lightberries.pixel import LEDOrder, Pixel, PixelColor
 from lightberries.pixel_sequence import PixelSequence
 from lightberries.pixel_transform import PixelTransform
 from lightberries.ws281x_strings import WS281xString
 
-LOGGER = logging.getLogger("lightBerries")
 DEFAULT_REFRESH_DELAY = 50
 
 
@@ -58,6 +59,7 @@ class ArrayController:
         led_strip_type: Any = None,  # noqa: ANN401
         gamma: Any = None,  # noqa: ANN401
         refresh_callback: Callable[[], None] | None = None,
+        led_order: LEDOrder = LEDOrder.GRB,
         *,
         pwm_invert_signal: bool = False,
         debug: bool = False,
@@ -95,6 +97,7 @@ class ArrayController:
 
         """
         try:
+            Pixel.default_pixel_order = led_order
             # configure logging
             if debug is True or verbose is True:
                 if not LOGGER.handlers:
@@ -123,7 +126,7 @@ class ArrayController:
             self._led_count: int = len(self.ws281xString)
             self.virtual_led_buffer: NDArray[np.int32] = SequenceSolid(
                 led_count=self._led_count,
-                color=PixelColor.OFF.array,
+                color=Pixel(PixelColor.OFF),
             ).ndarray
             self.virtual_led_index_buffer: NDArray[np.int32] = np.array(
                 range(len(self.ws281xString)),
@@ -135,12 +138,11 @@ class ArrayController:
             self._next_mode_change: float = time.time()
             self._refresh_delay: float = 0.001
             self._seconds_per_mode: float = 120.0
-            self._background_color: Pixel = PixelColor.OFF
+            self._background_color: Pixel = Pixel(PixelColor.OFF)
             self._color_sequence: PixelSequence = PixelSequence.default_color_sequence_by_month()
             self._color_sequence_count: int = len(self._color_sequence)
             self._color_sequence_index: int = 0
             self._loop_forever: bool = False
-            self._transforms: list[PixelTransform] = []
 
             self.running: bool = False
             self.refresh_callback: Callable[[], None] | None = refresh_callback
@@ -155,10 +157,6 @@ class ArrayController:
             raise
         except Exception as ex:  # pragma: no cover
             raise ControllerError from ex
-
-    def set_transforms(self, transforms: list[PixelTransform]) -> None:
-        """Set transforms."""
-        self._transforms = transforms
 
     def _instantiate_ws281x_string(  # noqa: PLR0913
         self,
@@ -263,7 +261,7 @@ class ArrayController:
     @property
     def background_color(
         self,
-    ) -> NDArray[np.int32]:
+    ) -> Pixel:
         """The defined background, or "Off" color for the LED string.
 
         Returns
@@ -276,7 +274,7 @@ class ArrayController:
     @background_color.setter
     def background_color(
         self,
-        color: NDArray[np.int32],
+        color: Pixel,
     ) -> None:
         """Set the background color.
 
@@ -285,7 +283,7 @@ class ArrayController:
             color: an RGB value
 
         """
-        self._background_color = Pixel(color).array
+        self._background_color = color.copy()
 
     @property
     def seconds_per_mode(
@@ -408,7 +406,7 @@ class ArrayController:
     @property
     def color_sequence_next(
         self,
-    ) -> NDArray[np.int32]:
+    ) -> Pixel:
         """Get the next color in the sequence.
 
         Returns
@@ -429,7 +427,7 @@ class ArrayController:
             the list of functions
 
         """
-        return self._transforms
+        return PixelTransform.ACTIVE_TRANSFORMS
 
     @property
     def overlay_dictionary(self) -> dict[int, Any]:
@@ -457,13 +455,13 @@ class ArrayController:
         """
         try:
             LOGGER.debug("%s.%s:", ArrayController.__name__, self.reset.__name__)
-            self._transforms = []
+            PixelTransform.ACTIVE_TRANSFORMS.clear()
             if self.virtual_led_count >= self.real_led_count:
                 self.set_virtual_led_buffer(self.virtual_led_buffer[: self.real_led_count])
             elif self.virtual_led_count < self.real_led_count:
                 array = SequenceSolid(
                     led_count=self.real_led_count,
-                    color=PixelColor.OFF,
+                    color=Pixel(PixelColor.OFF),
                 )
                 self.set_virtual_led_buffer(array)
         except SystemExit:  # pragma: no cover
@@ -525,7 +523,7 @@ class ArrayController:
                     (
                         self.virtual_led_buffer,
                         np.array(
-                            [PixelColor.OFF.tuple for _ in range(self.real_led_count - self.virtual_led_count)],
+                            [Pixel(PixelColor.OFF) for _ in range(self.real_led_count - self.virtual_led_count)],
                         ),
                     ),
                 )
@@ -619,7 +617,7 @@ class ArrayController:
             # clear all current values
             self.virtual_led_buffer *= 0
             # set to background color
-            self.virtual_led_buffer[:] += self.background_color
+            self.virtual_led_buffer[:] += self.background_color.rgb_array
         except SystemExit:  # pragma: no cover
             raise
         except KeyboardInterrupt:  # pragma: no cover
@@ -643,7 +641,7 @@ class ArrayController:
 
         """
         # invoke the function pointer saved in the light data object
-        for function in self._transforms:
+        for function in PixelTransform.ACTIVE_TRANSFORMS:
             function.transform()
 
     def _copy_overlays(
@@ -676,7 +674,9 @@ class ArrayController:
         except Exception as ex:  # pragma: no cover
             raise ControllerError from ex
 
-    def run(self) -> None:
+    def run(
+        self,
+    ) -> None:
         """Run the configured color pattern and function either forever or for self.secondsPerMode.
 
         Raises
@@ -719,6 +719,8 @@ class ArrayController:
         color_names: list[str] | None = None,
         skip_functions: list[str] | None = None,
         skip_colors: list[str] | None = None,
+        *,
+        kwargs: dict[str, Any],
     ) -> None:
         """Run colors and functions semi-randomly.
 
@@ -737,10 +739,13 @@ class ArrayController:
             LightControlException: if something bad happens
 
         """
+        LOGGER.info("Running demo")
         _seconds_per_mode: int = 60
         if seconds_per_mode is not None:
             _seconds_per_mode = int(seconds_per_mode)
         self.seconds_per_mode = _seconds_per_mode
+        if seconds_per_mode == 0.0:
+            self._loop_forever = True
 
         if function_names is None:
             function_names = []
@@ -751,64 +756,106 @@ class ArrayController:
         if skip_colors is None:
             skip_colors = []
 
-        functions = list(PixelTransform.ALL_TRANSFORMS)
-        colors = list(PixelSequence.ALL_SEQUENCES)
+        transform_functions = list(PixelTransform.ALL_TRANSFORMS)
+        color_functions = list(PixelSequence.ALL_SEQUENCES)
+        color_sequences = list(SequenceName._member_names_)
         # get methods that match user's string
         if len(function_names) > 0:
             matches: list[str] = []
             for name in function_names:
-                matches.extend([f for f in PixelTransform.ALL_TRANSFORMS if name.lower() in f.lower()])
-            functions = matches
+                matches.extend([f for f in PixelTransform.ALL_TRANSFORMS if name.lower() == f.lower()])
+            transform_functions = matches
         # get methods that match user's string
         if len(color_names) > 0:
             matches: list[str] = []
             for name in color_names:
-                matches.extend([f for f in PixelSequence.ALL_SEQUENCES if name.lower() in f.lower()])
-            colors = matches
+                matches.extend([f for f in PixelSequence.ALL_SEQUENCES if name.lower() == f.lower()])
+            color_functions = matches
+        # get methods that match user's string
+        if len(color_names) > 0:
+            matches: list[str] = []
+            for name in color_names:
+                matches.extend([f for f in SequenceName._member_names_ if name.lower() == f.lower()])
+            color_sequences = matches
         # remove methods that user requested
         if len(skip_functions) > 0:
             matches = []
             for name in skip_functions:
-                for function in functions:
-                    if name.lower() in function.lower():
-                        functions.remove(function)
+                for transform_function in transform_functions:
+                    if name.lower() in transform_function.lower():
+                        transform_functions.remove(transform_function)
         # remove methods that user requested
         if len(skip_colors) > 0:
             matches = []
             for name in skip_colors:
-                for color in colors:
-                    if name.lower() in color.lower():
-                        colors.remove(color)
+                for color_function in color_functions:
+                    if name.lower() in color_function.lower():
+                        color_functions.remove(color_function)
 
-        if len(functions) == 0:
+        if len(transform_functions) == 0:
             msg = "No functions selected in demo"
             raise ControllerError(msg)
-        if len(colors) == 0:
+        if len(color_functions) == 0 and len(color_sequences) == 0:
             msg = "No colors selected in demo"
             raise ControllerError(msg)
         while True:
             # make a temporary copy (so we can go through each one)
-            functions_copy = functions.copy()
-            colors_copy = colors.copy()
-            function = functions_copy[random.randint(0, len(functions_copy) - 1)]
-            color = colors_copy[random.randint(0, len(colors_copy) - 1)]
+            transform_functions_copy = transform_functions.copy()
+            color_functions_copy = color_functions.copy()
+            color_sequences_copy = color_sequences.copy()
+            transform_function = transform_functions_copy[random.randint(0, len(transform_functions_copy) - 1)]
+            color_function = None
+            color_sequence = None
+            if color_functions:
+                color_function = color_functions_copy[random.randint(0, len(color_functions_copy) - 1)]
+            if color_sequences:
+                color_sequence = color_sequences_copy[random.randint(0, len(color_sequences_copy) - 1)]
+            # if not color_function and any(name.lower() in SequenceName._member_names_ for name in color_names):
+            #     color_functions_copy = color_names
+            #     color_function = color_names[0]
             # loop while we still have a color and a function
-            while (len(functions_copy) * len(colors_copy)) > 0:
+            while len(transform_functions_copy) > 0 and (len(color_functions_copy) or len(color_sequences_copy) > 0):
                 # get a new function if there is one
-                if len(functions_copy) > 0:
-                    function = functions_copy[random.randint(0, len(functions_copy) - 1)]
-                    functions_copy.remove(function)
+                if len(transform_functions_copy) > 0:
+                    transform_function = transform_functions_copy[random.randint(0, len(transform_functions_copy) - 1)]
+                    transform_functions_copy.remove(transform_function)
                 # get a new color pattern if there is one
-                if len(colors_copy) > 0:
-                    color = colors_copy[random.randint(0, len(colors_copy) - 1)]
-                    colors_copy.remove(color)
+                if len(color_functions_copy) > 0:
+                    color_function = color_functions_copy[random.randint(0, len(color_functions_copy) - 1)]
+                    color_functions_copy.remove(color_function)
+                # get a new color pattern if there is one
+                if len(color_sequences_copy) > 0:
+                    color_sequence = color_sequences_copy[random.randint(0, len(color_sequences_copy) - 1)]
+                    color_sequences_copy.remove(color_sequence)
                 # reset
                 self.reset()
                 # apply color
-                clr = PixelSequence.ALL_SEQUENCES[color](led_count=self.real_led_count)
+                clr = None
+                if color_function:
+                    LOGGER.info("Color: %s", color_function)
+                    clr = PixelSequence.ALL_SEQUENCES[color_function](
+                        led_count=random.randint(
+                            1,
+                            self.real_led_count,
+                        ),
+                    )
+                elif color_sequence:
+                    LOGGER.info("Color: %s", color_sequence)
+                    clr = get_named_sequence(
+                        name=SequenceName[color_sequence],
+                        led_count=random.randint(
+                            1,
+                            self.real_led_count,
+                        ),
+                    )
+                else:
+                    LOGGER.info("Color: %s", "default monthly sequence")
+                    clr = PixelSequence.default_color_sequence_by_month()
                 # configure function
-                self._transforms = PixelTransform.ALL_TRANSFORMS[function](controller=self).setup(
-                    color_sequence=clr,
+                LOGGER.info("Function: %s", transform_function)
+                PixelTransform.ALL_TRANSFORMS[transform_function].setup(
+                    controller=self,
+                    pixel_sequence=clr,
                 )
 
                 # run the combination

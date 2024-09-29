@@ -9,8 +9,6 @@ from lightberries.pixel_transform import PixelTransform
 if TYPE_CHECKING:
 
     import lightberries.array_controller
-    from lightberries.state import TransformState
-
 
 
 class ArrayTransform(PixelTransform):
@@ -23,13 +21,24 @@ class ArrayTransform(PixelTransform):
         **kwargs: dict[str, Any],
     ) -> None:
         super().__init_subclass__(kwargs=kwargs)
-        cls.ALL_ARRAY_TRANSFORMS[cls.__name__.replace("Transform", "")] = cls
+        cls_name = cls.__name__.replace("Transform", "")
+        if cls_name not in (
+            "Overlay",
+            "Array",
+            "Off",
+            "FadeOff",
+            "CollisionDetect",
+            "None",
+            "Fade",
+            "Blink",
+            "Twinkle",
+        ):
+            cls.ALL_ARRAY_TRANSFORMS[cls_name] = cls
 
     def __init__(
         self,
         name: str,
         controller: lightberries.array_controller.ArrayController,
-        state: TransformState | None = None,
     ) -> None:
         """Initialize the Light Function tracking object.
 
@@ -37,11 +46,11 @@ class ArrayTransform(PixelTransform):
         ----
             name: name of the function
             controller: Array controller instance
+            pixel_sequence: a sequence of pixels
             state: initial state. Defaults to None.
 
         """
         super().__init__(
             name=name,
             controller=controller,
-            state=state,
         )

@@ -2,43 +2,51 @@
 
 from __future__ import annotations
 
-import logging
 import random
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 
-from lightberries.array_sequence.base import ArraySequence
 from lightberries.exceptions import ControllerError, LightBerryError
-from lightberries.pixel import LEDOrder, Pixel
+from lightberries.logger import LOGGER
+from lightberries.pixel_sequence import PixelSequence
 from lightberries.state import TransformState
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     import lightberries.array_controller
-    from lightberries.pixel_sequence import PixelSequence
-
-LOGGER = logging.getLogger("lightBerries")
 
 
 class PixelTransform:
     """Modify LED strings in interesting ways."""
 
     ALL_TRANSFORMS: ClassVar[dict[str, type[PixelTransform]]] = {}
+    ACTIVE_TRANSFORMS: ClassVar[list[PixelTransform]] = []
+    _instance_count: ClassVar[int] = 0
 
     def __init_subclass__(
         cls,
         **kwargs: dict[str, Any],
     ) -> None:
-        cls.ALL_TRANSFORMS[cls.__name__.replace("Transform", "")] = cls
+        cls_name = cls.__name__.replace("Transform", "")
+        if cls_name not in (
+            "Overlay",
+            "Array",
+            "Off",
+            "FadeOff",
+            "CollisionDetect",
+            "None",
+            "Fade",
+            "Blink",
+            "Twinkle",
+        ):
+            cls.ALL_TRANSFORMS[cls_name] = cls
 
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
         name: str | None = None,
-        state: TransformState | None = None,
-        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> None:
         """Initialize the Light Function tracking object.
 
@@ -46,25 +54,28 @@ class PixelTransform:
         ----
             name: name of the function
             controller: Array controller instance
+            pixel_sequence: a pixel sequence
             state: initial state. Defaults to None.
             kwargs: args for patterns
 
         """
         if name is None:
             name = PixelTransform.__name__
+        PixelTransform._instance_count += 1
+        name = f"{name}[{self._instance_count}]"
         self.controller = controller
         self._name = name
-        if state is None:
-            self.state = TransformState(controller=self.controller)
-        else:
-            self.state = state
+        self.state = TransformState(
+            controller=self.controller,
+            pixel_sequence=PixelSequence.default_color_sequence_by_month(),
+        )
 
-        LOGGER.debug("Transform: %s", name)
+        LOGGER.debug("Transform: %s", self)
 
     def __str__(
         self,
     ) -> str:
-        return f'[{self.state.index}]: "{self._name}" {Pixel(self.state.color_sequence.pixel, LEDOrder.RGB)}'
+        return f'[{self.state.index}]: "{self._name}" {self.state.pixel_sequence.pixel}'
 
     def __repr__(
         self,
@@ -78,16 +89,18 @@ class PixelTransform:
         """
         return f"<{PixelTransform.__name__}> {self!s}"
 
+    @staticmethod
     def setup(
-        self,
-        color_sequence: PixelSequence | None = None,
+        controller: lightberries.array_controller.ArrayController,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
     ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:
         ----
-            color_sequence: color sequence. Defaults to None.
+            controller: Array controller instance
+            pixel_sequence: color sequence. Defaults to None.
             state: initial state. Defaults to None.
 
         Returns:
@@ -95,42 +108,14 @@ class PixelTransform:
             list of transforms
 
         """
-        if state is not None:
-            self.state = state
-        self.state.color_sequence = self.default_color_sequence_by_month()
-        if color_sequence is not None:
-            self.state.color_sequence = color_sequence
+        if pixel_sequence is None:
+            pixel_sequence = PixelSequence.default_color_sequence_by_month()
+        if state is None:
+            state = TransformState(controller=controller, pixel_sequence=pixel_sequence)
         return []
 
     def transform(self) -> None:
         """Run this array function's transformation."""
-
-    @property
-    def color_sequence(
-        self,
-    ) -> PixelSequence:
-        """Return the color sequence.
-
-        Returns
-        -------
-            the color sequence
-
-        """
-        return self.state.color_sequence
-
-    @color_sequence.setter
-    def color_sequence(
-        self,
-        color_sequence: PixelSequence,
-    ) -> None:
-        """Set the color sequence.
-
-        Args:
-        ----
-            color_sequence: desired color sequence
-
-        """
-        self.state.color_sequence = color_sequence
 
     def update_array_index(
         self,
@@ -259,3 +244,23 @@ class PixelTransform:
 
         """
         return [True, False][random.randint(0, 1)]
+
+    def copy(self) -> PixelTransform:
+        """Get a copy of this transform.
+
+        Returns
+        -------
+            a copy of this transform
+
+        """
+        transform = PixelTransform(
+            controller=self.controller,
+            name=self._name,
+        )
+        transform.state = self.state.copy()
+        return transform
+
+    @staticmethod
+    def clear_active() -> None:
+        """Clear the list of active transforms."""
+        PixelTransform.ACTIVE_TRANSFORMS.clear()

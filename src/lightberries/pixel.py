@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import enum
-import logging
 import random
 from typing import TYPE_CHECKING, Any, Callable, NamedTuple, Union, cast, overload
 
@@ -15,7 +14,6 @@ from lightberries.exceptions import PixelError
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-LOGGER = logging.getLogger("lightBerries")
 
 
 class Order(NamedTuple):
@@ -59,11 +57,11 @@ class LEDOrder(Order, enum.Enum):
 class Pixel:
     """A single LED pixel."""
 
-    default_pixel_order: list[int] = LEDOrder.GRB.value
+    default_pixel_order: LEDOrder = LEDOrder.GRB
 
     def __init__(
         self,
-        colors: Pixel | int | NDArray[np.int32] | tuple[int, int, int] | list[int] | None = None,
+        colors: Pixel | int | NDArray[Any] | tuple[int, int, int] | list[int] | None = None,
     ) -> None:
         """Create a single RGB LED pixel.
 
@@ -173,7 +171,7 @@ class Pixel:
             a string representation of the Pixel instance
 
         """
-        return f"<{Pixel.__name__}> {self.__str__()} ({LEDOrder (self._order).name})"
+        return f"<{Pixel.__name__}> {self.__str__()} ({self._order.name})"
 
     def __eq__(self, other: object) -> bool:
         """Text pixel equality with other objects.
@@ -262,9 +260,9 @@ class Pixel:
         """
         return np.array(
             [
-                self.array[self._order[0]],
-                self.array[self._order[1]],
-                self.array[self._order[2]],
+                self.array[self._order.red],
+                self.array[self._order.green],
+                self.array[self._order.blue],
             ],
         )
 
@@ -325,7 +323,7 @@ class Pixel:
 
         """
         if color_next is None:
-            color_next = PixelColor.OFF
+            color_next = pixel_from_color(PixelColor.OFF)
         if fade_amount is None:
             fade_amount = 25
         color = self.array.copy()
@@ -420,44 +418,72 @@ class Pixel:
         )
 
 
-class PixelColor(Pixel, enum.Enum):
+class _Pixel(NamedTuple):
+    """LEDs type."""
+
+    red: int
+    green: int
+    blue: int
+
+
+_pixels: dict[PixelColor, Pixel] = {}
+
+
+def pixel_from_color(color: PixelColor) -> Pixel:
+    """Get the pixel object with colors in the specified order.
+
+    Args:
+    ----
+        color: color specification
+
+    Returns:
+    -------
+        pixel object
+
+    """
+    if color not in _pixels:
+        _pixels[color] = Pixel(color)
+    return _pixels[color]
+
+
+class PixelColor(_Pixel, enum.Enum):
     """List of commonly used colors for ease of use."""
 
-    OFF = Pixel((0, 0, 0))
-    RED4 = Pixel((31, 0, 0))
-    RED3 = Pixel((63, 0, 0))
-    RED2 = Pixel((127, 0, 0))
-    RED = Pixel((255, 0, 0))
-    ORANGE3 = Pixel((63, 63, 0))
-    ORANGE2 = Pixel((127, 127, 0))
-    ORANGE = Pixel((255, 127, 0))
-    YELLOW = Pixel((255, 210, 80))
-    LIME = Pixel((127, 255, 0))
-    GREEN4 = Pixel((0, 31, 0))
-    GREEN3 = Pixel((0, 63, 0))
-    GREEN2 = Pixel((0, 127, 0))
-    GREEN = Pixel((0, 255, 0))
-    TEAL = Pixel((0, 255, 127))
-    CYAN3 = Pixel((0, 63, 63))
-    CYAN2 = Pixel((0, 127, 127))
-    CYAN = Pixel((0, 255, 255))
-    SKY = Pixel((0, 127, 255))
-    BLUE = Pixel((0, 0, 255))
-    BLUE2 = Pixel((0, 0, 127))
-    BLUE3 = Pixel((0, 0, 63))
-    BLUE4 = Pixel((0, 0, 31))
-    VIOLET = Pixel((127, 0, 255))
-    PURPLE = Pixel((127, 0, 127))
-    PURPLE2 = Pixel((63, 0, 63))
-    MIDNIGHT = Pixel((70, 0, 127))
-    MAGENTA = Pixel((255, 0, 255))
-    PINK = Pixel((255, 0, 127))
-    WHITE = Pixel((255, 255, 255))
-    GRAY = Pixel((127, 118, 108))
-    GRAY2 = Pixel((64, 55, 50))
+    OFF = (0, 0, 0)
+    RED4 = (31, 0, 0)
+    RED3 = (63, 0, 0)
+    RED2 = (127, 0, 0)
+    RED = (255, 0, 0)
+    ORANGE3 = (63, 63, 0)
+    ORANGE2 = (127, 127, 0)
+    ORANGE = (255, 127, 0)
+    YELLOW = (255, 210, 80)
+    LIME = (127, 255, 0)
+    GREEN4 = (0, 31, 0)
+    GREEN3 = (0, 63, 0)
+    GREEN2 = (0, 127, 0)
+    GREEN = (0, 255, 0)
+    TEAL = (0, 255, 127)
+    CYAN3 = (0, 63, 63)
+    CYAN2 = (0, 127, 127)
+    CYAN = (0, 255, 255)
+    SKY = (0, 127, 255)
+    BLUE = (0, 0, 255)
+    BLUE2 = (0, 0, 127)
+    BLUE3 = (0, 0, 63)
+    BLUE4 = (0, 0, 31)
+    VIOLET = (127, 0, 255)
+    PURPLE = (127, 0, 127)
+    PURPLE2 = (63, 0, 63)
+    MIDNIGHT = (70, 0, 127)
+    MAGENTA = (255, 0, 255)
+    PINK = (255, 0, 127)
+    WHITE = (255, 255, 255)
+    GRAY = (127, 118, 108)
+    GRAY2 = (64, 55, 50)
 
-    @StaticPixelProperty
-    def pseudo_random() -> Pixel:
+    @staticmethod
+    def pseudo_random() -> PixelColor:
         """Get pseudo-random pixel value from list of named colors.
 
         Returns
@@ -465,15 +491,15 @@ class PixelColor(Pixel, enum.Enum):
             pseudo-random pixel value from list of named colors
 
         """
-        valid_colors = [
+        valid_colors: list[PixelColor] = [
             getattr(PixelColor, p)
             for p in dir(PixelColor)
             if "__" not in p and "random" not in p.lower() and "off" not in p.lower()
         ]
         return valid_colors[random.randint(0, len(valid_colors) - 1)]
 
-    @StaticPixelProperty
-    def random() -> Pixel:
+    @staticmethod
+    def random() -> PixelColor:
         """Get random pixel color.
 
         Returns
@@ -481,4 +507,4 @@ class PixelColor(Pixel, enum.Enum):
             random pixel color
 
         """
-        return Pixel([random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)])
+        return PixelColor([random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)])

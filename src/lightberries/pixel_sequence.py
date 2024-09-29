@@ -3,35 +3,35 @@
 from __future__ import annotations
 
 import datetime
-import logging
 import random
 from collections.abc import Sequence
+from enum import IntEnum
 from typing import TYPE_CHECKING, Any, ClassVar, overload
 
 import numpy as np
 
+from lightberries.logger import LOGGER
 from lightberries.pixel import Pixel, PixelColor
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-LOGGER = logging.getLogger("lightBerries")
 
 
-class PixelSequence:
+class PixelSequence(Sequence[Pixel]):
     """A pattern of lights."""
 
-    DEFAULT_TWINKLE_COLOR = PixelColor.GRAY
-    DEFAULT_BACKGROUND_COLOR = PixelColor.OFF
     ALL_SEQUENCES: ClassVar[dict[str, type[PixelSequence]]] = {}
 
     def __init_subclass__(cls) -> None:
-        cls.ALL_SEQUENCES[cls.__name__.replace("Sequence", "")] = cls
+        cls_name = cls.__name__.replace("Sequence", "")
+        if cls_name not in ("Pixel", "Array", "Off"):
+            cls.ALL_SEQUENCES[cls_name] = cls
 
     def __init__(
         self,
         led_count: int | None = None,
-        pixel_array: list[Pixel] | None = None,
+        pixel_sequence: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
         **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> None:
@@ -42,31 +42,34 @@ class PixelSequence:
             name: the name of this pattern
             led_count: the number of pixels desired in the returned pixel array
             kwargs: args for patterns
-            pixel_array: a list of pixels
+            pixel_sequence: a list of pixels
 
         """
         if name is None:
             name = PixelSequence.__name__
         self._name = name
-        LOGGER.debug("Sequence: %s", name)
-        if pixel_array is not None:
-            self._array = pixel_array
-            self._led_count = len(pixel_array)
+        if pixel_sequence is not None:
+            if isinstance(pixel_sequence, PixelSequence):
+                self._array = list(pixel_sequence)
+            else:
+                self._array = pixel_sequence
+            self._led_count = len(pixel_sequence)
         elif led_count is not None:
             self._led_count = led_count
-            self._array: list[Pixel] = [PixelColor.OFF for _ in range(int(self._led_count))]
+            self._array: list[Pixel] = [Pixel(PixelColor.OFF) for _ in range(int(self._led_count))]
         else:
             self._led_count = 0
-            self._array: list[Pixel] = [PixelColor.OFF for _ in range(int(self._led_count))]
-        self._index: int = 0
+            self._array: list[Pixel] = [Pixel(PixelColor.OFF) for _ in range(int(self._led_count))]
+        self._led_index: int = 0
         if self._led_count:
             self._pixel: Pixel = self._array[0].copy()
         else:
-            self._pixel: Pixel = PixelColor.OFF
+            self._pixel: Pixel = Pixel(PixelColor.OFF)
         if self._led_count > 1:
             self._pixel_next: Pixel = self._array[1].copy()
         else:
             self._pixel_next: Pixel = self._pixel.copy()
+        LOGGER.debug(self)
 
     def __len__(self) -> int:
         return self._led_count
@@ -93,11 +96,11 @@ class PixelSequence:
         self,
         idx: int | np.int32 | slice,
     ) -> Pixel | list[Pixel]:
-        """Return a pixel value by index.
+        """Return a pixel value by led_index.
 
         Args:
         ----
-            idx: an index of a pixel, or a slice specifying a range of pixels
+            idx: an led_index of a pixel, or a slice specifying a range of pixels
 
         Returns:
         -------
@@ -122,7 +125,7 @@ class PixelSequence:
 
         Args:
         ----
-            key: the index or slice specifying one or more LED indices
+            key: the led_index or slice specifying one or more LED indices
             value: the RGB value or values to assign to the given LED indices
 
         """
@@ -137,30 +140,30 @@ class PixelSequence:
             raise TypeError(msg)
 
     @property
-    def index(self) -> int:
-        """Get the sequence index.
+    def led_index(self) -> int:
+        """Get the sequence led_index.
 
         Returns
         -------
-            the sequence index
+            the sequence led_index
 
         """
-        return self._index
+        return self._led_index
 
-    @index.setter
-    def index(self, index: int) -> None:
-        self._index = index % self.count
+    @led_index.setter
+    def led_index(self, led_index: int) -> None:
+        self._led_index = led_index % self.led_count
 
     @property
     def index_next(self) -> int:
-        """Get the next valid sequence index.
+        """Get the next valid sequence led_index.
 
         Returns
         -------
-            the next valid sequence index
+            the next valid sequence led_index
 
         """
-        return (self.index + 1) % self.count
+        return (self.led_index + 1) % self.led_count
 
     @property
     def pixel(self) -> Pixel:
@@ -194,7 +197,7 @@ class PixelSequence:
 
     @staticmethod
     def pixel_array_to_numpy_array(
-        color_sequence: Sequence[Pixel] | NDArray[np.int32],
+        color_sequence: Sequence[Pixel] | PixelSequence,
     ) -> NDArray[np.int32]:
         """Convert an array of Pixels into a numpy array of rgb arrays.
 
@@ -215,9 +218,7 @@ class PixelSequence:
 
         """
         if len(color_sequence) > 0:
-            if isinstance(color_sequence, Sequence):
-                return np.array([Pixel(p).array for p in color_sequence])
-            return color_sequence
+            return np.array([Pixel(p).array for p in color_sequence])
         return np.zeros((0, 3), dtype=np.int32)
 
     @property
@@ -229,10 +230,24 @@ class PixelSequence:
             the light sequence
 
         """
-        return np.array([p.array for p in self._array], dtype=np.int32)
+        return np.array([p.rgb_array for p in self._array], dtype=np.int32)
+
+    def count(self, value: Pixel) -> int:
+        """Count instances of the pixel value.
+
+        Args:
+        ----
+            value: a pixel instance
+
+        Returns:
+        -------
+            count of the value
+
+        """
+        return self._array.count(value)
 
     @property
-    def count(self) -> int:
+    def led_count(self) -> int:
         """Get the Pixel count.
 
         Returns
@@ -280,7 +295,7 @@ class PixelSequence:
         if month is None:
             date = datetime.datetime.now()  # noqa: DTZ005
             month = date.month
-        return MONTHLY_COLOR_SEQUENCE[month]
+        return get_monthly_color_sequence(month)
 
     def get_random_boolean(self) -> bool:
         """Get a random true or false value.
@@ -292,6 +307,18 @@ class PixelSequence:
         """
         return [True, False][random.randint(0, 1)]
 
+    def random_index(self) -> int:
+        """Get a random index.
+
+        Returns
+        -------
+            random index
+
+        """
+        _led_index = random.randint(0, self.led_count - 1)
+        self._set_index(_led_index)
+        return self._led_index
+
     def copy(self) -> PixelSequence:
         """Make a copy of the sequence.
 
@@ -300,8 +327,8 @@ class PixelSequence:
             a copy of the sequence
 
         """
-        sequence = PixelSequence(name=self._name, pixel_array=self._array)
-        sequence._index = self.index  # noqa: SLF001
+        sequence = PixelSequence(name=self._name, pixel_sequence=self._array)
+        sequence._led_index = self.led_index  # noqa: SLF001
         sequence._pixel = self._pixel  # noqa: SLF001
         sequence._pixel_next = self._pixel_next  # noqa: SLF001
         sequence.pixel = self.pixel
@@ -309,18 +336,23 @@ class PixelSequence:
         return sequence
 
     def advance_index(self, *, keep_current: bool = False) -> Pixel:
-        """Advance index, update current pixel object.
+        """Advance led_index, update current pixel object.
 
         Returns
         -------
             next pixel object
 
         """
-        self.index = self.index_next
+        _pixel = self._pixel
+        self._set_index(self.index_next)
         if keep_current:
-            self._pixel = self._array[self.index].copy()
-        self._pixel_next = self._array[self.index_next].copy()
+            self._pixel = _pixel
         return self.pixel
+
+    def _set_index(self, index: int) -> None:
+        self._led_index = index
+        self._pixel = self._array[self.led_index].copy()
+        self._pixel_next = self._array[self.index_next].copy()
 
     def __str__(
         self,
@@ -335,14 +367,14 @@ class PixelSequence:
         chunks: list[str] = []
         end = min(3, self._led_count)
         for i in range(end):
-            index = (self.index + i) % self._led_count
-            chunks.append(str(self._array[index]))
+            led_index = (self.led_index + i) % self._led_count
+            chunks.append(str(self._array[led_index]))
         s = ", ".join(chunks)
         if self._led_count > end:
             s += ",..."
         else:
             s += "]"
-        return f"SQX#{self._led_count}[{s}"
+        return f"{self._name}: SQX#{self._led_count}[{s}"
 
     def __repr__(
         self,
@@ -357,106 +389,141 @@ class PixelSequence:
         return f"<{PixelSequence.__name__}> {self.__str__()}"
 
 
-MONTHLY_COLOR_SEQUENCE: dict[
-    int,
-    PixelSequence,
-] = {
-    1: PixelSequence.from_list(
+class Month(IntEnum):
+    """Month enum so linters stop hating me."""
+
+    January = 1
+    February = 2
+    March = 3
+    April = 4
+    May = 5
+    June = 6
+    July = 7
+    August = 8
+    September = 9
+    October = 10
+    November = 11
+    December = 12
+
+
+def get_monthly_color_sequence(month: int) -> PixelSequence:  # noqa: C901, PLR0911
+    """Get the sequence for each month.
+
+    Args:
+    ----
+        month: the month as an integer
+
+    Returns:
+    -------
+        pixel sequence
+
+    """
+    if month == Month.January:
+        return PixelSequence.from_list(
+            [
+                Pixel(PixelColor.CYAN2),
+                Pixel(PixelColor.WHITE),
+                Pixel(PixelColor.CYAN),
+                Pixel(PixelColor.BLUE2),
+                Pixel(PixelColor.BLUE),
+            ],
+        )
+    if month == Month.February:
+        return PixelSequence.from_list(
+            [
+                Pixel(PixelColor.PINK),
+                Pixel(PixelColor.WHITE),
+                Pixel(PixelColor.RED),
+                Pixel(PixelColor.WHITE),
+            ],
+        )
+    if month == Month.March:
+        return PixelSequence.from_list(
+            [
+                Pixel(PixelColor.GREEN),
+                Pixel(PixelColor.WHITE),
+                Pixel(PixelColor.ORANGE),
+                Pixel(PixelColor.WHITE),
+                Pixel(PixelColor.YELLOW),
+            ],
+        )
+    if month == Month.April:
+        return PixelSequence.from_list(
+            [
+                Pixel(PixelColor.PINK),
+                Pixel(PixelColor.CYAN),
+                Pixel(PixelColor.YELLOW),
+                Pixel(PixelColor.GREEN),
+                Pixel(PixelColor.WHITE),
+            ],
+        )
+    if month == Month.May:
+        return PixelSequence.from_list(
+            [
+                Pixel(PixelColor.PINK),
+                Pixel(PixelColor.YELLOW),
+                Pixel(PixelColor.GREEN),
+                Pixel(PixelColor.WHITE),
+            ],
+        )
+    if month == Month.June:
+        return PixelSequence.from_list(
+            [
+                Pixel(PixelColor.RED),
+                Pixel(PixelColor.WHITE),
+                Pixel(PixelColor.BLUE),
+                Pixel(PixelColor.GREEN),
+            ],
+        )
+    if month == Month.July:
+        return PixelSequence.from_list(
+            [
+                Pixel(PixelColor.RED),
+                Pixel(PixelColor.WHITE),
+                Pixel(PixelColor.BLUE),
+            ],
+        )
+    if month == Month.August:
+        return PixelSequence.from_list(
+            [
+                Pixel(PixelColor.ORANGE),
+                Pixel(PixelColor.WHITE),
+                Pixel(PixelColor.YELLOW),
+                Pixel(PixelColor.ORANGE2),
+            ],
+        )
+    if month == Month.September:
+        return PixelSequence.from_list(
+            [
+                Pixel(PixelColor.RED),
+                Pixel(PixelColor.ORANGE),
+                Pixel(PixelColor.WHITE),
+                Pixel(PixelColor.YELLOW),
+                Pixel(PixelColor.ORANGE2),
+                Pixel(PixelColor.RED2),
+            ],
+        )
+    if month == Month.October:
+        return PixelSequence.from_list(
+            [
+                Pixel(PixelColor.MIDNIGHT),
+                Pixel(PixelColor.RED),
+                Pixel(PixelColor.ORANGE),
+                Pixel(PixelColor.OFF),
+            ],
+        )
+    if month == Month.November:
+        return PixelSequence.from_list(
+            [
+                Pixel(PixelColor.RED),
+                Pixel(PixelColor.MIDNIGHT),
+                Pixel(PixelColor.GRAY),
+            ],
+        )
+    return PixelSequence.from_list(
         [
-            PixelColor.CYAN2,
-            PixelColor.WHITE,
-            PixelColor.CYAN,
-            PixelColor.BLUE2,
-            PixelColor.BLUE,
+            Pixel(PixelColor.RED),
+            Pixel(PixelColor.WHITE),
+            Pixel(PixelColor.GREEN),
         ],
-    ),
-    2: PixelSequence.from_list(
-        [
-            PixelColor.PINK,
-            PixelColor.WHITE,
-            PixelColor.RED,
-            PixelColor.WHITE,
-        ],
-    ),
-    3: PixelSequence.from_list(
-        [
-            PixelColor.GREEN,
-            PixelColor.WHITE,
-            PixelColor.ORANGE,
-            PixelColor.WHITE,
-            PixelColor.YELLOW,
-        ],
-    ),
-    4: PixelSequence.from_list(
-        [
-            PixelColor.PINK,
-            PixelColor.CYAN,
-            PixelColor.YELLOW,
-            PixelColor.GREEN,
-            PixelColor.WHITE,
-        ],
-    ),
-    5: PixelSequence.from_list(
-        [
-            PixelColor.PINK,
-            PixelColor.YELLOW,
-            PixelColor.GREEN,
-            PixelColor.WHITE,
-        ],
-    ),
-    6: PixelSequence.from_list(
-        [
-            PixelColor.RED,
-            PixelColor.WHITE,
-            PixelColor.BLUE,
-            PixelColor.GREEN,
-        ],
-    ),
-    7: PixelSequence.from_list(
-        [
-            PixelColor.RED,
-            PixelColor.WHITE,
-            PixelColor.BLUE,
-        ],
-    ),
-    8: PixelSequence.from_list(
-        [
-            PixelColor.ORANGE,
-            PixelColor.WHITE,
-            PixelColor.YELLOW,
-            PixelColor.ORANGE2,
-        ],
-    ),
-    9: PixelSequence.from_list(
-        [
-            PixelColor.RED,
-            PixelColor.ORANGE,
-            PixelColor.WHITE,
-            PixelColor.YELLOW,
-            PixelColor.ORANGE2,
-            PixelColor.RED2,
-        ],
-    ),
-    10: PixelSequence.from_list(
-        [
-            PixelColor.MIDNIGHT,
-            PixelColor.RED,
-            PixelColor.ORANGE,
-            PixelColor.OFF,
-        ],
-    ),
-    11: PixelSequence.from_list(
-        [
-            PixelColor.RED,
-            PixelColor.MIDNIGHT,
-            PixelColor.GRAY,
-        ],
-    ),
-    12: PixelSequence.from_list(
-        [
-            PixelColor.RED,
-            PixelColor.WHITE,
-            PixelColor.GREEN,
-        ],
-    ),
-}
+    )

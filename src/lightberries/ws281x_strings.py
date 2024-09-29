@@ -3,25 +3,19 @@
 from __future__ import annotations
 
 import atexit
-import logging
 import os
 import sys
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any, overload
+from typing import Any, overload
 
 import numpy as np
 from numpy.typing import NDArray
 
-from lightberries.array_sequence.base import ArraySequence
+from lightberries.array_sequence._array_sequence import ArraySequence
 from lightberries.exceptions import PermissionsError
-from lightberries.pixel import Pixel, PixelColor
-from lightberries.rpiws281x import rpi_ws281x
-
-if TYPE_CHECKING:
-
-    from lightberries.rpiws281x_patch import PixelStrip
-
-LOGGER = logging.getLogger("lightBerries")
+from lightberries.logger import LOGGER
+from lightberries.pixel import Pixel, PixelColor, pixel_from_color
+from lightberries.rpiws281x import PixelStrip
 
 
 class WS281xString(Sequence[NDArray[np.int32]]):
@@ -143,7 +137,7 @@ class WS281xString(Sequence[NDArray[np.int32]]):
             WS281xStringError: _description_
 
         """
-        self._ws281x_pixel_strip = rpi_ws281x.PixelStrip(  # pragma: no cover
+        self._ws281x_pixel_strip = PixelStrip(  # pragma: no cover
             pin=pwm_gpio_pin,
             dma=dma_channel,
             num=led_count,
@@ -158,7 +152,7 @@ class WS281xString(Sequence[NDArray[np.int32]]):
         atexit.register(self.__del__)
 
         self._ws281x_pixel_strip.begin()
-        self._ledCount = int(self._ws281x_pixel_strip.numPixels())
+        self._ledCount = len(self._ws281x_pixel_strip)
         LOGGER.debug("Created %s", WS281xString.__name__)
 
     def __del__(
@@ -325,7 +319,7 @@ class WS281xString(Sequence[NDArray[np.int32]]):
 
         """
         for index in range(len(self)):
-            self[index] = PixelColor.OFF.array
+            self[index] = pixel_from_color(PixelColor.OFF).array
         self.refresh()
         self.refresh()
         self.refresh()

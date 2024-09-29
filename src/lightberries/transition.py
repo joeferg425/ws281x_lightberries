@@ -16,7 +16,7 @@ from lightberries.pixel_sequence import PixelSequence
 class SequenceTransition(ArraySequence):
     """A more versatile version of CreateRainbow."""
 
-    def __init__(  # noqa: C901
+    def __init__(  # noqa: C901, PLR0912
         self,
         led_count: int | None = None,
         pixel_sequence: PixelSequence | list[Pixel] | None = None,

@@ -2,18 +2,15 @@
 
 from __future__ import annotations
 
-import logging
 import random
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
 
-from lightberries.array_transform.base import ArrayTransform
-from lightberries.array_transform.fade_off import TransformFadeOff
+from lightberries.array_transform._array_transform import ArrayTransform
 from lightberries.constants import MAX_INT8, SHAPE_2D
 from lightberries.state import TransformState
-
-LOGGER = logging.getLogger("lightBerries")
+from lightberries.transform_overlay.fade_off import TransformFadeOff
 
 if TYPE_CHECKING:
 
@@ -31,7 +28,6 @@ class TransformAccelerate(ArrayTransform):
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        state: TransformState | None = None,
     ) -> None:
         """Accelerate across the string of lights repeatedly.
 
@@ -39,31 +35,32 @@ class TransformAccelerate(ArrayTransform):
         ----
             controller: Array controller instance
             state: initial state. Defaults to None.
+            pixel_sequence: a sequence of pixels
 
         """
         super().__init__(
             name=TransformAccelerate.__name__,
             controller=controller,
-            state=state,
         )
         self.INSTANCES[len(self.INSTANCES)] = self
 
+    @staticmethod
     def setup(  # noqa: PLR0913
-        self,
-        color_sequence: PixelSequence | None = None,
+        controller: lightberries.array_controller.ArrayController,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         delay_count_max: int | None = None,
         step_count_max: int | None = None,
         fade_amount: float | None = None,
         color_cycle: bool | None = None,
-        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:
         ----
-            color_sequence: _description_. Defaults to None.
+            controller: Array controller instance
+            pixel_sequence: _description_. Defaults to None.
             state: initial state. Defaults to None.
             kwargs: extra args to the state object
             delay_count_max: maximum number of iterations to delay for
@@ -76,43 +73,46 @@ class TransformAccelerate(ArrayTransform):
             list of transforms
 
         """
-        if color_sequence is not None:
-            self.color_sequence = self.color_sequence
+        transform = TransformAccelerate(controller=controller)
         if state is not None:
-            self.state = state
+            transform.state = state
         else:
             # set the number of updates during which the lights will stay constant
-            self.state.delay_count_max = random.randint(5, 10)
+            transform.state.delay_count_max = random.randint(5, 10)
             # this determines the maximum that the LED can jump in a single step as it speeds up
-            self.state.step_count_max = random.randint(4, 10)
+            transform.state.step_count_max = random.randint(4, 10)
             # this determines the length of comet tails
-            self.state.set_fade_amount(random.randint(15, 35) / MAX_INT8)
+            transform.state.set_fade_amount(random.randint(15, 35) / MAX_INT8)
             # whether to cycle through colors
-            self.state.color_cycle = self.get_random_boolean()
+            transform.state.color_cycle = transform.get_random_boolean()
             # the number of times the comet will accelerate
-            self.state.state_max = random.randint(5, 10)
+            transform.state.state_max = random.randint(5, 10)
             # randomize direction
-            self.state.direction = self.get_random_direction()
+            transform.state.direction = transform.get_random_direction()
             # randomize start index
-            self.state.index = self.get_random_index()
+            transform.state.index = transform.get_random_index()
+
+        if pixel_sequence is not None:
+            transform.state.pixel_sequence = pixel_sequence
 
         if delay_count_max is not None:
-            self.state.delay_count_max = delay_count_max
+            transform.state.delay_count_max = delay_count_max
         if step_count_max is not None:
-            self.state.step_count_max = step_count_max
+            transform.state.step_count_max = step_count_max
         if fade_amount is not None:
-            self.state.set_fade_amount(fade_amount)
+            transform.state.set_fade_amount(fade_amount)
         # make sure fade amount is valid
 
         if color_cycle is not None:
-            self.state.color_cycle = color_cycle
+            transform.state.color_cycle = color_cycle
 
-        fade = TransformFadeOff(
-            controller=self.controller,
-            state=self.state,
+        TransformFadeOff.setup(
+            controller=controller,
+            state=transform.state,
+            fade_amount=transform.state.fade_amount,
         )
-        fade.setup(fade_amount=self.state.fade_amount)
-        return [fade, self]
+        TransformAccelerate.ACTIVE_TRANSFORMS.append(transform)
+        return TransformAccelerate.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
         """Accelerate across the string of lights repeatedly."""
@@ -141,7 +141,7 @@ class TransformAccelerate(ArrayTransform):
             )
             self.state.index_range[modulo] -= self.controller.real_led_count
             if self.state.color_cycle is True:
-                self.state.color_sequence.advance_index()
+                self.state.pixel_sequence.advance_index()
         # check index step counter, update speed state when it hits step count max
         if self.state.step_counter >= self.state.step_count_max:
             # reset step counter
@@ -149,7 +149,7 @@ class TransformAccelerate(ArrayTransform):
             # reduce delay max
             self.state.delay_count_max -= 1
             # increment step size every two delay reductions
-            if (self.state.state % 2) == 0:
+            if (self.state.current_state % 2) == 0:
                 self.state.step += 1
             # set step counter to a random number of steps based on LED count
             self.state.step_count_max = random.randint(
@@ -157,10 +157,10 @@ class TransformAccelerate(ArrayTransform):
                 int(self.controller.real_led_count / 4),
             )
             # update state counter
-            self.state.state += 1
+            self.state.current_state += 1
         # check state counter, reset speed state when it hits max speed
         splash_range = np.zeros([], dtype=np.int32)
-        if self.state.state > self.state.state_max:
+        if self.state.current_state > self.state.state_max:
             # "splash" color when we hit the end
             splash = True
             #  create the "splash" index array before updating direction etc.
@@ -188,7 +188,7 @@ class TransformAccelerate(ArrayTransform):
             # randomize direction
             self.state.direction = self.get_random_direction()
             # reset state
-            self.state.state = 0
+            self.state.current_state = 0
             # reset step
             self.state.step = 1
             # reset step counter
@@ -201,12 +201,12 @@ class TransformAccelerate(ArrayTransform):
                 self.state.index + 1,
             )
         if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
-            self.controller.virtual_led_buffer[self.state.index_range] = self.state.color_sequence.pixel
+            self.controller.virtual_led_buffer[self.state.index_range] = self.state.pixel_sequence.pixel
         else:
             self.controller.virtual_led_buffer[
                 np.where(
                     self.controller.virtual_led_index_buffer == self.state.index_range,
                 )
-            ] = self.state.color_sequence.pixel
+            ] = self.state.pixel_sequence.pixel
         if splash is True:
             self.controller.virtual_led_buffer[splash_range, :] = self.state.fade_color()

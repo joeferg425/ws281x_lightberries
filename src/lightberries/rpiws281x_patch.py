@@ -5,92 +5,49 @@ This allows easier interaction from the rest of LightBerries
 
 from __future__ import annotations
 
-import logging
+from typing import cast
 
 import numpy as np
 
-LOGGER = logging.getLogger("LightBerries")
 
-
-class PixelStrip:
+class FakePixelStrip:
     """Fake class that lets me debug the ws281x code in windows."""
 
     rpi_ws281x = None
 
-    def __init__(self, num: int, *_, **kwargs):
+    def __init__(self, num: int, *_, **kwargs) -> None:  # type: ignore  # noqa: ANN002, ANN003, D107, PGH003
         self.fake = np.zeros((num), dtype=np.int32)
-        """Fake method.
-
-        Args:
-            _: ignored
-            kwargs: ignored
-        """
+        """Fake method."""
         if "num" in kwargs:
-            self.count = kwargs["num"]  # pragma: no cover
+            self.size: int = cast("int", kwargs["num"])  # pragma: no cover
 
-    @property
-    def count(self) -> int:
+    def __len__(self) -> int:
         return len(self.fake)
 
-    def begin(self):
+    def begin(self) -> None:
         """Fake method."""
         # pylint: disable = unnecessary-pass # pragma: no cover
 
-    def setPixelColor(self, index: int, color: int):
-        """Fake method.
+    def setPixelColor(self, n: int, color: int) -> None:  # noqa: N802
+        """Fake method."""
+        self.fake[n] = color
 
-        Args:
-        ----
-            index: ignored
-            color: ignored
+    def setPixelColorRGB(self, n: int, red: int, green: int, blue: int, white: int = 0) -> None:  # noqa: N802
+        """Fake method."""
 
-        """
-        self.fake[index] = color
-
-    def getPixelColor(self, index: int) -> int:
-        """Fake method.
-
-        Args:
-        ----
-            index: ignored
-
-        Returns:
-        -------
-            ignored
-
-        """
+    def getPixelColor(self, index: int) -> int:  # noqa: N802
+        """Fake method."""
         return self.fake[index]
 
-    def show(self):
+    def show(self) -> None:
         """Fake method."""
 
-    def _cleanup(self):
+    def _cleanup(self) -> None:
         """Fake method."""
 
-    def numPixels(self) -> int:
-        """Fake method.
+    def __getitem__(self, pos: int | slice) -> int | list[int]:
+        """Fake method."""
+        return 0
 
-        Returns
-        -------
-            count
-
-        """
-        return self.count
-
-
-@staticmethod
-def ws2811_led_set(channel, index, value):
-    """Fake method.
-
-    Args:
-    ----
-        channel: ignored
-        index: ignored
-        value: ignored
-
-    Returns:
-    -------
-        garbage
-
-    """
-    return (channel, index, value)  # pragma: no cover
+    def __setitem__(self, pos: int | slice, value: int | list[int]) -> None:
+        """Fake method."""

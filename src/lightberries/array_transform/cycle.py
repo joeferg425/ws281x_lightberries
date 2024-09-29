@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import logging
 import random
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from lightberries.pixel_transform import PixelTransform
 
@@ -14,16 +13,14 @@ if TYPE_CHECKING:
     from lightberries.pixel_sequence import PixelSequence
     from lightberries.state import TransformState
 
-LOGGER = logging.getLogger("lightBerries")
 
 
-class TransformSolidColorCycle(PixelTransform):
+class TransformCycle(PixelTransform):
     """Cycle the entire light string's color at once."""
 
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
-        state: TransformState | None = None,
     ) -> None:
         """Cycle the entire light string's color at once.
 
@@ -31,27 +28,28 @@ class TransformSolidColorCycle(PixelTransform):
         ----
             controller: Array controller instance
             state: the initial or previous state of the light string
+            pixel_sequence: a sequence of pixels
 
         """
         super().__init__(
-            name=TransformSolidColorCycle.__name__,
+            name=TransformCycle.__name__,
             controller=controller,
-            state=state,
         )
 
+    @staticmethod
     def setup(
-        self,
-        color_sequence: PixelSequence | None = None,
+        controller: lightberries.array_controller.ArrayController,
+        pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
         delay_count: int | None = None,
-        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> list[PixelTransform]:
         """Configure the transformation.
 
         Args:
         ----
-            color_sequence: color sequence. Defaults to None.
+            controller: Array controller instance
+            pixel_sequence: color sequence. Defaults to None.
             state: the initial or previous state of the light string
             kwargs: extra args to the state object
             delay_count: number of delays
@@ -61,18 +59,21 @@ class TransformSolidColorCycle(PixelTransform):
             list of transforms
 
         """
-        if color_sequence is not None:
-            self.color_sequence = self.color_sequence
+        transform = TransformCycle(controller=controller)
         if state is not None:
-            self.state = state
+            transform.state = state
         else:
-            self.state.delay_count_max = random.randint(50, 100)
-            self.state.delay_counter = self.state.delay_count_max
+            transform.state.delay_count_max = random.randint(50, 100)
+            transform.state.delay_counter = transform.state.delay_count_max
+
+        if pixel_sequence is not None:
+            transform.state.pixel_sequence = pixel_sequence
 
         if delay_count is not None:
-            self.state.delay_count_max = delay_count
-            self.state.delay_counter = self.state.delay_count_max
-        return [self]
+            transform.state.delay_count_max = delay_count
+            transform.state.delay_counter = transform.state.delay_count_max
+        TransformCycle.ACTIVE_TRANSFORMS.append(transform)
+        return TransformCycle.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
         """Set all pixels to the next color.
@@ -89,8 +90,8 @@ class TransformSolidColorCycle(PixelTransform):
             # remove any current color
             self.controller.virtual_led_buffer *= 0
             # add new color
-            self.controller.virtual_led_buffer += self.color_sequence.pixel_next.array
-            self.color_sequence.advance_index()
+            self.controller.virtual_led_buffer += self.state.pixel_sequence.pixel_next.array
+            self.state.pixel_sequence.advance_index()
         # increment delay counter
         self.state.delay_counter += 1
         self.state.delay_counter += 1

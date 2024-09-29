@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from lightberries.array_sequence.base import ArraySequence
+from lightberries.array_sequence._array_sequence import ArraySequence
 from lightberries.array_sequence.off import SequenceOff
 from lightberries.pixel_sequence import PixelSequence
 
@@ -61,9 +61,7 @@ class SequenceRepeating(ArraySequence):
                 temp_array[0:sequence_length] = color_sequence
                 for i in range(0, led_count, sequence_length):
                     if i + sequence_length <= led_count:
-                        temp_array[i : i + sequence_length] = temp_array[
-                            0:sequence_length
-                        ]
+                        temp_array[i : i + sequence_length] = temp_array[0:sequence_length]
                     else:
                         extra = (i + sequence_length) % led_count
                         end = (i + sequence_length) - extra

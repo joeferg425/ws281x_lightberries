@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 
 
+
 class SequenceSolid(ArraySequence):
     """Creates array of RGB tuples that are all one color."""
 

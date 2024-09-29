@@ -13,7 +13,7 @@
 # from lightberries.pixel import PixelColors
 # from lightberries.transform import LightTransform, transform_name
 
-# LOGGER = logging.getLogger("lightBerries")
+# from lightberries.logger import LOGGER
 
 
 # class EyeMoveType(IntEnum):

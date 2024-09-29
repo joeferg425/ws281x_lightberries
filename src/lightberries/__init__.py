@@ -1,21 +1,22 @@
-"""Wraps rpi_ws281x module and provides a bunch of helpers.
+"""Color patterns and sequences."""
 
-See https://github.com/rpi-ws281x/rpi-ws281x-python for referenced module.
-"""
-
-from __future__ import annotations
-
-import logging
-
-from lightberries.array_controller import ArrayController as ArrayController
-
-# from lightberries.matrix_controller import MatrixController as MatrixController
-
-# setup logging
-LOGGER = logging.getLogger("lightBerries")
-logging.addLevelName(5, "VERBOSE")
-if not LOGGER.handlers:
-    stream_handler = logging.StreamHandler()
-    LOGGER.addHandler(stream_handler)
-LOGGER.setLevel(logging.INFO)
-LOGGER.setLevel(logging.INFO)
+from lightberries.array_sequence.off import SequenceOff as SequenceOff
+from lightberries.array_sequence.pseudo_random import (
+    SequencePseudoRandom as SequencePseudoRandom,
+)
+from lightberries.array_sequence.rainbow import SequenceRainbow as SequenceRainbow
+from lightberries.array_sequence.rainbow_repeating import (
+    SequenceRainbowRepeating as SequenceRainbowRepeating,
+)
+from lightberries.array_sequence.random import SequenceRandom as SequenceRandom
+from lightberries.array_sequence.reflect import (
+    SequenceReflect as SequenceReflect,
+)
+from lightberries.array_sequence.repeat import (
+    SequenceRepeat as SequenceRepeat,
+)
+from lightberries.array_sequence.solid import SequenceSolid as SequenceSolid
+from lightberries.array_sequence.stretch import SequenceStretch as SequenceStretch
+from lightberries.array_sequence.transition import (
+    SequenceTransition as SequenceTransition,
+)

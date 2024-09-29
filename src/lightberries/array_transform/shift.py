@@ -10,7 +10,6 @@ import numpy as np
 from lightberries.array_sequence.solid import SequenceSolid
 from lightberries.pixel import Pixel, PixelColor
 from lightberries.pixel_transform import PixelTransform
-from lightberries.transform_overlay.fade_off import TransformFadeOff
 
 if TYPE_CHECKING:
     import lightberries.array_controller
@@ -18,7 +17,8 @@ if TYPE_CHECKING:
     from lightberries.state import TransformState
 
 
-class TransformMarquee(PixelTransform):
+
+class TransformShift(PixelTransform):
     """Move the LEDs in the color sequence from one end of the LED string to the other continuously."""
 
     def __init__(
@@ -35,7 +35,7 @@ class TransformMarquee(PixelTransform):
 
         """
         super().__init__(
-            name=TransformMarquee.__name__,
+            name=TransformShift.__name__,
             controller=controller,
         )
 
@@ -45,7 +45,7 @@ class TransformMarquee(PixelTransform):
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
         *,
-        fade_amount: float | None = None,
+        fade_amount: float | None = 0.0,
         shift_amount: int | None = None,
         delay_count: int | None = None,
         initial_direction: int | None = None,
@@ -68,16 +68,17 @@ class TransformMarquee(PixelTransform):
             list of transforms
 
         """
-        transform = TransformMarquee(controller=controller)
+        transform = TransformShift(controller=controller)
         if state is not None:
             transform.state = state
         else:
             transform.state.step = random.randint(1, 2)
-            transform.state.delay_count_max = random.randint(0, 6)
+            transform.state.delay_count_max = random.randint(10, 50)
             transform.state.direction = transform.get_random_direction()
 
         if pixel_sequence is not None:
             transform.state.pixel_sequence = pixel_sequence
+
         if shift_amount is not None:
             transform.state.step = shift_amount
         if delay_count is not None:
@@ -86,27 +87,22 @@ class TransformMarquee(PixelTransform):
             transform.state.direction = 1 if (initial_direction >= 1) else -1
         if fade_amount is None:
             transform.state.set_fade_amount(random.uniform(0.01, 0.1))
-        # store the size of the color sequence being shifted back and forth
-        transform.state.size = transform.state.pixel_sequence.led_count
+
         # this function just shifts the existing virtual LED buffer,
         # so make sure the virtual LED buffer is initialized here
-        if transform.controller.real_led_count <= transform.controller.virtual_led_count + 10:
+        if transform.state.pixel_sequence.led_count > transform.controller.virtual_led_count:
             array = SequenceSolid(
-                led_count=transform.controller.real_led_count + 10,
+                led_count=transform.state.pixel_sequence.led_count,
                 color=Pixel(PixelColor.OFF),
             )
+            array[: transform.state.pixel_sequence.led_count] = list(transform.state.pixel_sequence)
+            transform.controller.virtual_led_buffer[:] = array
         else:
-            array = SequenceSolid(
-                led_count=transform.controller.real_led_count + 10,
-                color=Pixel(PixelColor.OFF),
+            transform.controller.virtual_led_buffer[: transform.state.pixel_sequence.count] = (
+                transform.state.pixel_sequence
             )
-        array[: transform.state.pixel_sequence.led_count] = [Pixel(x) for x in transform.state.pixel_sequence]
-        transform.controller.set_virtual_led_buffer(array)
-        # turn off all LEDs every time so we can turn on new ones
-        TransformFadeOff.setup(
-            controller=controller,
-            fade_amount=transform.state.fade_amount,
-        )
+
+
         transform.ACTIVE_TRANSFORMS.append(transform)
         return transform.ACTIVE_TRANSFORMS
 
@@ -116,40 +112,7 @@ class TransformMarquee(PixelTransform):
         self.state.delay_counter += 1
         # wait for several LED cycles to change LEDs
         if self.state.delay_counter >= self.state.delay_count_max:
-            # reset delay counter
             self.state.delay_counter = 0
-            # calculate possible next index
-            self.state.index_next = self.state.index + (self.state.step * self.state.direction)
-            # calculate max index we will update
-            self.state.index_max = self.state.index_next + self.state.size
-            # if we are going to overshoot
-            if self.state.index_max >= self.controller.virtual_led_count:
-                # switch direction
-                self.state.direction *= -1
-                # set index to either the next step or the max possible
-                # (accounts for step sizes > 1)
-                self.state.index = max(
-                    self.state.index + (self.state.step * self.state.direction),
-                    self.controller.virtual_led_count - self.state.size,
-                )
-            # if we will undershoot
-            elif self.state.index_max < self.state.size:
-                # TODO: should make a wrap-around version
-                # switch direction
-                self.state.direction *= -1
-                # set index to either the next step or zero
-                # (accounts for step sizes > 1)
-                self.state.index = max(
-                    self.state.index + (self.state.step * self.state.direction),
-                    0,
-                )
-            else:
-                # next index is valid, use it
-                self.state.index = self.state.index_next
-        # calculate color sequence range
-        self.state.index_range = np.arange(
-            self.state.index,
-            self.state.index + self.state.size,
-        )
-        # update LEDs with new values
-        self.controller.virtual_led_buffer[np.sort(self.state.index_range)] = self.state.pixel_sequence
+            # reset delay counter
+            # update LEDs with new values
+            self.controller.virtual_led_buffer = np.roll(self.controller.virtual_led_buffer, self.state.step, 0)
