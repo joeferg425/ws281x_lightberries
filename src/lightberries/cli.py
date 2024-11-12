@@ -122,7 +122,7 @@ def main(
         LOGGER.setLevel(logging.INFO)
         LOGGER.info("logging some debug information.")
     else:
-        LOGGER.setLevel(logging.CRITICAL)
+        LOGGER.setLevel(logging.ERROR)
 
     # create the light-function object
     try:
@@ -138,8 +138,8 @@ def main(
             debug=verbose > 2,  # noqa: PLR2004
             led_brightness=brightness,
         )
-    except PermissionsError:
-        LOGGER.exception("LightBerries failed")
+    except PermissionsError as ex:
+        LOGGER.error(str(ex))
         sys.exit(1)
     except LightBerryError:
         LOGGER.exception("Failed to launch LightBerries Controller")
@@ -158,7 +158,6 @@ def main(
             seconds_per_mode=duration,
             function_names=function_names,
             color_names=color_names,
-            kwargs={},
         )
     except SystemExit:
         pass

@@ -78,8 +78,7 @@ class WS281xString(Sequence[NDArray[np.int32]]):
             # cant run GPIO stuff without root, tell the user if they forgot
             # linux check is just for debugging with fake GPIO on windows
         if (not self._simulate and not self._testing) and sys.platform == "linux" and os.getuid() != 0:
-            msg = ("GPIO functionality requires root privilege. Please run command again as root",)
-
+            msg = "GPIO functionality requires root privilege. Please run command again as root"
             raise PermissionsError(msg)
         self._instantiate_pixel_strip(
             pwm_gpio_pin=pwm_gpio_pin,

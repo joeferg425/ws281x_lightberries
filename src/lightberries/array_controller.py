@@ -12,8 +12,10 @@ import numpy as np
 from numpy.typing import NDArray
 
 from lightberries.array_sequence._array_sequence import ArraySequence
+from lightberries.array_sequence.all_sequences import *
 from lightberries.array_sequence.named import SequenceName, get_named_sequence
 from lightberries.array_sequence.solid import SequenceSolid
+from lightberries.array_transform.all_functions import *
 from lightberries.constants import SHAPE_2D, SHAPE_3D
 from lightberries.exceptions import ControllerError, LightBerryError
 from lightberries.logger import LOGGER
@@ -719,8 +721,7 @@ class ArrayController:
         color_names: list[str] | None = None,
         skip_functions: list[str] | None = None,
         skip_colors: list[str] | None = None,
-        *,
-        kwargs: dict[str, Any],
+        kwargs: dict[str, Any]={},
     ) -> None:
         """Run colors and functions semi-randomly.
 

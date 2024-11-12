@@ -245,7 +245,7 @@ class PixelTransform:
         """
         return [True, False][random.randint(0, 1)]
 
-    def copy(self) -> PixelTransform:
+    def copy(self ) -> PixelTransform:
         """Get a copy of this transform.
 
         Returns
@@ -253,9 +253,8 @@ class PixelTransform:
             a copy of this transform
 
         """
-        transform = PixelTransform(
+        transform = type(self)(
             controller=self.controller,
-            name=self._name,
         )
         transform.state = self.state.copy()
         return transform
