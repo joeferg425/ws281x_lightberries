@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from lightberries.array_transform.collision_detection import TransformCollisionDetect
-from lightberries.constants import SHAPE_2D
-from lightberries.logger import LOGGER
+from lightberries.base.constants import SHAPE_2D
+from lightberries.base.logger import LOGGER
 from lightberries.pixel_transform import PixelTransform
 from lightberries.state import LEDFadeType, TransformState
 from lightberries.transform_overlay.fade_off import TransformFadeOff

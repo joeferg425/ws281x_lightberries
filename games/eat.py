@@ -11,7 +11,7 @@ from game_objects import GameObject, Player, Projectile, Sprite
 from light_game import LightEvent, LightEventId, LightGame, XboxController
 
 from lightberries.matrix_controller import MatrixController
-from lightberries.pixel import PixelColor
+from lightberries.base.pixel import PixelColor
 
 LOGGER = logging.getLogger(__name__)
 

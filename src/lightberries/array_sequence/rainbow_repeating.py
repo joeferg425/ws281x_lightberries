@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-from lightberries.array_sequence._array_sequence import ArraySequence
+from lightberries.array_sequence.base import ArraySequence
 from lightberries.array_sequence.rainbow import SequenceRainbow
 from lightberries.array_sequence.repeat import SequenceRepeat
 
@@ -17,7 +15,6 @@ class SequenceRainbowRepeating(ArraySequence):
         led_count: int,
         name: str | None = None,
         segment_length: int | None = None,
-        **kwargs: dict[str, Any],
     ) -> None:
         """Create a repeating gradient .
 
@@ -38,11 +35,10 @@ class SequenceRainbowRepeating(ArraySequence):
         super().__init__(
             name=name,
             led_count=led_count,
-            **kwargs,
         )
         if segment_length is None:
             segment_length = led_count // 4
         self._array = SequenceRepeat(
             led_count=led_count,
-            color_sequence=SequenceRainbow(led_count=segment_length, wrap=True).ndarray,
-        ).ndarray
+            pixel_sequence=SequenceRainbow(led_count=segment_length, wrap=True),
+        )[:]

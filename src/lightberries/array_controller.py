@@ -11,18 +11,18 @@ from typing import Any, Callable, cast
 import numpy as np
 from numpy.typing import NDArray
 
-from lightberries.array_sequence._array_sequence import ArraySequence
-from lightberries.array_sequence.all_sequences import *
+from lightberries.array_sequence.all_sequences import *  # noqa: F403 - import all of them for the demo
+from lightberries.array_sequence.base import ArraySequence
 from lightberries.array_sequence.named import SequenceName, get_named_sequence
 from lightberries.array_sequence.solid import SequenceSolid
-from lightberries.array_transform.all_functions import *
-from lightberries.constants import SHAPE_2D, SHAPE_3D
-from lightberries.exceptions import ControllerError, LightBerryError
-from lightberries.logger import LOGGER
-from lightberries.pixel import LEDOrder, Pixel, PixelColor
+from lightberries.array_transform.all_functions import *  # noqa: F403 - import all of them for the demo
+from lightberries.base.constants import SHAPE_2D, SHAPE_3D
+from lightberries.base.exceptions import ControllerError, LightBerryError
+from lightberries.base.logger import LOGGER
+from lightberries.base.pixel import LEDOrder, Pixel, PixelColor
+from lightberries.base.ws281x_strings import WS281xString
 from lightberries.pixel_sequence import PixelSequence
 from lightberries.pixel_transform import PixelTransform
-from lightberries.ws281x_strings import WS281xString
 
 DEFAULT_REFRESH_DELAY = 50
 

@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from lightberries.array_sequence.solid import SequenceSolid
-from lightberries.constants import MAX_INT8, SHAPE_2D
-from lightberries.pixel import Pixel, PixelColor, pixel_from_color
+from lightberries.base.constants import MAX_INT8, SHAPE_2D
+from lightberries.base.pixel import Pixel, PixelColor, pixel_from_color
 from lightberries.pixel_transform import PixelTransform
 from lightberries.transform_overlay.fade_off import TransformFadeOff
 

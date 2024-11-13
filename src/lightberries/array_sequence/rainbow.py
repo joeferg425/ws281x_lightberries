@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from lightberries.array_sequence._array_sequence import ArraySequence
+from lightberries.array_sequence.base import ArraySequence
 from lightberries.array_sequence.transition import SequenceTransition
-from lightberries.pixel import Pixel, PixelColor, pixel_from_color
+from lightberries.base.pixel import Pixel, PixelColor, pixel_from_color
 from lightberries.pixel_sequence import PixelSequence
 
 

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from lightberries.constants import MAX_INT8
+from lightberries.base.constants import MAX_INT8
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray

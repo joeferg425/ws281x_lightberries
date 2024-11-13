@@ -11,11 +11,11 @@ from typing import Any, overload
 import numpy as np
 from numpy.typing import NDArray
 
-from lightberries.array_sequence._array_sequence import ArraySequence
-from lightberries.exceptions import PermissionsError
-from lightberries.logger import LOGGER
-from lightberries.pixel import Pixel, PixelColor, pixel_from_color
-from lightberries.rpiws281x import PixelStrip
+from lightberries.array_sequence.base import ArraySequence
+from lightberries.base.exceptions import PermissionsError
+from lightberries.base.logger import LOGGER
+from lightberries.base.pixel import Pixel, PixelColor, pixel_from_color
+from lightberries.base.rpiws281x import PixelStrip
 
 
 class WS281xString(Sequence[NDArray[np.int32]]):
@@ -73,7 +73,7 @@ class WS281xString(Sequence[NDArray[np.int32]]):
         self._ledCount = led_count
         if self._testing:
             global rpi_ws281x  # noqa: PLW0603
-            import lightberries.rpiws281x_patch as rpi_ws281x
+            import lightberries.base.rpiws281x_patch as rpi_ws281x
 
             # cant run GPIO stuff without root, tell the user if they forgot
             # linux check is just for debugging with fake GPIO on windows

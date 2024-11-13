@@ -9,12 +9,8 @@ from lightberries.array_sequence.rainbow_repeating import (
     SequenceRainbowRepeating as SequenceRainbowRepeating,
 )
 from lightberries.array_sequence.random import SequenceRandom as SequenceRandom
-from lightberries.array_sequence.reflect import (
-    SequenceReflect as SequenceReflect,
-)
-from lightberries.array_sequence.repeat import (
-    SequenceRepeat as SequenceRepeat,
-)
+from lightberries.array_sequence.reflect import SequenceReflect as SequenceReflect
+from lightberries.array_sequence.repeat import SequenceRepeat as SequenceRepeat
 from lightberries.array_sequence.solid import SequenceSolid as SequenceSolid
 from lightberries.array_sequence.stretch import SequenceStretch as SequenceStretch
 from lightberries.array_sequence.transition import (

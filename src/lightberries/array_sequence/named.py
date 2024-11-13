@@ -3,7 +3,7 @@
 from enum import IntEnum, auto
 
 from lightberries.array_sequence.transition import SequenceTransition
-from lightberries.pixel import Pixel, PixelColor
+from lightberries.base.pixel import Pixel, PixelColor
 from lightberries.pixel_sequence import PixelSequence
 
 

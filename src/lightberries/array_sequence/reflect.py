@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from lightberries.array_sequence._array_sequence import ArraySequence
+from lightberries.array_sequence.base import ArraySequence
 from lightberries.array_sequence.off import SequenceOff
-from lightberries.pixel import Pixel, PixelColor
+from lightberries.base.pixel import Pixel, PixelColor
 from lightberries.pixel_sequence import PixelSequence
 
 
@@ -54,15 +54,13 @@ class SequenceReflect(ArraySequence):
             led_count = pixel_sequence.led_count
         if fold_length is None:
             fold_length = led_count // 2
+        fold_length=int(fold_length)
+        led_count=int(led_count)
 
         _pixel_array: list[Pixel] = []
         if pixel_sequence.led_count == 0 or led_count == 0:
             _pixel_array = [Pixel(PixelColor.OFF)]
         else:
-            # if fold_length > pixel_sequence.led_count:
-            #     temp = list(SequenceOff(fold_length))
-            #     temp[fold_length - pixel_sequence.led_count :] = list(pixel_sequence)
-            #     pixel_sequence = PixelSequence(pixel_sequence=temp)
             flip = False
             _pixel_array = list(SequenceOff(led_count=led_count))
             for seg_begin in range(0, led_count, fold_length):

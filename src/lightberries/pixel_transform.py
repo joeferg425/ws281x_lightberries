@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 
-from lightberries.exceptions import ControllerError, LightBerryError
-from lightberries.logger import LOGGER
+from lightberries.base.exceptions import ControllerError, LightBerryError
+from lightberries.base.logger import LOGGER
 from lightberries.pixel_sequence import PixelSequence
 from lightberries.state import TransformState
 

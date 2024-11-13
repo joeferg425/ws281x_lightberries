@@ -9,8 +9,9 @@ from typing import Optional
 import numpy as np
 from game_objects import Enemy, GameObject, Player, Projectile
 from light_game import LightEvent, LightEventId, LightGame
+
+from lightberries.base.pixel import PixelColor
 from lightberries.matrix_controller import MatrixController
-from lightberries.pixel import PixelColor
 
 LOGGER = logging.getLogger(__name__)
 
@@ -494,4 +495,5 @@ if __name__ == "__main__":
 
     run_space_game(lights)
 
+    run_space_game(lights)
     run_space_game(lights)

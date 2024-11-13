@@ -41,6 +41,4 @@ class OverlayTransform(PixelTransform):
         super().__init__(
             name=name,
             controller=controller,
-            state=state,
-            kwargs=kwargs,
         )

@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from lightberries.array_sequence._array_sequence import ArraySequence
-from lightberries.logger import LOGGER
-from lightberries.pixel import Pixel, PixelColor
+from lightberries.array_sequence.base import ArraySequence
+from lightberries.base.logger import LOGGER
+from lightberries.base.pixel import Pixel, PixelColor
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray

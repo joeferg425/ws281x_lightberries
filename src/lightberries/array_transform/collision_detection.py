@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from lightberries.pixel import Pixel, PixelColor
+from lightberries.base.pixel import Pixel, PixelColor
 from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:

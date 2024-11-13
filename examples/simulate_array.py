@@ -7,9 +7,10 @@ import time
 import tkinter as tk
 
 import matplotlib.pyplot as plt
-from lightberries.array_controller import ArrayController
-from lightberries.pixel import Pixel
 from numpy import double
+
+from lightberries.array_controller import ArrayController
+from lightberries.base.pixel import Pixel
 
 
 class LightOutput:
@@ -409,4 +410,5 @@ class App:
 
 if __name__ == "__main__":
     theApp = App()
+    del theApp
     del theApp

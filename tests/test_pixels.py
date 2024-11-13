@@ -6,11 +6,12 @@ from typing import Callable
 
 import numpy as np
 import pytest
-from lightberries.exceptions import PixelError
+from numpy.testing import assert_array_equal
+
+from lightberries.base.exceptions import PixelError
 
 # import lightberries.pixel
-from lightberries.pixel import LEDOrder, Pixel, PixelColor
-from numpy.testing import assert_array_equal
+from lightberries.base.pixel import LEDOrder, Pixel, PixelColor
 
 
 def test_pixel_creation_default():

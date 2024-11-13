@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from lightberries.constants import MAX_INT8, SHAPE_2D
+from lightberries.base.constants import MAX_INT8, SHAPE_2D
 from lightberries.pixel_transform import PixelTransform
 from lightberries.transform_overlay.fade_off import TransformFadeOff
 

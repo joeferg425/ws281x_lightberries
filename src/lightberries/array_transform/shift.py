@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from lightberries.array_sequence.solid import SequenceSolid
-from lightberries.pixel import Pixel, PixelColor
+from lightberries.base.pixel import Pixel, PixelColor
 from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
@@ -98,7 +98,7 @@ class TransformShift(PixelTransform):
             array[: transform.state.pixel_sequence.led_count] = list(transform.state.pixel_sequence)
             transform.controller.virtual_led_buffer[:] = array
         else:
-            transform.controller.virtual_led_buffer[: transform.state.pixel_sequence.count] = (
+            transform.controller.virtual_led_buffer[: transform.state.pixel_sequence.led_count] = (
                 transform.state.pixel_sequence
             )
 

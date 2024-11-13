@@ -6,7 +6,7 @@ import random
 from math import ceil
 from typing import TYPE_CHECKING
 
-from lightberries.constants import MAX_INT8
+from lightberries.base.constants import MAX_INT8
 from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:

@@ -18,8 +18,9 @@ from game_objects import (
     SpriteShape,
 )
 from light_game import LightEvent, LightEventId, LightGame
+
+from lightberries.base.pixel import PixelColor
 from lightberries.matrix_controller import MatrixController
-from lightberries.pixel import PixelColor
 
 LOGGER = logging.getLogger(__name__)
 
@@ -615,4 +616,5 @@ if __name__ == "__main__":
     while True:
         run_jump_game(lights)
     while True:
+        run_jump_game(lights)
         run_jump_game(lights)

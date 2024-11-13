@@ -3,11 +3,17 @@ from __future__ import annotations
 from typing import Any
 from unittest import mock
 
-import lightberries.rpiws281x_patch
 import numpy as np
+from numpy.testing import assert_array_equal
+from numpy.typing import NDArray
+
+import lightberries.rpiws281x_patch
 from lightberries.array_controller import ArrayController
-from lightberries.array_sequence._array_sequence import ArraySequence, pixel_array_to_numpy_array
-from lightberries.array_transform._array_transform import (
+from lightberries.array_sequence._array_sequence import (
+    ArraySequence,
+    pixel_array_to_numpy_array,
+)
+from lightberries.array_transform.base import (
     ArrayTransform,
     LEDFadeType,
     RaindropStates,
@@ -16,10 +22,8 @@ from lightberries.array_transform._array_transform import (
     ThingMoves,
     ThingSizes,
 )
-from lightberries.pixel import PixelColor
+from lightberries.base.pixel import PixelColor
 from lightberries.ws281x_strings import WS281xString, WS281xStringError
-from numpy.testing import assert_array_equal
-from numpy.typing import NDArray
 
 
 def new_instantiate_pixelstrip(
@@ -901,4 +905,5 @@ def test_overlayBlink():
     control.function_list.append(function)
     control._run_functions()
     control._copy_overlays()
+    assert np.sum(np.array(control.ws281xString)) != 0
     assert np.sum(np.array(control.ws281xString)) != 0

@@ -8,12 +8,13 @@ from typing import Callable, Generator, Optional
 import numpy as np
 import pygame
 from game_objects import GameObject, Player, Sprite, check_for_collisions
+
 from lightberries.array_functions import ArrayFunction
 from lightberries.array_patterns import ArrayPattern
+from lightberries.base.pixel import Pixel, PixelColor
 from lightberries.matrix_controller import MatrixController
 from lightberries.matrix_functions import MatrixFunction
 from lightberries.matrix_patterns import TextMatrix
-from lightberries.pixel import Pixel, PixelColor
 
 
 class ButtonState(IntEnum):
@@ -1025,5 +1026,6 @@ class TriggerRight(Trigger):
 
 @dataclass
 class TriggerLeft(Trigger):
+    event_id: LightEventId = LightEventId.TriggerLeft
     event_id: LightEventId = LightEventId.TriggerLeft
     event_id: LightEventId = LightEventId.TriggerLeft

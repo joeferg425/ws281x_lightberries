@@ -6,7 +6,7 @@ import numpy as np
 from numpy.testing import assert_array_equal
 
 from lightberries.array_sequence._array_sequence import ArraySequence, pixel_array_to_numpy_array
-from lightberries.pixel import Pixel, PixelColor
+from lightberries.base.pixel import Pixel, PixelColor
 
 
 def test_default_color_sequence():

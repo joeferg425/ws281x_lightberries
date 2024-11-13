@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from lightberries.array_sequence._array_sequence import ArraySequence
+from lightberries.array_sequence.base import ArraySequence
 
 if TYPE_CHECKING:
 
-    from lightberries.pixel import Pixel
+    from lightberries.base.pixel import Pixel
     from lightberries.pixel_sequence import PixelSequence
 
 

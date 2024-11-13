@@ -6,12 +6,12 @@ import datetime
 import random
 from collections.abc import Sequence
 from enum import IntEnum
-from typing import TYPE_CHECKING, Any, ClassVar, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Iterable, overload
 
 import numpy as np
 
-from lightberries.logger import LOGGER
-from lightberries.pixel import Pixel, PixelColor
+from lightberries.base.logger import LOGGER
+from lightberries.base.pixel import Pixel, PixelColor
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -92,9 +92,15 @@ class PixelSequence(Sequence[Pixel]):
         idx: slice,
     ) -> list[Pixel]: ...  # pylint: disable=pointless-statement  # pragma: no cover
 
+    @overload
+    def __getitem__(  # D105 # pylint: disable=function-redefined
+        self,
+        idx: Iterable[int],
+    ) -> list[Pixel]: ...  # pylint: disable=pointless-statement  # pragma: no cover
+
     def __getitem__(  # pylint: disable=function-redefined # type: ignore  # noqa: PGH003
         self,
-        idx: int | np.int32 | slice,
+        idx: int | np.int32 | slice|list[int],
     ) -> Pixel | list[Pixel]:
         """Return a pixel value by led_index.
 
@@ -112,8 +118,10 @@ class PixelSequence(Sequence[Pixel]):
             pixels = self._array[idx]
         elif isinstance(idx, (np.integer)):
             pixels = self._array[int(idx)]
-        else:
+        elif isinstance(idx, (slice)):
             pixels = self._array[idx]
+        else:
+            pixels = [self._array[i] for i in idx]
         return pixels
 
     def __setitem__(

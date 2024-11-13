@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from lightberries.array_sequence._array_sequence import ArraySequence
-from lightberries.pixel import Pixel, PixelColor, pixel_from_color
+from lightberries.array_sequence.base import ArraySequence
+from lightberries.base.pixel import Pixel, PixelColor, pixel_from_color
 
 if TYPE_CHECKING:
     from lightberries.pixel_sequence import PixelSequence

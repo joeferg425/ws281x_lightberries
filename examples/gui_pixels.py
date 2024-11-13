@@ -16,10 +16,10 @@ from multiprocessing import Queue
 from tkinter.colorchooser import askcolor
 from typing import TYPE_CHECKING, Any
 
-import lightberries.pixel
+import lightberries.base.pixel
 from lightberries.array_controller import ArrayController
 from lightberries.array_sequence.solid import SequenceSolid
-from lightberries.pixel import Pixel
+from lightberries.base.pixel import Pixel
 
 if TYPE_CHECKING:
 
@@ -44,7 +44,7 @@ GAMMA = None
 LED_STRIP_TYPE = None
 INVERT = False
 PWM_CHANNEL = 0
-Pixel.default_pixel_order = lightberries.pixel.LEDOrder.RGB.value
+Pixel.default_pixel_order = lightberries.base.pixel.LEDOrder.RGB.value
 
 
 class LedButton(tk.Button):
@@ -119,7 +119,7 @@ class LightsProcess:
                 light_control.set_virtual_led_buffer(
                     SequenceSolid(
                         led_count=PIXEL_COUNT,
-                        color=lightberries.pixel.PixelColor.OFF,
+                        color=lightberries.base.pixel.PixelColor.OFF,
                     ),
                 )
                 light_control.copy_virtual_leds_to_ws281x()
@@ -137,7 +137,7 @@ class LightsProcess:
                             try:
                                 index, color = msg[1:]
                                 LOGGER.critical("setting color")
-                                Pixel.default_pixel_order = lightberries.pixel.LEDOrder.RGB.value
+                                Pixel.default_pixel_order = lightberries.base.pixel.LEDOrder.RGB.value
                                 light_control.virtual_led_buffer[index] = Pixel(
                                     color,
                                 ).array

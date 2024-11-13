@@ -7,9 +7,9 @@ from typing import Any
 
 import numpy as np
 
-from lightberries.array_sequence._array_sequence import ArraySequence
+from lightberries.array_sequence.base import ArraySequence
 from lightberries.array_sequence.off import SequenceOff
-from lightberries.pixel import Pixel
+from lightberries.base.pixel import Pixel
 from lightberries.pixel_sequence import PixelSequence
 
 

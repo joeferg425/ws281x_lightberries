@@ -5,9 +5,10 @@ import os
 
 import numpy as np
 import pygame
+
 from lightberries.array_controller import ArrayController
 from lightberries.array_sequence._array_sequence import ArraySequence
-from lightberries.pixel import Pixel, PixelColor
+from lightberries.base.pixel import Pixel, PixelColor
 from lightberries.pixel_transform import PixelTransform
 
 COUNT = 1024
@@ -150,4 +151,5 @@ while True:
     player.go()
     lightControl.virtual_led_buffer[player.x] = Pixel(player.color).array
     lightControl.copy_virtual_leds_to_ws281x()
+    lightControl.refresh_leds()
     lightControl.refresh_leds()

@@ -3,14 +3,15 @@ from __future__ import annotations
 from typing import Any
 from unittest import mock
 
-import lightberries.rpiws281x_patch
 import numpy as np
+from numpy.typing import NDArray
+
+import lightberries.rpiws281x_patch
 from lightberries.array_controller import ArrayController
 from lightberries.array_sequence._array_sequence import pixel_array_to_numpy_array
-from lightberries.exceptions import WS281xStringError
-from lightberries.pixel import PixelColor
+from lightberries.base.exceptions import WS281xStringError
+from lightberries.base.pixel import PixelColor
 from lightberries.ws281x_strings import WS281xString
-from numpy.typing import NDArray
 
 
 def new_instantiate_pixelstrip(
@@ -158,4 +159,5 @@ def test_getRandomIndices():
 def test_getRandomBoolean():
     with mock.patch.object(ArrayController, "_instantiate_WS281xString", new_instantiate_WS281xString):
         ac = ArrayController(testing=True)
+        assert isinstance(ac.get_random_boolean(), bool)
         assert isinstance(ac.get_random_boolean(), bool)

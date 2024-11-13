@@ -5,8 +5,9 @@ import time
 import numpy as np
 from game_objects import GameObject, Player, Projectile, SpriteShape
 from light_game import LightEvent, LightEventId, LightGame
+
+from lightberries.base.pixel import PixelColor
 from lightberries.matrix_controller import MatrixController
-from lightberries.pixel import PixelColor
 
 
 class Dot(Player):
@@ -267,5 +268,6 @@ if __name__ == "__main__":
         matrixShape=MATRIX_SHAPE,
     )
     while True:
+        run_dots_game(lights)
         run_dots_game(lights)
         run_dots_game(lights)

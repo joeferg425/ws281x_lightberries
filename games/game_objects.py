@@ -7,8 +7,9 @@ from enum import IntEnum
 from typing import Optional
 
 import numpy as np
+
+from lightberries.base.pixel import Pixel, PixelColor
 from lightberries.matrix_controller import MatrixController
-from lightberries.pixel import Pixel, PixelColor
 
 
 @dataclass
@@ -1085,4 +1086,5 @@ def check_for_collisions(lights: Optional[MatrixController] = None):
             except KeyError:
                 pass
             except KeyError:
+                pass
                 pass

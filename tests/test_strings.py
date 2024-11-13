@@ -5,16 +5,17 @@ from __future__ import annotations
 from typing import Any
 from unittest import mock
 
-import lightberries.rpiws281x
-import lightberries.rpiws281x_patch
 import numpy as np
 import pytest
-from lightberries.array_sequence._array_sequence import pixel_array_to_numpy_array
-from lightberries.exceptions import WS281xStringError
-from lightberries.pixel import PixelColor
-from lightberries.ws281x_strings import WS281xString
 from numpy.testing import assert_array_equal
 from numpy.typing import NDArray
+
+import lightberries.rpiws281x
+import lightberries.rpiws281x_patch
+from lightberries.array_sequence._array_sequence import pixel_array_to_numpy_array
+from lightberries.base.exceptions import WS281xStringError
+from lightberries.base.pixel import PixelColor
+from lightberries.ws281x_strings import WS281xString
 
 
 def new_instantiate_pixelstrip(
@@ -252,4 +253,5 @@ def test_context_manager():
             random_colors = pixel_array_to_numpy_array([PixelColor.random for i in range(led_count)])
             ws281x[:] = random_colors
             assigned_colors = ws281x[:]
+            assert_array_equal(assigned_colors, random_colors)
             assert_array_equal(assigned_colors, random_colors)

@@ -8,11 +8,11 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from lightberries.array_sequence.reflect import SequenceReflect
+from lightberries.pixel_sequence import PixelSequence
 from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
     import lightberries.array_controller
-    from lightberries.pixel_sequence import PixelSequence
     from lightberries.state import TransformState
 
 
@@ -45,7 +45,7 @@ class TransformMerge(PixelTransform):
         *,
         shift_amount: int | None = None,
         delay_count: int | None = None,
-    ) -> None:
+    ) -> list[PixelTransform]:
         """Reflect a color sequence and shift the reflections toward each other in the middle.
 
         Args:
@@ -71,39 +71,39 @@ class TransformMerge(PixelTransform):
         if shift_amount is not None:
             transform.state.step = shift_amount
         # make sure doing a merge function would be visible
-        if transform.color_sequence_count >= transform.controller.real_led_count:
+        if transform.state.pixel_sequence.led_count >= transform.controller.real_led_count:
             # if sequence is too long, cut it in half
-            transform.pixel_sequence = transform.pixel_sequence[: int(transform.color_sequence_count // 2)]
-            # don't remember offhand why this is here
-            if transform.color_sequence_count % 2 == 1:
-                if transform.color_sequence_count == 1:
-                    transform.pixel_sequence = np.concatenate(
-                        transform.pixel_sequence,
-                        transform.pixel_sequence,
-                    )
-                else:
-                    transform.pixel_sequence = transform.pixel_sequence[:-1]
+            temp_sequence=PixelSequence(led_count=transform.state.pixel_sequence.led_count // 2)
+            temp_sequence[:]=transform.state.pixel_sequence[: int(transform.state.pixel_sequence.led_count // 2)]
+            transform.state.pixel_sequence =temp_sequence
+            # # don't remember offhand why this is here
+            # if transform.state.pixel_sequence.led_count % 2 == 1:
+            #     if transform.state.pixel_sequence.led_count== 1:
+            #         transform.state.pixel_sequence=                         transform.state.pixel_sequence+                        transform.state.pixel_sequence
+            #     else:
+            #         transform.state.pixel_sequence= transform.state.pixel_sequence[:-1]
         # calculate modulo length
         array_length = (
-            np.ceil(transform.controller.real_led_count / transform.color_sequence_count)
-            * transform.color_sequence_count
+            np.ceil(transform.controller.real_led_count / transform.state.pixel_sequence.led_count)
+            * transform.state.pixel_sequence.led_count
         )
         # update LED buffer with any changes we had to make
         transform.controller.set_virtual_led_buffer(
-            SequenceReflect(
-                arrayLength=array_length,
-                colorSequence=transform.pixel_sequence,
-                foldLength=transform.color_sequence_count,
+            led_buffer=SequenceReflect(
+                led_count=array_length,
+                pixel_sequence=transform.state.pixel_sequence,
+                fold_length=transform.state.pixel_sequence.led_count,
             ),
         )
         # set merge size
-        transform.state.size = transform.color_sequence_count
+        transform.state.size = transform.state.pixel_sequence.led_count
         # set shift amount
-        transform.state.step = shift_amount
+        # transform.state.step = shift_amount
         # set the number of LED refreshes to skip
-        transform.state.delay_count_max = delay_count
+        # transform.state.delay_count_max = delay_count
         # add function to list
-        return [self]
+        transform.ACTIVE_TRANSFORMS.append(transform)
+        return transform.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
         """Do nothing."""
@@ -130,7 +130,7 @@ class TransformMerge(PixelTransform):
             if temp[0][0] != temp[1][-1]:
                 temp[1] = np.flip(temp[0])
                 self.controller.virtual_led_buffer[range(self.state.size)] = self.state.pixel_sequence[
-                    range(self.state.size)
+                    list(range(self.state.size))
                 ]
             temp[0] = np.roll(temp[0], self.state.step, 0)
             temp[1] = np.roll(temp[1], -self.state.step, 0)

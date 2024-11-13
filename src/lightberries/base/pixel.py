@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Any, Callable, NamedTuple, Union, cast, overlo
 
 import numpy as np
 
-from lightberries.constants import MAX_INT8, MAX_INT24, PIXEL_COLOR_COUNT
-from lightberries.exceptions import PixelError
+from lightberries.base.constants import MAX_INT8, MAX_INT24, PIXEL_COLOR_COUNT
+from lightberries.base.exceptions import PixelError
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray

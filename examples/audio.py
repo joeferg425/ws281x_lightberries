@@ -9,9 +9,10 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pyaudio
+
 from lightberries.array_controller import ArrayController
 from lightberries.array_sequence._array_sequence import ArraySequence
-from lightberries.pixel import Pixel
+from lightberries.base.pixel import Pixel
 
 matplotlib.use("Qt5Agg")
 
@@ -422,4 +423,5 @@ if __name__ == "__main__":
         if PY_AUDIO is not None:
             PY_AUDIO.terminate()
     # hang out in case cleanup is happening in the other process
+    time.sleep(0.2)
     time.sleep(0.2)

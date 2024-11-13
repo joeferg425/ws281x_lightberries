@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from lightberries.array_sequence.solid import SequenceSolid
-from lightberries.pixel import Pixel, PixelColor
+from lightberries.base.pixel import Pixel, PixelColor
 from lightberries.pixel_transform import PixelTransform
 from lightberries.transform_overlay.fade_off import TransformFadeOff
 

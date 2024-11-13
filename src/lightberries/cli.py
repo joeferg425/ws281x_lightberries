@@ -15,8 +15,8 @@ from lightberries.array_controller import ArrayController
 from lightberries.array_sequence.all_sequences import *
 from lightberries.array_sequence.named import SequenceName
 from lightberries.array_transform.all_functions import *
-from lightberries.exceptions import LightBerryError, PermissionsError
-from lightberries.logger import LOGGER
+from lightberries.base.exceptions import LightBerryError, PermissionsError
+from lightberries.base.logger import LOGGER
 from lightberries.pixel_sequence import PixelSequence
 from lightberries.pixel_transform import PixelTransform
 
@@ -40,7 +40,7 @@ ColorEnum = StrEnum("ColorEnum", COLOR_SEQUENCE_NAMES)
     no_args_is_help=True,
     short_help="sudo python3 -m lightberries (Needs root for GPIO access)",
 )
-def main(
+def main(  # noqa: C901, PLR0912, PLR0913
     led_count: int = typer.Option(
         DEFAULT_LED_COUNT,
         "--led-count",

@@ -8,7 +8,7 @@ from __future__ import annotations
 import sys
 
 if sys.platform != "linux":
-    from lightberries.rpiws281x_patch import (  # type: ignore  # noqa: F401, I001, PGH003, RUF100
+    from lightberries.base.rpiws281x_patch import (  # type: ignore  # noqa: F401, I001, PGH003, RUF100
         FakePixelStrip as PixelStrip,
     )
 else:
