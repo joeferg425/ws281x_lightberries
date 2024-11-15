@@ -12,8 +12,7 @@ from lightberries.base.constants import MAX_INT8, MAX_INT24, PIXEL_COLOR_COUNT
 from lightberries.base.exceptions import PixelError
 
 if TYPE_CHECKING:
-    from numpy.typing import NDArray
-
+    from numpy.typing import NDArray  # pragma: no cover
 
 
 class Order(NamedTuple):
@@ -38,10 +37,10 @@ class StaticPixelProperty:
             func: function pointer
 
         """
-        self.func = func
+        self.func = func  # pragma: no cover
 
     def __get__(self, inst: Pixel, owner: Pixel) -> Pixel:
-        return self.func()
+        return self.func()  # pragma: no cover
 
 
 class LEDOrder(Order, enum.Enum):
@@ -82,6 +81,10 @@ class Pixel:
         self.int32value: int = 0
 
         self._order = Pixel.default_pixel_order
+        for i in self._order:
+            if i < 0 or i > 3:  # noqa: PLR2004
+                msg = f"Invalid Pixel order: {self._order}"
+                raise PixelError(msg)
 
         # none gets a zero
         if colors is None:
@@ -97,7 +100,12 @@ class Pixel:
 
         # this is an instance of this class, just use the value
         elif isinstance(colors, Pixel):
-            self.int32value = colors.int32value
+            self.int32value = (
+                # this is where the rgb order comes into play
+                (int(colors.array[colors.order[0]]) << 16)
+                + (int(colors.array[colors.order[1]]) << 8)
+                + (int(colors.array[colors.order[2]]))
+            )
 
         # if it is a tuple, list, or numpy array
         elif (
@@ -110,9 +118,7 @@ class Pixel:
             # create a 3-byte int from the three bytes
             self.int32value = (
                 # this is where the rgb order comes into play
-                (int(colors[self._order[0]]) << 16)
-                + (int(colors[self._order[1]]) << 8)
-                + (int(colors[self._order[2]]))
+                (int(colors[self._order[0]]) << 16) + (int(colors[self._order[1]]) << 8) + (int(colors[self._order[2]]))
             )
 
         # we've got an error boys!
@@ -132,6 +138,7 @@ class Pixel:
         """
         return len(self.array)
 
+    @property
     def int32(
         self,
     ) -> int:
@@ -143,6 +150,11 @@ class Pixel:
 
         """
         return self.int32value
+
+    @property
+    def order(self) -> LEDOrder:
+        """Get the LED order of this pixel object."""
+        return self._order
 
     def __str__(
         self,
@@ -159,7 +171,7 @@ class Pixel:
             (self.int32value & 0xFF00) >> 8,
             self.int32value & 0xFF,
         )
-        return f"PX#{rgb_value[0]:02X}{rgb_value[1]:02X}{rgb_value[2]:02X}"
+        return f"PX#{rgb_value[0]:02X}{rgb_value[1]:02X}{rgb_value[2]:02X}:{self._order.name}"
 
     def __repr__(
         self,
@@ -171,7 +183,7 @@ class Pixel:
             a string representation of the Pixel instance
 
         """
-        return f"<{Pixel.__name__}> {self.__str__()} ({self._order.name})"
+        return self.__str__()
 
     def __eq__(self, other: object) -> bool:
         """Text pixel equality with other objects.
@@ -185,9 +197,12 @@ class Pixel:
             true if objects are equal
 
         """
+        if isinstance(other, (Pixel)):
+            return self.int32value == other.int32value
+        if isinstance(other, (int)):
+            return self.int32value == other
         if (
-            isinstance(other, (int, Pixel))
-            or (
+            (
                 isinstance(other, tuple) and all(isinstance(e, int) for e in other) and len(other) >= COLOR_COUNT  # type: ignore  # noqa: PGH003
             )  # type: ignore  # noqa: PGH003
             or (
@@ -195,7 +210,7 @@ class Pixel:
             )  # type: ignore # noqa: PGH003
         ):
             other = cast("Union[int, Pixel, tuple[int, int, int], list[int]]", other)
-            return self.pixel.int32value == Pixel(other).pixel.int32value
+            return self.int32value == Pixel(other).int32value
         return False
         # convert the pixel orders to the same order then compare
 
@@ -220,19 +235,6 @@ class Pixel:
             rgb_tuple[1],
             rgb_tuple[2],
         )
-
-    @property
-    def pixel(
-        self,
-    ) -> Pixel:
-        """Return Pixel value with default RGB order.
-
-        Returns
-        -------
-            this pixel with default RGB order
-
-        """
-        return Pixel(self.tuple)
 
     @property
     def array(
@@ -303,7 +305,7 @@ class Pixel:
             inverted pixel value
 
         """
-        return Pixel([255 - a for a in self.array])
+        return Pixel([255 - a for a in self.rgb_array])
 
     def fade(
         self,
@@ -412,10 +414,11 @@ class Pixel:
         array[key] = value
         self.int32value = (
             # this is where the rgb order comes into play
-            (int(array[self._order[0]]) << 16)
-            + (int(array[self._order[1]]) << 8)
-            + (int(array[self._order[2]]))
+            (int(array[self._order[0]]) << 16) + (int(array[self._order[1]]) << 8) + (int(array[self._order[2]]))
         )
+
+    def __int__(self) -> int:
+        return self.int32
 
 
 class _Pixel(NamedTuple):
@@ -499,7 +502,7 @@ class PixelColor(_Pixel, enum.Enum):
         return valid_colors[random.randint(0, len(valid_colors) - 1)]
 
     @staticmethod
-    def random() -> PixelColor:
+    def random() -> _Pixel:
         """Get random pixel color.
 
         Returns
@@ -507,4 +510,8 @@ class PixelColor(_Pixel, enum.Enum):
             random pixel color
 
         """
-        return PixelColor([random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)])
+        return _Pixel(
+            red=random.randint(0, 255),
+            green=random.randint(0, 255),
+            blue=random.randint(0, 255),
+        )
