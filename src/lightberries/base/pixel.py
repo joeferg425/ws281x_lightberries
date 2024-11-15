@@ -93,18 +93,18 @@ class Pixel:
         # if it is an int and in range
         elif isinstance(colors, (int, np.integer)) and colors >= 0 and colors <= MAX_INT24:
             colors = int(colors)
-            if self._order == LEDOrder.RGB.value:
-                self.int32value = colors & MAX_INT24
-            elif self._order == LEDOrder.GRB.value:
-                self.int32value = ((colors & 0xFF0000) >> 8) + ((colors & 0x00FF00) << 8) + ((colors & 0x0000FF) >> 0)
+            # if self._order == LEDOrder.RGB.value:
+            self.int32value = colors & MAX_INT24
+            # elif self._order == LEDOrder.GRB.value:
+            # self.int32value = ((colors & 0xFF0000) >> 8) + ((colors & 0x00FF00) << 8) + ((colors & 0x0000FF) >> 0)
 
         # this is an instance of this class, just use the value
         elif isinstance(colors, Pixel):
             self.int32value = (
                 # this is where the rgb order comes into play
-                (int(colors.array[colors.order[0]]) << 16)
-                + (int(colors.array[colors.order[1]]) << 8)
-                + (int(colors.array[colors.order[2]]))
+                (int(colors.array[self.order[0]]) << 16)
+                + (int(colors.array[self.order[1]]) << 8)
+                + (int(colors.array[self.order[2]]))
             )
 
         # if it is a tuple, list, or numpy array
@@ -118,7 +118,7 @@ class Pixel:
             # create a 3-byte int from the three bytes
             self.int32value = (
                 # this is where the rgb order comes into play
-                (int(colors[self._order[0]]) << 16) + (int(colors[self._order[1]]) << 8) + (int(colors[self._order[2]]))
+                (int(colors[0]) << 16) + (int(colors[1]) << 8) + (int(colors[2]))
             )
 
         # we've got an error boys!

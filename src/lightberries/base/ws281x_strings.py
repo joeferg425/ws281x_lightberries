@@ -12,7 +12,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from lightberries.array_sequence.base import ArraySequence
-from lightberries.base.exceptions import PermissionsError
+from lightberries.base.exceptions import PermissionsError, WS281xStringError
 from lightberries.base.logger import LOGGER
 from lightberries.base.pixel import Pixel, PixelColor, pixel_from_color
 from lightberries.base.rpiws281x import PixelStrip
@@ -71,6 +71,9 @@ class WS281xString(Sequence[NDArray[np.int32]]):
         self._testing = testing
         # use passed led count if it is valid
         self._ledCount = led_count
+        if not isinstance(led_count, int):  # type: ignore  # noqa: PGH003
+            msg = "Cannot instantiate WS281X string, LED count argument is required."
+            raise WS281xStringError(msg)
         if self._testing:
             global rpi_ws281x  # noqa: PLW0603
             import lightberries.base.rpiws281x_patch as rpi_ws281x
@@ -261,7 +264,7 @@ class WS281xString(Sequence[NDArray[np.int32]]):
         """
         if isinstance(key, slice):
             for i, j in enumerate(range(self._ledCount)[key]):
-                p = Pixel(value[i, :])
+                p = Pixel(value[i, Pixel.default_pixel_order])
                 self._ws281x_pixel_strip.setPixelColor(j, p.int32value)
         elif isinstance(key, (np.integer)):
             if int(key) >= self._ledCount:

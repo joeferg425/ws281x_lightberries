@@ -1,6 +1,7 @@
 """Test Pixel."""
 
 # ruff: noqa: S101
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, cast
@@ -358,27 +359,27 @@ def test_pixel_creation_grb(arg: int | NDArray[np.float32] | Pixel) -> None:
     Pixel.default_pixel_order = LEDOrder.GRB
     p = Pixel(arg)
     assert isinstance(p, Pixel), f"Pixel: {p} is not {type(Pixel)}"
-    exp = HEX_TEN_THOUSAND
+    exp = HEX_ONE_HUNDRED
     assert p.int32 == exp, f"Pixel.int32: {p.int32} != expected value: {exp}"
     exp = THREE
     assert len(p.array) == exp, f"Pixel.array: {p.array} != expected value: {exp}"
-    exp = "010000"
+    exp = "000100"
     assert p.hex_str == exp, f"Pixel.hex_str: {p.hex_str} != expected value: {exp}"
-    exp = "PX#010000:GRB"
+    exp = "PX#000100:GRB"
     assert str(p) == exp, f"str(Pixel): {p!s} != expected value: {exp}"
     exp = Pixel(HEX_ONE_HUNDRED)
     assert p == exp, f"Pixel: {p} != expected value: {exp}"
-    exp = HEX_TEN_THOUSAND
+    exp = HEX_ONE_HUNDRED
     assert p == exp, f"Pixel: {p} != expected value: {exp}"
     exp = (0, 1, 0)
     assert p == exp, f"Pixel: {p} != expected value: {exp}"
-    exp = (1, 0, 0)
+    exp = (0, 1, 0)
     assert p.tuple == exp, f"Pixel.tuple: {p.tuple} != expected value: {exp}"
-    exp = np.array([1, 0, 0])
-    assert_array_equal(p.array, exp, err_msg=f"Pixel.array: {p.array} != expected value: {exp}")
-    exp = (0, 1, 0)
-    assert p.rgb_tuple == exp, f"Pixel.rgb_tuple: {p.rgb_tuple} != expected value: {exp}"
     exp = np.array([0, 1, 0])
+    assert_array_equal(p.array, exp, err_msg=f"Pixel.array: {p.array} != expected value: {exp}")
+    exp = (1, 0, 0)
+    assert p.rgb_tuple == exp, f"Pixel.rgb_tuple: {p.rgb_tuple} != expected value: {exp}"
+    exp = np.array([1, 0, 0])
     assert_array_equal(p.rgb_array, exp, err_msg=f"Pixel.rgb_array: {p.rgb_array} != expected value: {exp}")
 
 
