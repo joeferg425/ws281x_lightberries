@@ -2,13 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
 from lightberries.array_sequence.base import ArraySequence
-from lightberries.base.pixel import Pixel, PixelColor, pixel_from_color
-
-if TYPE_CHECKING:
-    from lightberries.pixel_sequence import PixelSequence
+from lightberries.base.pixel import Pixel, PixelColor
+from lightberries.pixel_sequence import PixelSequence
 
 
 class SequenceOff(ArraySequence):
@@ -19,7 +15,6 @@ class SequenceOff(ArraySequence):
         led_count: int | None = None,
         pixel_sequence: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
-        **kwargs: dict[str, Any],
     ) -> None:
         """Create array of RGB tuples that are all off.
 
@@ -33,13 +28,22 @@ class SequenceOff(ArraySequence):
         """
         if name is None:
             name = SequenceOff.__name__
-        if led_count is None:
-            led_count = 1
         if pixel_sequence is None:
-            self._array = [pixel_from_color(PixelColor.OFF) for _ in range(int(led_count))]
+            pixel_sequence = PixelSequence(
+                pixel_sequence=[Pixel(PixelColor.OFF) for _ in PixelSequence.get_monthly_color_sequence()],
+            )
+        elif isinstance(pixel_sequence, list):
+            pixel_sequence = PixelSequence(pixel_sequence=[Pixel(PixelColor.OFF) for _ in pixel_sequence])
+        if led_count is not None and led_count < pixel_sequence.led_count:
+            pixel_sequence = PixelSequence(pixel_sequence=pixel_sequence[:led_count])
+        if led_count is None:
+            led_count = len(pixel_sequence)
+        elif led_count > pixel_sequence.led_count:
+            pixel_sequence = PixelSequence(
+                pixel_sequence=[Pixel(PixelColor.OFF) for _ in range(led_count)],
+            )
         super().__init__(
             name=name,
             pixel_sequence=pixel_sequence,
             led_count=led_count,
-            **kwargs,
         )

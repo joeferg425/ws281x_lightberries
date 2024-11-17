@@ -7,8 +7,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from lightberries.pixel_sequence import PixelSequence
 
 if TYPE_CHECKING:
-    from lightberries.base.pixel import Pixel
-
+    from lightberries.base.pixel import Pixel  # pragma: no cover
 
 
 class ArraySequence(PixelSequence):

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from math import ceil
-from typing import Any
 
 import numpy as np
 
@@ -16,13 +15,12 @@ from lightberries.pixel_sequence import PixelSequence
 class SequenceTransition(ArraySequence):
     """A more versatile version of CreateRainbow."""
 
-    def __init__(  # noqa: C901
+    def __init__(  # noqa: C901, PLR0912
         self,
         led_count: int | None = None,
         pixel_sequence: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
         wrap: bool | None = None,
-        **kwargs: dict[str, Any],
     ) -> None:
         """More versatile version of CreateRainbow.
 
@@ -43,9 +41,11 @@ class SequenceTransition(ArraySequence):
             name = SequenceTransition.__name__
         if pixel_sequence is None:
             pixel_sequence = self.get_monthly_color_sequence()
+            if led_count is not None and led_count < pixel_sequence.led_count:
+                pixel_sequence = PixelSequence(pixel_sequence=pixel_sequence[:led_count])
         elif isinstance(pixel_sequence, list):
             pixel_sequence = PixelSequence(pixel_sequence=pixel_sequence)
-        if pixel_sequence.led_count == 0 and led_count == 0:
+        if pixel_sequence.led_count == 0:
             pixel_sequence = self.get_monthly_color_sequence()
         if led_count is None:
             led_count = pixel_sequence.led_count
@@ -58,6 +58,8 @@ class SequenceTransition(ArraySequence):
             wrap_offset = 0
         else:
             wrap_offset = -1
+        if pixel_sequence.led_count <= 1:
+            wrap_offset = 0
         # figure out how many LEDs per color change
         if transition_count is None:
             transition_count = ceil(led_count / (pixel_sequence.led_count + wrap_offset))
@@ -90,5 +92,4 @@ class SequenceTransition(ArraySequence):
             name=name,
             led_count=led_count,
             pixel_sequence=temp_pixels,
-            kwargs=kwargs,
         )

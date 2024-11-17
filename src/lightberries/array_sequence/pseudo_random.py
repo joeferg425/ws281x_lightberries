@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from lightberries.array_sequence.base import ArraySequence
 from lightberries.array_sequence.off import SequenceOff
 from lightberries.base.pixel import Pixel
@@ -18,7 +16,6 @@ class SequencePseudoRandom(ArraySequence):
         led_count: int | None = None,
         pixel_sequence: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
-        **kwargs: dict[str, Any],
     ) -> None:
         """Create an array of random colors.
 
@@ -36,8 +33,6 @@ class SequencePseudoRandom(ArraySequence):
         """
         if name is None:
             name = SequencePseudoRandom.__name__
-        if led_count is None:
-            led_count = 1
 
         temp_array = SequenceOff(led_count=led_count)
 
@@ -48,6 +43,9 @@ class SequencePseudoRandom(ArraySequence):
         if pixel_sequence.led_count == 0:
             pixel_sequence = self.get_monthly_color_sequence()
 
+        if led_count is None:
+            led_count = pixel_sequence.led_count
+
         for i in range(led_count):
             temp_array[i] = Pixel(PixelColor.get_PSEUDO_RANDOM())
 
@@ -55,5 +53,4 @@ class SequencePseudoRandom(ArraySequence):
             pixel_sequence=temp_array,
             led_count=led_count,
             name=name,
-            **kwargs,
         )

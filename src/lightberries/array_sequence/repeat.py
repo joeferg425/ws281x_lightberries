@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING
 
 from lightberries.array_sequence.base import ArraySequence
 from lightberries.array_sequence.off import SequenceOff
-from lightberries.base.pixel import Pixel, PixelColor
 from lightberries.pixel_sequence import PixelSequence
+
+if TYPE_CHECKING:
+    from lightberries.base.pixel import Pixel  # pragma: no cover
 
 
 class SequenceRepeat(ArraySequence):
@@ -18,7 +20,6 @@ class SequenceRepeat(ArraySequence):
         led_count: int | None = None,
         pixel_sequence: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
-        **kwargs: dict[str, Any],
     ) -> None:
         """Create a repeating LightPattern from a given sequence.
 
@@ -42,27 +43,24 @@ class SequenceRepeat(ArraySequence):
             pixel_sequence = PixelSequence.get_monthly_color_sequence()
         elif isinstance(pixel_sequence, list):
             pixel_sequence = PixelSequence(pixel_sequence=pixel_sequence)
+        if pixel_sequence.led_count == 0:
+            pixel_sequence = PixelSequence.get_monthly_color_sequence()
 
         if led_count is None:
             led_count = pixel_sequence.led_count
 
-        _pixel_array: list[Pixel] = []
-        if len(pixel_sequence) == 0:
-            _pixel_array = []
-        else:
-            _pixel_array = list(SequenceOff(led_count=led_count))
-            if led_count > pixel_sequence.led_count:
-                _pixel_array[0 : pixel_sequence.led_count] = pixel_sequence
-                for i in range(0, led_count, pixel_sequence.led_count):
-                    if i + pixel_sequence.led_count <= led_count:
-                        _pixel_array[i : i + pixel_sequence.led_count] = _pixel_array[0 : pixel_sequence.led_count]
-                    else:
-                        extra = (i + pixel_sequence.led_count) % led_count
-                        end = (i + pixel_sequence.led_count) - extra
-                        _pixel_array[i:end] = _pixel_array[0 : (pixel_sequence.led_count - extra)]
+        _pixel_array = list(SequenceOff(led_count=led_count))
+        if led_count > pixel_sequence.led_count:
+            _pixel_array[0 : pixel_sequence.led_count] = pixel_sequence
+            for i in range(0, led_count, pixel_sequence.led_count):
+                if i + pixel_sequence.led_count <= led_count:
+                    _pixel_array[i : i + pixel_sequence.led_count] = _pixel_array[0 : pixel_sequence.led_count]
+                else:
+                    extra = (i + pixel_sequence.led_count) % led_count
+                    end = (i + pixel_sequence.led_count) - extra
+                    _pixel_array[i:end] = _pixel_array[0 : (pixel_sequence.led_count - extra)]
         super().__init__(
             name=name,
             led_count=led_count,
             pixel_sequence=_pixel_array,
-            kwargs=kwargs,
         )

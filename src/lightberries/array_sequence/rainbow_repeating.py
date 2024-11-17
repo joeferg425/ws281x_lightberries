@@ -5,6 +5,7 @@ from __future__ import annotations
 from lightberries.array_sequence.base import ArraySequence
 from lightberries.array_sequence.rainbow import SequenceRainbow
 from lightberries.array_sequence.repeat import SequenceRepeat
+from lightberries.pixel_sequence import PixelSequence
 
 
 class SequenceRainbowRepeating(ArraySequence):
@@ -12,7 +13,7 @@ class SequenceRainbowRepeating(ArraySequence):
 
     def __init__(
         self,
-        led_count: int,
+        led_count: int | None,
         name: str | None = None,
         segment_length: int | None = None,
     ) -> None:
@@ -36,6 +37,8 @@ class SequenceRainbowRepeating(ArraySequence):
             name=name,
             led_count=led_count,
         )
+        if led_count is None:
+            led_count = PixelSequence.get_monthly_color_sequence().led_count
         if segment_length is None:
             segment_length = led_count // 4
         self._array = SequenceRepeat(

@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING
 
 from lightberries.array_sequence.base import ArraySequence
 from lightberries.array_sequence.off import SequenceOff
-from lightberries.base.pixel import Pixel, PixelColor
 from lightberries.pixel_sequence import PixelSequence
+
+if TYPE_CHECKING:
+    from lightberries.base.pixel import Pixel  # pragma: no cover
 
 
 class SequenceReflect(ArraySequence):
@@ -19,7 +21,6 @@ class SequenceReflect(ArraySequence):
         pixel_sequence: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
         fold_length: int | None = None,
-        **kwargs: dict[str, Any],
     ) -> None:
         """Generate an array where each repetition of the input. Sequence is reversed from the previous one.
 
@@ -81,4 +82,8 @@ class SequenceReflect(ArraySequence):
                 else:
                     _pixel_array[seg_begin:seg_end] = pixel_sequence[0 : fold_length - overflow]
                 flip = not flip
-        super().__init__(led_count=led_count, name=name, pixel_sequence=_pixel_array, kwargs=kwargs)
+        super().__init__(
+            led_count=led_count,
+            name=name,
+            pixel_sequence=_pixel_array,
+        )

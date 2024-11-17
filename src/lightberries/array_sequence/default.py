@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from lightberries.array_sequence.base import ArraySequence
 
@@ -19,7 +19,6 @@ class SequenceDefault(ArraySequence):
         led_count: int | None = None,
         pixel_sequence: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
-        **kwargs: dict[str, Any],
     ) -> None:
         """Create an array of default colors.
 
@@ -38,10 +37,11 @@ class SequenceDefault(ArraySequence):
         if name is None:
             name = SequenceDefault.__name__
         if pixel_sequence is None:
-            pixel_sequence = self.get_monthly_color_sequence()
+            pixel_sequence = self.get_monthly_color_sequence().list
+        if led_count is None:
+            led_count = len(pixel_sequence)
         super().__init__(
             pixel_sequence=pixel_sequence,
             led_count=led_count,
             name=name,
-            **kwargs,
         )

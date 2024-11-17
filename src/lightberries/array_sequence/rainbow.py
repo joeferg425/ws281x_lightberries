@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from lightberries.array_sequence.base import ArraySequence
 from lightberries.array_sequence.transition import SequenceTransition
 from lightberries.base.pixel import Pixel, PixelColor, pixel_from_color
@@ -19,7 +17,6 @@ class SequenceRainbow(ArraySequence):
         pixel_sequence: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
         wrap: bool | None = None,
-        **kwargs: dict[str, Any],
     ) -> None:
         """Create a color gradient array.
 
@@ -49,6 +46,12 @@ class SequenceRainbow(ArraySequence):
                     pixel_from_color(PixelColor.VIOLET),
                 ],
             )
+            if led_count is not None and led_count < pixel_sequence.led_count:
+                pixel_sequence = PixelSequence(pixel_sequence=pixel_sequence[:led_count])
+        elif isinstance(pixel_sequence, list):
+            pixel_sequence = PixelSequence(pixel_sequence=pixel_sequence)
+        if led_count is None:
+            led_count = pixel_sequence.led_count
         super().__init__(
             name=name,
             pixel_sequence=SequenceTransition(
@@ -56,5 +59,4 @@ class SequenceRainbow(ArraySequence):
                 pixel_sequence=pixel_sequence,
                 wrap=wrap,
             ),
-            kwargs=kwargs,
         )

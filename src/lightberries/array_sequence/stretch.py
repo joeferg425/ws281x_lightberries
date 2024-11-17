@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from lightberries.array_sequence.base import ArraySequence
 from lightberries.array_sequence.off import SequenceOff
 from lightberries.pixel_sequence import PixelSequence
 
 if TYPE_CHECKING:
-    from lightberries.base.pixel import Pixel
+    from lightberries.base.pixel import Pixel  # pragma: no cover
 
 
 class SequenceStretch(ArraySequence):
@@ -20,7 +20,6 @@ class SequenceStretch(ArraySequence):
         led_count: int | None = None,
         pixel_sequence: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
-        **kwargs: dict[str, Any],
     ) -> None:
         """Take a sequence of input colors and repeats each element the requested number of times.
 
@@ -61,5 +60,4 @@ class SequenceStretch(ArraySequence):
             led_count=led_count,
             name=name,
             pixel_sequence=temp_array[:led_count],
-            kwargs=kwargs,
         )

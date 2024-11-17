@@ -2,18 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-import numpy as np
-
 from lightberries.array_sequence.base import ArraySequence
 from lightberries.base.logger import LOGGER
 from lightberries.base.pixel import Pixel, PixelColor
-
-if TYPE_CHECKING:
-    from numpy.typing import NDArray
-
-    from lightberries.pixel_sequence import PixelSequence
+from lightberries.pixel_sequence import PixelSequence
 
 
 class SequenceSolid(ArraySequence):
@@ -24,8 +16,7 @@ class SequenceSolid(ArraySequence):
         led_count: int | None = None,
         pixel_sequence: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
-        color: Pixel | PixelColor | NDArray[np.int32] | None = None,
-        **kwargs: dict[str, Any],  # noqa: ARG002
+        color: Pixel | PixelColor | None = None,
     ) -> None:
         """Create array of RGB tuples that are all one color.
 
@@ -44,18 +35,21 @@ class SequenceSolid(ArraySequence):
         if color is None:
             pixel = self.get_monthly_color_sequence()[0]
         elif isinstance(color, PixelColor):
-            pixel = color.value
-        elif isinstance(color, np.ndarray):
             pixel = Pixel(color)
         else:
             pixel = color
         if pixel_sequence is None:
             if led_count is not None:
-                pixel_sequence = [pixel for _ in range(int(led_count))]
+                sqnc = [pixel for _ in range(int(led_count))]
             else:
-                pixel_sequence = [pixel]
-        else:
-            pixel_sequence = [pixel]
+                sqnc = [pixel for _ in self.get_monthly_color_sequence()]
+            pixel_sequence = PixelSequence(pixel_sequence=sqnc)
+        elif isinstance(pixel_sequence, list):
+            pixel_sequence = PixelSequence(pixel_sequence=pixel_sequence)
+        if led_count is None:
+            led_count = pixel_sequence.led_count
+        if led_count > pixel_sequence.led_count:
+            pixel_sequence = PixelSequence(pixel_sequence=[pixel for _ in range(int(led_count))])
         super().__init__(
             name=name,
             pixel_sequence=pixel_sequence,

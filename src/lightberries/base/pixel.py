@@ -60,13 +60,13 @@ class Pixel:
 
     def __init__(
         self,
-        colors: Pixel | int | NDArray[Any] | tuple[int, int, int] | list[int] | None = None,
+        color: Pixel | int | NDArray[Any] | tuple[int, int, int] | list[int] | None = None,
     ) -> None:
         """Create a single RGB LED pixel.
 
         Args:
         ----
-            colors: pixel color definition
+            color: pixel color definition
             order: enum determining the order of the colors (e.g. RGB vs GRB)
 
         Raises:
@@ -87,41 +87,41 @@ class Pixel:
                 raise PixelError(msg)
 
         # none gets a zero
-        if colors is None:
+        if color is None:
             self.int32value = 0
 
         # if it is an int and in range
-        elif isinstance(colors, (int, np.integer)) and colors >= 0 and colors <= MAX_INT24:
-            colors = int(colors)
+        elif isinstance(color, (int, np.integer)) and color >= 0 and color <= MAX_INT24:
+            color = int(color)
             # if self._order == LEDOrder.RGB.value:
-            self.int32value = colors & MAX_INT24
+            self.int32value = color & MAX_INT24
 
         # this is an instance of this class, just use the value
-        elif isinstance(colors, Pixel):
+        elif isinstance(color, Pixel):
             self.int32value = (
                 # this is where the rgb order comes into play
-                (int(colors.array[self.order[0]]) << 16)
-                + (int(colors.array[self.order[1]]) << 8)
-                + (int(colors.array[self.order[2]]))
+                (int(color.array[self.order[0]]) << 16)
+                + (int(color.array[self.order[1]]) << 8)
+                + (int(color.array[self.order[2]]))
             )
 
         # if it is a tuple, list, or numpy array
         elif (
-            isinstance(colors, (tuple, list, np.ndarray))
+            isinstance(color, (tuple, list, np.ndarray))
             # and has length three
-        ) and len(colors) == PIXEL_COLOR_COUNT:
-            if colors[0] > MAX_INT8 or colors[1] > MAX_INT8 or colors[2] > MAX_INT8:
-                msg = f"Invalid Pixel values: {colors}"
+        ) and len(color) == PIXEL_COLOR_COUNT:
+            if color[0] > MAX_INT8 or color[1] > MAX_INT8 or color[2] > MAX_INT8:
+                msg = f"Invalid Pixel values: {color}"
                 raise PixelError(msg)
             # create a 3-byte int from the three bytes
             self.int32value = (
                 # this is where the rgb order comes into play
-                (int(colors[0]) << 16) + (int(colors[1]) << 8) + (int(colors[2]))
+                (int(color[0]) << 16) + (int(color[1]) << 8) + (int(color[2]))
             )
 
         # we've got an error boys!
         else:
-            msg = f"Cannot assign pixel using value: {colors!s} ({type(colors)})"
+            msg = f"Cannot assign pixel using value: {color!s} ({type(color)})"
             raise PixelError(msg)
 
     def __len__(

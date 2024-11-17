@@ -125,7 +125,7 @@ class PixelSequence(Sequence[Pixel]):
 
     def __setitem__(
         self,
-        key: int | np.int32 | slice,
+        key: int | np.int32 | slice | Iterable[int],
         value: Pixel | list[Pixel],
     ) -> None:
         """Set LED value(s) in the array.
@@ -142,6 +142,9 @@ class PixelSequence(Sequence[Pixel]):
             self._array[key] = value
         elif isinstance(key, slice) and isinstance(value, list):
             self._array[key] = value
+        elif isinstance(key, list) and isinstance(value, list):
+            for i in key:
+                self._array[i] = value[i]
         else:
             msg = f"Pixel setitem failed for key/value: {key}/{value}"
             raise TypeError(msg)
@@ -240,6 +243,17 @@ class PixelSequence(Sequence[Pixel]):
         if self._array:
             return np.array([p.rgb_array for p in self._array], dtype=np.int32)
         return np.zeros((0, 3), dtype=np.int32)
+
+    @property
+    def list(self) -> list[Pixel]:
+        """Get the light sequence.
+
+        Returns
+        -------
+            the light sequence
+
+        """
+        return list(self._array)
 
     def count(self, value: Pixel) -> int:
         """Count instances of the pixel value.
@@ -360,7 +374,7 @@ class PixelSequence(Sequence[Pixel]):
             s += ",..."
         else:
             s += "]"
-        return f"{self._name}: SQX#{self._led_count}[{s}"
+        return f"{self._name.replace('Sequence','')}: SQX#{self._led_count}[{s}"
 
     def __repr__(
         self,
@@ -372,7 +386,7 @@ class PixelSequence(Sequence[Pixel]):
             a string representation of the Pixel instance
 
         """
-        return f"<{PixelSequence.__name__}> {self.__str__()}"
+        return f"{self.__str__()}"
 
     @staticmethod
     def get_monthly_color_sequence(month: int | datetime | None = None) -> PixelSequence:

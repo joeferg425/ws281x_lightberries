@@ -6,6 +6,7 @@ import contextlib
 import logging
 import random
 import time
+from pathlib import Path
 from typing import Any, Callable, cast
 
 import numpy as np
@@ -68,6 +69,7 @@ class ArrayController:
         verbose: bool = False,
         simulate: bool = False,
         testing: bool = False,
+        log_file: str | Path | None = None,
     ) -> None:
         """Create a LightArrayController object for running patterns across a rpi_ws281x LED string.
 
@@ -108,6 +110,11 @@ class ArrayController:
                 LOGGER.setLevel(logging.DEBUG)
             if verbose is True:
                 LOGGER.setLevel(5)
+            if log_file is not None:
+                log_file = Path(log_file)
+                fh = logging.FileHandler(filename=log_file, mode="w+")
+                fh.setLevel(logging.DEBUG)
+                LOGGER.addHandler(fh)
             self.simulate = simulate
             # wrap pixel strip in my own interface object
             self._instantiate_ws281x_string(

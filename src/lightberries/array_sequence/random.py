@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import random
-from typing import Any
 
 from lightberries.array_sequence.base import ArraySequence
 from lightberries.base.pixel import Pixel
@@ -22,7 +21,6 @@ class SequenceRandom(ArraySequence):
         led_count: int | None = None,
         pixel_sequence: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
-        **kwargs: dict[str, Any],
     ) -> None:
         """Create an array of random colors.
 
@@ -31,7 +29,6 @@ class SequenceRandom(ArraySequence):
             name: the name of this pattern
             pixel_sequence: array of pixels
             led_count: the number of random colors to generate for the array
-            kwargs: args for patterns
 
         Returns:
         -------
@@ -43,7 +40,6 @@ class SequenceRandom(ArraySequence):
         super().__init__(
             led_count=led_count,
             name=name,
-            kwargs=kwargs,
         )
 
         if pixel_sequence is None:
