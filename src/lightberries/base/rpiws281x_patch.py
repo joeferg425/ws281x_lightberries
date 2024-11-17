@@ -47,7 +47,7 @@ class FakePixelStrip:
 
     def __getitem__(self, pos: int | slice) -> int | list[int]:
         """Fake method."""
-        return 0
+        return 0  # pragma: no cover
 
     def __setitem__(self, pos: int | slice, value: int | list[int]) -> None:
         """Fake method."""

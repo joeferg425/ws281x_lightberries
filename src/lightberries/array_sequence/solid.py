@@ -16,7 +16,6 @@ if TYPE_CHECKING:
     from lightberries.pixel_sequence import PixelSequence
 
 
-
 class SequenceSolid(ArraySequence):
     """Creates array of RGB tuples that are all one color."""
 
@@ -43,7 +42,7 @@ class SequenceSolid(ArraySequence):
         if name is None:
             name = SequenceSolid.__name__
         if color is None:
-            pixel = self.default_color_sequence_by_month()[0]
+            pixel = self.get_monthly_color_sequence()[0]
         elif isinstance(color, PixelColor):
             pixel = color.value
         elif isinstance(color, np.ndarray):

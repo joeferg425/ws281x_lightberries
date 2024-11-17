@@ -67,7 +67,7 @@ class PixelTransform:
         self._name = name
         self.state = TransformState(
             controller=self.controller,
-            pixel_sequence=PixelSequence.default_color_sequence_by_month(),
+            pixel_sequence=PixelSequence.get_monthly_color_sequence(),
         )
 
         LOGGER.debug("Transform: %s", self)
@@ -109,7 +109,7 @@ class PixelTransform:
 
         """
         if pixel_sequence is None:
-            pixel_sequence = PixelSequence.default_color_sequence_by_month()
+            pixel_sequence = PixelSequence.get_monthly_color_sequence()
         if state is None:
             state = TransformState(controller=controller, pixel_sequence=pixel_sequence)
         return []
@@ -245,7 +245,7 @@ class PixelTransform:
         """
         return [True, False][random.randint(0, 1)]
 
-    def copy(self ) -> PixelTransform:
+    def copy(self) -> PixelTransform:
         """Get a copy of this transform.
 
         Returns

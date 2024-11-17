@@ -129,7 +129,7 @@ class ArrayController:
             self.virtual_led_buffer: NDArray[np.int32] = SequenceSolid(
                 led_count=self._led_count,
                 color=Pixel(PixelColor.OFF),
-            ).ndarray
+            ).array
             self.virtual_led_index_buffer: NDArray[np.int32] = np.array(
                 range(len(self.ws281xString)),
             )
@@ -141,7 +141,7 @@ class ArrayController:
             self._refresh_delay: float = 0.001
             self._seconds_per_mode: float = 120.0
             self._background_color: Pixel = Pixel(PixelColor.OFF)
-            self._color_sequence: PixelSequence = PixelSequence.default_color_sequence_by_month()
+            self._color_sequence: PixelSequence = PixelSequence.get_monthly_color_sequence()
             self._color_sequence_count: int = len(self._color_sequence)
             self._color_sequence_index: int = 0
             self._loop_forever: bool = False
@@ -496,7 +496,7 @@ class ArrayController:
         try:
             # make sure the passed LED array is the correct type
             if isinstance(led_buffer, PixelSequence):
-                _led_buffer = led_buffer.ndarray
+                _led_buffer = led_buffer.array
             else:
                 _led_buffer = led_buffer
             _led_buffer_length = int(_led_buffer.size / 3)
@@ -721,7 +721,7 @@ class ArrayController:
         color_names: list[str] | None = None,
         skip_functions: list[str] | None = None,
         skip_colors: list[str] | None = None,
-        kwargs: dict[str, Any]={},
+        kwargs: dict[str, Any] = {},
     ) -> None:
         """Run colors and functions semi-randomly.
 
@@ -851,7 +851,7 @@ class ArrayController:
                     )
                 else:
                     LOGGER.info("Color: %s", "default monthly sequence")
-                    clr = PixelSequence.default_color_sequence_by_month()
+                    clr = PixelSequence.get_monthly_color_sequence()
                 # configure function
                 LOGGER.info("Function: %s", transform_function)
                 PixelTransform.ALL_TRANSFORMS[transform_function].setup(

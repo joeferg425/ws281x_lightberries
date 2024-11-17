@@ -21,7 +21,7 @@ class Dot(Player):
             y=y,
             size=0,
             name="",
-            color=PixelColor.PSEUDO_RANDOM.array,
+            color=PixelColor.get_PSEUDO_RANDOM.array,
             has_gravity=False,
         )
         self.bounded = False
@@ -30,7 +30,7 @@ class Dot(Player):
         self.timestamp_shoot = self.timestamp_spawn
         self.timestamp_shape = self.timestamp_spawn
         self.timestamp_size = self.timestamp_spawn
-        self.splash_color = PixelColor.PSEUDO_RANDOM.array
+        self.splash_color = PixelColor.get_PSEUDO_RANDOM.array
         self._shape: SpriteShape = SpriteShape.CROSS
         self._size = 0
 
@@ -170,9 +170,9 @@ class DotsGame(LightGame):
                 player.x_aim = x_aim if abs(x_aim) > DotsGame.MIN_BULLET_SPEED else 0.0
                 player.y_aim = y_aim if abs(y_aim) > DotsGame.MIN_BULLET_SPEED else 0.0
                 if event.event_id == LightEventId.TriggerLeft:
-                    player.splash_color = PixelColor.RANDOM.array
+                    player.splash_color = PixelColor.get_RANDOM.array
                 elif event.event_id == LightEventId.ButtonTop:
-                    player.color = PixelColor.RANDOM.array
+                    player.color = PixelColor.get_RANDOM.array
                 elif event.event_id == LightEventId.TriggerRight:
                     if (t - player.timestamp_shoot >= GameObject.BUTTON_DEBOUNCE) and not (self.pause):
                         player.timestamp_shoot = t

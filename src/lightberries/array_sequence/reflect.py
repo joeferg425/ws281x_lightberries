@@ -42,7 +42,7 @@ class SequenceReflect(ArraySequence):
 
         # if user didn't specify otherwise, fold in middle
         if pixel_sequence is None:
-            pixel_sequence = PixelSequence.default_color_sequence_by_month()
+            pixel_sequence = PixelSequence.get_monthly_color_sequence()
             if fold_length is None and led_count is None:
                 fold_length = pixel_sequence.led_count // 2
         elif isinstance(pixel_sequence, list):
@@ -54,12 +54,12 @@ class SequenceReflect(ArraySequence):
             led_count = pixel_sequence.led_count
         if fold_length is None:
             fold_length = led_count // 2
-        fold_length=int(fold_length)
-        led_count=int(led_count)
+        fold_length = int(fold_length)
+        led_count = int(led_count)
 
         _pixel_array: list[Pixel] = []
         if pixel_sequence.led_count == 0 or led_count == 0:
-            _pixel_array = [Pixel(PixelColor.OFF)]
+            _pixel_array = []
         else:
             flip = False
             _pixel_array = list(SequenceOff(led_count=led_count))

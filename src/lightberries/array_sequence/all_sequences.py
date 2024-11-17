@@ -1,5 +1,6 @@
 """Import all array sequences."""
 
+from lightberries.array_sequence.base import ArraySequence as ArraySequence
 from lightberries.array_sequence.default import SequenceDefault as SequenceDefault
 from lightberries.array_sequence.off import SequenceOff as SequenceOff
 from lightberries.array_sequence.pseudo_random import (

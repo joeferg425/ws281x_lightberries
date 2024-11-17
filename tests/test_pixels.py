@@ -181,8 +181,8 @@ def test_pixel_equality_not_equal() -> None:
 def test_pixel_color_random() -> None:
     """Test default pixel creation and attributes."""
     Pixel.default_pixel_order = LEDOrder.RGB
-    p1 = Pixel(PixelColor.random())
-    p2 = Pixel(PixelColor.random())
+    p1 = Pixel(PixelColor.get_RANDOM())
+    p2 = Pixel(PixelColor.get_RANDOM())
     assert p1 != p2
 
 
@@ -276,8 +276,8 @@ def test_pixel_set_item() -> None:
 def test_pixel_color_pseudo_random() -> None:
     """Test default pixel creation and attributes."""
     Pixel.default_pixel_order = LEDOrder.RGB
-    p1 = pixel_from_color(PixelColor.pseudo_random())
-    p2 = pixel_from_color(PixelColor.pseudo_random())
+    p1 = pixel_from_color(PixelColor.get_PSEUDO_RANDOM())
+    p2 = pixel_from_color(PixelColor.get_PSEUDO_RANDOM())
     assert p1 != p2
 
 

@@ -37,7 +37,7 @@ light_control = ArrayController(
     debug=True,
 )
 # configure a color pattern using a "useColor" method
-light_control.color_sequence = PixelSequence.default_color_sequence_by_month()
+light_control.color_sequence = PixelSequence.get_monthly_color_sequence()
 # configure a function using a "useFunction" method
 light_control.set_transforms(
     TransformRaindrop(controller=light_control).setup(

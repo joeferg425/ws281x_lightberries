@@ -47,7 +47,7 @@ class SequenceRandom(ArraySequence):
         )
 
         if pixel_sequence is None:
-            pixel_sequence = PixelSequence.default_color_sequence_by_month()
+            pixel_sequence = PixelSequence.get_monthly_color_sequence()
         elif isinstance(pixel_sequence, list):
             pixel_sequence = PixelSequence(pixel_sequence=pixel_sequence)
         if led_count is None:

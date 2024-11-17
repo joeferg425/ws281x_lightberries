@@ -107,7 +107,7 @@ def test_single_assignment() -> None:
     with mock.patch.object(WS281xString, "_instantiate_pixel_strip", new=mock_instantiate_pixel_strip):
         ws281x = WS281xString(led_count=led_count, simulate=True)
         for i in range(len(ws281x)):
-            random_color = Pixel(PixelColor.random()).array
+            random_color = Pixel(PixelColor.get_RANDOM()).array
             ws281x[i] = random_color
             assigned_color = ws281x[i]
             assert assigned_color is not None
@@ -119,7 +119,7 @@ def test_single_assignment_indexerror() -> None:
     led_count = 10
     with mock.patch.object(WS281xString, "_instantiate_pixel_strip", new=mock_instantiate_pixel_strip):
         ws281x = WS281xString(led_count=led_count, simulate=True)
-        random_color = Pixel(PixelColor.random()).array
+        random_color = Pixel(PixelColor.get_RANDOM()).array
         with pytest.raises(IndexError):
             ws281x[led_count + 1] = random_color
 
@@ -130,7 +130,7 @@ def test_single_assignment_indexerror_numpy() -> None:
     led_count_np = np.array(np.arange(11), dtype=np.int32)[-1]
     with mock.patch.object(WS281xString, "_instantiate_pixel_strip", new=mock_instantiate_pixel_strip):
         ws281x = WS281xString(led_count=led_count, simulate=True)
-        random_color = Pixel(PixelColor.random()).array
+        random_color = Pixel(PixelColor.get_RANDOM()).array
         with pytest.raises(IndexError):
             ws281x[led_count_np] = random_color
 
@@ -160,7 +160,7 @@ def test_single_assignment_numpy_int() -> None:
     with mock.patch.object(WS281xString, "_instantiate_pixel_strip", new=mock_instantiate_pixel_strip):
         ws281x = WS281xString(led_count=led_count, simulate=True)
         for i in np.arange(len(ws281x)):
-            random_color = Pixel(PixelColor.random()).array
+            random_color = Pixel(PixelColor.get_RANDOM()).array
             ws281x[i] = random_color
             assigned_color = ws281x[i]
             assert assigned_color is not None
@@ -176,7 +176,7 @@ def test_multiple_assignment() -> None:
         # one
         assign_count = 1
         random_colors = PixelSequence.pixel_array_to_numpy_array(
-            [Pixel(PixelColor.random()) for _ in range(assign_count)],
+            [Pixel(PixelColor.get_RANDOM()) for _ in range(assign_count)],
         )
         ws281x[0] = random_colors[0]
         assigned_colors = ws281x[0]
@@ -186,7 +186,7 @@ def test_multiple_assignment() -> None:
         # stop only
         assign_count = 2
         random_colors = PixelSequence.pixel_array_to_numpy_array(
-            [Pixel(PixelColor.random()) for _ in range(assign_count)],
+            [Pixel(PixelColor.get_RANDOM()) for _ in range(assign_count)],
         )
         ws281x[:assign_count] = random_colors
         assigned_colors = ws281x[:assign_count]
@@ -195,7 +195,7 @@ def test_multiple_assignment() -> None:
 
         # start only
         random_colors = PixelSequence.pixel_array_to_numpy_array(
-            [Pixel(PixelColor.random()) for _ in range(assign_count)],
+            [Pixel(PixelColor.get_RANDOM()) for _ in range(assign_count)],
         )
         ws281x[-assign_count:] = random_colors
         assigned_colors = ws281x[-assign_count:]
@@ -204,7 +204,7 @@ def test_multiple_assignment() -> None:
 
         # step only
         random_colors = PixelSequence.pixel_array_to_numpy_array(
-            [Pixel(PixelColor.random()) for _ in range(assign_count)],
+            [Pixel(PixelColor.get_RANDOM()) for _ in range(assign_count)],
         )
         ws281x[:: int(led_count // 2)] = random_colors
         assigned_colors = ws281x[:: int(led_count // 2)]
@@ -213,7 +213,7 @@ def test_multiple_assignment() -> None:
 
         # all
         random_colors = PixelSequence.pixel_array_to_numpy_array(
-            [Pixel(PixelColor.random()) for _ in range(assign_count)],
+            [Pixel(PixelColor.get_RANDOM()) for _ in range(assign_count)],
         )
         ws281x[0 : led_count : int(led_count // 2)] = random_colors
         assigned_colors = ws281x[:: int(led_count // 2)]
@@ -222,7 +222,7 @@ def test_multiple_assignment() -> None:
 
         # nones
         random_colors = PixelSequence.pixel_array_to_numpy_array(
-            [Pixel(PixelColor.random()) for _ in range(led_count)],
+            [Pixel(PixelColor.get_RANDOM()) for _ in range(led_count)],
         )
         ws281x[:] = random_colors
         assigned_colors = ws281x[:]
@@ -238,50 +238,66 @@ def test_multiple_assignment_simulated() -> None:
 
         # one
         assign_count = 1
-        random_colors = pixel_array_to_numpy_array([PixelColor.random for i in range(assign_count)])
+        random_colors = PixelSequence.pixel_array_to_numpy_array(
+            [Pixel(PixelColor.get_RANDOM()) for _ in range(assign_count)],
+        )
         ws281x[0] = random_colors[0]
         assigned_colors = ws281x[0]
-        assert_array_equal(assigned_colors, random_colors[0])
+        assert_array_equal(assigned_colors, random_colors[0])  # type: ignore  # noqa: PGH003
 
         # stop only
         assign_count = 2
-        random_colors = pixel_array_to_numpy_array([PixelColor.random for i in range(assign_count)])
+        random_colors = PixelSequence.pixel_array_to_numpy_array(
+            [Pixel(PixelColor.get_RANDOM()) for _ in range(assign_count)],
+        )
         ws281x[:assign_count] = random_colors
         assigned_colors = ws281x[:assign_count]
-        assert_array_equal(assigned_colors, random_colors)
+        assert_array_equal(assigned_colors, random_colors)  # type: ignore  # noqa: PGH003
 
         # start only
-        random_colors = pixel_array_to_numpy_array([PixelColor.random for i in range(assign_count)])
+        random_colors = PixelSequence.pixel_array_to_numpy_array(
+            [Pixel(PixelColor.get_RANDOM()) for _ in range(assign_count)],
+        )
         ws281x[-assign_count:] = random_colors
         assigned_colors = ws281x[-assign_count:]
-        assert_array_equal(assigned_colors, random_colors)
+        assert_array_equal(assigned_colors, random_colors)  # type: ignore  # noqa: PGH003
 
         # step only
-        random_colors = pixel_array_to_numpy_array([PixelColor.random for i in range(assign_count)])
+        random_colors = PixelSequence.pixel_array_to_numpy_array(
+            [Pixel(PixelColor.get_RANDOM()) for _ in range(assign_count)],
+        )
         ws281x[:: int(led_count // 2)] = random_colors
         assigned_colors = ws281x[:: int(led_count // 2)]
-        assert_array_equal(assigned_colors, random_colors)
+        assert_array_equal(assigned_colors, random_colors)  # type: ignore  # noqa: PGH003
 
         # all
-        random_colors = pixel_array_to_numpy_array([PixelColor.random for i in range(assign_count)])
+        random_colors = PixelSequence.pixel_array_to_numpy_array(
+            [Pixel(PixelColor.get_RANDOM()) for _ in range(assign_count)],
+        )
         ws281x[0 : led_count : int(led_count // 2)] = random_colors
         assigned_colors = ws281x[:: int(led_count // 2)]
-        assert_array_equal(assigned_colors, random_colors)
+        assert_array_equal(assigned_colors, random_colors)  # type: ignore  # noqa: PGH003
 
         # nones
-        random_colors = pixel_array_to_numpy_array([PixelColor.random for i in range(led_count)])
+        random_colors = PixelSequence.pixel_array_to_numpy_array(
+            [Pixel(PixelColor.get_RANDOM()) for _ in range(led_count)],
+        )
         ws281x[:] = random_colors
         assigned_colors = ws281x[:]
-        assert_array_equal(assigned_colors, random_colors)
+        assert_array_equal(assigned_colors, random_colors)  # type: ignore  # noqa: PGH003
 
 
 def test_context_manager() -> None:
+    """Tests."""
     led_count = 10
-    with mock.patch.object(WS281xString, "_instantiate_pixel_strip", new=mock_instantiate_pixel_strip):
-        with WS281xString(led_count=led_count, simulate=True) as ws281x:
-            # all
-            random_colors = pixel_array_to_numpy_array([PixelColor.random for i in range(led_count)])
-            ws281x[:] = random_colors
-            assigned_colors = ws281x[:]
-            assert_array_equal(assigned_colors, random_colors)
-            assert_array_equal(assigned_colors, random_colors)
+    with (
+        mock.patch.object(WS281xString, "_instantiate_pixel_strip", new=mock_instantiate_pixel_strip),
+        WS281xString(led_count=led_count, simulate=True) as ws281x,
+    ):
+        # all
+        random_colors = PixelSequence.pixel_array_to_numpy_array(
+            [Pixel(PixelColor.get_RANDOM()) for _ in range(led_count)],
+        )
+        ws281x[:] = random_colors
+        assigned_colors = ws281x[:]
+        assert_array_equal(assigned_colors, random_colors)  # type: ignore  # noqa: PGH003

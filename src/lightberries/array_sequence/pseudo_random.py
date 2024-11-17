@@ -42,14 +42,14 @@ class SequencePseudoRandom(ArraySequence):
         temp_array = SequenceOff(led_count=led_count)
 
         if pixel_sequence is None:
-            pixel_sequence = self.default_color_sequence_by_month()
+            pixel_sequence = self.get_monthly_color_sequence()
         elif isinstance(pixel_sequence, list):
             pixel_sequence = PixelSequence(pixel_sequence=pixel_sequence)
         if pixel_sequence.led_count == 0:
-            pixel_sequence = self.default_color_sequence_by_month()
+            pixel_sequence = self.get_monthly_color_sequence()
 
         for i in range(led_count):
-            temp_array[i] = Pixel(PixelColor.pseudo_random())
+            temp_array[i] = Pixel(PixelColor.get_PSEUDO_RANDOM())
 
         super().__init__(
             pixel_sequence=temp_array,

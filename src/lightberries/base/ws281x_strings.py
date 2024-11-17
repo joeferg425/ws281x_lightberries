@@ -76,13 +76,13 @@ class WS281xString(Sequence[NDArray[np.int32]]):
             raise WS281xStringError(msg)
         if self._testing:
             global rpi_ws281x  # noqa: PLW0603
-            import lightberries.base.rpiws281x_patch as rpi_ws281x
+            import lightberries.base.rpiws281x_patch as rpi_ws281x  # pragma: no cover
 
             # cant run GPIO stuff without root, tell the user if they forgot
             # linux check is just for debugging with fake GPIO on windows
         if (not self._simulate and not self._testing) and sys.platform == "linux" and os.getuid() != 0:
-            msg = "GPIO functionality requires root privilege. Please run command again as root"
-            raise PermissionsError(msg)
+            msg = "GPIO functionality requires root privilege. Please run command again as root"  # pragma: no cover
+            raise PermissionsError(msg)  # pragma: no cover
         self._instantiate_pixel_strip(
             pwm_gpio_pin=pwm_gpio_pin,
             dma_channel=dma_channel,
@@ -151,11 +151,11 @@ class WS281xString(Sequence[NDArray[np.int32]]):
             brightness=int(255 * led_brightness),
         )
         # try to force cleanup of underlying c objects when user exits
-        atexit.register(self.__del__)
+        atexit.register(self.__del__)  # pragma: no cover
 
-        self._ws281x_pixel_strip.begin()
-        self._ledCount = len(self._ws281x_pixel_strip)
-        LOGGER.debug("Created %s", WS281xString.__name__)
+        self._ws281x_pixel_strip.begin()  # pragma: no cover
+        self._ledCount = len(self._ws281x_pixel_strip)  # pragma: no cover
+        LOGGER.debug("Created %s", WS281xString.__name__)  # pragma: no cover
 
     def __del__(
         self,

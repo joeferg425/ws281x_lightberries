@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Any
 from lightberries.array_sequence.base import ArraySequence
 
 if TYPE_CHECKING:
-
     from lightberries.base.pixel import Pixel
     from lightberries.pixel_sequence import PixelSequence
 
@@ -39,7 +38,7 @@ class SequenceDefault(ArraySequence):
         if name is None:
             name = SequenceDefault.__name__
         if pixel_sequence is None:
-            pixel_sequence = self.default_color_sequence_by_month()
+            pixel_sequence = self.get_monthly_color_sequence()
         super().__init__(
             pixel_sequence=pixel_sequence,
             led_count=led_count,

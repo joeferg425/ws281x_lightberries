@@ -24,7 +24,7 @@ class SpaceShip(Player):
         color: np.ndarray[(3), np.int32] | None = None,
     ) -> None:
         if color is None:
-            color = PixelColor.PSEUDO_RANDOM.array
+            color = PixelColor.get_PSEUDO_RANDOM.array
         super().__init__(
             x=x,
             y=y,
@@ -333,7 +333,7 @@ class SpaceGame(LightGame):
         self.splash_screen("space", 20)
 
     def get_new_player(self, old_player: Optional[SpaceShip] = None) -> GameObject:
-        color = PixelColor.PSEUDO_RANDOM.array
+        color = PixelColor.get_PSEUDO_RANDOM.array
         if old_player is not None:
             color = old_player.color
         return SpaceShip(
@@ -411,7 +411,7 @@ class SpaceGame(LightGame):
                         elif event.event_id == LightEventId.ButtonTop:
                             if t - ship.color_time > 0.15:
                                 ship.color_time = t
-                                ship.color = PixelColor.PSEUDO_RANDOM.array
+                                ship.color = PixelColor.get_PSEUDO_RANDOM.array
             if time.time() - self.enemy_time >= self.enemy_delay and (self.first_render is True or self.pause is False):
                 self.enemy_time = time.time()
                 if random.randint(0, SpaceGame.SHIELD_ENEMY_CHANCE - 1) == SpaceGame.SHIELD_ENEMY_CHANCE - 1:

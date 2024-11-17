@@ -9,7 +9,6 @@ from lightberries.array_sequence.off import SequenceOff
 from lightberries.pixel_sequence import PixelSequence
 
 if TYPE_CHECKING:
-
     from lightberries.base.pixel import Pixel
 
 
@@ -42,7 +41,7 @@ class SequenceStretch(ArraySequence):
             name = SequenceStretch.__name__
 
         if pixel_sequence is None:
-            pixel_sequence = self.default_color_sequence_by_month()
+            pixel_sequence = self.get_monthly_color_sequence()
         if isinstance(pixel_sequence, list):
             pixel_sequence = PixelSequence(pixel_sequence=pixel_sequence)
 

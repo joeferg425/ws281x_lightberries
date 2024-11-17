@@ -95,8 +95,6 @@ class Pixel:
             colors = int(colors)
             # if self._order == LEDOrder.RGB.value:
             self.int32value = colors & MAX_INT24
-            # elif self._order == LEDOrder.GRB.value:
-            # self.int32value = ((colors & 0xFF0000) >> 8) + ((colors & 0x00FF00) << 8) + ((colors & 0x0000FF) >> 0)
 
         # this is an instance of this class, just use the value
         elif isinstance(colors, Pixel):
@@ -486,7 +484,7 @@ class PixelColor(_Pixel, enum.Enum):
     GRAY2 = (64, 55, 50)
 
     @staticmethod
-    def pseudo_random() -> PixelColor:
+    def get_PSEUDO_RANDOM() -> _Pixel:  # noqa: N802
         """Get pseudo-random pixel value from list of named colors.
 
         Returns
@@ -499,10 +497,10 @@ class PixelColor(_Pixel, enum.Enum):
             for p in dir(PixelColor)
             if "__" not in p and "random" not in p.lower() and "off" not in p.lower()
         ]
-        return valid_colors[random.randint(0, len(valid_colors) - 1)]
+        return _Pixel(*valid_colors[random.randint(0, len(valid_colors) - 1)].value)
 
     @staticmethod
-    def random() -> _Pixel:
+    def get_RANDOM() -> _Pixel:  # noqa: N802
         """Get random pixel color.
 
         Returns
@@ -511,7 +509,7 @@ class PixelColor(_Pixel, enum.Enum):
 
         """
         return _Pixel(
-            red=random.randint(0, 255),
-            green=random.randint(0, 255),
-            blue=random.randint(0, 255),
-        )
+            random.randint(0, 255),
+            random.randint(0, 255),
+            random.randint(0, 255),
+        )  # type: ignore  # noqa: PGH003

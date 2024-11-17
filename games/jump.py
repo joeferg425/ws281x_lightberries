@@ -543,7 +543,7 @@ class JumpGame(LightGame):
                     elif event.event_id == LightEventId.ButtonTop:
                         if t - player.timestamp_color > 0.15:
                             player.timestamp_color = t
-                            player.color = PixelColor.PSEUDO_RANDOM.array
+                            player.color = PixelColor.get_PSEUDO_RANDOM.array
                             player.real_color = player.color
                     elif event.event_id == LightEventId.ButtonBottom:
                         if t - player.timestamp_jump > 0.25:

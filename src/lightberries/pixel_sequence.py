@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import datetime
 import random
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
+from datetime import datetime
 from enum import IntEnum
-from typing import TYPE_CHECKING, Any, ClassVar, Iterable, overload
+from typing import TYPE_CHECKING, Any, ClassVar, overload
 
 import numpy as np
 
@@ -14,8 +14,7 @@ from lightberries.base.logger import LOGGER
 from lightberries.base.pixel import Pixel, PixelColor
 
 if TYPE_CHECKING:
-    from numpy.typing import NDArray
-
+    from numpy.typing import NDArray  # pragma: no cover
 
 
 class PixelSequence(Sequence[Pixel]):
@@ -100,7 +99,7 @@ class PixelSequence(Sequence[Pixel]):
 
     def __getitem__(  # pylint: disable=function-redefined # type: ignore  # noqa: PGH003
         self,
-        idx: int | np.int32 | slice|list[int],
+        idx: int | np.int32 | slice | list[int],
     ) -> Pixel | list[Pixel]:
         """Return a pixel value by led_index.
 
@@ -230,7 +229,7 @@ class PixelSequence(Sequence[Pixel]):
         return np.zeros((0, 3), dtype=np.int32)
 
     @property
-    def ndarray(self) -> NDArray[np.int32]:
+    def array(self) -> NDArray[np.int32]:
         """Get the light sequence.
 
         Returns
@@ -238,7 +237,9 @@ class PixelSequence(Sequence[Pixel]):
             the light sequence
 
         """
-        return np.array([p.rgb_array for p in self._array], dtype=np.int32)
+        if self._array:
+            return np.array([p.rgb_array for p in self._array], dtype=np.int32)
+        return np.zeros((0, 3), dtype=np.int32)
 
     def count(self, value: Pixel) -> int:
         """Count instances of the pixel value.
@@ -281,29 +282,6 @@ class PixelSequence(Sequence[Pixel]):
         pixel_sequence = PixelSequence(led_count=len(pixel_list))
         pixel_sequence._array = pixel_list  # noqa: SLF001
         return pixel_sequence
-
-    @staticmethod
-    def default_color_sequence_by_month(
-        month: int | None = None,
-    ) -> PixelSequence:
-        """Get the default sequence of colors defined for this month.
-
-        Returns
-        -------
-            the default sequence of colors as determined by the current month
-
-        Raises
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightBerryException: if propagating an exception
-            LightPatternException: if something bad happens
-
-        """
-        if month is None:
-            date = datetime.datetime.now()  # noqa: DTZ005
-            month = date.month
-        return get_monthly_color_sequence(month)
 
     def get_random_boolean(self) -> bool:
         """Get a random true or false value.
@@ -396,6 +374,28 @@ class PixelSequence(Sequence[Pixel]):
         """
         return f"<{PixelSequence.__name__}> {self.__str__()}"
 
+    @staticmethod
+    def get_monthly_color_sequence(month: int | datetime | None = None) -> PixelSequence:
+        """Get the sequence for each month.
+
+        Args:
+        ----
+            month: the month as an integer
+
+        Returns:
+        -------
+            pixel sequence
+
+        """
+        if month is None:
+            date = datetime.now()  # noqa: DTZ005
+            month = Month(date.month)
+        elif isinstance(month, datetime):
+            month = Month(month.month)
+        else:
+            month = Month(month)
+        return MonthSequences[month]
+
 
 class Month(IntEnum):
     """Month enum so linters stop hating me."""
@@ -414,124 +414,103 @@ class Month(IntEnum):
     December = 12
 
 
-def get_monthly_color_sequence(month: int) -> PixelSequence:  # noqa: C901, PLR0911
-    """Get the sequence for each month.
-
-    Args:
-    ----
-        month: the month as an integer
-
-    Returns:
-    -------
-        pixel sequence
-
-    """
-    if month == Month.January:
-        return PixelSequence.from_list(
-            [
-                Pixel(PixelColor.CYAN2),
-                Pixel(PixelColor.WHITE),
-                Pixel(PixelColor.CYAN),
-                Pixel(PixelColor.BLUE2),
-                Pixel(PixelColor.BLUE),
-            ],
-        )
-    if month == Month.February:
-        return PixelSequence.from_list(
-            [
-                Pixel(PixelColor.PINK),
-                Pixel(PixelColor.WHITE),
-                Pixel(PixelColor.RED),
-                Pixel(PixelColor.WHITE),
-            ],
-        )
-    if month == Month.March:
-        return PixelSequence.from_list(
-            [
-                Pixel(PixelColor.GREEN),
-                Pixel(PixelColor.WHITE),
-                Pixel(PixelColor.ORANGE),
-                Pixel(PixelColor.WHITE),
-                Pixel(PixelColor.YELLOW),
-            ],
-        )
-    if month == Month.April:
-        return PixelSequence.from_list(
-            [
-                Pixel(PixelColor.PINK),
-                Pixel(PixelColor.CYAN),
-                Pixel(PixelColor.YELLOW),
-                Pixel(PixelColor.GREEN),
-                Pixel(PixelColor.WHITE),
-            ],
-        )
-    if month == Month.May:
-        return PixelSequence.from_list(
-            [
-                Pixel(PixelColor.PINK),
-                Pixel(PixelColor.YELLOW),
-                Pixel(PixelColor.GREEN),
-                Pixel(PixelColor.WHITE),
-            ],
-        )
-    if month == Month.June:
-        return PixelSequence.from_list(
-            [
-                Pixel(PixelColor.RED),
-                Pixel(PixelColor.WHITE),
-                Pixel(PixelColor.BLUE),
-                Pixel(PixelColor.GREEN),
-            ],
-        )
-    if month == Month.July:
-        return PixelSequence.from_list(
-            [
-                Pixel(PixelColor.RED),
-                Pixel(PixelColor.WHITE),
-                Pixel(PixelColor.BLUE),
-            ],
-        )
-    if month == Month.August:
-        return PixelSequence.from_list(
-            [
-                Pixel(PixelColor.ORANGE),
-                Pixel(PixelColor.WHITE),
-                Pixel(PixelColor.YELLOW),
-                Pixel(PixelColor.ORANGE2),
-            ],
-        )
-    if month == Month.September:
-        return PixelSequence.from_list(
-            [
-                Pixel(PixelColor.RED),
-                Pixel(PixelColor.ORANGE),
-                Pixel(PixelColor.WHITE),
-                Pixel(PixelColor.YELLOW),
-                Pixel(PixelColor.ORANGE2),
-                Pixel(PixelColor.RED2),
-            ],
-        )
-    if month == Month.October:
-        return PixelSequence.from_list(
-            [
-                Pixel(PixelColor.MIDNIGHT),
-                Pixel(PixelColor.RED),
-                Pixel(PixelColor.ORANGE),
-                Pixel(PixelColor.OFF),
-            ],
-        )
-    if month == Month.November:
-        return PixelSequence.from_list(
-            [
-                Pixel(PixelColor.RED),
-                Pixel(PixelColor.MIDNIGHT),
-                Pixel(PixelColor.GRAY),
-            ],
-        )
-    return PixelSequence.from_list(
+MonthSequences = {
+    Month.January: PixelSequence.from_list(
+        [
+            Pixel(PixelColor.CYAN2),
+            Pixel(PixelColor.WHITE),
+            Pixel(PixelColor.CYAN),
+            Pixel(PixelColor.BLUE2),
+            Pixel(PixelColor.BLUE),
+        ],
+    ),
+    Month.February: PixelSequence.from_list(
+        [
+            Pixel(PixelColor.PINK),
+            Pixel(PixelColor.WHITE),
+            Pixel(PixelColor.RED),
+            Pixel(PixelColor.WHITE),
+        ],
+    ),
+    Month.March: PixelSequence.from_list(
+        [
+            Pixel(PixelColor.GREEN),
+            Pixel(PixelColor.WHITE),
+            Pixel(PixelColor.ORANGE),
+            Pixel(PixelColor.WHITE),
+            Pixel(PixelColor.YELLOW),
+        ],
+    ),
+    Month.April: PixelSequence.from_list(
+        [
+            Pixel(PixelColor.PINK),
+            Pixel(PixelColor.CYAN),
+            Pixel(PixelColor.YELLOW),
+            Pixel(PixelColor.GREEN),
+            Pixel(PixelColor.WHITE),
+        ],
+    ),
+    Month.May: PixelSequence.from_list(
+        [
+            Pixel(PixelColor.PINK),
+            Pixel(PixelColor.YELLOW),
+            Pixel(PixelColor.GREEN),
+            Pixel(PixelColor.WHITE),
+        ],
+    ),
+    Month.June: PixelSequence.from_list(
+        [
+            Pixel(PixelColor.RED),
+            Pixel(PixelColor.WHITE),
+            Pixel(PixelColor.BLUE),
+            Pixel(PixelColor.GREEN),
+        ],
+    ),
+    Month.July: PixelSequence.from_list(
+        [
+            Pixel(PixelColor.RED),
+            Pixel(PixelColor.WHITE),
+            Pixel(PixelColor.BLUE),
+        ],
+    ),
+    Month.August: PixelSequence.from_list(
+        [
+            Pixel(PixelColor.ORANGE),
+            Pixel(PixelColor.WHITE),
+            Pixel(PixelColor.YELLOW),
+            Pixel(PixelColor.ORANGE2),
+        ],
+    ),
+    Month.September: PixelSequence.from_list(
+        [
+            Pixel(PixelColor.RED),
+            Pixel(PixelColor.ORANGE),
+            Pixel(PixelColor.WHITE),
+            Pixel(PixelColor.YELLOW),
+            Pixel(PixelColor.ORANGE2),
+            Pixel(PixelColor.RED2),
+        ],
+    ),
+    Month.October: PixelSequence.from_list(
+        [
+            Pixel(PixelColor.MIDNIGHT),
+            Pixel(PixelColor.RED),
+            Pixel(PixelColor.ORANGE),
+            Pixel(PixelColor.OFF),
+        ],
+    ),
+    Month.November: PixelSequence.from_list(
+        [
+            Pixel(PixelColor.RED),
+            Pixel(PixelColor.MIDNIGHT),
+            Pixel(PixelColor.GRAY),
+        ],
+    ),
+    Month.December: PixelSequence.from_list(
         [
             Pixel(PixelColor.RED),
             Pixel(PixelColor.WHITE),
             Pixel(PixelColor.GREEN),
         ],
-    )
+    ),
+}

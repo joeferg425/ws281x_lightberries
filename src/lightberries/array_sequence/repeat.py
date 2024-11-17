@@ -39,7 +39,7 @@ class SequenceRepeat(ArraySequence):
             name = SequenceRepeat.__name__
 
         if pixel_sequence is None:
-            pixel_sequence = PixelSequence.default_color_sequence_by_month()
+            pixel_sequence = PixelSequence.get_monthly_color_sequence()
         elif isinstance(pixel_sequence, list):
             pixel_sequence = PixelSequence(pixel_sequence=pixel_sequence)
 
@@ -48,7 +48,7 @@ class SequenceRepeat(ArraySequence):
 
         _pixel_array: list[Pixel] = []
         if len(pixel_sequence) == 0:
-            _pixel_array = [Pixel(PixelColor.OFF)]
+            _pixel_array = []
         else:
             _pixel_array = list(SequenceOff(led_count=led_count))
             if led_count > pixel_sequence.led_count:
