@@ -165,4 +165,4 @@ def main(  # noqa: C901, PLR0912, PLR0913
         pass
     except Exception:
         LOGGER.exception("LightBerries Demo failed")
-        array_controller.__del__()
+    array_controller.__del__()

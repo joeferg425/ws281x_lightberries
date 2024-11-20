@@ -18,7 +18,7 @@ from lightberries.array_sequence.named import SequenceName, get_named_sequence
 from lightberries.array_sequence.solid import SequenceSolid
 from lightberries.array_transform.all_functions import *  # noqa: F403 - import all of them for the demo
 from lightberries.base.constants import SHAPE_2D, SHAPE_3D
-from lightberries.base.exceptions import ControllerError, LightBerryError
+from lightberries.base.exceptions import ControllerError
 from lightberries.base.logger import LOGGER
 from lightberries.base.pixel import LEDOrder, Pixel, PixelColor
 from lightberries.base.ws281x_strings import WS281xString
@@ -92,80 +92,64 @@ class ArrayController:
             simulate: only call refreshCallback, don't use GPIO
             testing: when testing
 
-        Raises:
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightBerryException: if propagating an exception
-            LightControlException: if something bad happens
-
         """
-        try:
-            Pixel.default_pixel_order = led_order
-            # configure logging
-            if debug is True or verbose is True:
-                if not LOGGER.handlers:
-                    stream_handler = logging.StreamHandler()
-                    LOGGER.addHandler(stream_handler)
-                LOGGER.setLevel(logging.DEBUG)
-            if verbose is True:
-                LOGGER.setLevel(5)
-            if log_file is not None:
-                log_file = Path(log_file)
-                fh = logging.FileHandler(filename=log_file, mode="w+")
-                fh.setLevel(logging.DEBUG)
-                LOGGER.addHandler(fh)
-            self.simulate = simulate
-            # wrap pixel strip in my own interface object
-            self._instantiate_ws281x_string(
-                led_count=led_count,
-                pwm_gpio_pin=pwm_gpio_pin,
-                dma_channel=dma_channel,
-                pwm_frequency=pwm_frequency,
-                pwm_invert_signal=pwm_invert_signal,
-                led_brightness=led_brightness,
-                pwm_channel=pwm_channel,
-                led_strip_type=led_strip_type,
-                gamma=gamma,
-                simulate=simulate,
-                testing=testing,
-            )
+        Pixel.default_pixel_order = led_order
+        # configure logging
+        if debug is True or verbose is True:
+            if not LOGGER.handlers:
+                stream_handler = logging.StreamHandler()
+                LOGGER.addHandler(stream_handler)
+            LOGGER.setLevel(logging.DEBUG)
+        if verbose is True:
+            LOGGER.setLevel(5)
+        if log_file is not None:
+            log_file = Path(log_file)
+            fh = logging.FileHandler(filename=log_file, mode="a")
+            fh.setLevel(logging.DEBUG)
+            LOGGER.addHandler(fh)
+        self.simulate = simulate
+        # wrap pixel strip in my own interface object
+        self._instantiate_ws281x_string(
+            led_count=led_count,
+            pwm_gpio_pin=pwm_gpio_pin,
+            dma_channel=dma_channel,
+            pwm_frequency=pwm_frequency,
+            pwm_invert_signal=pwm_invert_signal,
+            led_brightness=led_brightness,
+            pwm_channel=pwm_channel,
+            led_strip_type=led_strip_type,
+            gamma=gamma,
+            simulate=simulate,
+            testing=testing,
+        )
 
-            # initialize instance variables
-            self._led_count: int = len(self.ws281xString)
-            self.virtual_led_buffer: NDArray[np.int32] = SequenceSolid(
-                led_count=self._led_count,
-                color=Pixel(PixelColor.OFF),
-            ).array
-            self.virtual_led_index_buffer: NDArray[np.int32] = np.array(
-                range(len(self.ws281xString)),
-            )
-            self._overlay_dict: dict[int, NDArray[np.int32]] = {}
-            self._virtual_led_count: int = len(self.virtual_led_buffer)
-            self._virtual_led_index_count: int = len(self.virtual_led_index_buffer)
-            self._last_mode_change: float = time.time() - 1000
-            self._next_mode_change: float = time.time()
-            self._refresh_delay: float = 0.001
-            self._seconds_per_mode: float = 120.0
-            self._background_color: Pixel = Pixel(PixelColor.OFF)
-            self._color_sequence: PixelSequence = PixelSequence.get_monthly_color_sequence()
-            self._color_sequence_count: int = len(self._color_sequence)
-            self._color_sequence_index: int = 0
-            self._loop_forever: bool = False
+        # initialize instance variables
+        self._led_count: int = len(self.ws281xString)
+        self.virtual_led_buffer: NDArray[np.int32] = SequenceSolid(
+            led_count=self._led_count,
+            color=Pixel(PixelColor.OFF),
+        ).array
+        self.virtual_led_index_buffer: NDArray[np.int32] = np.array(
+            range(len(self.ws281xString)),
+        )
+        self._overlay_dict: dict[int, NDArray[np.int32]] = {}
+        self._virtual_led_count: int = len(self.virtual_led_buffer)
+        self._virtual_led_index_count: int = len(self.virtual_led_index_buffer)
+        self._last_mode_change: float = time.time() - 1000
+        self._next_mode_change: float = time.time()
+        self._refresh_delay: float = 0.001
+        self._seconds_per_mode: float = 120.0
+        self._background_color: Pixel = Pixel(PixelColor.OFF)
+        self._color_sequence: PixelSequence = PixelSequence.get_monthly_color_sequence()
+        self._color_sequence_count: int = len(self._color_sequence)
+        self._color_sequence_index: int = 0
+        self._loop_forever: bool = False
 
-            self.running: bool = False
-            self.refresh_callback: Callable[[], None] | None = refresh_callback
+        self.running: bool = False
+        self.refresh_callback: Callable[[], None] | None = refresh_callback
 
-            # initialize stuff
-            self.reset()
-        except SystemExit:  # pragma: no cover
-            raise
-        except KeyboardInterrupt:  # pragma: no cover
-            raise
-        except LightBerryError:  # pragma: no cover
-            raise
-        except Exception as ex:  # pragma: no cover
-            raise ControllerError from ex
+        # initialize stuff
+        self.reset()
 
     def _instantiate_ws281x_string(  # noqa: PLR0913
         self,
@@ -194,27 +178,13 @@ class ArrayController:
             simulate=simulate,
             testing=testing,
         )
+        self.ws281xString.off()
 
     def __del__(
         self,
     ) -> None:
-        """Disposes of the rpi_ws281x object (if it exists) to prevent memory leaks.
-
-        Raises
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightBerryException: if propagating an exception
-            LightControlException: if something bad happens
-
-        """
+        """Disposes of the rpi_ws281x object (if it exists) to prevent memory leaks."""
         if hasattr(self, "ws281xString"):
-            with contextlib.suppress(Exception):
-                self.off()
-            with contextlib.suppress(Exception):
-                self.copy_virtual_leds_to_ws281x()
-            with contextlib.suppress(Exception):
-                self.refresh_leds()
             with contextlib.suppress(Exception):
                 self.ws281xString.__del__()
 
@@ -452,35 +422,17 @@ class ArrayController:
     def reset(
         self,
     ) -> None:
-        """Reset class variables to default state.
-
-        Raises
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightBerryException: if propagating an exception
-            LightControlException: if something bad happens
-
-        """
-        try:
-            LOGGER.debug("%s.%s:", ArrayController.__name__, self.reset.__name__)
-            PixelTransform.ACTIVE_TRANSFORMS.clear()
-            if self.virtual_led_count >= self.real_led_count:
-                self.set_virtual_led_buffer(self.virtual_led_buffer[: self.real_led_count])
-            elif self.virtual_led_count < self.real_led_count:
-                array = SequenceSolid(
-                    led_count=self.real_led_count,
-                    color=Pixel(PixelColor.OFF),
-                )
-                self.set_virtual_led_buffer(array)
-        except SystemExit:  # pragma: no cover
-            raise
-        except KeyboardInterrupt:  # pragma: no cover
-            raise
-        except LightBerryError:  # pragma: no cover
-            raise
-        except Exception as ex:  # pragma: no cover
-            raise ControllerError from ex
+        """Reset class variables to default state."""
+        LOGGER.debug("%s.%s:", ArrayController.__name__, self.reset.__name__)
+        PixelTransform.ACTIVE_TRANSFORMS.clear()
+        if self.virtual_led_count >= self.real_led_count:
+            self.set_virtual_led_buffer(self.virtual_led_buffer[: self.real_led_count])
+        elif self.virtual_led_count < self.real_led_count:
+            array = SequenceSolid(
+                led_count=self.real_led_count,
+                color=Pixel(PixelColor.OFF),
+            )
+            self.set_virtual_led_buffer(array)
 
     def set_virtual_led_buffer(
         self,
@@ -492,72 +444,47 @@ class ArrayController:
         ----
             led_buffer: array of RGB values
 
-        Raises:
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightBerryException: if propagating an exception
-            LightControlException: if something bad happens
-
         """
-        try:
-            # make sure the passed LED array is the correct type
-            if isinstance(led_buffer, PixelSequence):
-                _led_buffer = led_buffer.array
-            else:
-                _led_buffer = led_buffer
-            _led_buffer_length = int(_led_buffer.size / 3)
+        # make sure the passed LED array is the correct type
+        if isinstance(led_buffer, PixelSequence):
+            _led_buffer = led_buffer.array
+        else:
+            _led_buffer = led_buffer
+        _led_buffer_length = int(_led_buffer.size / 3)
 
-            # check assignment length
-            if (
-                _led_buffer_length >= self.real_led_count
-                or len(_led_buffer.shape) > SHAPE_2D
-                or len(self.virtual_led_buffer.shape) > SHAPE_2D
-            ):
-                self.virtual_led_buffer = _led_buffer
-            else:
-                self.virtual_led_buffer[:_led_buffer_length] = _led_buffer
+        # check assignment length
+        if (
+            _led_buffer_length >= self.real_led_count
+            or len(_led_buffer.shape) > SHAPE_2D
+            or len(self.virtual_led_buffer.shape) > SHAPE_2D
+        ):
+            self.virtual_led_buffer = _led_buffer
+        else:
+            self.virtual_led_buffer[:_led_buffer_length] = _led_buffer
 
-            # assign new LED array to virtual LEDs
-            self._virtual_led_count = _led_buffer_length
-            # set our indices for virtual LEDs
-            self._virtual_led_index_count = self.virtual_led_count
-            # create array of index values for manipulation if needed
-            self.virtual_led_index_buffer = np.arange(self.virtual_led_count)
-            # if the array is smaller than the actual light strand, make our entire strand addressable
-            if self._virtual_led_index_count < self.real_led_count and len(self.virtual_led_buffer.shape) < SHAPE_3D:
-                self._virtual_led_index_count = self.real_led_count
-                self.virtual_led_index_buffer = np.arange(self._virtual_led_index_count)
-                self.virtual_led_buffer = np.concatenate(
-                    (
-                        self.virtual_led_buffer,
-                        np.array(
-                            [Pixel(PixelColor.OFF) for _ in range(self.real_led_count - self.virtual_led_count)],
-                        ),
+        # assign new LED array to virtual LEDs
+        self._virtual_led_count = _led_buffer_length
+        # set our indices for virtual LEDs
+        self._virtual_led_index_count = self.virtual_led_count
+        # create array of index values for manipulation if needed
+        self.virtual_led_index_buffer = np.arange(self.virtual_led_count)
+        # if the array is smaller than the actual light strand, make our entire strand addressable
+        if self._virtual_led_index_count < self.real_led_count and len(self.virtual_led_buffer.shape) < SHAPE_3D:
+            self._virtual_led_index_count = self.real_led_count
+            self.virtual_led_index_buffer = np.arange(self._virtual_led_index_count)
+            self.virtual_led_buffer = np.concatenate(
+                (
+                    self.virtual_led_buffer,
+                    np.array(
+                        [Pixel(PixelColor.OFF) for _ in range(self.real_led_count - self.virtual_led_count)],
                     ),
-                )
-        except SystemExit:  # pragma: no cover
-            raise
-        except KeyboardInterrupt:  # pragma: no cover
-            raise
-        except LightBerryError:  # pragma: no cover
-            raise
-        except Exception as ex:  # pragma: no cover
-            raise ControllerError from ex
+                ),
+            )
 
     def copy_virtual_leds_to_ws281x(
         self,
     ) -> None:
-        """Set each Pixel in the rpi_ws281x object to the buffered array value.
-
-        Raises
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightBerryException: if propagating an exception
-            LightControlException: if something bad happens
-
-        """
+        """Set each Pixel in the rpi_ws281x object to the buffered array value."""
         # callback function to do work
 
         def set_pixel(i_rgb: tuple[int, NDArray[np.int32]]) -> None:
@@ -585,70 +512,27 @@ class ArrayController:
     def refresh_leds(
         self,
     ) -> None:
-        """Display current LED buffer.
-
-        Raises
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightBerryException: if propagating an exception
-            LightControlException: if something bad happens
-
-        """
-        try:
-            # call light string's refresh method to send the communications out to the addressable LEDs
-            if isinstance(self.refresh_callback, Callable):
-                self.refresh_callback()
-            self.ws281xString.refresh()
-        except SystemExit:  # pragma: no cover
-            raise
-        except KeyboardInterrupt:  # pragma: no cover
-            raise
-        except LightBerryError:  # pragma: no cover
-            raise
-        except Exception as ex:  # pragma: no cover
-            raise ControllerError from ex
+        """Display current LED buffer."""
+        # call light string's refresh method to send the communications out to the addressable LEDs
+        if isinstance(self.refresh_callback, Callable):
+            self.refresh_callback()
+        self.ws281xString.refresh()
 
     def off(
         self,
     ) -> None:
-        """Set all Pixels to RGD background color.
-
-        Raises
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightBerryException: if propagating an exception
-            LightControlException: if something bad happens
-
-        """
-        try:
-            # clear all current values
-            self.virtual_led_buffer *= 0
-            # set to background color
-            self.virtual_led_buffer[:] += self.background_color.rgb_array
-        except SystemExit:  # pragma: no cover
-            raise
-        except KeyboardInterrupt:  # pragma: no cover
-            raise
-        except LightBerryError:  # pragma: no cover
-            raise
-        except Exception as ex:  # pragma: no cover
-            raise ControllerError from ex
+        """Set all Pixels to RGD background color."""
+        LOGGER.debug("%s.%s:", ArrayController.__name__, self.off.__name__)
+        # clear all current values
+        self.virtual_led_buffer *= 0
+        # set to background color
+        self.virtual_led_buffer[:] += self.background_color.rgb_array
+        LOGGER.debug("Turning Off.")
 
     def _run_functions(
         self,
     ) -> None:
-        """Run each function in the configured function list.
-
-        Raises
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightBerryException: if propagating an exception
-            LightControlException: if something bad happens
-
-        """
+        """Run each function in the configured function list."""
         # invoke the function pointer saved in the light data object
         for function in PixelTransform.ACTIVE_TRANSFORMS:
             function.transform()
@@ -656,46 +540,19 @@ class ArrayController:
     def _copy_overlays(
         self,
     ) -> None:
-        """Copy overlays directly to output array, bypassing the buffer.
-
-        Raises
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightBerryException: if propagating an exception
-            LightControlException: if something bad happens
-
-        """
-        try:
-            # iterate over the dictionary key-value pairs, assign LED values
-            # directly to output buffer skipping the virtual LED copies.
-            # This ensures that overlays are temporary and get overwritten
-            # next refresh.
-            for index, led_value in self._overlay_dict.items():
-                self.ws281xString[index] = led_value
-            self._overlay_dict = {}
-        except SystemExit:  # pragma: no cover
-            raise
-        except KeyboardInterrupt:  # pragma: no cover
-            raise
-        except LightBerryError:  # pragma: no cover
-            raise
-        except Exception as ex:  # pragma: no cover
-            raise ControllerError from ex
+        """Copy overlays directly to output array, bypassing the buffer."""
+        # iterate over the dictionary key-value pairs, assign LED values
+        # directly to output buffer skipping the virtual LED copies.
+        # This ensures that overlays are temporary and get overwritten
+        # next refresh.
+        for index, led_value in self._overlay_dict.items():
+            self.ws281xString[index] = led_value
+        self._overlay_dict = {}
 
     def run(
         self,
     ) -> None:
-        """Run the configured color pattern and function either forever or for self.secondsPerMode.
-
-        Raises
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightBerryException: if propagating an exception
-            LightControlException: if something bad happens
-
-        """
+        """Run the configured color pattern and function either forever or for self.secondsPerMode."""
         LOGGER.debug("%s.%s:", ArrayController.__name__, self.run.__name__)
         # set start time
         self._last_mode_change = time.time()
@@ -740,14 +597,8 @@ class ArrayController:
             skip_functions: function strings to omit (run if "skipFunction not in name")
             skip_colors: color pattern strings to omit (run if "skipColor not in name")
 
-        Raises:
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightControlException: if something bad happens
-
         """
-        LOGGER.info("Running demo")
+        LOGGER.debug("%s.%s:", ArrayController.__name__, self.demo.__name__)
         _seconds_per_mode: int = 60
         if seconds_per_mode is not None:
             _seconds_per_mode = int(seconds_per_mode)

@@ -58,13 +58,6 @@ class WS281xString(Sequence[NDArray[np.int32]]):
             matrix_layout: layout of a matrix made up of smaller LED matrices
             testing: set true if only testing
 
-        Raises:
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightBerryException: if propagating an exception
-            LightStringException: if something bad happens
-
         """
         self._ws281x_pixel_strip: PixelStrip
         self._simulate = simulate
@@ -134,11 +127,8 @@ class WS281xString(Sequence[NDArray[np.int32]]):
             matrix_layout: layout of a matrix made up of smaller LED matrices
             testing: set true if only testing
 
-        Raises:
-        ------
-            WS281xStringError: _description_
-
         """
+        # try to force cleanup of underlying c objects when user exits
         self._ws281x_pixel_strip = PixelStrip(  # pragma: no cover
             pin=pwm_gpio_pin,
             dma=dma_channel,
@@ -150,9 +140,8 @@ class WS281xString(Sequence[NDArray[np.int32]]):
             strip_type=led_strip_type,
             brightness=int(255 * led_brightness),
         )
-        # try to force cleanup of underlying c objects when user exits
-        atexit.register(self.__del__)  # pragma: no cover
 
+        atexit.register(self.__del__)  # pragma: no cover
         self._ws281x_pixel_strip.begin()  # pragma: no cover
         self._ledCount = len(self._ws281x_pixel_strip)  # pragma: no cover
         LOGGER.debug("Created %s", WS281xString.__name__)  # pragma: no cover
@@ -164,20 +153,14 @@ class WS281xString(Sequence[NDArray[np.int32]]):
 
         Prevents memory leaks (hopefully) that were happening in the rpi.PixelStrip module.
 
-        Raises
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightBerryException: if propagating an exception
-            LightStringException: if something bad happens
-
         """
         # check if pixel strip has been created
-        if hasattr(self, "_ws281x_pixel_strip"):
+        if hasattr(self, "_ws281x_pixel_strip") and self._ws281x_pixel_strip is not None: # type: ignore
             # turn off LEDs
             self.off()
             # cleanup c memory usage
             self._ws281x_pixel_strip._cleanup()  # type: ignore  # noqa: PGH003, SLF001
+            self._ws281x_pixel_strip=None
 
     def __len__(
         self,
@@ -223,12 +206,6 @@ class WS281xString(Sequence[NDArray[np.int32]]):
         -------
             the LED value or values as requested
 
-        Raises:
-        ------
-            SystemExit: if exiting
-            KeyboardInterrupt: if user quits
-            LightBerryException: if propagating an exception
-            LightStringException: if something bad happens
 
         """
         pixel: NDArray[np.int32]
@@ -321,7 +298,5 @@ class WS281xString(Sequence[NDArray[np.int32]]):
 
         """
         for index in range(len(self)):
-            self[index] = pixel_from_color(PixelColor.OFF).array
-        self.refresh()
-        self.refresh()
+            self[index] = Pixel(PixelColor.OFF).array
         self.refresh()

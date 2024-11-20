@@ -1,4 +1,5 @@
 """Logger setup."""
+
 import logging
 import sys
 
