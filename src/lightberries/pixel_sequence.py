@@ -173,7 +173,9 @@ class PixelSequence(Sequence[Pixel]):
             the next valid sequence led_index
 
         """
-        return (self.led_index + 1) % self.led_count
+        if self.led_count > 0:
+            return (self.led_index + 1) % self.led_count
+        return 0
 
     @property
     def pixel(self) -> Pixel:
@@ -344,7 +346,8 @@ class PixelSequence(Sequence[Pixel]):
 
         """
         _pixel = self._pixel
-        self._set_index(self.index_next)
+        if self.index_next < self.led_count:
+            self._set_index(self.index_next)
         if keep_current:
             self._pixel = _pixel
         return self.pixel
@@ -371,7 +374,7 @@ class PixelSequence(Sequence[Pixel]):
             chunks.append(str(self._array[led_index]))
         s = ", ".join(chunks)
         if self._led_count > end:
-            s += ",..."
+            s += ", ...]"
         else:
             s += "]"
         return f"{self._name.replace('Sequence','')}: SQX#{self._led_count}[{s}"

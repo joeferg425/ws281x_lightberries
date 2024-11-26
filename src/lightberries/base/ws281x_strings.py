@@ -14,7 +14,7 @@ from numpy.typing import NDArray
 from lightberries.array_sequence.base import ArraySequence
 from lightberries.base.exceptions import PermissionsError, WS281xStringError
 from lightberries.base.logger import LOGGER
-from lightberries.base.pixel import Pixel, PixelColor, pixel_from_color
+from lightberries.base.pixel import Pixel, PixelColor
 from lightberries.base.rpiws281x import PixelStrip
 
 
@@ -60,6 +60,7 @@ class WS281xString(Sequence[NDArray[np.int32]]):
 
         """
         self._ws281x_pixel_strip: PixelStrip
+        self._ws281x_pixel_strip_instantiated = False
         self._simulate = simulate
         self._testing = testing
         # use passed led count if it is valid
@@ -140,9 +141,9 @@ class WS281xString(Sequence[NDArray[np.int32]]):
             strip_type=led_strip_type,
             brightness=int(255 * led_brightness),
         )
-
         atexit.register(self.__del__)  # pragma: no cover
         self._ws281x_pixel_strip.begin()  # pragma: no cover
+        self._ws281x_pixel_strip_instantiated = True  # pragma: no cover
         self._ledCount = len(self._ws281x_pixel_strip)  # pragma: no cover
         LOGGER.debug("Created %s", WS281xString.__name__)  # pragma: no cover
 
@@ -155,12 +156,12 @@ class WS281xString(Sequence[NDArray[np.int32]]):
 
         """
         # check if pixel strip has been created
-        if hasattr(self, "_ws281x_pixel_strip") and self._ws281x_pixel_strip is not None: # type: ignore
+        if hasattr(self, "_ws281x_pixel_strip") and self._ws281x_pixel_strip_instantiated:
             # turn off LEDs
-            self.off()
+            self.off()  # pragma: no cover
             # cleanup c memory usage
-            self._ws281x_pixel_strip._cleanup()  # type: ignore  # noqa: PGH003, SLF001
-            self._ws281x_pixel_strip=None
+            self._ws281x_pixel_strip_instantiated = False  # pragma: no cover
+            self._ws281x_pixel_strip._cleanup()  # type: ignore  # noqa: PGH003, SLF001 # pragma: no cover
 
     def __len__(
         self,
@@ -281,8 +282,8 @@ class WS281xString(Sequence[NDArray[np.int32]]):
 
     def refresh(self) -> None:
         """Refresh the LED output."""
-        if self._ws281x_pixel_strip:
-            self._ws281x_pixel_strip.show()
+        if self._ws281x_pixel_strip:  # pragma: no cover
+            self._ws281x_pixel_strip.show()  # pragma: no cover
 
     def off(
         self,
@@ -297,6 +298,6 @@ class WS281xString(Sequence[NDArray[np.int32]]):
             LightStringException: if something bad happens
 
         """
-        for index in range(len(self)):
-            self[index] = Pixel(PixelColor.OFF).array
-        self.refresh()
+        for index in range(len(self)):  # pragma: no cover
+            self[index] = Pixel(PixelColor.OFF).array  # pragma: no cover
+        self.refresh()  # pragma: no cover

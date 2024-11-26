@@ -22,7 +22,7 @@ class FakePixelStrip:
             self.size: int = cast("int", kwargs["num"])  # pragma: no cover
 
     def __len__(self) -> int:
-        return len(self.fake)
+        return len(self.fake)  # pragma: no cover
 
     def begin(self) -> None:
         """Fake method."""

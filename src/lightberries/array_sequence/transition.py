@@ -82,8 +82,8 @@ class SequenceTransition(ArraySequence):
                 for rgb_index in range(len(this_color)):
                     # linspace creates the array of values from arg1, to arg2, in exactly arg3 steps
                     temp_array[output_index : (output_index + transition_count), rgb_index] = np.linspace(
-                        this_color.rgb_array[rgb_index],
-                        next_color.rgb_array[rgb_index],
+                        this_color.array[rgb_index],
+                        next_color.array[rgb_index],
                         transition_count,
                     )
                 count += transition_count

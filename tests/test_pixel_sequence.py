@@ -92,8 +92,15 @@ def test_sequence_set_item() -> None:
     assert_array_equal(a1, a2)  # type: ignore
 
 
-def test_sequence_led_index() -> None:
+def test_sequence_led_index_zero() -> None:
     sequence = PixelSequence()
+    assert sequence.led_index == 0
+    sequence.advance_index()
+    assert sequence.led_index == 0
+
+
+def test_sequence_led_index() -> None:
+    sequence = PixelSequence(led_count=2)
     assert sequence.led_index == 0
     sequence.advance_index()
     assert sequence.led_index == 1
@@ -585,3 +592,101 @@ def test_sequence_stretch_odd() -> None:
     assert sequence.array.shape[0] == led_count
     assert sequence.array.shape[1] == THREE
     assert sequence._name == SequenceStretch.__name__  # type: ignore
+
+
+def test_sequence_set_led_index() -> None:
+    led_count = 7
+    sequence = SequenceStretch(led_count=led_count, pixel_sequence=None)
+    assert sequence.led_index == 0
+    sequence.led_index = 2
+    assert sequence.led_index == 2
+
+
+def test_sequence_set_pixel() -> None:
+    led_count = 7
+    color = Pixel(PixelColor.RED)
+    sequence = SequenceSolid(led_count=led_count, color=color)
+    assert sequence.pixel == color
+    new_color = Pixel(PixelColor.BLUE)
+    sequence.pixel = new_color
+    assert sequence.pixel == new_color
+
+
+def test_sequence_set_pixel_next() -> None:
+    led_count = 7
+    color = Pixel(PixelColor.RED)
+    sequence = SequenceSolid(led_count=led_count, color=color)
+    assert sequence.pixel_next == color
+    new_color = Pixel(PixelColor.BLUE)
+    sequence.pixel_next = new_color
+    assert sequence.pixel_next == new_color
+
+
+def test_sequence_count() -> None:
+    led_count = 8
+    color1 = Pixel(PixelColor.RED)
+    color2 = Pixel(PixelColor.BLUE)
+    sequence = SequenceSolid(led_count=led_count, color=color1)
+    assert sequence.count(color1) == led_count
+    sequence = SequenceStretch(led_count=led_count, pixel_sequence=[color1, color2])
+    assert sequence.count(color1) == 4
+    sequence = SequenceTransition(led_count=led_count, pixel_sequence=[color1, color2], wrap=False)
+    assert sequence.count(color1) == 1
+
+
+def test_sequence_random_index() -> None:
+    led_count = 8
+    sequence = SequenceSolid(led_count=led_count)
+    idxs = [sequence.random_index() for _ in range(5)]
+    assert not all(idx == idxs[0] for idx in idxs)
+
+
+def test_sequence_copy() -> None:
+    led_count = 8
+    color1 = Pixel(PixelColor.RED)
+    color2 = Pixel(PixelColor.BLUE)
+    sequence1 = SequenceTransition(led_count=led_count, pixel_sequence=[color1, color2])
+    sequence2 = sequence1.copy()
+    assert all(sequence1[i] == sequence2[i] for i in range(len(sequence1)))
+
+
+def test_sequence_advance_index() -> None:
+    led_count = 7
+    color1 = Pixel(PixelColor.RED)
+    color2 = Pixel(PixelColor.BLUE)
+    sequence = SequenceTransition(led_count=led_count, pixel_sequence=[color1, color2])
+    assert sequence.pixel == color1
+    assert sequence[sequence.led_index] == color1
+    assert sequence[sequence.index_next] != color1
+    sequence.advance_index(keep_current=True)
+    assert sequence.pixel == color1
+    assert sequence[sequence.led_index] != color1
+    assert sequence[sequence.index_next] != color1
+
+
+def test_sequence_str() -> None:
+    color1 = Pixel(PixelColor.RED)
+    color2 = Pixel(PixelColor.GREEN)
+    color3 = Pixel(PixelColor.BLUE)
+    sequence = PixelSequence(pixel_sequence=[color1, color2, color3])
+    str_val = "Pixel: SQX#3[PX#FF0000:GRB, PX#00FF00:GRB, PX#0000FF:GRB]"
+    assert str(sequence) == str_val
+    sequence = SequenceSolid(led_count=100, color=color1)
+    str_val = "Solid: SQX#100[PX#FF0000:GRB, PX#FF0000:GRB, PX#FF0000:GRB, ...]"
+    assert str(sequence) == str_val
+
+
+def test_sequence_repr() -> None:
+    color1 = Pixel(PixelColor.RED)
+    color2 = Pixel(PixelColor.GREEN)
+    color3 = Pixel(PixelColor.BLUE)
+    sequence = PixelSequence(pixel_sequence=[color1, color2, color3])
+    str_val = "Pixel: SQX#3[PX#FF0000:GRB, PX#00FF00:GRB, PX#0000FF:GRB]"
+    assert repr(sequence) == str_val
+
+
+def test_sequence_monthly() -> None:
+    sequence = PixelSequence.get_monthly_color_sequence(12)
+    assert sequence[0] == Pixel(PixelColor.RED)
+    assert sequence[1] == Pixel(PixelColor.WHITE)
+    assert sequence[2] == Pixel(PixelColor.GREEN)
