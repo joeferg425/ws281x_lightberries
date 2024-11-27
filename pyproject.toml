@@ -4,14 +4,13 @@ name = "lightberries"
 version = "1.0.2"
 dependencies = [
     "Adafruit-Blinka>=3.0.0",
-    "adafruit-circuitpython-neopixel==3.4.0",
-    "numpy>=2.0.0",
-    "rpi_ws281x>=5.0.0",
-    "RPi.GPIO>=0.7.0",
-    "numpy<3.0,>=2.0",
-    "pygame<3.0.0,>=2.1.2",
-    "typer>=0.12.5",
-    "strenum>=0.4.15",
+    "adafruit-circuitpython-neopixel>=6.3.12",
+    "numpy>=2.0.2",
+    "rpi-ws281x>=5.0.0",
+    "RPi-GPIO>=0.7.1",
+    # "pygame<3.0.0,>=2.1.2",
+    "typer>=0.13.1",
+    # "strenum>=0.4.15",
 ]
 requires-python = "<4.0,>=3.9"
 description = "A wrapper for rpi_ws281x that does all the heavy lifting for you."
