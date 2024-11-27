@@ -15,9 +15,8 @@ from lightberries.transform_overlay.fade_off import TransformFadeOff
 
 if TYPE_CHECKING:
     import lightberries.array_controller
+    from lightberries.base.state import TransformState
     from lightberries.pixel_sequence import PixelSequence
-    from lightberries.state import TransformState
-
 
 
 class SpriteState(IntEnum):
@@ -51,7 +50,7 @@ class TransformSprite(PixelTransform):
         )
 
     @staticmethod
-    def setup(
+    def create(
         controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
@@ -86,7 +85,7 @@ class TransformSprite(PixelTransform):
         if fade_steps is not None:
             transform.state.set_fade_amount(np.ceil(255 / fade_steps))
 
-        TransformFadeOff.setup(
+        TransformFadeOff.create(
             controller=transform.controller,
             fade_amount=transform.state.fade_amount,
         )

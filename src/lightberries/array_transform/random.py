@@ -9,15 +9,14 @@ import numpy as np
 
 from lightberries.base.constants import MAX_INT8, SHAPE_2D
 from lightberries.base.pixel import Pixel
+from lightberries.base.state import ChangeStates, LEDFadeType, TransformState
 from lightberries.pixel_transform import PixelTransform
-from lightberries.state import ChangeStates, LEDFadeType, TransformState
 from lightberries.transform_overlay.fade_off import TransformFadeOff
 from lightberries.transform_overlay.off import TransformOff
 
 if TYPE_CHECKING:
     import lightberries.array_controller
     from lightberries.pixel_sequence import PixelSequence
-
 
 
 class TransformRandom(PixelTransform):
@@ -42,7 +41,7 @@ class TransformRandom(PixelTransform):
         )
 
     @staticmethod
-    def setup(  # noqa: C901, PLR0912, PLR0913
+    def create(  # noqa: C901, PLR0912, PLR0913
         controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
@@ -91,11 +90,11 @@ class TransformRandom(PixelTransform):
             transform.state.fade_type = fade_type
         # make comet trails
         if transform.state.fade_type == LEDFadeType.FADE_OFF:
-            TransformOff.setup(
+            TransformOff.create(
                 controller=controller,
             )
         elif transform.state.fade_type == LEDFadeType.INSTANT_OFF:
-            TransformFadeOff.setup(
+            TransformFadeOff.create(
                 controller=controller,
                 fade_amount=transform.state.fade_amount,
             )

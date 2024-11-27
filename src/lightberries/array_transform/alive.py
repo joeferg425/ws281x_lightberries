@@ -8,15 +8,13 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from lightberries.base.constants import SHAPE_2D
+from lightberries.base.state import ThingColors, ThingMoves, ThingSizes, TransformState
 from lightberries.pixel_transform import PixelTransform
-from lightberries.state import ThingColors, ThingMoves, ThingSizes, TransformState
 from lightberries.transform_overlay.fade_off import TransformFadeOff
 
 if TYPE_CHECKING:
     import lightberries.array_controller
     from lightberries.pixel_sequence import PixelSequence
-
-
 
 
 class TransformAlive(PixelTransform):
@@ -41,7 +39,7 @@ class TransformAlive(PixelTransform):
         )
 
     @staticmethod
-    def setup(  # noqa: PLR0913
+    def create(  # noqa: PLR0913
         controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
@@ -98,7 +96,7 @@ class TransformAlive(PixelTransform):
         if step_count_max is not None:
             step_count_max = int(step_count_max)
 
-        TransformFadeOff.setup(controller=controller, fade_amount=transform.state.fade_amount)
+        TransformFadeOff.create(controller=controller, fade_amount=transform.state.fade_amount)
         thing = None
         for _ in range(random.randint(2, 5)):
             if thing is None:

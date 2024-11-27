@@ -13,9 +13,8 @@ from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
     import lightberries.array_controller
+    from lightberries.base.state import TransformState
     from lightberries.pixel_sequence import PixelSequence
-    from lightberries.state import TransformState
-
 
 
 class TransformShift(PixelTransform):
@@ -40,7 +39,7 @@ class TransformShift(PixelTransform):
         )
 
     @staticmethod
-    def setup(  # noqa: D417, PLR0913
+    def create(  # noqa: D417, PLR0913
         controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
@@ -101,7 +100,6 @@ class TransformShift(PixelTransform):
             transform.controller.virtual_led_buffer[: transform.state.pixel_sequence.led_count] = (
                 transform.state.pixel_sequence
             )
-
 
         transform.ACTIVE_TRANSFORMS.append(transform)
         return transform.ACTIVE_TRANSFORMS

@@ -14,7 +14,7 @@
 # from lightberries.ws281x_strings import WS281xString
 
 
-# def new_instantiate_pixelstrip(
+# def new_instantiate_pixel_strip(
 #     self,
 #     pwmGPIOpin: int,
 #     channelDMA: int,
@@ -69,7 +69,7 @@
 #     matrixShape: tuple[int, int] = None,
 #     matrixLayout: NDArray[np.int32] | None = None,
 # ) -> None:
-#     with mock.patch.object(WS281xString, "_instantiate_pixelstrip", new=new_instantiate_pixelstrip):
+#     with mock.patch.object(WS281xString, "_instantiate_pixel_strip", new=new_instantiate_pixel_strip):
 #         self.ws281xString = WS281xString(
 #             led_count=ledCount,
 #             pwm_gpio_pin=pwmGPIOpin,

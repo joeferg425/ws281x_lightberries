@@ -8,12 +8,10 @@ from lightberries.pixel_transform import PixelTransform
 from lightberries.transform_overlay._overlay_transform import OverlayTransform
 
 if TYPE_CHECKING:
-
     import lightberries.array_controller
+    from lightberries.base.state import TransformState
     from lightberries.pixel_sequence import PixelSequence
     from lightberries.pixel_transform import PixelTransform
-    from lightberries.state import TransformState
-
 
 
 class TransformOff(OverlayTransform):
@@ -37,7 +35,7 @@ class TransformOff(OverlayTransform):
         )
 
     @staticmethod
-    def setup(
+    def create(
         controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,

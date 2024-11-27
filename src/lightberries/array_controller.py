@@ -124,13 +124,13 @@ class ArrayController:
         )
 
         # initialize instance variables
-        self._led_count: int = len(self.ws281xString)
+        self._led_count: int = len(self._ws281x_string)
         self.virtual_led_buffer: NDArray[np.int32] = SequenceSolid(
             led_count=self._led_count,
             color=Pixel(PixelColor.OFF),
         ).array
         self.virtual_led_index_buffer: NDArray[np.int32] = np.array(
-            range(len(self.ws281xString)),
+            range(len(self._ws281x_string)),
         )
         self._overlay_dict: dict[int, NDArray[np.int32]] = {}
         self._virtual_led_count: int = len(self.virtual_led_buffer)
@@ -165,7 +165,7 @@ class ArrayController:
         simulate: bool,  # noqa: FBT001
         testing: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
-        self.ws281xString: WS281xString = WS281xString(
+        self._ws281x_string: WS281xString = WS281xString(
             led_count=led_count,
             pwm_gpio_pin=pwm_gpio_pin,
             dma_channel=dma_channel,
@@ -178,7 +178,7 @@ class ArrayController:
             simulate=simulate,
             testing=testing,
         )
-        self.ws281xString.off()
+        self._ws281x_string.off()
 
     def __del__(
         self,
@@ -186,7 +186,7 @@ class ArrayController:
         """Disposes of the rpi_ws281x object (if it exists) to prevent memory leaks."""
         if hasattr(self, "ws281xString"):
             with contextlib.suppress(Exception):
-                self.ws281xString.__del__()
+                self._ws281x_string.__del__()
 
     @property
     def virtual_led_count(self) -> int:
@@ -495,7 +495,7 @@ class ArrayController:
                 i_rgb: pixel color value and gamma
 
             """
-            self.ws281xString[i_rgb[0]] = i_rgb[1]
+            self._ws281x_string[i_rgb[0]] = i_rgb[1]
 
         # fast method of calling the callback method on each index of LED array
         list(
@@ -516,7 +516,7 @@ class ArrayController:
         # call light string's refresh method to send the communications out to the addressable LEDs
         if isinstance(self.refresh_callback, Callable):
             self.refresh_callback()
-        self.ws281xString.refresh()
+        self._ws281x_string.refresh()
 
     def off(
         self,
@@ -546,7 +546,7 @@ class ArrayController:
         # This ensures that overlays are temporary and get overwritten
         # next refresh.
         for index, led_value in self._overlay_dict.items():
-            self.ws281xString[index] = led_value
+            self._ws281x_string[index] = led_value
         self._overlay_dict = {}
 
     def run(
@@ -712,7 +712,7 @@ class ArrayController:
                     clr = PixelSequence.get_monthly_color_sequence()
                 # configure function
                 LOGGER.info("Function: %s", transform_function)
-                PixelTransform.ALL_TRANSFORMS[transform_function].setup(
+                PixelTransform.ALL_TRANSFORMS[transform_function].create(
                     controller=self,
                     pixel_sequence=clr,
                 )

@@ -1,159 +1,321 @@
-# from __future__ import annotations
+"""Test pixel/array functions."""
+# ruff: noqa: S101, D103, SLF001, PGH003, PLR2004
 
-# from typing import Any
-# from unittest import mock
+from __future__ import annotations
 
-# import numpy as np
-# from numpy.testing import assert_array_equal
-# from numpy.typing import NDArray
+from typing import TYPE_CHECKING, Any, Callable
+from unittest import mock
 
-# import lightberries.rpiws281x_patch
-# from lightberries.array_controller import ArrayController
-# from lightberries.array_sequence._array_sequence import (
-#     ArraySequence,
-#     pixel_array_to_numpy_array,
-# )
-# from lightberries.array_transform.base import (
-#     ArrayTransform,
-#     LEDFadeType,
-#     RaindropStates,
-#     SpriteState,
-#     ThingColors,
-#     ThingMoves,
-#     ThingSizes,
-# )
-# from lightberries.base.pixel import PixelColor
-# from lightberries.ws281x_strings import WS281xString, WS281xStringError
+import lightberries.base.rpiws281x_patch
+from lightberries.array_controller import ArrayController
+from lightberries.array_transform.all_functions import TransformNone
+from lightberries.array_transform.base import (
+    ArrayTransform,
+)
+from lightberries.base.pixel import LEDOrder
+from lightberries.base.ws281x_strings import WS281xString, WS281xStringError
+from lightberries.pixel_sequence import PixelSequence
+from lightberries.pixel_transform import PixelTransform
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    import numpy as np
+    from numpy.typing import NDArray
 
 
-# def new_instantiate_pixelstrip(
-#     self,
-#     pwmGPIOpin: int,
-#     channelDMA: int,
-#     ledCount: int,
-#     frequencyPWM: int,
-#     channelPWM: int,
-#     invertSignalPWM: bool,
-#     gamma: float,
-#     stripTypeLED: Any,
-#     ledBrightnessFloat: Any,
-#     testing: bool,
-#     matrixShape: tuple[int, int] = None,
-#     matrixLayout: NDArray[np.int32] | None = None,
-# ) -> None:
-#     try:
-#         # create ws281x pixel strip
-#         self.ws281xPixelStrip = lightberries.rpiws281x_patch.PixelStrip(
-#             pin=pwmGPIOpin,
-#             dma=channelDMA,
-#             num=ledCount,
-#             freq_hz=frequencyPWM,
-#             channel=channelPWM,
-#             invert=invertSignalPWM,
-#             gamma=gamma,
-#             strip_type=stripTypeLED,
-#             brightness=int(255 * ledBrightnessFloat),
-#         )
-#     except SystemExit:  # pragma: no cover
-#         raise
-#     except KeyboardInterrupt:  # pragma: no cover
-#         raise
-#     except Exception as ex:  # pragma: no cover
-#         raise WS281xStringError from ex
+def pixel_strip_fakery(  # noqa: PLR0913
+    self: WS281xString,
+    led_count: int,
+    pwm_gpio_pin: int,
+    pwm_channel: int,
+    pwm_frequency: int,
+    dma_channel: int,
+    led_gamma: float,
+    led_strip_type: Any,  # noqa: ANN401
+    led_brightness: Any,  # noqa: ANN401
+    matrix_shape: tuple[int, int] | None = None,  # noqa: ARG001, ARG002, RUF100
+    matrix_layout: NDArray[np.int32] | None = None,  # noqa: ARG001, ARG002, RUF100
+    *,
+    pwm_invert_signal: bool = False,
+    testing: bool = False,  # noqa: ARG001, ARG002, RUF100
+) -> None:
+    try:
+        # create ws281x pixel strip
+        self._ws281x_pixel_strip = lightberries.base.rpiws281x_patch.FakePixelStrip(  # type: ignore
+            pin=pwm_gpio_pin,
+            dma=dma_channel,
+            num=led_count,
+            freq_hz=pwm_frequency,
+            channel=pwm_channel,
+            invert=pwm_invert_signal,
+            gamma=led_gamma,
+            strip_type=led_strip_type,
+            brightness=int(255 * led_brightness),
+        )
+    except SystemExit:  # pragma: no cover
+        raise
+    except KeyboardInterrupt:  # pragma: no cover
+        raise
+    except Exception as ex:  # pragma: no cover
+        raise WS281xStringError from ex
 
 
-# def new_instantiate_WS281xString(
-#     self,
-#     ledCount: int,
-#     pwmGPIOpin: int,
-#     channelDMA: int,
-#     frequencyPWM: int,
-#     invertSignalPWM: bool,
-#     ledBrightnessFloat: float,
-#     channelPWM: int,
-#     stripTypeLED: Any,
-#     gamma: Any,
-#     simulate: bool,
-#     testing: bool,
-#     matrixShape: tuple[int, int] = None,
-#     matrixLayout: NDArray[np.int32] | None = None,
-# ) -> None:
-#     with mock.patch.object(
-#         WS281xString,
-#         "_instantiate_pixelstrip",
-#         new=new_instantiate_pixelstrip,
-#     ):
-#         self.ws281xString = WS281xString(
-#             led_count=ledCount,
-#             pwm_gpio_pin=pwmGPIOpin,
-#             dma_channel=channelDMA,
-#             pwm_frequency=frequencyPWM,
-#             pwm_invert_signal=invertSignalPWM,
-#             led_brightness=ledBrightnessFloat,
-#             pwm_channel=channelPWM,
-#             led_strip_type=stripTypeLED,
-#             led_gamma=gamma,
-#             simulate=simulate,
-#             testing=testing,
-#             matrix_shape=matrixShape,
-#             matrix_layout=matrixLayout,
-#         )
+def wS281xString_mockery(  # noqa: N802, PLR0913
+    self: ArrayController,
+    led_count: int = 100,
+    pwm_gpio_pin: int = 18,
+    dma_channel: int = 10,
+    pwm_frequency: int = 800000,
+    led_brightness: float = 0.75,
+    pwm_channel: int = 0,
+    led_strip_type: Any = None,  # noqa: ANN401
+    gamma: Any = None,  # noqa: ANN401
+    refresh_callback: Callable[[], None] | None = None,  # noqa: ARG001
+    led_order: LEDOrder = LEDOrder.GRB,  # noqa: ARG001
+    *,
+    pwm_invert_signal: bool = False,
+    debug: bool = False,  # noqa: ARG001
+    verbose: bool = False,  # noqa: ARG001
+    simulate: bool = False,
+    testing: bool = False,
+    log_file: str | Path | None = None,  # noqa: ARG001
+) -> None:
+    with mock.patch.object(
+        WS281xString,
+        "_instantiate_pixel_strip",
+        new=pixel_strip_fakery,
+    ):
+        self._ws281x_string = WS281xString(  # type: ignore
+            led_count=led_count,
+            pwm_gpio_pin=pwm_gpio_pin,
+            dma_channel=dma_channel,
+            pwm_frequency=pwm_frequency,
+            pwm_invert_signal=pwm_invert_signal,
+            led_brightness=led_brightness,
+            pwm_channel=pwm_channel,
+            led_strip_type=led_strip_type,
+            led_gamma=gamma,
+            simulate=simulate,
+            testing=testing,
+        )
 
 
-# def newController() -> ArrayController:
-#     with mock.patch.object(
-#         ArrayController,
-#         "_instantiate_WS281xString",
-#         new_instantiate_WS281xString,
-#     ):
-#         return ArrayController(
-#             led_count=3,
-#             simulate=True,
-#         )
+def new_controller(led_count: int = 3) -> ArrayController:
+    ArrayTransform.clear_active()
+    with mock.patch.object(
+        ArrayController,
+        "_instantiate_ws281x_string",
+        wS281xString_mockery,
+    ):
+        return ArrayController(
+            led_count=led_count,
+            simulate=True,
+        )
 
 
-# def newControllerBigger() -> ArrayController:
-#     with mock.patch.object(
-#         ArrayController,
-#         "_instantiate_WS281xString",
-#         new_instantiate_WS281xString,
-#     ):
-#         return ArrayController(
-#             led_count=6,
-#             simulate=True,
-#         )
+def new_controller_bigger() -> ArrayController:
+    with mock.patch.object(
+        ArrayController,
+        "_instantiate_WS281xString",
+        wS281xString_mockery,
+    ):
+        return ArrayController(
+            led_count=6,
+            simulate=True,
+        )
 
 
-# def assert_func(func: ArrayTransform):
-#     assert func is not None
-#     assert isinstance(func, ArrayTransform)
+def test_pixel_transform_init() -> None:
+    name = "PixelTransform"
+    controller = new_controller()
+    function = PixelTransform(
+        controller=controller,
+    )
+    assert function is not None
+    assert function.name == name
+    assert isinstance(function, PixelTransform)
 
 
-# def test_creation_simple():
-#     control = newController()
-#     function = ArrayTransform(control, assert_func)
-#     control.function_list.append(function)
-#     assert function is not None
-#     assert isinstance(function, ArrayTransform)
+def test_pixel_transform_init_name() -> None:
+    name = "test"
+    controller = new_controller()
+    function = PixelTransform(
+        controller=controller,
+        name=name,
+    )
+    assert function is not None
+    assert function.name == name
+    assert isinstance(function, PixelTransform)
 
 
-# def test_creation_with_colors():
-#     control = newController()
-#     pattern = self.default_color_sequence_by_month()
-#     function = ArrayTransform(control, assert_func, pattern)
-#     control.function_list.append(function)
-#     assert function is not None
-#     assert isinstance(function, ArrayTransform)
+def test_pixel_transform_str() -> None:
+    controller = new_controller()
+    function = PixelTransform(controller=controller)
+    assert str(function) == '[0]: "PixelTransform" PX#000000:GRB'
 
 
-# def test_str():
-#     control = newController()
-#     pattern = pixel_array_to_numpy_array(
-#         [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
-#     )
-#     function = ArrayTransform(control, assert_func, pattern)
-#     control.function_list.append(function)
-#     assert str(function) == '[0]: "assert_func" PX #FF0000'
+def test_pixel_transform_repr() -> None:
+    controller = new_controller()
+    function = PixelTransform(controller=controller)
+    assert repr(function) == '<PixelTransform> [0]: "PixelTransform" PX#000000:GRB'
+
+
+def test_pixel_transform_create() -> None:
+    controller = new_controller()
+    function_list = PixelTransform.create(controller=controller)
+    assert function_list is not None
+    assert isinstance(function_list, list)
+    assert len(function_list) == 0
+
+
+def test_pixel_transform_copy() -> None:
+    controller = new_controller()
+    function1 = PixelTransform(controller=controller)
+    function2 = function1.copy()
+    assert function1.name == function2.name
+    assert function1 != function2
+
+
+def test_pixel_transform_eq() -> None:
+    controller = new_controller()
+    function1 = PixelTransform(controller=controller)
+    function2 = function1.copy()
+    assert function1.name == function2.name
+    assert function1 == function1  # noqa: PLR0124
+    assert function1 != function2
+    assert function2 != "tacocat"
+
+
+def test_pixel_transform_random_direction() -> None:
+    directions = [PixelTransform.get_random_direction() for _ in range(20)]
+    assert not all(d == directions[0] for d in directions)
+
+
+def test_pixel_transform_random_bool() -> None:
+    bools = [PixelTransform.get_random_boolean() for _ in range(20)]
+    assert not all(b == bools[0] for b in bools)
+
+
+def test_pixel_transform_state() -> None:
+    controller = new_controller()
+    function1 = PixelTransform(controller=controller)
+    assert function1.state is not None
+    assert function1.state.pixel_sequence == PixelSequence.get_monthly_color_sequence()
+
+
+def test_pixel_transform_random_index() -> None:
+    controller = new_controller()
+    function = PixelTransform(controller=controller)
+    idxs = [function.get_random_index() for _ in range(20)]
+    assert not all(i == idxs[0] for i in idxs)
+
+
+def test_pixel_transform_random_indices() -> None:
+    controller = new_controller()
+    function = PixelTransform(controller=controller)
+    idxs = function.get_random_indices(20)
+    assert not all(i == idxs[0] for i in idxs)
+
+
+def test_pixel_transform_update_array_index() -> None:
+    controller = new_controller()
+    function = PixelTransform(controller=controller)
+    assert function.state.step == 1
+    assert function.state.index == 0
+    assert function.state.index_previous == 2
+    assert function.state.index_next == 1
+    function.update_array_index()
+    assert function.state.index == 1
+    assert function.state.index_previous == 0
+    assert function.state.index_next == 2
+
+
+def test_pixel_transform_calc_range() -> None:
+    controller = new_controller()
+    function = PixelTransform(controller=controller)
+    assert function.state.step == 1
+    rng = function.calc_range()
+    assert len(rng) == 1
+    assert rng[0] == 1
+    function.update_array_index()
+    rng = function.calc_range()
+    assert len(rng) == 1
+    assert rng[0] == 2
+    function.update_array_index()
+    rng = function.calc_range()
+    assert len(rng) == 1
+    assert rng[0] == 0
+    function.update_array_index()
+    rng = function.calc_range()
+    assert len(rng) == 1
+    assert rng[0] == 1
+
+
+def test_pixel_transform_calc_range_2() -> None:
+    controller = new_controller()
+    function = PixelTransform(controller=controller)
+    function.state.step = 2
+    assert function.state.step == 2
+    rng = function.calc_range()
+    assert len(rng) == 2
+    assert rng[0] == 1
+    assert rng[1] == 2
+    function.update_array_index()
+    rng = function.calc_range()
+    assert len(rng) == 2
+    assert rng[0] == 0
+    assert rng[1] == 1
+
+
+def test_pixel_transform_calc_range_3() -> None:
+    controller = new_controller(led_count=4)
+    function = PixelTransform(controller=controller)
+    function.state.step = 3
+    function.state.direction = -1
+    assert function.state.step == 3
+    rng = function.calc_range()
+    assert len(rng) == 3
+    assert rng[0] == 3
+    assert rng[1] == 2
+    assert rng[2] == 1
+    function.update_array_index()
+    rng = function.calc_range()
+    assert len(rng) == 3
+    assert rng[0] == 0
+    assert rng[1] == 3
+    assert rng[2] == 2
+    function.update_array_index()
+    rng = function.calc_range()
+    assert len(rng) == 3
+    assert rng[0] == 1
+    assert rng[1] == 0
+    assert rng[2] == 3
+
+
+def test_pixel_transform_clear_active() -> None:
+    controller = new_controller(led_count=4)
+    TransformNone.create(controller=controller)
+    assert len(ArrayTransform.ACTIVE_TRANSFORMS) == 1
+    ArrayTransform.clear_active()
+    assert len(ArrayTransform.ACTIVE_TRANSFORMS) == 0
+
+
+def test_array_transform_init() -> None:
+    name = "ArrayTransform"
+    controller = new_controller()
+    function = ArrayTransform(controller=controller)
+    assert function is not None
+    assert function.name == name
+    assert isinstance(function, ArrayTransform)
+
+
+def test_array_transform_create() -> None:
+    controller = new_controller()
+    function_list = ArrayTransform.create(controller=controller)
+    assert function_list is not None
+    assert isinstance(function_list, list)
+    assert len(function_list) == 0
 
 
 # def test_repr():

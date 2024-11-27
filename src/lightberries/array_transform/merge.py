@@ -13,7 +13,7 @@ from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
     import lightberries.array_controller
-    from lightberries.state import TransformState
+    from lightberries.base.state import TransformState
 
 
 class TransformMerge(PixelTransform):
@@ -38,7 +38,7 @@ class TransformMerge(PixelTransform):
         )
 
     @staticmethod
-    def setup(
+    def create(
         controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
@@ -73,9 +73,9 @@ class TransformMerge(PixelTransform):
         # make sure doing a merge function would be visible
         if transform.state.pixel_sequence.led_count >= transform.controller.real_led_count:
             # if sequence is too long, cut it in half
-            temp_sequence=PixelSequence(led_count=transform.state.pixel_sequence.led_count // 2)
-            temp_sequence[:]=transform.state.pixel_sequence[: int(transform.state.pixel_sequence.led_count // 2)]
-            transform.state.pixel_sequence =temp_sequence
+            temp_sequence = PixelSequence(led_count=transform.state.pixel_sequence.led_count // 2)
+            temp_sequence[:] = transform.state.pixel_sequence[: int(transform.state.pixel_sequence.led_count // 2)]
+            transform.state.pixel_sequence = temp_sequence
             # # don't remember offhand why this is here
             # if transform.state.pixel_sequence.led_count % 2 == 1:
             #     if transform.state.pixel_sequence.led_count== 1:

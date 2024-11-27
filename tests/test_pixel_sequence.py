@@ -1,6 +1,6 @@
 """Test array patterns."""
 
-# ruff: noqa: S101, D103, SLF001, PGH003
+# ruff: noqa: S101, D103, SLF001, PGH003, PLR2004
 
 from __future__ import annotations
 

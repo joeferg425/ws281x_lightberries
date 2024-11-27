@@ -9,13 +9,13 @@ import numpy as np
 
 from lightberries.base.exceptions import ControllerError, LightBerryError
 from lightberries.base.logger import LOGGER
+from lightberries.base.state import TransformState
 from lightberries.pixel_sequence import PixelSequence
-from lightberries.state import TransformState
 
 if TYPE_CHECKING:
-    from numpy.typing import NDArray
+    from numpy.typing import NDArray  # pragma: no cover
 
-    import lightberries.array_controller
+    import lightberries.array_controller  # pragma: no cover
 
 
 class PixelTransform:
@@ -62,7 +62,7 @@ class PixelTransform:
         if name is None:
             name = PixelTransform.__name__
         PixelTransform._instance_count += 1
-        name = f"{name}[{self._instance_count}]"
+        self._instance_id = PixelTransform._instance_count
         self.controller = controller
         self._name = name
         self.state = TransformState(
@@ -89,8 +89,23 @@ class PixelTransform:
         """
         return f"<{PixelTransform.__name__}> {self!s}"
 
+    def __eq__(self, value: object) -> bool:
+        if isinstance(value, PixelTransform):
+            return self._instance_id == value.instance_id
+        return False
+
+    @property
+    def name(self) -> str:
+        """Get name of transform."""
+        return self._name
+
+    @property
+    def instance_id(self) -> int:
+        """Get id of transform."""
+        return self._instance_id
+
     @staticmethod
-    def setup(
+    def create(
         controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
@@ -114,6 +129,28 @@ class PixelTransform:
             state = TransformState(controller=controller, pixel_sequence=pixel_sequence)
         return []
 
+    @staticmethod
+    def get_random_direction() -> int:
+        """Get a random one or negative one to determine direction for light functions.
+
+        Returns
+        -------
+            one or negative one, randomly
+
+        """
+        return [-1, 1][random.randint(0, 1)]
+
+    @staticmethod
+    def get_random_boolean() -> bool:
+        """Get a random true or false value.
+
+        Returns
+        -------
+            True or False, randomly
+
+        """
+        return [True, False][random.randint(0, 1)]
+
     def transform(self) -> None:
         """Run this array function's transformation."""
 
@@ -125,6 +162,9 @@ class PixelTransform:
         self.calc_range()
         self.state.index_previous = self.state.index
         self.state.index = int(self.state.index_range[-1])
+        self.state.index_next = (
+            self.state.index + (self.state.step * self.state.direction)
+        ) % self.controller.virtual_led_count
         self.state.index_updated = True
 
     def calc_range(
@@ -146,7 +186,7 @@ class PixelTransform:
         self.state.index_range = np.array(
             list(
                 range(
-                    self.state.index_previous + self.state.direction,
+                    self.state.index + self.state.direction,
                     new_index_no_modulo + self.state.direction,
                     self.state.direction,
                 ),
@@ -225,26 +265,6 @@ class PixelTransform:
         except Exception as ex:  # pragma: no cover
             raise ControllerError from ex
 
-    def get_random_direction(self) -> int:
-        """Get a random one or negative one to determine direction for light functions.
-
-        Returns
-        -------
-            one or negative one, randomly
-
-        """
-        return [-1, 1][random.randint(0, 1)]
-
-    def get_random_boolean(self) -> bool:
-        """Get a random true or false value.
-
-        Returns
-        -------
-            True or False, randomly
-
-        """
-        return [True, False][random.randint(0, 1)]
-
     def copy(self) -> PixelTransform:
         """Get a copy of this transform.
 
@@ -257,6 +277,8 @@ class PixelTransform:
             controller=self.controller,
         )
         transform.state = self.state.copy()
+        # instantiation incremented the counter above, set the value here
+        transform._instance_id = transform._instance_count  # type: ignore  # noqa: PGH003, SLF001
         return transform
 
     @staticmethod

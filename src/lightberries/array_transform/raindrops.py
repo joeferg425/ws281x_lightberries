@@ -14,9 +14,8 @@ from lightberries.transform_overlay.fade_off import TransformFadeOff
 
 if TYPE_CHECKING:
     import lightberries.array_controller
+    from lightberries.base.state import TransformState
     from lightberries.pixel_sequence import PixelSequence
-    from lightberries.state import TransformState
-
 
 
 class RaindropStates(IntEnum):
@@ -48,7 +47,7 @@ class TransformRaindrop(PixelTransform):
         )
 
     @staticmethod
-    def setup(  # noqa: C901, PLR0912, PLR0913
+    def create(  # noqa: C901, PLR0912, PLR0913
         controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
@@ -106,7 +105,7 @@ class TransformRaindrop(PixelTransform):
         transform.state.active_chance = raindrop_chance
 
         raindrops: list[PixelTransform] = []
-        TransformFadeOff.setup(
+        TransformFadeOff.create(
             controller=controller,
             fade_amount=transform.state.fade_amount,
         )

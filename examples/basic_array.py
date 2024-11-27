@@ -40,7 +40,7 @@ light_control = ArrayController(
 light_control.color_sequence = PixelSequence.get_monthly_color_sequence()
 # configure a function using a "useFunction" method
 light_control.set_transforms(
-    TransformRaindrop(controller=light_control).setup(
+    TransformRaindrop(controller=light_control).create(
         max_size=12,
         raindrop_chance=0.05,
         step_size=1,

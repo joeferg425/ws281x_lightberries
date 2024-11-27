@@ -10,15 +10,14 @@ import numpy as np
 from lightberries.array_transform.collision_detection import TransformCollisionDetect
 from lightberries.base.constants import SHAPE_2D
 from lightberries.base.logger import LOGGER
+from lightberries.base.state import LEDFadeType, TransformState
 from lightberries.pixel_transform import PixelTransform
-from lightberries.state import LEDFadeType, TransformState
 from lightberries.transform_overlay.fade_off import TransformFadeOff
 from lightberries.transform_overlay.off import TransformOff
 
 if TYPE_CHECKING:
     import lightberries.array_controller
     from lightberries.pixel_sequence import PixelSequence
-
 
 
 class TransformMeteor(PixelTransform):
@@ -43,7 +42,7 @@ class TransformMeteor(PixelTransform):
         )
 
     @staticmethod
-    def setup(  # noqa: C901, PGH003, PLR0912, PLR0913, PLR0915, RUF100 # type: ignore
+    def create(  # noqa: C901, PGH003, PLR0912, PLR0913, PLR0915, RUF100 # type: ignore
         controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
@@ -142,12 +141,12 @@ class TransformMeteor(PixelTransform):
 
         # make comet trails
         if transform.state.fade_type == LEDFadeType.FADE_OFF:
-            TransformFadeOff.setup(
+            TransformFadeOff.create(
                 controller=transform.controller,
                 fade_amount=fade_amount,
             )
         elif transform.state.fade_type == LEDFadeType.INSTANT_OFF:
-            TransformOff.setup(controller=transform.controller)
+            TransformOff.create(controller=transform.controller)
 
         # this object calculates collisions between other objects based on index and previous/next index
         if collide is True:
@@ -157,7 +156,7 @@ class TransformMeteor(PixelTransform):
                 and transform.ACTIVE_TRANSFORMS[0].state.direction * transform.ACTIVE_TRANSFORMS[1].state.direction > 0
             ):
                 transform.ACTIVE_TRANSFORMS[1].state.direction *= -1
-            TransformCollisionDetect.setup(controller=transform.controller)
+            TransformCollisionDetect.create(controller=transform.controller)
 
         transform.state.pixel_sequence.random_index()
         LOGGER.debug("Transform: %s", transform)

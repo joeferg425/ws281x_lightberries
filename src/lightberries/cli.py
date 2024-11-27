@@ -114,7 +114,7 @@ def main(  # noqa: C901, PLR0912, PLR0913
     pwm_channel = 0
     if verbose > 2:  # noqa: PLR2004
         LOGGER.setLevel(5)
-        LOGGER.log(5,"logging debug information verbosely.")
+        LOGGER.log(5, "logging debug information verbosely.")
     elif verbose > 1:
         LOGGER.setLevel(logging.DEBUG)
         LOGGER.debug("logging all debug information.")

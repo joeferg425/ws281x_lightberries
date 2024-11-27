@@ -19,7 +19,6 @@ if TYPE_CHECKING:
     from lightberries.pixel_transform import PixelTransform
 
 
-
 class LEDFadeType(IntEnum):
     """Enumeration of types of LED fade for use in functions."""
 
@@ -135,8 +134,8 @@ class TransformState:
     period_short: int = 10
 
     def __post_init__(self) -> None:
-        self.index_next: int = self.index
-        self.index_previous: int = (self.index - 1) % self.controller.real_led_count
+        self.index_next: int = self.index + self.step
+        self.index_previous: int = (self.index - self.step) % self.controller.real_led_count
         self.index_min: int = self.index
         self.index_max: int = self.index
 

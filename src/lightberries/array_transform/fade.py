@@ -10,11 +10,9 @@ from lightberries.base.constants import MAX_INT8
 from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
-
     import lightberries.array_controller
+    from lightberries.base.state import TransformState
     from lightberries.pixel_sequence import PixelSequence
-    from lightberries.state import TransformState
-
 
 
 class TransformFade(PixelTransform):
@@ -39,7 +37,7 @@ class TransformFade(PixelTransform):
         )
 
     @staticmethod
-    def setup(
+    def create(
         controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,

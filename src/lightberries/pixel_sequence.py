@@ -209,7 +209,7 @@ class PixelSequence(Sequence[Pixel]):
 
     @staticmethod
     def pixel_array_to_numpy_array(
-        color_sequence: Sequence[Pixel] | PixelSequence,
+        color_sequence: Sequence[Pixel] | Sequence[PixelColor] | PixelSequence,
     ) -> NDArray[np.int32]:
         """Convert an array of Pixels into a numpy array of rgb arrays.
 

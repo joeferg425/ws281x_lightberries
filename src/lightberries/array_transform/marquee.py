@@ -14,8 +14,8 @@ from lightberries.transform_overlay.fade_off import TransformFadeOff
 
 if TYPE_CHECKING:
     import lightberries.array_controller
+    from lightberries.base.state import TransformState
     from lightberries.pixel_sequence import PixelSequence
-    from lightberries.state import TransformState
 
 
 class TransformMarquee(PixelTransform):
@@ -40,7 +40,7 @@ class TransformMarquee(PixelTransform):
         )
 
     @staticmethod
-    def setup(  # noqa: D417, PLR0913
+    def create(  # noqa: D417, PLR0913
         controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
@@ -103,7 +103,7 @@ class TransformMarquee(PixelTransform):
         array[: transform.state.pixel_sequence.led_count] = [Pixel(x) for x in transform.state.pixel_sequence]
         transform.controller.set_virtual_led_buffer(array)
         # turn off all LEDs every time so we can turn on new ones
-        TransformFadeOff.setup(
+        TransformFadeOff.create(
             controller=controller,
             fade_amount=transform.state.fade_amount,
         )
