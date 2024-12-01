@@ -73,7 +73,7 @@ class TransformCycle(PixelTransform):
         TransformCycle.ACTIVE_TRANSFORMS.append(transform)
         return TransformCycle.ACTIVE_TRANSFORMS
 
-    def transform(self) -> None:
+    def next_step(self) -> None:
         """Set all pixels to the next color.
 
         Args:
@@ -82,16 +82,9 @@ class TransformCycle(PixelTransform):
 
         """
         # wait for delay count before changing LEDs
-        if self.state.delay_counter >= self.state.delay_count_max:
-            # reset delay counter
-            self.state.delay_counter = 0
+        if self.state.delay_count_reset:
             # remove any current color
             self.controller.virtual_led_buffer *= 0
             # add new color
             self.controller.virtual_led_buffer += self.state.pixel_sequence.pixel_next.array
             self.state.pixel_sequence.advance_index()
-        # increment delay counter
-        self.state.delay_counter += 1
-        self.state.delay_counter += 1
-        self.state.delay_counter += 1
-        self.state.delay_counter += 1

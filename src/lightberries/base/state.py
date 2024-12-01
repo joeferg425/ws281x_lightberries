@@ -90,10 +90,11 @@ class TransformState:
     index: int = 0
     index_next: int = 0
     index_previous: int = 0
-    index_min: int = 0
-    index_max: int = 0
+    # index_min: int = 0
+    # index_max: int = 0
     index_updated: bool = False
-    index_range: NDArray[np.int32] = field(default_factory=lambda: np.zeros([3, 0], dtype=np.int32))
+    index_range: NDArray[np.int32] = field(default_factory=lambda: np.zeros([0], dtype=np.int32))
+    index_reflect: bool = False
 
     fade_type: LEDFadeType = LEDFadeType.FADE_OFF
     fade_amount: int = 128

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from lightberries.array_transform.array_transform import ArrayTransform
-from lightberries.base.constants import MAX_INT8, SHAPE_2D
+from lightberries.base.constants import MAX_INT8
 from lightberries.base.state import TransformState
 from lightberries.overlay.fade_off import TransformFadeOff
 from lightberries.pixel_transform import PixelTransform
@@ -179,13 +179,6 @@ class TransformAccelerate(ArrayTransform):
                 self.state.index_previous,
                 self.state.index + 1,
             )
-        if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
-            self.controller.virtual_led_buffer[self.state.index_range] = self.state.pixel_sequence.pixel
-        else:
-            self.controller.virtual_led_buffer[
-                np.where(
-                    self.controller.virtual_led_index_buffer == self.state.index_range,
-                )
-            ] = self.state.pixel_sequence.pixel
+        self.assign_pixels()
         if splash is True:
             self.controller.virtual_led_buffer[splash_range, :] = self.state.fade_color()

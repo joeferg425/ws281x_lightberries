@@ -6,6 +6,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable
 from unittest import mock
 
+import numpy as np
+from numpy.testing import assert_array_equal
+
 import lightberries.base.rpiws281x_patch
 from lightberries.array_controller import ArrayController
 from lightberries.array_sequence.solid import SequenceSolid
@@ -409,6 +412,97 @@ def test_pixel_transform_transform() -> None:
     assert transform.state.step_count_reset is True
 
 
+def test_pixel_transform_advance_index_no_reflect() -> None:
+    controller = new_controller(led_count=4)
+    transform = TransformNone(controller=controller)
+    transform.state.step_size = 3
+    assert transform.state.index == 0
+    assert transform.state.index_previous == 3
+    assert transform.state.index_reflect is False
+    assert len(transform.state.index_range) == 0
+    transform.advance_index()
+    assert transform.state.index == 3
+    assert transform.state.index_previous == 0
+    assert transform.state.index_reflect is False
+    assert len(transform.state.index_range) == 3
+    expected = np.array([1, 2, 3], dtype=np.int32)
+    assert_array_equal(transform.state.index_range, expected)
+    transform.advance_index()
+    assert transform.state.index == 2
+    assert transform.state.index_previous == 3
+    assert transform.state.index_reflect is False
+    assert len(transform.state.index_range) == 3
+    expected = np.array([0, 1, 2], dtype=np.int32)
+    assert_array_equal(transform.state.index_range, expected)
+    transform.advance_index()
+    assert transform.state.index == 1
+    assert transform.state.index_previous == 2
+    assert transform.state.index_reflect is False
+    assert len(transform.state.index_range) == 3
+    expected = np.array([3, 0, 1], dtype=np.int32)
+    assert_array_equal(transform.state.index_range, expected)
+    transform.advance_index()
+    assert transform.state.index == 0
+    assert transform.state.index_previous == 1
+    assert transform.state.index_reflect is False
+    assert len(transform.state.index_range) == 3
+    expected = np.array([2, 3, 0], dtype=np.int32)
+    assert_array_equal(transform.state.index_range, expected)
+
+
+def test_pixel_transform_advance_index_with_reflect() -> None:
+    controller = new_controller(led_count=5)
+    transform = TransformNone(controller=controller)
+    transform.state.step_size = 3
+    transform.state.index_reflect = True
+    assert transform.state.index == 0
+    assert transform.state.index_previous == 4
+    assert transform.state.index_reflect is True
+    assert len(transform.state.index_range) == 0
+    assert transform.state.step_size == 3
+    assert transform.state.direction == 1
+    # 0 -> 1 -> 2 -> 3
+    transform.advance_index()
+    assert transform.state.index == 3
+    assert transform.state.index_previous == 0
+    assert transform.state.index_reflect is True
+    assert len(transform.state.index_range) == 3
+    expected = np.array([1, 2, 3], dtype=np.int32)
+    assert_array_equal(transform.state.index_range, expected)
+    assert transform.state.step_size == 3
+    assert transform.state.direction == 1
+    # 3 -> 4 -> 3 -> 2
+    transform.advance_index()
+    assert transform.state.index == 2
+    assert transform.state.index_previous == 3
+    assert transform.state.index_reflect is True
+    assert len(transform.state.index_range) == 3
+    expected = np.array([4, 3, 2], dtype=np.int32)
+    assert_array_equal(transform.state.index_range, expected)
+    assert transform.state.step_size == 3
+    assert transform.state.direction == -1
+    # 2 -> 1 -> 0 -> 1
+    transform.advance_index()
+    assert transform.state.index == 1
+    assert transform.state.index_previous == 2
+    assert transform.state.index_reflect is True
+    assert len(transform.state.index_range) == 3
+    assert transform.state.step_size == 3
+    assert transform.state.direction == 1
+    expected = np.array([1, 0, 1], dtype=np.int32)
+    assert_array_equal(transform.state.index_range, expected)
+    # 1 -> 2 -> 3 -> 4
+    transform.advance_index()
+    assert transform.state.index == 4
+    assert transform.state.index_previous == 1
+    assert transform.state.index_reflect is True
+    assert len(transform.state.index_range) == 3
+    expected = np.array([2, 3, 4], dtype=np.int32)
+    assert_array_equal(transform.state.index_range, expected)
+    assert transform.state.step_size == 3
+    assert transform.state.direction == 1
+
+
 def test_array_transform_init() -> None:
     name = "ArrayTransform"
     controller = new_controller()
@@ -509,6 +603,34 @@ def test_accelerate_create_with_values() -> None:
         assert f.state.step_count_max == step_count_max
         assert f.state.color_cycle == color_cycle
         assert f.state.fade_amount == fade_amount
+
+
+def test_accelerate_next() -> None:
+    delay_count_max = 2
+    step_count_max = 2
+    color_cycle = False
+    fade_amount = 2
+    controller = new_controller()
+    pixel_sequence = SequenceSolid(led_count=12, color=PixelColor.CYAN)
+    function_list = TransformAccelerate.create(
+        controller=controller,
+        pixel_sequence=pixel_sequence,
+        delay_count_max=delay_count_max,
+        step_count_max=step_count_max,
+        color_cycle=color_cycle,
+        fade_amount=fade_amount,
+    )
+    assert function_list is not None
+    assert isinstance(function_list, list)
+    assert len(function_list) > 0
+    for _ in range(delay_count_max):
+        for f in function_list:
+            f.transform()
+            assert f.state.pixel_sequence == pixel_sequence
+            assert f.state.delay_count_max == delay_count_max
+            assert f.state.step_count_max == step_count_max
+            assert f.state.color_cycle == color_cycle
+            assert f.state.fade_amount == fade_amount
 
 
 # def test_repr():

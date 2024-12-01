@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 
+from lightberries.base.constants import SHAPE_2D
 from lightberries.base.exceptions import ControllerError, LightBerryError
 from lightberries.base.logger import LOGGER
 from lightberries.base.state import TransformState
@@ -186,6 +187,7 @@ class PixelTransform:
             array of indices
 
         """
+        reverse = False
         new_index_no_modulo = self.state.index + (self.state.step_size * self.state.direction)
         self.state.index_range = np.array(
             list(
@@ -197,15 +199,33 @@ class PixelTransform:
             ),
         )
         modulo = np.where(self.state.index_range >= (self.controller.virtual_led_count))[0]
-        while len(modulo):
-            self.state.index_range[modulo] -= self.controller.virtual_led_count
-            modulo = np.where(
-                self.state.index_range >= (self.controller.virtual_led_count),
-            )[0]
+        if len(modulo) != 0:
+            reverse = True
+            for _ in range(5):
+                self.state.index_range[modulo] -= self.controller.virtual_led_count
+                if self.state.index_reflect and len(modulo):
+                    self.state.index_range[modulo] += 1
+                    self.state.index_range[modulo] *= -1
+                    self.state.index_range[modulo] += self.controller.virtual_led_count - 1
+                modulo = np.where(
+                    self.state.index_range >= (self.controller.virtual_led_count),
+                )[0]
+                if len(modulo) == 0:
+                    break
         modulo = np.where(self.state.index_range < 0)[0]
-        while len(modulo):
-            self.state.index_range[modulo] += self.controller.virtual_led_count
-            modulo = np.where(self.state.index_range < 0)[0]
+        if len(modulo) != 0:
+            reverse = True
+            for _ in range(5):
+                self.state.index_range[modulo] += self.controller.virtual_led_count
+                if self.state.index_reflect and len(modulo):
+                    self.state.index_range[modulo] -= 1
+                    self.state.index_range[modulo] *= -1
+                    self.state.index_range[modulo] += self.controller.virtual_led_count - 1
+                modulo = np.where(self.state.index_range < 0)[0]
+                if len(modulo) == 0:
+                    break
+        if reverse:
+            self.state.direction *= -1
         return self.state.index_range
 
     def get_random_index(
@@ -319,3 +339,14 @@ class PixelTransform:
         self.state.index_next = self.state.index_range[-1]
         self.state.index = self.state.index_next
         self.state.index_updated = self.state.index_previous != self.state.index
+
+    def assign_pixels(self) -> None:
+        """Assign colors to indices."""
+        if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
+            self.controller.virtual_led_buffer[self.state.index_range] = self.state.pixel_sequence.pixel
+        else:
+            self.controller.virtual_led_buffer[
+                np.where(
+                    self.controller.virtual_led_index_buffer == self.state.index_range,
+                )
+            ] = self.state.pixel_sequence.pixel

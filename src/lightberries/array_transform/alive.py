@@ -5,9 +5,6 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING
 
-import numpy as np
-
-from lightberries.base.constants import SHAPE_2D
 from lightberries.base.state import ThingColors, ThingMoves, ThingSizes, TransformState
 from lightberries.overlay.fade_off import TransformFadeOff
 from lightberries.pixel_transform import PixelTransform
@@ -80,7 +77,7 @@ class TransformAlive(PixelTransform):
                 transform.controller.virtual_led_count // 10,
                 transform.controller.virtual_led_count,
             )
-            transform.state.step_size_max = random.randint(6, 10)
+            transform.state.step_size_max_setting = random.randint(6, 10)
 
         if pixel_sequence is not None:
             transform.state.pixel_sequence = pixel_sequence
@@ -111,7 +108,7 @@ class TransformAlive(PixelTransform):
             # copy color sequence
             thing.state.pixel_sequence = transform.state.pixel_sequence.copy()
             # randomize speed
-            thing.state.step_size = random.randint(1, thing.state.step_size_max)
+            thing.state.step_size = random.randint(1, thing.state.step_size_max_setting)
             # randomize refresh speed
             thing.state.delay_count_max = random.randint(6, 15)
             # randomize initial size
@@ -126,132 +123,118 @@ class TransformAlive(PixelTransform):
         # add a fade
         return TransformAlive.ACTIVE_TRANSFORMS
 
-    def transform(self) -> None:  # noqa: C901, PLR0912, PLR0915
+    def next_step(self) -> None:  # noqa: C901, PLR0912, PLR0915
         """Do alive function things."""
         # track last index
-        self.state.index_previous = self.state.index
-        # if we have hit our step goal
-        if self.state.delay_counter >= self.state.delay_count_max:
-            self.state.delay_counter = 0
-            if self.state.step_counter < self.state.step_count_max:
-                # if in meteor mode
-                if self.state.current_state & ThingMoves.METEOR.value:
-                    self.state.step_size = 1
-                    # set next index
-                    self.update_array_index()
-                    # randomly change direction
-                    if random.randint(0, 99) > 95:  # noqa: PLR2004
-                        self.state.direction *= -1  # pragma: no cover
-                # if in fast meteor mode
-                elif self.state.current_state & ThingMoves.LIGHT_SPEED.value:
-                    # artificially limit duration of this mode
-                    self.state.step_count_max = min(self.state.period_short, self.state.step_count_max)
-                    # randomize step size
-                    self.state.step_size = random.randint(7, 12)
-                    # set next index
-                    self.update_array_index()
-                    # randomly change direction
-                    if random.randint(0, 99) > 95:  # noqa: PLR2004
-                        self.state.direction *= -1  # pragma: no cover
-                # if slow meteor
-                elif self.state.current_state & ThingMoves.TURTLE.value:
-                    # set step to 1
-                    self.state.step_size = 1
-                    # randomly change direction
-                    if random.randint(0, 99) > 80:  # noqa: PLR2004
-                        self.state.direction *= -1  # pragma: no cover
-                    # set next index
-                    self.update_array_index()
-                # if we are growing
-                if self.state.current_state & ThingSizes.GROW.value:
-                    # artificially limit duration
-                    self.state.step_count_max = min(self.state.period_short, self.state.step_count_max)
-                    # if we can still grow
-                    if self.state.size < self.state.size_max:
-                        # randomly grow
-                        if random.randint(0, 99) > 80:  # noqa: PLR2004
-                            self.state.size += random.randint(
-                                1,
-                                5,
-                            )  # pragma: no cover
-                        # also randomly shrink a bit
-                        if self.state.size > 2 and random.randint(0, 99) > 90:  # noqa: PLR2004
-                            self.state.size -= 1  # pragma: no cover
-                    # make sure we aren't overgrown
-                    if self.state.size > self.state.size_max:
-                        self.state.size = self.state.size_max
-                    # make sure we still exist
-                    elif self.state.size < 1:
-                        self.state.size = 1
-                # if we are shrinking
-                elif self.state.current_state & ThingSizes.SHRINK.value:
-                    # artificially limit duration
-                    self.state.step_count_max = min(self.state.period_short, self.state.step_count_max)
-                    # if we can shrink
-                    if self.state.size > 0:
-                        # randomly shrink
-                        if random.randint(0, 99) > 80:  # noqa: PLR2004
-                            self.state.size -= random.randint(1, 5)
-                        # also randomly grow a bit
-                        if self.state.size < self.state.size_max and random.randint(0, 99) > 90:  # noqa: PLR2004
-                            self.state.size += 1  # pragma: no cover
-                    # make sure we aren't overgrown
-                    if self.state.size >= self.state.size_max:
-                        self.state.size = self.state.size_max
-                    # also make sure we still exist
-                    elif self.state.size < 1:
-                        self.state.size = 1
-                # if we are cycling through colors
-                if self.state.current_state & ThingColors.CYCLE.value:
-                    # artificially limit duration
-                    self.state.step_count_max = min(self.state.period_short, self.state.step_count_max)
-                    # randomly cycle through assign colors
-                    if random.randint(0, 99) > 90:  # noqa: PLR2004
-                        for _ in range(random.randint(1, 3)):
-                            self.state.pixel_sequence.advance_index()
-                # increment step counter
-                self.state.step_counter += 1
-            # we hit our step goal, randomize next state
-            else:
-                # states are mutually exclusive bits, can just add one of each
-                for _ in range(random.randint(1, 3)):
-                    self.state.current_state = (
-                        list(ThingMoves)[random.randint(0, len(ThingMoves) - 1)].value
-                        + list(ThingSizes)[random.randint(0, len(ThingSizes) - 1)].value
-                        + list(ThingColors)[random.randint(0, len(ThingColors) - 1)].value
-                    )
-                # reset step counter
-                self.state.step_counter = 0
-                # set step count to random value
-                self.state.step_count_max = random.randint(
-                    self.controller.virtual_led_count // 10,
-                    self.controller.virtual_led_count,
-                )
-                # set delay count randomly
-                self.state.delay_count_max = random.randint(6, 15)
+        if self.state.step_count_reset:
+            # if in meteor mode
+            if self.state.current_state & ThingMoves.METEOR.value:
+                self.state.step_size = 1
+                # set next index
+                self.update_array_index()
+                # randomly change direction
+                if random.randint(0, 99) > 95:  # noqa: PLR2004
+                    self.state.direction *= -1  # pragma: no cover
+            # if in fast meteor mode
+            elif self.state.current_state & ThingMoves.LIGHT_SPEED.value:
+                # artificially limit duration of this mode
+                self.state.step_count_max = min(self.state.period_short, self.state.step_count_max)
                 # randomize step size
-                self.state.step_size = random.randint(1, 3)
-                # randomize fade amount
-                self.state.fade_amount = random.randint(80, 192)
-                # randomize delays
-                if self.state.current_state & ThingMoves.METEOR.value:
-                    self.state.delay_count_max = random.randint(1, 3)
-                elif self.state.current_state & ThingMoves.TURTLE.value:
-                    self.state.delay_count_max = random.randint(15, 45)
-                elif self.state.current_state & ThingMoves.LIGHT_SPEED.value:
-                    self.state.delay_count_max = random.randint(0, 3)
-                else:
-                    self.state.delay_count_max = random.randint(1, 7)
-                # calculate affected range
-                self.state.index_range = self.calc_range()
-        # increment delay
-        self.state.delay_counter += 1
-        # assign colors to indices
-        if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
-            self.controller.virtual_led_buffer[self.state.index_range] = self.state.pixel_sequence.pixel
+                self.state.step_size = random.randint(7, 12)
+                # set next index
+                self.update_array_index()
+                # randomly change direction
+                if random.randint(0, 99) > 95:  # noqa: PLR2004
+                    self.state.direction *= -1  # pragma: no cover
+            # if slow meteor
+            elif self.state.current_state & ThingMoves.TURTLE.value:
+                # set step to 1
+                self.state.step_size = 1
+                # randomly change direction
+                if random.randint(0, 99) > 80:  # noqa: PLR2004
+                    self.state.direction *= -1  # pragma: no cover
+                # set next index
+                self.update_array_index()
+            # if we are growing
+            if self.state.current_state & ThingSizes.GROW.value:
+                # artificially limit duration
+                self.state.step_count_max = min(self.state.period_short, self.state.step_count_max)
+                # if we can still grow
+                if self.state.size < self.state.size_max:
+                    # randomly grow
+                    if random.randint(0, 99) > 80:  # noqa: PLR2004
+                        self.state.size += random.randint(
+                            1,
+                            5,
+                        )  # pragma: no cover
+                    # also randomly shrink a bit
+                    if self.state.size > 2 and random.randint(0, 99) > 90:  # noqa: PLR2004
+                        self.state.size -= 1  # pragma: no cover
+                # make sure we aren't overgrown
+                if self.state.size > self.state.size_max:
+                    self.state.size = self.state.size_max
+                # make sure we still exist
+                elif self.state.size < 1:
+                    self.state.size = 1
+            # if we are shrinking
+            elif self.state.current_state & ThingSizes.SHRINK.value:
+                # artificially limit duration
+                self.state.step_count_max = min(self.state.period_short, self.state.step_count_max)
+                # if we can shrink
+                if self.state.size > 0:
+                    # randomly shrink
+                    if random.randint(0, 99) > 80:  # noqa: PLR2004
+                        self.state.size -= random.randint(1, 5)
+                    # also randomly grow a bit
+                    if self.state.size < self.state.size_max and random.randint(0, 99) > 90:  # noqa: PLR2004
+                        self.state.size += 1  # pragma: no cover
+                # make sure we aren't overgrown
+                if self.state.size >= self.state.size_max:
+                    self.state.size = self.state.size_max
+                # also make sure we still exist
+                elif self.state.size < 1:
+                    self.state.size = 1
+            # if we are cycling through colors
+            if self.state.current_state & ThingColors.CYCLE.value:
+                # artificially limit duration
+                self.state.step_count_max = min(self.state.period_short, self.state.step_count_max)
+                # randomly cycle through assign colors
+                if random.randint(0, 99) > 90:  # noqa: PLR2004
+                    for _ in range(random.randint(1, 3)):
+                        self.state.pixel_sequence.advance_index()
+            # increment step counter
+            self.state.step_counter += 1
+        # we hit our step goal, randomize next state
         else:
-            self.controller.virtual_led_buffer[
-                np.where(
-                    self.controller.virtual_led_index_buffer == self.state.index_range,
+            # states are mutually exclusive bits, can just add one of each
+            for _ in range(random.randint(1, 3)):
+                self.state.current_state = (
+                    list(ThingMoves)[random.randint(0, len(ThingMoves) - 1)].value
+                    + list(ThingSizes)[random.randint(0, len(ThingSizes) - 1)].value
+                    + list(ThingColors)[random.randint(0, len(ThingColors) - 1)].value
                 )
-            ] = self.state.pixel_sequence.pixel
+            # reset step counter
+            self.state.step_counter = 0
+            # set step count to random value
+            self.state.step_count_max = random.randint(
+                self.controller.virtual_led_count // 10,
+                self.controller.virtual_led_count,
+            )
+            # set delay count randomly
+            self.state.delay_count_max = random.randint(6, 15)
+            # randomize step size
+            self.state.step_size = random.randint(1, 3)
+            # randomize fade amount
+            self.state.fade_amount = random.randint(80, 192)
+            # randomize delays
+            if self.state.current_state & ThingMoves.METEOR.value:
+                self.state.delay_count_max = random.randint(1, 3)
+            elif self.state.current_state & ThingMoves.TURTLE.value:
+                self.state.delay_count_max = random.randint(15, 45)
+            elif self.state.current_state & ThingMoves.LIGHT_SPEED.value:
+                self.state.delay_count_max = random.randint(0, 3)
+            else:
+                self.state.delay_count_max = random.randint(1, 7)
+            # calculate affected range
+            self.state.index_range = self.calc_range()
+        self.assign_pixels()

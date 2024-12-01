@@ -7,10 +7,10 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from lightberries.array_transform.collision_detection import TransformCollisionDetect
 from lightberries.base.constants import SHAPE_2D
 from lightberries.base.logger import LOGGER
 from lightberries.base.state import LEDFadeType, TransformState
+from lightberries.overlay.collision_detection import TransformCollisionDetect
 from lightberries.overlay.fade_off import TransformFadeOff
 from lightberries.overlay.off import TransformOff
 from lightberries.pixel_transform import PixelTransform
