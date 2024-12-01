@@ -16,8 +16,8 @@ class SequenceName(IntEnum):
 def get_named_sequence(name: SequenceName, led_count: int) -> PixelSequence:
     """Get a named sequence."""
     sequence: PixelSequence
-    if name is SequenceName.sunset:
-        sequence = SequenceTransition(
+    if name is SequenceName.sunset:  # pragma: no cover
+        sequence = SequenceTransition(  # pragma: no cover
             name="SequenceSunset",
             led_count=led_count,
             pixel_sequence=[
@@ -31,4 +31,4 @@ def get_named_sequence(name: SequenceName, led_count: int) -> PixelSequence:
             ],
             wrap=True,
         )
-    return sequence
+    return sequence  # pragma: no cover

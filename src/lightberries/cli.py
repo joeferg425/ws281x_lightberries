@@ -12,9 +12,9 @@ from strenum import StrEnum
 
 import lightberries
 from lightberries.array_controller import ArrayController
-from lightberries.array_sequence.all_sequences import *
+from lightberries.array_sequence.all import *
 from lightberries.array_sequence.named import SequenceName
-from lightberries.array_transform.all_functions import *
+from lightberries.array_transform.all import *
 from lightberries.base.exceptions import LightBerryError, PermissionsError
 from lightberries.base.logger import LOGGER
 from lightberries.pixel_sequence import PixelSequence

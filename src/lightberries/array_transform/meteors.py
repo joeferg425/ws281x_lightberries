@@ -11,9 +11,9 @@ from lightberries.array_transform.collision_detection import TransformCollisionD
 from lightberries.base.constants import SHAPE_2D
 from lightberries.base.logger import LOGGER
 from lightberries.base.state import LEDFadeType, TransformState
+from lightberries.overlay.fade_off import TransformFadeOff
+from lightberries.overlay.off import TransformOff
 from lightberries.pixel_transform import PixelTransform
-from lightberries.transform_overlay.fade_off import TransformFadeOff
-from lightberries.transform_overlay.off import TransformOff
 
 if TYPE_CHECKING:
     import lightberries.array_controller
@@ -88,7 +88,7 @@ class TransformMeteor(PixelTransform):
             transform.state.explode = transform.get_random_boolean()
             transform.state.collision_enabled = transform.get_random_boolean()
             transform.state.step_size_max = random.randint(1, 3)
-            transform.state.step = transform.state.step_size_max
+            transform.state.step_size = transform.state.step_size_max
             transform.state.delay_count_max = random.randint(1, 3)
             transform.state.explode = transform.get_random_boolean()
             transform.state.color_cycle = transform.get_random_boolean()
@@ -158,7 +158,7 @@ class TransformMeteor(PixelTransform):
                 transform.ACTIVE_TRANSFORMS[1].state.direction *= -1
             TransformCollisionDetect.create(controller=transform.controller)
 
-        transform.state.pixel_sequence.random_index()
+        transform.state.pixel_sequence.get_random_index()
         LOGGER.debug("Transform: %s", transform)
         meteor = None
         for _ in range(meteor_count - 1):
@@ -166,19 +166,19 @@ class TransformMeteor(PixelTransform):
                 meteor = transform
             else:
                 meteor = transform.copy()
-            meteor.state.pixel_sequence.random_index()
+            meteor.state.pixel_sequence.get_random_index()
             # initialize "previous" index, for math's sake later
             meteor.state.index_previous = random.randint(0, transform.controller.virtual_led_count - 1)
             # set the maximum number of LEDs it could move in one step
             speed = 1
             for _ in range(5):
                 speed = random.randint(1, max(2, meteor.state.step_size_max))
-            meteor.state.step = speed
+            meteor.state.step_size = speed
             # randomly initialize the direction
             meteor.state.direction = transform.get_random_direction()
             # randomly assign starting index
             meteor.state.index = (
-                meteor.state.index + (meteor.state.step * meteor.state.direction)
+                meteor.state.index + (meteor.state.step_size * meteor.state.direction)
             ) % transform.controller.virtual_led_count
             # add function to list
             transform.ACTIVE_TRANSFORMS.append(meteor)

@@ -6,7 +6,7 @@ import random
 from typing import TYPE_CHECKING
 
 from lightberries.base.state import TransformState
-from lightberries.transform_overlay._overlay_transform import OverlayTransform
+from lightberries.overlay.overlay_transform import OverlayTransform
 
 if TYPE_CHECKING:
     import lightberries.array_controller
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from lightberries.pixel_transform import PixelTransform
 
 
-class TransformBlink(OverlayTransform):
+class OverlayBlink(OverlayTransform):
     """Randomly set all lights in the string to the same color without changing the virtual LED buffer."""
 
     def __init__(
@@ -33,7 +33,7 @@ class TransformBlink(OverlayTransform):
 
         """
         super().__init__(
-            name=TransformBlink.__name__,
+            name=OverlayBlink.__name__,
             controller=controller,
         )
 
@@ -54,7 +54,7 @@ class TransformBlink(OverlayTransform):
             blink_chance: chance of a blink
 
         """
-        transform = TransformBlink(controller=controller)
+        transform = OverlayBlink(controller=controller)
         if state is not None:
             transform.state = state
         else:
@@ -65,8 +65,8 @@ class TransformBlink(OverlayTransform):
         if blink_chance is not None:
             transform.state.random = blink_chance
 
-        TransformBlink.ACTIVE_TRANSFORMS.append(transform)
-        return TransformBlink.ACTIVE_TRANSFORMS
+        OverlayBlink.ACTIVE_TRANSFORMS.append(transform)
+        return OverlayBlink.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
         """Randomly set all lights in the string to the same color without changing the virtual LED buffer.

@@ -94,12 +94,12 @@ class TransformCollisionDetect(PixelTransform):
                                 object1.state.collision = True
                                 object1.state.collision_private = True
                                 object1.state.collision_with = object2
-                                object1.state.step_last = object1.state.step
+                                object1.state.step_count_previous = object1.state.step_size
                                 object1.state.collision_intersection = intersection
                                 object2.state.collision_private = True
                                 object2.state.collision = True
                                 object2.state.collision_with = object1
-                                object2.state.step_last = object2.state.step
+                                object2.state.step_count_previous = object2.state.step_size
                                 object2.state.collision_intersection = intersection
                                 found_collision = True
         explosion_indices: list[int] = []
@@ -126,12 +126,12 @@ class TransformCollisionDetect(PixelTransform):
                             % self.controller.virtual_led_count,
                         )
                     else:
-                        temp = object2.state.step
-                        object2.state.step = object1.state.step
-                        object1.state.step = temp
-                        object1_delta = object1.state.step - object2.state.step
-                        object2_delta = object2.state.step - object1.state.step
-                        if object1.state.step > object2.state.step:
+                        temp = object2.state.step_size
+                        object2.state.step_size = object1.state.step_size
+                        object1.state.step_size = temp
+                        object1_delta = object1.state.step_size - object2.state.step_size
+                        object2_delta = object2.state.step_size - object1.state.step_size
+                        if object1.state.step_size > object2.state.step_size:
                             object2_delta += object2.state.direction
                         else:
                             object1_delta += object1.state.direction

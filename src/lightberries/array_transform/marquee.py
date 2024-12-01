@@ -9,8 +9,8 @@ import numpy as np
 
 from lightberries.array_sequence.solid import SequenceSolid
 from lightberries.base.pixel import Pixel, PixelColor
+from lightberries.overlay.fade_off import TransformFadeOff
 from lightberries.pixel_transform import PixelTransform
-from lightberries.transform_overlay.fade_off import TransformFadeOff
 
 if TYPE_CHECKING:
     import lightberries.array_controller
@@ -72,14 +72,14 @@ class TransformMarquee(PixelTransform):
         if state is not None:
             transform.state = state
         else:
-            transform.state.step = random.randint(1, 2)
+            transform.state.step_size = random.randint(1, 2)
             transform.state.delay_count_max = random.randint(0, 6)
             transform.state.direction = transform.get_random_direction()
 
         if pixel_sequence is not None:
             transform.state.pixel_sequence = pixel_sequence
         if shift_amount is not None:
-            transform.state.step = shift_amount
+            transform.state.step_size = shift_amount
         if delay_count is not None:
             transform.state.delay_count_max = delay_count
         if initial_direction is not None:
@@ -119,7 +119,7 @@ class TransformMarquee(PixelTransform):
             # reset delay counter
             self.state.delay_counter = 0
             # calculate possible next index
-            self.state.index_next = self.state.index + (self.state.step * self.state.direction)
+            self.state.index_next = self.state.index + (self.state.step_size * self.state.direction)
             # calculate max index we will update
             self.state.index_max = self.state.index_next + self.state.size
             # if we are going to overshoot
@@ -129,7 +129,7 @@ class TransformMarquee(PixelTransform):
                 # set index to either the next step or the max possible
                 # (accounts for step sizes > 1)
                 self.state.index = max(
-                    self.state.index + (self.state.step * self.state.direction),
+                    self.state.index + (self.state.step_size * self.state.direction),
                     self.controller.virtual_led_count - self.state.size,
                 )
             # if we will undershoot
@@ -140,7 +140,7 @@ class TransformMarquee(PixelTransform):
                 # set index to either the next step or zero
                 # (accounts for step sizes > 1)
                 self.state.index = max(
-                    self.state.index + (self.state.step * self.state.direction),
+                    self.state.index + (self.state.step_size * self.state.direction),
                     0,
                 )
             else:

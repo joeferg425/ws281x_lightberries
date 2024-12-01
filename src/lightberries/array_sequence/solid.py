@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from lightberries.array_sequence.base import ArraySequence
+from lightberries.array_sequence.array_sequence import ArraySequence
 from lightberries.base.logger import LOGGER
 from lightberries.base.pixel import Pixel, PixelColor
 from lightberries.pixel_sequence import PixelSequence
@@ -14,7 +14,7 @@ class SequenceSolid(ArraySequence):
     def __init__(
         self,
         led_count: int | None = None,
-        pixel_sequence: PixelSequence | list[Pixel] | None = None,
+        pixel_sequence: PixelSequence | list[Pixel] | list[PixelColor] | None = None,
         name: str | None = None,
         color: Pixel | PixelColor | None = None,
     ) -> None:

@@ -9,8 +9,8 @@ import numpy as np
 
 from lightberries.base.constants import SHAPE_2D
 from lightberries.base.state import ThingColors, ThingMoves, ThingSizes, TransformState
+from lightberries.overlay.fade_off import TransformFadeOff
 from lightberries.pixel_transform import PixelTransform
-from lightberries.transform_overlay.fade_off import TransformFadeOff
 
 if TYPE_CHECKING:
     import lightberries.array_controller
@@ -111,7 +111,7 @@ class TransformAlive(PixelTransform):
             # copy color sequence
             thing.state.pixel_sequence = transform.state.pixel_sequence.copy()
             # randomize speed
-            thing.state.step = random.randint(1, thing.state.step_size_max)
+            thing.state.step_size = random.randint(1, thing.state.step_size_max)
             # randomize refresh speed
             thing.state.delay_count_max = random.randint(6, 15)
             # randomize initial size
@@ -136,7 +136,7 @@ class TransformAlive(PixelTransform):
             if self.state.step_counter < self.state.step_count_max:
                 # if in meteor mode
                 if self.state.current_state & ThingMoves.METEOR.value:
-                    self.state.step = 1
+                    self.state.step_size = 1
                     # set next index
                     self.update_array_index()
                     # randomly change direction
@@ -147,7 +147,7 @@ class TransformAlive(PixelTransform):
                     # artificially limit duration of this mode
                     self.state.step_count_max = min(self.state.period_short, self.state.step_count_max)
                     # randomize step size
-                    self.state.step = random.randint(7, 12)
+                    self.state.step_size = random.randint(7, 12)
                     # set next index
                     self.update_array_index()
                     # randomly change direction
@@ -156,7 +156,7 @@ class TransformAlive(PixelTransform):
                 # if slow meteor
                 elif self.state.current_state & ThingMoves.TURTLE.value:
                     # set step to 1
-                    self.state.step = 1
+                    self.state.step_size = 1
                     # randomly change direction
                     if random.randint(0, 99) > 80:  # noqa: PLR2004
                         self.state.direction *= -1  # pragma: no cover
@@ -230,7 +230,7 @@ class TransformAlive(PixelTransform):
                 # set delay count randomly
                 self.state.delay_count_max = random.randint(6, 15)
                 # randomize step size
-                self.state.step = random.randint(1, 3)
+                self.state.step_size = random.randint(1, 3)
                 # randomize fade amount
                 self.state.fade_amount = random.randint(80, 192)
                 # randomize delays

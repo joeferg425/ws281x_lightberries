@@ -85,6 +85,7 @@ class TransformState:
     current_state: int = 0
     state_max: int = 0
     direction: int = 1
+    ran_once: bool = False
 
     index: int = 0
     index_next: int = 0
@@ -100,13 +101,16 @@ class TransformState:
 
     delay_counter: int = 0
     delay_count_max: int = 0
-    delay_count_limit: int = 0
+    delay_count_reset: bool = False
+    delay_count_max_setting: int = 0
 
-    step: int = 1
-    step_last: int = 0
+    step_size: int = 1
+    step_size_max_setting: int = 1
+
     step_counter: int = 0
+    step_count_previous: int = 0
     step_count_max: int = 0
-    step_size_max: int = 1
+    step_count_reset: bool = False
 
     collision: bool = False
     collision_enabled: bool = False
@@ -134,8 +138,8 @@ class TransformState:
     period_short: int = 10
 
     def __post_init__(self) -> None:
-        self.index_next: int = self.index + self.step
-        self.index_previous: int = (self.index - self.step) % self.controller.real_led_count
+        self.index_next: int = self.index + self.step_size
+        self.index_previous: int = (self.index - self.step_size) % self.controller.real_led_count
         self.index_min: int = self.index
         self.index_max: int = self.index
 
@@ -150,10 +154,10 @@ class TransformState:
         if fade_amount > 0 and fade_amount < 1:
             self.fade_amount = int(fade_amount * MAX_INT8)
         elif fade_amount > 0 and fade_amount <= MAX_INT8:
-            self.fade_amount = int(fade_amount / MAX_INT8)
-        if fade_amount < 0:
+            self.fade_amount = int(fade_amount)
+        if self.fade_amount < 0:
             self.fade_amount = int(0.1 * MAX_INT8)
-        elif fade_amount > 1:
+        elif self.fade_amount > MAX_INT8:
             self.fade_amount = int(0.9 * MAX_INT8)
         self.fade_amount_float = self.fade_amount / MAX_INT8
 

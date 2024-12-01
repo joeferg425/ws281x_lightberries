@@ -4,12 +4,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from lightberries.array_sequence.base import ArraySequence
+from lightberries.array_sequence.array_sequence import ArraySequence
 from lightberries.array_sequence.off import SequenceOff
 from lightberries.pixel_sequence import PixelSequence
 
 if TYPE_CHECKING:
-    from lightberries.base.pixel import Pixel  # pragma: no cover
+    from lightberries.base.pixel import (
+        Pixel,  # pragma: no cover
+        PixelColor,
+    )
 
 
 class SequenceRepeat(ArraySequence):
@@ -18,7 +21,7 @@ class SequenceRepeat(ArraySequence):
     def __init__(
         self,
         led_count: int | None = None,
-        pixel_sequence: PixelSequence | list[Pixel] | None = None,
+        pixel_sequence: PixelSequence | list[Pixel] | list[PixelColor] | None = None,
         name: str | None = None,
     ) -> None:
         """Create a repeating LightPattern from a given sequence.

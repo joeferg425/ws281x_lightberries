@@ -59,14 +59,13 @@ class TransformNone(PixelTransform):
             transform.state = state
         if pixel_sequence is not None:
             transform.state.pixel_sequence = pixel_sequence
-        transform.ran_once = False
         TransformNone.ACTIVE_TRANSFORMS.append(transform)
         return TransformNone.ACTIVE_TRANSFORMS
 
-    def transform(self) -> None:
+    def next_step(self) -> None:
         """Do nothing."""
-        if not self.ran_once:
-            self.ran_once = True
+        if not self.state.ran_once:
+            self.state.ran_once = True
             if self.state.pixel_sequence.led_count <= self.controller.virtual_led_count:
                 self.controller.virtual_led_buffer[: self.state.pixel_sequence.led_count] = self.state.pixel_sequence
             else:

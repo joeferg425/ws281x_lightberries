@@ -71,7 +71,7 @@ class TransformShift(PixelTransform):
         if state is not None:
             transform.state = state
         else:
-            transform.state.step = random.randint(1, 2)
+            transform.state.step_size = random.randint(1, 2)
             transform.state.delay_count_max = random.randint(10, 50)
             transform.state.direction = transform.get_random_direction()
 
@@ -79,7 +79,7 @@ class TransformShift(PixelTransform):
             transform.state.pixel_sequence = pixel_sequence
 
         if shift_amount is not None:
-            transform.state.step = shift_amount
+            transform.state.step_size = shift_amount
         if delay_count is not None:
             transform.state.delay_count_max = delay_count
         if initial_direction is not None:
@@ -113,4 +113,4 @@ class TransformShift(PixelTransform):
             self.state.delay_counter = 0
             # reset delay counter
             # update LEDs with new values
-            self.controller.virtual_led_buffer = np.roll(self.controller.virtual_led_buffer, self.state.step, 0)
+            self.controller.virtual_led_buffer = np.roll(self.controller.virtual_led_buffer, self.state.step_size, 0)

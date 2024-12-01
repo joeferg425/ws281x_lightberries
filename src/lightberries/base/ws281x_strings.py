@@ -11,7 +11,7 @@ from typing import Any, overload
 import numpy as np
 from numpy.typing import NDArray
 
-from lightberries.array_sequence.base import ArraySequence
+from lightberries.array_sequence.array_sequence import ArraySequence
 from lightberries.base.exceptions import PermissionsError, WS281xStringError
 from lightberries.base.logger import LOGGER
 from lightberries.base.pixel import Pixel, PixelColor

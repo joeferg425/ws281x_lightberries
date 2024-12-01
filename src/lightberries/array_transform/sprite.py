@@ -10,8 +10,8 @@ import numpy as np
 
 from lightberries.base.constants import SHAPE_2D
 from lightberries.base.pixel import PixelColor, pixel_from_color
+from lightberries.overlay.fade_off import TransformFadeOff
 from lightberries.pixel_transform import PixelTransform
-from lightberries.transform_overlay.fade_off import TransformFadeOff
 
 if TYPE_CHECKING:
     import lightberries.array_controller
@@ -122,7 +122,7 @@ class TransformSprite(PixelTransform):
             if random.randint(_min, _max) < self.state.step_counter:
                 self.state.current_state = SpriteState.FADING_OFF.value
             # randomize step sizes
-            self.state.step = random.randint(1, 3)
+            self.state.step_size = random.randint(1, 3)
             # only update LED string when we change the index
             self.state.index_updated = False
             # if we are done delaying

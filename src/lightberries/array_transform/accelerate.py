@@ -3,26 +3,24 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from lightberries.array_transform.base import ArrayTransform
+from lightberries.array_transform.array_transform import ArrayTransform
 from lightberries.base.constants import MAX_INT8, SHAPE_2D
 from lightberries.base.state import TransformState
-from lightberries.transform_overlay.fade_off import TransformFadeOff
+from lightberries.overlay.fade_off import TransformFadeOff
+from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
-    import lightberries.array_controller
-    from lightberries.base.state import TransformState
-    from lightberries.pixel_sequence import PixelSequence
-    from lightberries.pixel_transform import PixelTransform
+    import lightberries.array_controller  # pragma: no cover
+    from lightberries.base.state import TransformState  # pragma: no cover
+    from lightberries.pixel_sequence import PixelSequence  # pragma: no cover
 
 
 class TransformAccelerate(ArrayTransform):
     """Function in which colorful lights accelerate across the string of lights repeatedly."""
-
-    INSTANCES: ClassVar[dict[int, TransformAccelerate]] = {}
 
     def __init__(
         self,
@@ -41,7 +39,6 @@ class TransformAccelerate(ArrayTransform):
             name=TransformAccelerate.__name__,
             controller=controller,
         )
-        self.INSTANCES[len(self.INSTANCES)] = self
 
     @staticmethod
     def create(  # noqa: PLR0913
@@ -72,6 +69,7 @@ class TransformAccelerate(ArrayTransform):
             list of transforms
 
         """
+        PixelTransform.clear_active()
         transform = TransformAccelerate(controller=controller)
         if state is not None:
             transform.state = state
@@ -113,28 +111,12 @@ class TransformAccelerate(ArrayTransform):
         TransformAccelerate.ACTIVE_TRANSFORMS.append(transform)
         return TransformAccelerate.ACTIVE_TRANSFORMS
 
-    def transform(self) -> None:
+    def next_step(self) -> None:
         """Accelerate across the string of lights repeatedly."""
-        self.state.index_previous = self.state.index
         splash = False
-        # increment delay counter
-        self.state.delay_counter += 1
         # check delay counter, update index when it hits max
-        if self.state.delay_counter >= self.state.delay_count_max:
-            # reset delay counter
-            self.state.delay_counter = 0
-            # update step counter
-            self.state.step_counter += 1
-            # calculate next index
-            self.state.index_next = int(
-                self.state.index + (self.state.direction * self.state.step),
-            )
-            self.state.index = self.state.index_next % self.controller.virtual_led_count
-            self.state.index_range = np.arange(
-                self.state.index_previous + self.state.direction,
-                self.state.index_next + self.state.direction,
-                self.state.direction,
-            )
+        if self.state.delay_count_reset:
+            self.advance_index()
             modulo = np.where(
                 self.state.index_range >= (self.controller.real_led_count),
             )
@@ -142,14 +124,12 @@ class TransformAccelerate(ArrayTransform):
             if self.state.color_cycle is True:
                 self.state.pixel_sequence.advance_index()
         # check index step counter, update speed state when it hits step count max
-        if self.state.step_counter >= self.state.step_count_max:
-            # reset step counter
-            self.state.step_counter = 0
+        if self.state.step_count_reset:
             # reduce delay max
             self.state.delay_count_max -= 1
             # increment step size every two delay reductions
             if (self.state.current_state % 2) == 0:
-                self.state.step += 1
+                self.state.step_size += 1
             # set step counter to a random number of steps based on LED count
             self.state.step_count_max = random.randint(
                 int(self.controller.real_led_count / 20),
@@ -167,7 +147,7 @@ class TransformAccelerate(ArrayTransform):
                 list(
                     range(
                         self.state.index_previous,
-                        self.state.index_next + (self.state.step * self.state.direction * 4),
+                        self.state.index_next + (self.state.step_size * self.state.direction * 4),
                         self.state.direction,
                     ),
                 ),
@@ -189,7 +169,7 @@ class TransformAccelerate(ArrayTransform):
             # reset state
             self.state.current_state = 0
             # reset step
-            self.state.step = 1
+            self.state.step_size = 1
             # reset step counter
             self.state.step_counter = 0
             # randomize starting index

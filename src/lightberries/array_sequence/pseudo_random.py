@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from lightberries.array_sequence.base import ArraySequence
+from lightberries.array_sequence.array_sequence import ArraySequence
 from lightberries.array_sequence.off import SequenceOff
 from lightberries.base.pixel import Pixel
 from lightberries.pixel_sequence import PixelColor, PixelSequence
@@ -14,7 +14,7 @@ class SequencePseudoRandom(ArraySequence):
     def __init__(
         self,
         led_count: int | None = None,
-        pixel_sequence: PixelSequence | list[Pixel] | None = None,
+        pixel_sequence: PixelSequence | list[Pixel] | list[PixelColor] | None = None,
         name: str | None = None,
     ) -> None:
         """Create an array of random colors.
@@ -36,18 +36,18 @@ class SequencePseudoRandom(ArraySequence):
 
         temp_array = SequenceOff(led_count=led_count)
 
-        if pixel_sequence is None:
-            pixel_sequence = self.get_monthly_color_sequence()
-        elif isinstance(pixel_sequence, list):
+        if isinstance(pixel_sequence, list):
             pixel_sequence = PixelSequence(pixel_sequence=pixel_sequence)
-        if pixel_sequence.led_count == 0:
-            pixel_sequence = self.get_monthly_color_sequence()
 
         if led_count is None:
-            led_count = pixel_sequence.led_count
+            led_count = self.get_monthly_color_sequence().led_count
 
-        for i in range(led_count):
-            temp_array[i] = Pixel(PixelColor.get_PSEUDO_RANDOM())
+        if pixel_sequence is None or pixel_sequence.led_count == 0:
+            for i in range(led_count):
+                temp_array[i] = Pixel(PixelColor.get_PSEUDO_RANDOM())
+        else:
+            for i in range(led_count):
+                temp_array[i] = pixel_sequence.get_random_pixel()
 
         super().__init__(
             pixel_sequence=temp_array,

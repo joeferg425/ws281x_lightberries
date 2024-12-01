@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import random
 
-from lightberries.array_sequence.base import ArraySequence
+from lightberries.array_sequence.array_sequence import ArraySequence
 from lightberries.base.pixel import Pixel
-from lightberries.pixel_sequence import PixelSequence
 
 RED = 0
 GREEN = 1
@@ -19,7 +18,6 @@ class SequenceRandom(ArraySequence):
     def __init__(
         self,
         led_count: int | None = None,
-        pixel_sequence: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
     ) -> None:
         """Create an array of random colors.
@@ -42,12 +40,8 @@ class SequenceRandom(ArraySequence):
             name=name,
         )
 
-        if pixel_sequence is None:
-            pixel_sequence = PixelSequence.get_monthly_color_sequence()
-        elif isinstance(pixel_sequence, list):
-            pixel_sequence = PixelSequence(pixel_sequence=pixel_sequence)
         if led_count is None:
-            led_count = pixel_sequence.led_count
+            led_count = self.get_monthly_color_sequence().led_count
         temp_array: list[Pixel] = []
         for _ in range(led_count):
             # prevent 255, 255, 255

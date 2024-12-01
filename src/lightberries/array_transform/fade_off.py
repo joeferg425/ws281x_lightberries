@@ -5,7 +5,7 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING, Any
 
-from lightberries.transform_overlay._overlay_transform import OverlayTransform
+from lightberries.overlay.overlay_transform import OverlayTransform
 
 if TYPE_CHECKING:
     import lightberries.array_controller

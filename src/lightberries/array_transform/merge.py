@@ -63,13 +63,13 @@ class TransformMerge(PixelTransform):
             transform.state = state
         else:
             transform.state.delay_count_max = random.randint(6, 12)
-            transform.state.step = 1
+            transform.state.step_size = 1
         if pixel_sequence is not None:
             transform.state.pixel_sequence = pixel_sequence.copy()
         if delay_count is not None:
             transform.state.delay_count_max = delay_count
         if shift_amount is not None:
-            transform.state.step = shift_amount
+            transform.state.step_size = shift_amount
         # make sure doing a merge function would be visible
         if transform.state.pixel_sequence.led_count >= transform.controller.real_led_count:
             # if sequence is too long, cut it in half
@@ -132,8 +132,8 @@ class TransformMerge(PixelTransform):
                 self.controller.virtual_led_buffer[range(self.state.size)] = self.state.pixel_sequence[
                     list(range(self.state.size))
                 ]
-            temp[0] = np.roll(temp[0], self.state.step, 0)
-            temp[1] = np.roll(temp[1], -self.state.step, 0)
+            temp[0] = np.roll(temp[0], self.state.step_size, 0)
+            temp[1] = np.roll(temp[1], -self.state.step_size, 0)
             for i in range(self.controller.virtual_led_count // self.state.size):
                 if i % 2 == 0:
                     temp[i] = temp[0]

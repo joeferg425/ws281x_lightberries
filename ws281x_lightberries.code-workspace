@@ -8,8 +8,8 @@
 		"python.terminal.activateEnvInCurrentTerminal": true,
 		"autoDocstring.docstringFormat": "google-notypes",
 		"[python]": {
-			"editor.formatOnSave": false,
-			"editor.defaultFormatter": "ms-python.black-formatter",
+			"editor.formatOnSave": true,
+			"editor.defaultFormatter": "charliermarsh.ruff",
 			"editor.codeActionsOnSave": {
 				"source.organizeImports": "explicit"
 			}
@@ -466,27 +466,17 @@
 			{
 				"label": "install editable",
 				"type": "shell",
-				"command": "poetry",
+				"command": "pip",
 				"args": [
-					"install"
-				],
-				"dependsOn": [
-					"update"
+					"install",
+					"-e",
+					"."
 				],
 				"problemMatcher": [],
 				"group": {
 					"kind": "build",
 					"isDefault": true
 				}
-			},
-			{
-				"label": "update",
-				"type": "shell",
-				"command": "poetry",
-				"args": [
-					"update"
-				],
-				"problemMatcher": [],
 			},
 			{
 				"label": "coverage",

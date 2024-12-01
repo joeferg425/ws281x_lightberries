@@ -6,9 +6,9 @@ from math import ceil
 
 import numpy as np
 
-from lightberries.array_sequence.base import ArraySequence
+from lightberries.array_sequence.array_sequence import ArraySequence
 from lightberries.array_sequence.off import SequenceOff
-from lightberries.base.pixel import Pixel
+from lightberries.base.pixel import Pixel, PixelColor
 from lightberries.pixel_sequence import PixelSequence
 
 
@@ -18,7 +18,7 @@ class SequenceTransition(ArraySequence):
     def __init__(  # noqa: C901, PLR0912
         self,
         led_count: int | None = None,
-        pixel_sequence: PixelSequence | list[Pixel] | None = None,
+        pixel_sequence: PixelSequence | list[Pixel] | list[PixelColor] | None = None,
         name: str | None = None,
         wrap: bool | None = None,
     ) -> None:
@@ -49,6 +49,8 @@ class SequenceTransition(ArraySequence):
             pixel_sequence = self.get_monthly_color_sequence()
         if led_count is None:
             led_count = pixel_sequence.led_count
+        if pixel_sequence.led_count > led_count:
+            pixel_sequence = PixelSequence(pixel_sequence=pixel_sequence[:led_count])
         count = 0
         transition_count = None
         wrap_offset = 0
@@ -62,32 +64,38 @@ class SequenceTransition(ArraySequence):
             wrap_offset = 0
         # figure out how many LEDs per color change
         if transition_count is None:
-            transition_count = ceil(led_count / (pixel_sequence.led_count + wrap_offset))
+            if pixel_sequence.led_count > 0:
+                transition_count = ceil(led_count / (pixel_sequence.led_count + wrap_offset))
+            else:
+                transition_count = 1
         # create temporary array
         temp_array = SequenceOff(led_count=led_count).array
-        this_color = pixel_sequence[0]
-        next_color = pixel_sequence[1 % pixel_sequence.led_count]
         temp_pixels: list[Pixel] = []
-        # step through color sequence
-        if transition_count:
-            for input_index, output_index in enumerate(range(0, led_count, transition_count)):
-                if (output_index + transition_count) >= led_count:
-                    transition_count = led_count - output_index
-                # figure out the current and next colors
-                if input_index < pixel_sequence.led_count or (wrap and input_index < pixel_sequence.led_count):
-                    this_color = pixel_sequence[input_index % pixel_sequence.led_count]
-                if (input_index + 1) < pixel_sequence.led_count or (wrap and input_index < pixel_sequence.led_count):
-                    next_color = pixel_sequence[(input_index + 1) % pixel_sequence.led_count]
-                # handle red, green, and blue individually
-                for rgb_index in range(len(this_color)):
-                    # linspace creates the array of values from arg1, to arg2, in exactly arg3 steps
-                    temp_array[output_index : (output_index + transition_count), rgb_index] = np.linspace(
-                        this_color.array[rgb_index],
-                        next_color.array[rgb_index],
-                        transition_count,
-                    )
-                count += transition_count
-        temp_pixels: list[Pixel] = [Pixel(temp_array[i]) for i in range(len(temp_array))]
+        if led_count > 0:
+            this_color = pixel_sequence[0]
+            next_color = pixel_sequence[1 % pixel_sequence.led_count]
+            # step through color sequence
+            if transition_count:
+                for input_index, output_index in enumerate(range(0, led_count, transition_count)):
+                    if (output_index + transition_count) >= led_count:
+                        transition_count = led_count - output_index
+                    # figure out the current and next colors
+                    if input_index < pixel_sequence.led_count or (wrap and input_index < pixel_sequence.led_count):
+                        this_color = pixel_sequence[input_index % pixel_sequence.led_count]
+                    if (input_index + 1) < pixel_sequence.led_count or (
+                        wrap and input_index < pixel_sequence.led_count
+                    ):
+                        next_color = pixel_sequence[(input_index + 1) % pixel_sequence.led_count]
+                    # handle red, green, and blue individually
+                    for rgb_index in range(len(this_color)):
+                        # linspace creates the array of values from arg1, to arg2, in exactly arg3 steps
+                        temp_array[output_index : (output_index + transition_count), rgb_index] = np.linspace(
+                            this_color.rgb_array[rgb_index],
+                            next_color.rgb_array[rgb_index],
+                            transition_count,
+                        )
+                    count += transition_count
+            temp_pixels: list[Pixel] = [Pixel(temp_array[i]) for i in range(len(temp_array))]
         super().__init__(
             name=name,
             led_count=led_count,

@@ -10,9 +10,9 @@ import numpy as np
 from lightberries.base.constants import MAX_INT8, SHAPE_2D
 from lightberries.base.pixel import Pixel
 from lightberries.base.state import ChangeStates, LEDFadeType, TransformState
+from lightberries.overlay.fade_off import TransformFadeOff
+from lightberries.overlay.off import TransformOff
 from lightberries.pixel_transform import PixelTransform
-from lightberries.transform_overlay.fade_off import TransformFadeOff
-from lightberries.transform_overlay.off import TransformOff
 
 if TYPE_CHECKING:
     import lightberries.array_controller
@@ -69,7 +69,7 @@ class TransformRandom(PixelTransform):
         if state is not None:
             transform.state = state
         else:
-            transform.state.delay_count_limit = random.randint(50, 100)
+            transform.state.delay_count_max = random.randint(50, 100)
             transform.state.fade_type = LEDFadeType.get_random()
 
         if pixel_sequence is not None:
@@ -85,7 +85,7 @@ class TransformRandom(PixelTransform):
             fade_step_count = random.randint(1, 5)
         transform.state.set_fade_amount(fade_step_count / MAX_INT8)
         if delay_count is not None:
-            transform.state.delay_count_limit = delay_count
+            transform.state.delay_count_max = delay_count
         if fade_type is not None:
             transform.state.fade_type = fade_type
         # make comet trails
@@ -123,7 +123,7 @@ class TransformRandom(PixelTransform):
                         keep_current=True,
                     )
                 # we want all the delays random, so don't start them all at zero
-                change.state.delay_count_max = random.randint(0, change.state.delay_count_limit)
+                change.state.delay_count_max = random.randint(0, change.state.delay_count_max)
                 # add function to list
                 TransformRandom.ACTIVE_TRANSFORMS.append(change)
         return TransformRandom.ACTIVE_TRANSFORMS
@@ -146,7 +146,7 @@ class TransformRandom(PixelTransform):
                     self.state.delay_counter = 0
                     self.state.delay_count_max = random.randint(
                         0,
-                        self.state.delay_count_limit,
+                        self.state.delay_count_max,
                     )
                     # randomly fading some LEDs to background color
                     if random.randint(0, 3) == 3:  # noqa: PLR2004
@@ -171,7 +171,7 @@ class TransformRandom(PixelTransform):
                     self.state.delay_counter = 0
                     self.state.delay_count_max = random.randint(
                         0,
-                        self.state.delay_count_limit,
+                        self.state.delay_count_max,
                     )
             # if state is "waiting"
             elif self.state.current_state == ChangeStates.WAIT.value:
@@ -201,7 +201,7 @@ class TransformRandom(PixelTransform):
                     self.state.delay_counter = 0
                     self.state.delay_count_max = random.randint(
                         0,
-                        self.state.delay_count_limit,
+                        self.state.delay_count_max,
                     )
         # if fading LEDs
         if self.state.fade_type == LEDFadeType.FADE_OFF:

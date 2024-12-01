@@ -6,7 +6,7 @@ import random
 from collections.abc import Iterable, Sequence
 from datetime import datetime
 from enum import IntEnum
-from typing import TYPE_CHECKING, Any, ClassVar, overload
+from typing import TYPE_CHECKING, ClassVar, overload
 
 import numpy as np
 
@@ -30,9 +30,8 @@ class PixelSequence(Sequence[Pixel]):
     def __init__(
         self,
         led_count: int | None = None,
-        pixel_sequence: PixelSequence | list[Pixel] | None = None,
+        pixel_sequence: PixelSequence | list[Pixel] | list[PixelColor] | None = None,
         name: str | None = None,
-        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> None:
         """Create a pattern of lights.
 
@@ -51,7 +50,7 @@ class PixelSequence(Sequence[Pixel]):
             if isinstance(pixel_sequence, PixelSequence):
                 self._array = list(pixel_sequence)
             else:
-                self._array = pixel_sequence
+                self._array = [Pixel(p) for p in pixel_sequence]
             self._led_count = len(pixel_sequence)
         elif led_count is not None:
             self._led_count = led_count
@@ -309,7 +308,7 @@ class PixelSequence(Sequence[Pixel]):
         """
         return [True, False][random.randint(0, 1)]
 
-    def random_index(self) -> int:
+    def get_random_index(self) -> int:
         """Get a random index.
 
         Returns
@@ -320,6 +319,10 @@ class PixelSequence(Sequence[Pixel]):
         _led_index = random.randint(0, self.led_count - 1)
         self._set_index(_led_index)
         return self._led_index
+
+    def get_random_pixel(self) -> Pixel:
+        """Get a random pixel from this sequence."""
+        return self[self.get_random_index()]
 
     def copy(self) -> PixelSequence:
         """Make a copy of the sequence.

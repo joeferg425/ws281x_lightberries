@@ -92,20 +92,31 @@ class Pixel:
 
         # if it is an int and in range
         elif isinstance(color, (int, np.integer)) and color >= 0 and color <= MAX_INT24:
-            color = int(color)
+            color = int(color) & MAX_INT24
+            _color = (
+                ((color >> 16) & 0xFF),
+                ((color >> 8) & 0xFF),
+                (color & 0xFF),
+            )
             # if self._order == LEDOrder.RGB.value:
-            self.int32value = color & MAX_INT24
+            self.int32value = (
+                # this is where the rgb order comes into play
+                (int(_color[self._order.red]) << 16)
+                + (int(_color[self._order.green]) << 8)
+                + (int(_color[self._order.blue]))
+            )
 
         # this is an instance of this class, just use the value
         elif isinstance(color, Pixel):
             self.int32value = (
                 # this is where the rgb order comes into play
-                (int(color.array[self.order[0]]) << 16)
-                + (int(color.array[self.order[1]]) << 8)
-                + (int(color.array[self.order[2]]))
+                (int(color.rgb_array[self.order[0]]) << 16)
+                + (int(color.rgb_array[self.order[1]]) << 8)
+                + (int(color.rgb_array[self.order[2]]))
             )
 
         # if it is a tuple, list, or numpy array
+
         elif (
             isinstance(color, (tuple, list, np.ndarray))
             # and has length three
@@ -114,9 +125,10 @@ class Pixel:
                 msg = f"Invalid Pixel values: {color}"
                 raise PixelError(msg)
             # create a 3-byte int from the three bytes
+            _color = (color[LEDOrder.RGB.red], color[LEDOrder.RGB.green], color[LEDOrder.RGB.blue])
             self.int32value = (
                 # this is where the rgb order comes into play
-                (int(color[0]) << 16) + (int(color[1]) << 8) + (int(color[2]))
+                (int(_color[self._order[0]]) << 16) + (int(_color[self._order[1]]) << 8) + (int(_color[self._order[2]]))
             )
 
         # we've got an error boys!
@@ -164,12 +176,7 @@ class Pixel:
             a string representation of the pixel
 
         """
-        rgb_value = (
-            (self.int32value & 0xFF0000) >> 16,
-            (self.int32value & 0xFF00) >> 8,
-            self.int32value & 0xFF,
-        )
-        return f"PX#{rgb_value[0]:02X}{rgb_value[1]:02X}{rgb_value[2]:02X}:{self._order.name}"
+        return f"PX#{self.rgb_array[LEDOrder.RGB.red]:02X}{self.rgb_array[LEDOrder.RGB.green]:02X}{self.rgb_array[LEDOrder.RGB.blue]:02X}:{self._order.name}"  # noqa: E501
 
     def __repr__(
         self,
@@ -223,15 +230,10 @@ class Pixel:
             the RGB value into tuple
 
         """
-        rgb_tuple = (
+        return (
             (self.int32value & 0xFF0000) >> 16,
             (self.int32value & 0xFF00) >> 8,
             self.int32value & 0xFF,
-        )
-        return (
-            rgb_tuple[0],
-            rgb_tuple[1],
-            rgb_tuple[2],
         )
 
     @property
@@ -284,6 +286,21 @@ class Pixel:
         )
 
     @property
+    def red(self) -> int:
+        """Get red LED value."""
+        return self.rgb_array[LEDOrder.RGB.red]
+
+    @property
+    def green(self) -> int:
+        """Get green LED value."""
+        return self.rgb_array[LEDOrder.RGB.green]
+
+    @property
+    def blue(self) -> int:
+        """Get blue LED value."""
+        return self.rgb_array[LEDOrder.RGB.blue]
+
+    @property
     def hex_str(self) -> str:
         """Returns the color value as an RGB hex strings regardless of underlying RGB order.
 
@@ -292,8 +309,8 @@ class Pixel:
             value as a hexadecimal string
 
         """
-        rgb = self.tuple
-        return f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
+        rgb = self.rgb_tuple
+        return f"{rgb[LEDOrder.RGB.red]:02X}{rgb[LEDOrder.RGB.green]:02X}{rgb[LEDOrder.RGB.blue]:02X}"
 
     def invert(self) -> Pixel:
         """Get inverted pixel value.
@@ -351,7 +368,7 @@ class Pixel:
             a copy of this pixel
 
         """
-        return Pixel(self.array)
+        return Pixel(self.rgb_array)
 
     @overload
     def __getitem__(  # D105

@@ -1,11 +1,11 @@
-"""Fade all Pixels toward OFF."""
+"""Turn all Pixels OFF."""
 
 from __future__ import annotations
 
-import random
 from typing import TYPE_CHECKING
 
-from lightberries.transform_overlay._overlay_transform import OverlayTransform
+from lightberries.overlay.overlay_transform import OverlayTransform
+from lightberries.pixel_transform import PixelTransform
 
 if TYPE_CHECKING:
     import lightberries.array_controller
@@ -14,23 +14,23 @@ if TYPE_CHECKING:
     from lightberries.pixel_transform import PixelTransform
 
 
-class TransformFadeOff(OverlayTransform):
-    """Fade all Pixels toward OFF."""
+class TransformOff(OverlayTransform):
+    """Turn all Pixels OFF."""
 
     def __init__(
         self,
         controller: lightberries.array_controller.ArrayController,
     ) -> None:
-        """Fade all Pixels toward OFF.
+        """Turn all Pixels OFF.
 
         Args:
         ----
             controller: Array controller instance
-            state: initial state. Defaults to None.
+            state: the initial or previous state of the light string
 
         """
         super().__init__(
-            name=TransformFadeOff.__name__,
+            name=TransformOff.__name__,
             controller=controller,
         )
 
@@ -39,8 +39,6 @@ class TransformFadeOff(OverlayTransform):
         controller: lightberries.array_controller.ArrayController,
         pixel_sequence: PixelSequence | None = None,
         state: TransformState | None = None,
-        *,
-        fade_amount: float | None = None,
     ) -> list[PixelTransform]:
         """Configure the transformation.
 
@@ -48,30 +46,25 @@ class TransformFadeOff(OverlayTransform):
         ----
             controller: Array controller instance
             pixel_sequence: color sequence. Defaults to None.
-            state: the initial or previous state of the light string
+            state: initial state. Defaults to None.
             kwargs: extra args to the state object
-            fade_amount: amount to fade on each iteration
 
         Returns:
         -------
             list of transforms
 
         """
-        transform = TransformFadeOff(controller=controller)
+        transform = TransformOff(controller=controller)
         if pixel_sequence is not None:
             transform.state.pixel_sequence = pixel_sequence.copy()
         if state is not None:
             transform.state = state
-        else:
-            transform.state.set_fade_amount(fade_amount=random.uniform(0.01, 0.5))
-            if fade_amount is not None:
-                transform.state.set_fade_amount(fade_amount=fade_amount)
         if pixel_sequence is not None:
             transform.state.pixel_sequence = pixel_sequence
 
-        TransformFadeOff.ACTIVE_TRANSFORMS.append(transform)
-        return TransformFadeOff.ACTIVE_TRANSFORMS
+        TransformOff.ACTIVE_TRANSFORMS.append(transform)
+        return TransformOff.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
-        """Fade all Pixels toward OFF."""
-        self.controller.virtual_led_buffer[:] = self.controller.virtual_led_buffer * (1 - self.state.fade_amount_float)
+        """Turn all Pixels OFF."""
+        self.controller.virtual_led_buffer[:] *= 0

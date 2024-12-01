@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from lightberries.pixel_sequence import PixelSequence
 
 if TYPE_CHECKING:
-    from lightberries.base.pixel import Pixel  # pragma: no cover
+    from lightberries.base.pixel import Pixel, PixelColor  # pragma: no cover
 
 
 class ArraySequence(PixelSequence):
@@ -22,9 +22,8 @@ class ArraySequence(PixelSequence):
     def __init__(
         self,
         led_count: int | None = None,
-        pixel_sequence: PixelSequence | list[Pixel] | None = None,
+        pixel_sequence: PixelSequence | list[Pixel] | list[PixelColor] | None = None,
         name: str | None = None,
-        **kwargs: dict[str, Any],
     ) -> None:
         """Create a pattern of lights.
 
@@ -42,5 +41,4 @@ class ArraySequence(PixelSequence):
             led_count=led_count,
             pixel_sequence=pixel_sequence,
             name=name,
-            **kwargs,
         )

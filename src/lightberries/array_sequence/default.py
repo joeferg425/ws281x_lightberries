@@ -2,13 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from lightberries.array_sequence.base import ArraySequence
-
-if TYPE_CHECKING:
-    from lightberries.base.pixel import Pixel
-    from lightberries.pixel_sequence import PixelSequence
+from lightberries.array_sequence.array_sequence import ArraySequence
+from lightberries.array_sequence.repeat import SequenceRepeat
+from lightberries.pixel_sequence import PixelSequence
 
 
 class SequenceDefault(ArraySequence):
@@ -17,7 +13,6 @@ class SequenceDefault(ArraySequence):
     def __init__(
         self,
         led_count: int | None = None,
-        pixel_sequence: PixelSequence | list[Pixel] | None = None,
         name: str | None = None,
     ) -> None:
         """Create an array of default colors.
@@ -36,10 +31,13 @@ class SequenceDefault(ArraySequence):
         """
         if name is None:
             name = SequenceDefault.__name__
-        if pixel_sequence is None:
-            pixel_sequence = self.get_monthly_color_sequence().list
+        pixel_sequence = self.get_monthly_color_sequence()
         if led_count is None:
             led_count = len(pixel_sequence)
+        if led_count > pixel_sequence.led_count:
+            pixel_sequence = SequenceRepeat(led_count=led_count, pixel_sequence=pixel_sequence)
+        elif led_count < pixel_sequence.led_count:
+            pixel_sequence = PixelSequence(pixel_sequence=pixel_sequence[:led_count])
         super().__init__(
             pixel_sequence=pixel_sequence,
             led_count=led_count,

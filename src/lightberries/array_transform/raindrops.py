@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from lightberries.base.constants import MAX_INT8, SHAPE_2D
+from lightberries.overlay.fade_off import TransformFadeOff
 from lightberries.pixel_transform import PixelTransform
-from lightberries.transform_overlay.fade_off import TransformFadeOff
 
 if TYPE_CHECKING:
     import lightberries.array_controller
@@ -96,7 +96,7 @@ class TransformRaindrop(PixelTransform):
             raindrop_chance = random.uniform(0.01, 0.25)
 
         # assign raindrop growth speed
-        transform.state.step = transform.state.step_size_max
+        transform.state.step_size = transform.state.step_size_max
         if fade_amount is None:
             transform.state.set_fade_amount(((MAX_INT8 / transform.state.size_max) / MAX_INT8) * 2)
         else:
@@ -151,11 +151,11 @@ class TransformRaindrop(PixelTransform):
             if self.state.step_counter <= self.state.step_count_max:
                 # lower valued side of "splash"
                 index_lower_min = max(
-                    self.state.index - self.state.step * self.state.step_counter,
+                    self.state.index - self.state.step_size * self.state.step_counter,
                     0,
                 )
                 index_lower_max = max(
-                    self.state.index + 1 - self.state.step * self.state.step_counter,
+                    self.state.index + 1 - self.state.step_size * self.state.step_counter,
                     0,
                 )
                 # higher valued side of "splash"
@@ -164,7 +164,7 @@ class TransformRaindrop(PixelTransform):
                     self.controller.virtual_led_count,
                 )
                 index_higher_max = min(
-                    self.state.index + self.state.step_counter + self.state.step,
+                    self.state.index + self.state.step_counter + self.state.step_size,
                     self.controller.virtual_led_count,
                 )
                 if (index_lower_max - index_lower_min) > 0:
@@ -199,7 +199,7 @@ class TransformRaindrop(PixelTransform):
                     self.state.pixel_sequence[self.state.pixel_sequence.led_index].array * self.state.color_scaler
                 )
                 # increment splash growth counter
-                self.state.step_counter += self.state.step
+                self.state.step_counter += self.state.step_size
             # splash is done growing
             else:
                 # randomize next splash start index

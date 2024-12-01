@@ -8,12 +8,14 @@ from unittest import mock
 
 import lightberries.base.rpiws281x_patch
 from lightberries.array_controller import ArrayController
-from lightberries.array_transform.all_functions import TransformNone
-from lightberries.array_transform.base import (
+from lightberries.array_sequence.solid import SequenceSolid
+from lightberries.array_transform.all import TransformAccelerate, TransformNone
+from lightberries.array_transform.array_transform import (
     ArrayTransform,
 )
-from lightberries.base.pixel import LEDOrder
+from lightberries.base.pixel import LEDOrder, PixelColor
 from lightberries.base.ws281x_strings import WS281xString, WS281xStringError
+from lightberries.overlay.all import TransformFadeOff
 from lightberries.pixel_sequence import PixelSequence
 from lightberries.pixel_transform import PixelTransform
 
@@ -127,26 +129,34 @@ def new_controller_bigger() -> ArrayController:
 
 
 def test_pixel_transform_init() -> None:
-    name = "PixelTransform"
+    f_type = PixelTransform
+    name = f_type.__name__
     controller = new_controller()
     function = PixelTransform(
         controller=controller,
     )
-    assert function is not None
-    assert function.name == name
-    assert isinstance(function, PixelTransform)
+    assert function is not None, "function is none"
+    assert function.name == name, f"function name != {name} ({function.name})"
+    assert isinstance(
+        function,
+        f_type,
+    ), f"function is not an instance of the expected class: {type(function)} != {f_type}"
 
 
 def test_pixel_transform_init_name() -> None:
+    f_type = PixelTransform
     name = "test"
     controller = new_controller()
     function = PixelTransform(
         controller=controller,
         name=name,
     )
-    assert function is not None
-    assert function.name == name
-    assert isinstance(function, PixelTransform)
+    assert function is not None, "function is none"
+    assert function.name == name, f"function name != {name} ({function.name})"
+    assert isinstance(
+        function,
+        f_type,
+    ), f"function is not an instance of the expected class: {type(function)} != {f_type}"
 
 
 def test_pixel_transform_str() -> None:
@@ -162,10 +172,17 @@ def test_pixel_transform_repr() -> None:
 
 
 def test_pixel_transform_create() -> None:
+    f_type = PixelTransform
     controller = new_controller()
     function_list = PixelTransform.create(controller=controller)
-    assert function_list is not None
-    assert isinstance(function_list, list)
+    assert function_list is not None, "function is none"
+    assert all(
+        isinstance(
+            f,
+            list,
+        )
+        for f in function_list
+    ), f"not all functions are not an instance of the expected class: {f_type}"
     assert len(function_list) == 0
 
 
@@ -221,7 +238,7 @@ def test_pixel_transform_random_indices() -> None:
 def test_pixel_transform_update_array_index() -> None:
     controller = new_controller()
     function = PixelTransform(controller=controller)
-    assert function.state.step == 1
+    assert function.state.step_size == 1
     assert function.state.index == 0
     assert function.state.index_previous == 2
     assert function.state.index_next == 1
@@ -234,7 +251,7 @@ def test_pixel_transform_update_array_index() -> None:
 def test_pixel_transform_calc_range() -> None:
     controller = new_controller()
     function = PixelTransform(controller=controller)
-    assert function.state.step == 1
+    assert function.state.step_size == 1
     rng = function.calc_range()
     assert len(rng) == 1
     assert rng[0] == 1
@@ -255,8 +272,8 @@ def test_pixel_transform_calc_range() -> None:
 def test_pixel_transform_calc_range_2() -> None:
     controller = new_controller()
     function = PixelTransform(controller=controller)
-    function.state.step = 2
-    assert function.state.step == 2
+    function.state.step_size = 2
+    assert function.state.step_size == 2
     rng = function.calc_range()
     assert len(rng) == 2
     assert rng[0] == 1
@@ -271,9 +288,9 @@ def test_pixel_transform_calc_range_2() -> None:
 def test_pixel_transform_calc_range_3() -> None:
     controller = new_controller(led_count=4)
     function = PixelTransform(controller=controller)
-    function.state.step = 3
+    function.state.step_size = 3
     function.state.direction = -1
-    assert function.state.step == 3
+    assert function.state.step_size == 3
     rng = function.calc_range()
     assert len(rng) == 3
     assert rng[0] == 3
@@ -301,6 +318,97 @@ def test_pixel_transform_clear_active() -> None:
     assert len(ArrayTransform.ACTIVE_TRANSFORMS) == 0
 
 
+def test_pixel_transform_advance_delay_counter() -> None:
+    controller = new_controller(led_count=4)
+    transform = TransformNone(controller=controller)
+    transform.state.delay_count_max = 2
+    assert transform.state.delay_count_max == 2
+    assert transform.state.delay_count_max_setting == 0
+    assert transform.state.delay_counter == 0
+    assert transform.state.delay_count_reset is False
+    transform.advance_delay_counter()
+    assert transform.state.delay_count_max == 2
+    assert transform.state.delay_count_max_setting == 0
+    assert transform.state.delay_counter == 1
+    assert transform.state.delay_count_reset is False
+    transform.advance_delay_counter()
+    assert transform.state.delay_count_max == 2
+    assert transform.state.delay_count_max_setting == 0
+    assert transform.state.delay_counter == 0
+    assert transform.state.delay_count_reset is True
+
+
+def test_pixel_transform_advance_step_counter() -> None:
+    controller = new_controller(led_count=4)
+    transform = TransformNone(controller=controller)
+    transform.state.step_count_max = 2
+    assert transform.state.step_count_max == 2
+    assert transform.state.step_size_max_setting == 1
+    assert transform.state.step_counter == 0
+    assert transform.state.step_count_reset is False
+    transform.advance_step_counter()
+    assert transform.state.step_count_max == 2
+    assert transform.state.step_size_max_setting == 1
+    assert transform.state.step_counter == 1
+    assert transform.state.step_count_reset is False
+    transform.advance_step_counter()
+    assert transform.state.step_count_max == 2
+    assert transform.state.step_size_max_setting == 1
+    assert transform.state.step_counter == 0
+    assert transform.state.step_count_reset is True
+
+
+def test_pixel_transform_transform() -> None:
+    controller = new_controller(led_count=4)
+    transform = TransformNone(controller=controller)
+    transform.state.delay_count_max = 2
+    transform.state.step_count_max = 2
+    assert transform.state.delay_count_max == 2
+    assert transform.state.delay_count_max_setting == 0
+    assert transform.state.delay_counter == 0
+    assert transform.state.delay_count_reset is False
+    assert transform.state.step_count_max == 2
+    assert transform.state.step_size_max_setting == 1
+    assert transform.state.step_counter == 0
+    assert transform.state.step_count_reset is False
+    transform.transform()
+    assert transform.state.delay_count_max == 2
+    assert transform.state.delay_count_max_setting == 0
+    assert transform.state.delay_counter == 1
+    assert transform.state.delay_count_reset is False
+    assert transform.state.step_count_max == 2
+    assert transform.state.step_size_max_setting == 1
+    assert transform.state.step_counter == 0
+    assert transform.state.step_count_reset is False
+    transform.transform()
+    assert transform.state.delay_count_max == 2
+    assert transform.state.delay_count_max_setting == 0
+    assert transform.state.delay_counter == 0
+    assert transform.state.delay_count_reset is True
+    assert transform.state.step_count_max == 2
+    assert transform.state.step_size_max_setting == 1
+    assert transform.state.step_counter == 1
+    assert transform.state.step_count_reset is False
+    transform.transform()
+    assert transform.state.delay_count_max == 2
+    assert transform.state.delay_count_max_setting == 0
+    assert transform.state.delay_counter == 1
+    assert transform.state.delay_count_reset is False
+    assert transform.state.step_count_max == 2
+    assert transform.state.step_size_max_setting == 1
+    assert transform.state.step_counter == 1
+    assert transform.state.step_count_reset is False
+    transform.transform()
+    assert transform.state.delay_count_max == 2
+    assert transform.state.delay_count_max_setting == 0
+    assert transform.state.delay_counter == 0
+    assert transform.state.delay_count_reset is True
+    assert transform.state.step_count_max == 2
+    assert transform.state.step_size_max_setting == 1
+    assert transform.state.step_counter == 0
+    assert transform.state.step_count_reset is True
+
+
 def test_array_transform_init() -> None:
     name = "ArrayTransform"
     controller = new_controller()
@@ -318,9 +426,94 @@ def test_array_transform_create() -> None:
     assert len(function_list) == 0
 
 
+def test_accelerate_init() -> None:
+    controller = new_controller()
+    function = TransformAccelerate(controller=controller)
+    assert function is not None
+    assert isinstance(function, TransformAccelerate)
+
+
+def test_accelerate_create() -> None:
+    controller = new_controller()
+    function_list = TransformAccelerate.create(controller=controller)
+    assert function_list is not None
+    assert isinstance(function_list, list)
+    assert len(function_list) > 0
+    assert all(isinstance(f, (TransformAccelerate, TransformFadeOff)) for f in function_list)
+
+
+def test_accelerate_create_state_is_not_none() -> None:
+    controller = new_controller()
+    setting = 10000
+    accelerate = TransformAccelerate(controller=controller)
+    accelerate.state.delay_count_max_setting = setting
+    function_list = TransformAccelerate.create(
+        controller=controller,
+        state=accelerate.state,
+    )
+    assert function_list is not None
+    assert isinstance(function_list, list)
+    assert len(function_list) > 0
+    assert all(isinstance(f, (TransformAccelerate, TransformFadeOff)) for f in function_list)
+    assert function_list[0].state.delay_count_max_setting == setting
+
+
+def test_accelerate_create_state_is_none() -> None:
+    controller = new_controller()
+    accelerate = TransformAccelerate(controller=controller)
+    function_list = TransformAccelerate.create(
+        controller=controller,
+        state=accelerate.state,
+    )
+    assert function_list is not None
+    assert isinstance(function_list, list)
+    assert len(function_list) > 0
+    assert all(isinstance(f, (TransformAccelerate, TransformFadeOff)) for f in function_list)
+
+
+def test_accelerate_create_with_pixel_sequence() -> None:
+    controller = new_controller()
+    pixel_sequence = SequenceSolid(led_count=12, color=PixelColor.CYAN)
+    function_list = TransformAccelerate.create(
+        controller=controller,
+        pixel_sequence=pixel_sequence,
+    )
+    assert function_list is not None
+    assert isinstance(function_list, list)
+    assert len(function_list) > 0
+    for f in function_list:
+        assert f.state.pixel_sequence == pixel_sequence
+
+
+def test_accelerate_create_with_values() -> None:
+    delay_count_max = 12345
+    step_count_max = 123456
+    color_cycle = False
+    fade_amount = 2
+    controller = new_controller()
+    pixel_sequence = SequenceSolid(led_count=12, color=PixelColor.CYAN)
+    function_list = TransformAccelerate.create(
+        controller=controller,
+        pixel_sequence=pixel_sequence,
+        delay_count_max=delay_count_max,
+        step_count_max=step_count_max,
+        color_cycle=color_cycle,
+        fade_amount=fade_amount,
+    )
+    assert function_list is not None
+    assert isinstance(function_list, list)
+    assert len(function_list) > 0
+    for f in function_list:
+        assert f.state.pixel_sequence == pixel_sequence
+        assert f.state.delay_count_max == delay_count_max
+        assert f.state.step_count_max == step_count_max
+        assert f.state.color_cycle == color_cycle
+        assert f.state.fade_amount == fade_amount
+
+
 # def test_repr():
-#     control = newController()
-#     pattern = pixel_array_to_numpy_array(
+#     control = new_controller()
+#     pattern = PixelSequence.pixel_array_to_numpy_array(
 #         [PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE],
 #     )
 #     function = ArrayTransform(control, assert_func, pattern)

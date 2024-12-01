@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from lightberries.array_sequence.base import ArraySequence
+from lightberries.array_sequence.array_sequence import ArraySequence
 from lightberries.array_sequence.rainbow import SequenceRainbow
 from lightberries.array_sequence.repeat import SequenceRepeat
 from lightberries.pixel_sequence import PixelSequence

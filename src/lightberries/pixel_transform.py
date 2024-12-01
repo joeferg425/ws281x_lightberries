@@ -153,6 +153,10 @@ class PixelTransform:
 
     def transform(self) -> None:
         """Run this array function's transformation."""
+        self.advance_delay_counter()
+
+    def next_step(self) -> None:
+        """Run this array function's transformation."""
 
     def update_array_index(
         self,
@@ -163,7 +167,7 @@ class PixelTransform:
         self.state.index_previous = self.state.index
         self.state.index = int(self.state.index_range[-1])
         self.state.index_next = (
-            self.state.index + (self.state.step * self.state.direction)
+            self.state.index + (self.state.step_size * self.state.direction)
         ) % self.controller.virtual_led_count
         self.state.index_updated = True
 
@@ -182,7 +186,7 @@ class PixelTransform:
             array of indices
 
         """
-        new_index_no_modulo = self.state.index + (self.state.step * self.state.direction)
+        new_index_no_modulo = self.state.index + (self.state.step_size * self.state.direction)
         self.state.index_range = np.array(
             list(
                 range(
@@ -285,3 +289,33 @@ class PixelTransform:
     def clear_active() -> None:
         """Clear the list of active transforms."""
         PixelTransform.ACTIVE_TRANSFORMS.clear()
+
+    def advance_delay_counter(self) -> None:
+        """Advance delay counter, advance step when done delaying."""
+        self.state.delay_counter += 1
+        self.state.delay_count_reset = False
+        # check delay counter, update index when it hits max
+        if self.state.delay_counter >= self.state.delay_count_max:
+            # reset delay counter
+            self.state.delay_counter = 0
+            self.state.delay_count_reset = True
+            self.advance_step_counter()
+            self.next_step()
+
+    def advance_step_counter(self) -> None:
+        """Advance delay counter."""
+        self.state.step_counter += 1
+        self.state.step_count_reset = False
+        # check delay counter, update index when it hits max
+        if self.state.step_counter >= self.state.step_count_max:
+            # reset delay counter
+            self.state.step_counter = 0
+            self.state.step_count_reset = True
+
+    def advance_index(self) -> None:
+        """Calculate next transform indices."""
+        self.state.index_previous = self.state.index
+        self.state.index_range = self.calc_range()
+        self.state.index_next = self.state.index_range[-1]
+        self.state.index = self.state.index_next
+        self.state.index_updated = self.state.index_previous != self.state.index
