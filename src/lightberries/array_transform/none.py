@@ -62,7 +62,7 @@ class TransformNone(PixelTransform):
         TransformNone.ACTIVE_TRANSFORMS.append(transform)
         return TransformNone.ACTIVE_TRANSFORMS
 
-    def next_step(self) -> None:
+    def transform(self) -> None:
         """Do nothing."""
         if not self.state.ran_once:
             self.state.ran_once = True

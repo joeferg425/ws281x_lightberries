@@ -200,8 +200,8 @@
 					"--function",
 					"cylon",
 					"--verbose",
-					"--duration",
-					"10"
+					// "--duration",
+					// "10"
 				]
 			},
 			{
@@ -381,10 +381,10 @@
 				]
 			},
 			{
-				"name": "example: dot array",
+				"name": "example: simulate array",
 				"type": "debugpy",
 				"request": "launch",
-				"program": "${workspaceFolder}/examples/dot_array.py",
+				"program": "${workspaceFolder}/examples/simulate_array.py",
 				"console": "integratedTerminal",
 				"linux": {
 					"sudo": true

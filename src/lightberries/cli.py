@@ -5,20 +5,20 @@ from __future__ import annotations
 
 import logging
 import sys
-from typing import Optional, cast
+from typing import Optional, cast, TYPE_CHECKING
 
 import typer
-from strenum import StrEnum
 
 import lightberries
 from lightberries.array_controller import ArrayController
 from lightberries.array_sequence.all import *
-from lightberries.array_sequence.named import SequenceName
 from lightberries.array_transform.all import *
 from lightberries.base.exceptions import LightBerryError, PermissionsError
 from lightberries.base.logger import LOGGER
-from lightberries.pixel_sequence import PixelSequence
-from lightberries.pixel_transform import PixelTransform
+
+if TYPE_CHECKING:
+    from lightberries.array_transform.all import FunctionEnum
+    from lightberries.array_sequence.all import ColorEnum
 
 CLI = typer.Typer()
 
@@ -27,12 +27,6 @@ DEFAULT_GPIO_PWM_PIN = 18
 DEFAULT_DMA_CHANNEL = 5
 DEFAULT_PWM_FREQUENCY = 800000
 DEFAULT_BRIGHTNESS = 0.7
-FUNCTION_NAMES = [name.lower() for name in PixelTransform.ALL_TRANSFORMS]
-FunctionEnum = StrEnum("FunctionEnum", FUNCTION_NAMES)
-COLOR_SEQUENCE_NAMES = [name.lower() for name in PixelSequence.ALL_SEQUENCES] + [
-    name.lower() for name in SequenceName._member_names_
-]
-ColorEnum = StrEnum("ColorEnum", COLOR_SEQUENCE_NAMES)
 
 
 @CLI.command(

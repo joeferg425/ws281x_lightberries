@@ -1,10 +1,15 @@
 """Create some named sequences."""
 
+from __future__ import annotations
+
 from enum import IntEnum, auto
+from typing import TYPE_CHECKING
 
 from lightberries.array_sequence.transition import SequenceTransition
 from lightberries.base.pixel import Pixel, PixelColor
-from lightberries.pixel_sequence import PixelSequence
+
+if TYPE_CHECKING:
+    from lightberries.pixel_sequence import PixelSequence
 
 
 class SequenceName(IntEnum):
@@ -13,7 +18,7 @@ class SequenceName(IntEnum):
     sunset = auto()
 
 
-def get_named_sequence(name: SequenceName, led_count: int) -> PixelSequence:
+def get_named_sequence(name: SequenceName, led_count: int | None = None) -> PixelSequence:
     """Get a named sequence."""
     sequence: PixelSequence
     if name is SequenceName.sunset:  # pragma: no cover

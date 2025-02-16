@@ -238,79 +238,209 @@ def test_pixel_transform_random_indices() -> None:
     assert not all(i == idxs[0] for i in idxs)
 
 
-def test_pixel_transform_update_array_index() -> None:
-    controller = new_controller()
+def test_pixel_transform_advance_index_step_1_dir_forward() -> None:
+    led_count = 4
+    controller = new_controller(led_count=led_count)
     function = PixelTransform(controller=controller)
     assert function.state.step_size == 1
+    assert function.state.direction == 1
+    assert function.state.index_previous == led_count - 1
     assert function.state.index == 0
-    assert function.state.index_previous == 2
     assert function.state.index_next == 1
-    function.update_array_index()
-    assert function.state.index == 1
+    function.advance_index()
     assert function.state.index_previous == 0
+    assert function.state.index == 1
+    assert function.state.index_next == 2
+    function.advance_index()
+    assert function.state.index_previous == 1
+    assert function.state.index == 2
+    assert function.state.index_next == 3
+    function.advance_index()
+    assert function.state.index_previous == 2
+    assert function.state.index == 3
+    assert function.state.index_next == 0
+    function.advance_index()
+    assert function.state.index_previous == 3
+    assert function.state.index == 0
+    assert function.state.index_next == 1
+    function.advance_index()
+    assert function.state.index_previous == 0
+    assert function.state.index == 1
     assert function.state.index_next == 2
 
 
-def test_pixel_transform_calc_range() -> None:
-    controller = new_controller()
+def test_pixel_transform_advance_index_step_3_dir_forward() -> None:
+    led_count = 4
+    controller = new_controller(led_count=led_count)
+    function = PixelTransform(controller=controller)
+    function.state.step_size = 3
+    assert function.state.step_size == 3
+    assert function.state.direction == 1
+    assert function.state.index_previous == led_count - 1
+    assert function.state.index == 0
+    assert function.state.index_next == 1
+    function.advance_index()
+    assert function.state.index_previous == 0
+    assert function.state.index == 3
+    assert function.state.index_next == 2
+    function.advance_index()
+    assert function.state.index_previous == 3
+    assert function.state.index == 2
+    assert function.state.index_next == 1
+    function.advance_index()
+    assert function.state.index_previous == 2
+    assert function.state.index == 1
+    assert function.state.index_next == 0
+    function.advance_index()
+    assert function.state.index_previous == 1
+    assert function.state.index == 0
+    assert function.state.index_next == 3
+    function.advance_index()
+    assert function.state.index_previous == 0
+    assert function.state.index == 3
+    assert function.state.index_next == 2
+
+
+def test_pixel_transform_advance_index_step_1_dir_backward() -> None:
+    led_count = 4
+    controller = new_controller(led_count=led_count)
+    function = PixelTransform(controller=controller)
+    function.state.direction = -1
+    assert function.state.step_size == 1
+    assert function.state.direction == -1
+    assert function.state.index_previous == led_count - 1
+    assert function.state.index == 0
+    assert function.state.index_next == 1
+    function.advance_index()
+    assert function.state.index_previous == 0
+    assert function.state.index == 3
+    assert function.state.index_next == 2
+    function.advance_index()
+    assert function.state.index_previous == 3
+    assert function.state.index == 2
+    assert function.state.index_next == 1
+    function.advance_index()
+    assert function.state.index_previous == 2
+    assert function.state.index == 1
+    assert function.state.index_next == 0
+    function.advance_index()
+    assert function.state.index_previous == 1
+    assert function.state.index == 0
+    assert function.state.index_next == 3
+    function.advance_index()
+    assert function.state.index_previous == 0
+    assert function.state.index == 3
+    assert function.state.index_next == 2
+
+
+def test_pixel_transform_advance_index_step_3_dir_backward() -> None:
+    led_count = 4
+    controller = new_controller(led_count=led_count)
+    function = PixelTransform(controller=controller)
+    function.state.direction = -1
+    function.state.step_size = 3
+    assert function.state.step_size == 3
+    assert function.state.direction == -1
+    assert function.state.index_previous == led_count - 1
+    assert function.state.index == 0
+    assert function.state.index_next == 1
+    function.advance_index()
+    assert function.state.index_previous == 0
+    assert function.state.index == 1
+    assert function.state.index_next == 2
+    function.advance_index()
+    assert function.state.index_previous == 1
+    assert function.state.index == 2
+    assert function.state.index_next == 3
+    function.advance_index()
+    assert function.state.index_previous == 2
+    assert function.state.index == 3
+    assert function.state.index_next == 0
+    function.advance_index()
+    assert function.state.index_previous == 3
+    assert function.state.index == 0
+    assert function.state.index_next == 1
+    function.advance_index()
+    assert function.state.index_previous == 0
+    assert function.state.index == 1
+    assert function.state.index_next == 2
+
+
+def test_pixel_transform_calc_range_step_1_dir_forward() -> None:
+    led_count = 3
+    controller = new_controller(led_count=led_count)
     function = PixelTransform(controller=controller)
     assert function.state.step_size == 1
+    function.advance_index()
     rng = function.calc_range()
-    assert len(rng) == 1
-    assert rng[0] == 1
-    function.update_array_index()
-    rng = function.calc_range()
+    assert function.state.index == 1
     assert len(rng) == 1
     assert rng[0] == 2
-    function.update_array_index()
+    function.advance_index()
     rng = function.calc_range()
+    assert function.state.index == 2
     assert len(rng) == 1
     assert rng[0] == 0
-    function.update_array_index()
+    function.advance_index()
     rng = function.calc_range()
+    assert function.state.index == 0
     assert len(rng) == 1
     assert rng[0] == 1
+    function.advance_index()
+    rng = function.calc_range()
+    assert function.state.index == 1
+    assert len(rng) == 1
+    assert rng[0] == 2
 
 
-def test_pixel_transform_calc_range_2() -> None:
-    controller = new_controller()
+def test_pixel_transform_calc_range_step_2_dir_forward() -> None:
+    led_count = 5
+    controller = new_controller(led_count=led_count)
     function = PixelTransform(controller=controller)
     function.state.step_size = 2
     assert function.state.step_size == 2
+    function.advance_index()
     rng = function.calc_range()
+    assert function.state.index == 2
     assert len(rng) == 2
-    assert rng[0] == 1
-    assert rng[1] == 2
-    function.update_array_index()
+    assert rng[0] == 3
+    assert rng[1] == 4
+    function.advance_index()
     rng = function.calc_range()
+    assert function.state.index == 4
     assert len(rng) == 2
     assert rng[0] == 0
     assert rng[1] == 1
 
 
-def test_pixel_transform_calc_range_3() -> None:
-    controller = new_controller(led_count=4)
+def test_pixel_transform_calc_range_step_3_dir_backward() -> None:
+    led_count = 4
+    controller = new_controller(led_count=led_count)
     function = PixelTransform(controller=controller)
     function.state.step_size = 3
     function.state.direction = -1
     assert function.state.step_size == 3
+    function.advance_index()
     rng = function.calc_range()
-    assert len(rng) == 3
-    assert rng[0] == 3
-    assert rng[1] == 2
-    assert rng[2] == 1
-    function.update_array_index()
-    rng = function.calc_range()
+    assert function.state.index == 1
     assert len(rng) == 3
     assert rng[0] == 0
     assert rng[1] == 3
     assert rng[2] == 2
-    function.update_array_index()
+    function.advance_index()
     rng = function.calc_range()
+    assert function.state.index == 2
     assert len(rng) == 3
     assert rng[0] == 1
     assert rng[1] == 0
     assert rng[2] == 3
+    function.advance_index()
+    rng = function.calc_range()
+    assert function.state.index == 3
+    assert len(rng) == 3
+    assert rng[0] == 2
+    assert rng[1] == 1
+    assert rng[2] == 0
 
 
 def test_pixel_transform_clear_active() -> None:
@@ -363,7 +493,7 @@ def test_pixel_transform_advance_step_counter() -> None:
 
 def test_pixel_transform_transform() -> None:
     controller = new_controller(led_count=4)
-    transform = TransformNone(controller=controller)
+    transform = PixelTransform(controller=controller)
     transform.state.delay_count_max = 2
     transform.state.step_count_max = 2
     assert transform.state.delay_count_max == 2
@@ -375,6 +505,8 @@ def test_pixel_transform_transform() -> None:
     assert transform.state.step_counter == 0
     assert transform.state.step_count_reset is False
     transform.transform()
+    if transform.state.delay_count_reset:
+        transform.advance_step_counter()
     assert transform.state.delay_count_max == 2
     assert transform.state.delay_count_max_setting == 0
     assert transform.state.delay_counter == 1
@@ -384,6 +516,8 @@ def test_pixel_transform_transform() -> None:
     assert transform.state.step_counter == 0
     assert transform.state.step_count_reset is False
     transform.transform()
+    if transform.state.delay_count_reset:
+        transform.advance_step_counter()
     assert transform.state.delay_count_max == 2
     assert transform.state.delay_count_max_setting == 0
     assert transform.state.delay_counter == 0
@@ -393,6 +527,8 @@ def test_pixel_transform_transform() -> None:
     assert transform.state.step_counter == 1
     assert transform.state.step_count_reset is False
     transform.transform()
+    if transform.state.delay_count_reset:
+        transform.advance_step_counter()
     assert transform.state.delay_count_max == 2
     assert transform.state.delay_count_max_setting == 0
     assert transform.state.delay_counter == 1
@@ -402,6 +538,8 @@ def test_pixel_transform_transform() -> None:
     assert transform.state.step_counter == 1
     assert transform.state.step_count_reset is False
     transform.transform()
+    if transform.state.delay_count_reset:
+        transform.advance_step_counter()
     assert transform.state.delay_count_max == 2
     assert transform.state.delay_count_max_setting == 0
     assert transform.state.delay_counter == 0
@@ -412,95 +550,202 @@ def test_pixel_transform_transform() -> None:
     assert transform.state.step_count_reset is True
 
 
-def test_pixel_transform_advance_index_no_reflect() -> None:
-    controller = new_controller(led_count=4)
+def test_pixel_transform_advance_index_no_reflect_step_3() -> None:
+    led_count = 5
+    controller = new_controller(led_count=5)
+    function = TransformNone(controller=controller)
+    function.state.step_size = 3
+    assert function.state.index_previous == led_count - 1
+    assert function.state.index == 0
+    assert function.state.index_bounce is False
+    assert len(function.state.index_range) == 0
+    # 0 --> 1 -> 2 -> 3
+    function.advance_index()
+    function.calc_range()
+    assert function.state.index_previous == 0
+    assert function.state.index == 3
+    assert function.state.index_next == 1
+    assert function.state.index_bounce is False
+    assert len(function.state.index_range) == 3
+    expected = np.array([4, 0, 1], dtype=np.int32)
+    assert_array_equal(function.state.index_range, expected)
+    # 3 --> 4 -> 0 -> 1
+    function.advance_index()
+    function.calc_range()
+    assert function.state.index_previous == 3
+    assert function.state.index == 1
+    assert function.state.index_next == 4
+    assert function.state.index_bounce is False
+    assert len(function.state.index_range) == 3
+    expected = np.array([2, 3, 4], dtype=np.int32)
+    assert_array_equal(function.state.index_range, expected)
+    # 1 --> 2 -> 3 -> 4
+    function.advance_index()
+    function.calc_range()
+    assert function.state.index_previous == 1
+    assert function.state.index == 4
+    assert function.state.index_next == 2
+    assert function.state.index_bounce is False
+    assert len(function.state.index_range) == 3
+    expected = np.array([0, 1, 2], dtype=np.int32)
+    assert_array_equal(function.state.index_range, expected)
+    # 4 --> 0 -> 1 -> 2
+    function.advance_index()
+    function.calc_range()
+    assert function.state.index_previous == 4
+    assert function.state.index == 2
+    assert function.state.index_next == 0
+    assert function.state.index_bounce is False
+    assert len(function.state.index_range) == 3
+    expected = np.array([3, 4, 0], dtype=np.int32)
+    assert_array_equal(function.state.index_range, expected)
+
+
+def test_pixel_transform_advance_index_with_reflect_step_3() -> None:
+    led_count = 5
+    controller = new_controller(led_count=led_count)
     transform = TransformNone(controller=controller)
     transform.state.step_size = 3
+    transform.state.index_bounce = True
     assert transform.state.index == 0
-    assert transform.state.index_previous == 3
-    assert transform.state.index_reflect is False
+    assert transform.state.index_previous == led_count - 1
+    assert transform.state.index_bounce is True
     assert len(transform.state.index_range) == 0
+    assert transform.state.step_size == 3
+    assert transform.state.direction == 1
+    # 0+3=3%5=3 --> 3 -> 2 -> 1
     transform.advance_index()
     assert transform.state.index == 3
     assert transform.state.index_previous == 0
-    assert transform.state.index_reflect is False
+    assert transform.state.index_bounce is True
     assert len(transform.state.index_range) == 3
-    expected = np.array([1, 2, 3], dtype=np.int32)
+    expected = np.array([3, 2, 1], dtype=np.int32)
     assert_array_equal(transform.state.index_range, expected)
-    transform.advance_index()
-    assert transform.state.index == 2
-    assert transform.state.index_previous == 3
-    assert transform.state.index_reflect is False
-    assert len(transform.state.index_range) == 3
-    expected = np.array([0, 1, 2], dtype=np.int32)
-    assert_array_equal(transform.state.index_range, expected)
+    assert transform.state.step_size == 3
+    assert transform.state.direction == 1
+    # 3+3=6%5=1 --> 2 -> 3 -> 4
     transform.advance_index()
     assert transform.state.index == 1
-    assert transform.state.index_previous == 2
-    assert transform.state.index_reflect is False
-    assert len(transform.state.index_range) == 3
-    expected = np.array([3, 0, 1], dtype=np.int32)
-    assert_array_equal(transform.state.index_range, expected)
-    transform.advance_index()
-    assert transform.state.index == 0
-    assert transform.state.index_previous == 1
-    assert transform.state.index_reflect is False
-    assert len(transform.state.index_range) == 3
-    expected = np.array([2, 3, 0], dtype=np.int32)
-    assert_array_equal(transform.state.index_range, expected)
-
-
-def test_pixel_transform_advance_index_with_reflect() -> None:
-    controller = new_controller(led_count=5)
-    transform = TransformNone(controller=controller)
-    transform.state.step_size = 3
-    transform.state.index_reflect = True
-    assert transform.state.index == 0
-    assert transform.state.index_previous == 4
-    assert transform.state.index_reflect is True
-    assert len(transform.state.index_range) == 0
-    assert transform.state.step_size == 3
-    assert transform.state.direction == 1
-    # 0 -> 1 -> 2 -> 3
-    transform.advance_index()
-    assert transform.state.index == 3
-    assert transform.state.index_previous == 0
-    assert transform.state.index_reflect is True
-    assert len(transform.state.index_range) == 3
-    expected = np.array([1, 2, 3], dtype=np.int32)
-    assert_array_equal(transform.state.index_range, expected)
-    assert transform.state.step_size == 3
-    assert transform.state.direction == 1
-    # 3 -> 4 -> 3 -> 2
-    transform.advance_index()
-    assert transform.state.index == 2
     assert transform.state.index_previous == 3
-    assert transform.state.index_reflect is True
+    assert transform.state.index_bounce is True
     assert len(transform.state.index_range) == 3
     expected = np.array([4, 3, 2], dtype=np.int32)
     assert_array_equal(transform.state.index_range, expected)
     assert transform.state.step_size == 3
     assert transform.state.direction == -1
-    # 2 -> 1 -> 0 -> 1
+    # 2 --> 1 -> 0 -> 1
     transform.advance_index()
     assert transform.state.index == 1
     assert transform.state.index_previous == 2
-    assert transform.state.index_reflect is True
+    assert transform.state.index_bounce is True
     assert len(transform.state.index_range) == 3
     assert transform.state.step_size == 3
     assert transform.state.direction == 1
     expected = np.array([1, 0, 1], dtype=np.int32)
     assert_array_equal(transform.state.index_range, expected)
-    # 1 -> 2 -> 3 -> 4
+    # 1 --> 2 -> 3 -> 4
     transform.advance_index()
     assert transform.state.index == 4
     assert transform.state.index_previous == 1
-    assert transform.state.index_reflect is True
+    assert transform.state.index_bounce is True
     assert len(transform.state.index_range) == 3
     expected = np.array([2, 3, 4], dtype=np.int32)
     assert_array_equal(transform.state.index_range, expected)
     assert transform.state.step_size == 3
     assert transform.state.direction == 1
+
+
+def test_pixel_transform_advance_sequence_index_no_reflect_step_3() -> None:
+    led_count = 5
+    sequence_count = 3
+    controller = new_controller(led_count=led_count)
+    pixel_sequence = PixelSequence(led_count=sequence_count)
+    function_list = TransformNone.create(controller=controller, pixel_sequence=pixel_sequence)
+    transform = function_list[0]
+    transform.state.step_size = 3
+    assert transform.state.index == 0
+    assert transform.state.index_previous == led_count - 1
+    assert transform.state.index_bounce is False
+    assert len(transform.state.index_range) == 0
+    # (0,1,2) --> (1,2,3) -> (2,3,4) -> (3,4,0)
+    transform.advance_index()
+    assert transform.state.index == 3
+    assert transform.state.index_previous == 0
+    assert transform.state.index_bounce is False
+    assert len(transform.state.index_range) == sequence_count
+    expected = np.array([3, 4, 0], dtype=np.int32)
+    assert_array_equal(transform.state.index_range, expected)
+    # (3,4,0) --> (4,0,1) -> (0,1,2) -> (1,2,3)
+    transform.advance_index()
+    assert transform.state.index == 1
+    assert transform.state.index_previous == 3
+    assert transform.state.index_bounce is False
+    assert len(transform.state.index_range) == sequence_count
+    expected = np.array([1, 2, 3], dtype=np.int32)
+    assert_array_equal(transform.state.index_range, expected)
+    # (1,2,3) --> (2,3,4) -> (3,4,0) -> (4,0,1)
+    transform.advance_index()
+    assert transform.state.index == 4
+    assert transform.state.index_previous == 1
+    assert transform.state.index_bounce is False
+    assert len(transform.state.index_range) == sequence_count
+    expected = np.array([4, 0, 1], dtype=np.int32)
+    assert_array_equal(transform.state.index_range, expected)
+    # (4,0,1) --> (0,1,2) -> (1,2,3) -> (2,3,4)
+    transform.advance_index()
+    assert transform.state.index == 2
+    assert transform.state.index_previous == 4
+    assert transform.state.index_bounce is False
+    assert len(transform.state.index_range) == sequence_count
+    expected = np.array([2, 3, 4], dtype=np.int32)
+    assert_array_equal(transform.state.index_range, expected)
+
+
+def test_pixel_transform_advance_sequence_index_bounce_step_3() -> None:
+    led_count = 5
+    pixel_count = 3
+    controller = new_controller(led_count=led_count)
+    pixel_sequence = PixelSequence(led_count=pixel_count)
+    function_list = TransformNone.create(controller=controller, pixel_sequence=pixel_sequence)
+    transform = function_list[0]
+    transform.state.step_size = 3
+    transform.state.index_bounce = True
+    assert transform.state.index == 0
+    assert transform.state.index_previous == led_count - 1
+    assert transform.state.index_bounce is True
+    assert len(transform.state.index_range) == 0
+    # (0,1,2) --> (1,2,3) -> (2,3,4) -> (3,4,3)
+    transform.advance_index()
+    assert transform.state.index == 3
+    assert transform.state.index_previous == 0
+    assert transform.state.index_bounce is True
+    assert len(transform.state.index_range) == pixel_count
+    expected = np.array([3, 4, 3], dtype=np.int32)
+    assert_array_equal(transform.state.index_range, expected)
+    # (3,4,3) --> (4,3,2) -> (3,2,1) -> (2,1,0)
+    transform.advance_index()
+    assert transform.state.index == 2
+    assert transform.state.index_previous == 3
+    assert transform.state.index_bounce is True
+    assert len(transform.state.index_range) == pixel_count
+    expected = np.array([2, 1, 0], dtype=np.int32)
+    assert_array_equal(transform.state.index_range, expected)
+    # (2,1,0) --> (1,0,1) -> (0,1,2) -> (1,2,3)
+    transform.advance_index()
+    assert transform.state.index == 1
+    assert transform.state.index_previous == 2
+    assert transform.state.index_bounce is True
+    assert len(transform.state.index_range) == pixel_count
+    expected = np.array([1, 2, 3], dtype=np.int32)
+    assert_array_equal(transform.state.index_range, expected)
+    # (1,2,3) --> (2,3,4) -> (3,4,3) -> (4,3,2)
+    transform.advance_index()
+    assert transform.state.index == 4
+    assert transform.state.index_previous == 1
+    assert transform.state.index_bounce is True
+    assert len(transform.state.index_range) == pixel_count
+    expected = np.array([4, 3, 2], dtype=np.int32)
+    assert_array_equal(transform.state.index_range, expected)
 
 
 def test_array_transform_init() -> None:
@@ -746,7 +991,7 @@ def test_accelerate_next() -> None:
 #     pattern = pixel_array_to_numpy_array(
 #         [PixelColor.RED, PixelColor.OFF, PixelColor.PINK],
 #     )
-#     function = ArrayTransform(control, ArrayTransform.update_array_index, pattern)
+#     function = ArrayTransform(control, ArrayTransform.advance_index, pattern)
 #     control.function_list.append(function)
 #     assert function._index == 0
 #     assert function._step == 1
@@ -770,7 +1015,7 @@ def test_accelerate_next() -> None:
 #     pattern = pixel_array_to_numpy_array(
 #         [PixelColor.RED, PixelColor.OFF, PixelColor.PINK],
 #     )
-#     function = ArrayTransform(control, ArrayTransform.update_array_index, pattern)
+#     function = ArrayTransform(control, ArrayTransform.advance_index, pattern)
 #     control.function_list.append(function)
 #     function._step = 2
 #     assert function._index == 0
@@ -818,8 +1063,8 @@ def test_accelerate_next() -> None:
 #     pattern = pixel_array_to_numpy_array(
 #         [PixelColor.RED, PixelColor.OFF, PixelColor.PINK],
 #     )
-#     function1 = ArrayTransform(control, ArrayTransform.update_array_index, pattern)
-#     function2 = ArrayTransform(control, ArrayTransform.update_array_index, pattern)
+#     function1 = ArrayTransform(control, ArrayTransform.advance_index, pattern)
+#     function2 = ArrayTransform(control, ArrayTransform.advance_index, pattern)
 #     function3 = ArrayTransform(
 #         control,
 #         ArrayTransform.functionCollisionDetection,
@@ -846,8 +1091,8 @@ def test_accelerate_next() -> None:
 #     pattern = pixel_array_to_numpy_array(
 #         [PixelColor.RED, PixelColor.OFF, PixelColor.PINK],
 #     )
-#     function1 = ArrayTransform(control, ArrayTransform.update_array_index, pattern)
-#     function2 = ArrayTransform(control, ArrayTransform.update_array_index, pattern)
+#     function1 = ArrayTransform(control, ArrayTransform.advance_index, pattern)
+#     function2 = ArrayTransform(control, ArrayTransform.advance_index, pattern)
 #     function3 = ArrayTransform(
 #         control,
 #         ArrayTransform.functionCollisionDetection,
@@ -891,8 +1136,8 @@ def test_accelerate_next() -> None:
 #     pattern = pixel_array_to_numpy_array(
 #         [PixelColor.RED, PixelColor.OFF, PixelColor.PINK],
 #     )
-#     function1 = ArrayTransform(control, ArrayTransform.update_array_index, pattern)
-#     function2 = ArrayTransform(control, ArrayTransform.update_array_index, pattern)
+#     function1 = ArrayTransform(control, ArrayTransform.advance_index, pattern)
+#     function2 = ArrayTransform(control, ArrayTransform.advance_index, pattern)
 #     function3 = ArrayTransform(
 #         control,
 #         ArrayTransform.functionCollisionDetection,

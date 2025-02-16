@@ -73,7 +73,7 @@ class TransformCycle(PixelTransform):
         TransformCycle.ACTIVE_TRANSFORMS.append(transform)
         return TransformCycle.ACTIVE_TRANSFORMS
 
-    def next_step(self) -> None:
+    def transform(self) -> None:
         """Set all pixels to the next color.
 
         Args:
@@ -81,6 +81,7 @@ class TransformCycle(PixelTransform):
             cycle: tracking object
 
         """
+        super().transform()
         # wait for delay count before changing LEDs
         if self.state.delay_count_reset:
             # remove any current color

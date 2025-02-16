@@ -1,16 +1,57 @@
 #!/usr/bin/python3
 """Example of syncing lights to audio."""
 
+from __future__ import annotations
+
+import contextlib
+import logging
 import multiprocessing
 import multiprocessing.queues
+import sys
 import time
 import tkinter as tk
+from dataclasses import dataclass
+from enum import IntEnum
+from queue import Empty
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
-from numpy import double
 
 from lightberries.array_controller import ArrayController
-from lightberries.base.pixel import Pixel
+from lightberries.array_sequence.named import SequenceName, get_named_sequence
+from lightberries.base.pixel import LEDOrder, Pixel
+from lightberries.overlay.fade_off import TransformFadeOff
+from lightberries.pixel_sequence import PixelSequence
+from lightberries.pixel_transform import PixelTransform
+
+if TYPE_CHECKING:
+    import numpy as np
+    from numpy.typing import NDArray
+
+LOGGER = logging.getLogger("light_berry_sim")
+LOGGER.addHandler(logging.StreamHandler(sys.stdout))
+LOGGER.setLevel(logging.DEBUG)
+
+
+class DataName(IntEnum):
+    """Handy enum."""
+
+    led_count = 0
+    duration = 1
+    delay = 2
+    sequence = 3
+    transform = 4
+    command = 5
+
+
+@dataclass
+class SimConfig:
+    """Handy data class."""
+
+    name: DataName
+    str_value: str = ""
+    int_value: int = 0
+    float_value: float = 0.0
 
 
 class LightOutput:
@@ -18,98 +59,110 @@ class LightOutput:
 
     def __init__(
         self,
-        lightQ: multiprocessing.Queue,
-        plotQ: multiprocessing.Queue,
-        tkQ: multiprocessing.Queue,
-        exitQ: multiprocessing.Queue,
+        light_q: multiprocessing.Queue[SimConfig],
+        plot_q: multiprocessing.Queue[NDArray[np.int32]],
+        tk_q: multiprocessing.Queue[str | list[str]],
+        exit_q: multiprocessing.Queue[str],
     ) -> None:
-        """Outputs audio FFT to light controller object.
+        """Output audio FFT to light controller object.
 
         Args:
         ----
-            lightQ: multiprocessing queue for receiving data
-            plotQ: multiprocessing queue for sending data
-            tkQ: multiprocessing queue for sending data
-            exitQ: multiprocessing queue for sending data
+            light_q: multiprocessing queue for receiving data
+            plot_q: multiprocessing queue for sending data
+            tk_q: multiprocessing queue for sending data
+            exit_q: multiprocessing queue for sending data
 
         """
-        self.lightQ = lightQ
-        self.plotQ = plotQ
-        self.tkQ = tkQ
-        self.exitQ = exitQ
-        self.delay = 0.1
-        self.lightController = None
+        self.light_q = light_q
+        self.plot_q = plot_q
+        self.tk_q = tk_q
+        self.exit_q = exit_q
+        self.delay: float = 0.1
+        self.lightController: ArrayController
+        self.has_run = False
         self.func = ""
         self.colr = ""
         # run routine
         self.run()
 
-    def update(self):
+    def update(self) -> None:
         """Update the gui."""
-        # print("led refresh")
-        self.plotQ.put(self.lightController.virtual_led_buffer)
+        self.plot_q.put(self.lightController.virtual_led_buffer)
+        if PixelTransform.ACTIVE_TRANSFORMS:
+            if not isinstance(PixelTransform.ACTIVE_TRANSFORMS[0], TransformFadeOff):
+                LOGGER.info(PixelTransform.ACTIVE_TRANSFORMS[0])
+            else:
+                LOGGER.info(PixelTransform.ACTIVE_TRANSFORMS[1])
         time.sleep(self.delay)
 
-    def run(self):
+    def run(self) -> None:  # noqa: C901, PLR0912
         """Run the process."""
         try:
-            ledCount = None
-            while ledCount is None:
-                try:
-                    ledCount = self.lightQ.get_nowait()
-                except multiprocessing.queues.Empty:
-                    pass
-            self.lightController = ArrayController(
-                ledCount,
-                18,
-                10,
-                800000,
-                simulate=True,
-                refresh_callback=lambda: self.update(),
-            )
-            # print("started lights")
+            led_count = 20
             while True:
-                try:
-                    msg = self.lightQ.get_nowait()
-                    # print(msg)
-                    if isinstance(msg, int):
-                        self.lightController.seconds_per_mode = msg
-                    if isinstance(msg, (float, double)):
-                        self.delay = msg
-                    elif isinstance(msg, str):
-                        if len(msg) > 8 and msg[:8] == "useColor":
-                            # print(msg)
-                            self.colr = msg
-                        elif len(msg) > 11 and msg[:11] == "useFunction":
-                            # print(msg)
-                            self.func = msg
-                        elif len(msg) > 1 and msg == "go":
-                            # print("run it")
+                with contextlib.suppress(Empty):
+                    msg = self.light_q.get_nowait()
+                    if msg.name is DataName.led_count:
+                        led_count = msg.int_value
+                        self.lightController = ArrayController(
+                            led_count=led_count,
+                            pwm_gpio_pin=18,
+                            dma_channel=10,
+                            pwm_frequency=800000,
+                            simulate=True,
+                            refresh_callback=lambda: self.update(),
+                            led_order=LEDOrder.RGB,
+                        )
+                        Pixel.default_pixel_order = LEDOrder.RGB
+                        self.has_run = True
+                    elif msg.name is DataName.duration:
+                        self.lightController.seconds_per_mode = msg.float_value
+                    elif msg.name is DataName.delay:
+                        self.delay = msg.float_value
+                    elif msg.name is DataName.sequence:
+                        LOGGER.info(msg.str_value)
+                        self.colr = msg.str_value
+                    elif msg.name is DataName.transform:
+                        LOGGER.info(msg.str_value)
+                        self.func = msg.str_value
+                    elif msg.name is DataName.command:
+                        if msg.str_value == "go":
                             self.lightController.reset()
                             self.lightController.off()
                             self.lightController.refresh_leds()
-                            getattr(self.lightController, self.colr)()
-                            getattr(self.lightController, self.func)()
-                            self.tkQ.put("running")
+                            if self.colr in PixelSequence.ALL_SEQUENCES:
+                                sequence = PixelSequence.ALL_SEQUENCES[self.colr]()
+                            else:
+                                sequence = get_named_sequence(
+                                    name=SequenceName[self.colr],
+                                )
+                            PixelTransform.ALL_TRANSFORMS[self.func].create(
+                                controller=self.lightController,
+                                pixel_sequence=sequence,
+                            )
+                            self.tk_q.put("running")
                             self.lightController.run()
-                            self.tkQ.put("done")
-                except multiprocessing.queues.Empty:
-                    pass
+                            self.tk_q.put("done")
+                        elif msg.str_value == "quit":
+                            break
         except KeyboardInterrupt:
             pass
-        except Exception as ex:
-            print(f"Error in {LightOutput.__name__}: {ex!s}")
+        except Exception:
+            LOGGER.exception("Error in %s", LightOutput.__name__)
         finally:
             # clean up the LightBerry object
-            self.lightController.off()
-            self.lightController.copy_virtual_leds_to_ws281x()
-            self.lightController.refresh_leds()
+            if self.has_run:
+                self.lightController.off()
+                self.lightController.copy_virtual_leds_to_ws281x()
+                self.lightController.refresh_leds()
             # pause for object destruction
             time.sleep(0.2)
             # put any data in queue, this will signify "exit" status
-            self.exitQ.put("quit")
+            self.exit_q.put("quit")
             # double-check deletion
-            del self.lightController
+            if self.has_run:
+                del self.lightController
 
 
 class PlotOutput:
@@ -117,61 +170,68 @@ class PlotOutput:
 
     def __init__(
         self,
-        plotQ: multiprocessing.Queue,
-        tkQ: multiprocessing.Queue,
-        exitQ: multiprocessing.Queue,
+        plot_q: multiprocessing.Queue[NDArray[np.int32]],
+        tk_q: multiprocessing.Queue[str | list[str]],
+        exit_q: multiprocessing.Queue[str],
     ) -> None:
-        """Plots audio FFT to matplotlib's pyplot graphic.
+        """Plot audio FFT to matplotlib's pyplot graphic.
 
         Args:
         ----
-            plotQ: multiprocessing queue for receiving data
-            tkQ: multiprocessing queue for sending data
-            exitQ: multiprocessing queue for sending data
+            plot_q: multiprocessing queue for receiving data
+            tk_q: multiprocessing queue for sending data
+            exit_q: multiprocessing queue for sending data
 
         """
-        self.plotQ = plotQ
-        self.tkQ = tkQ
-        self.exitQ = exitQ
+        self.plot_q = plot_q
+        self.tk_q = tk_q
+        self.exit_q = exit_q
         self.buttonCallback = None
-        plt.ion()
+        self.exiting = False
+        plt.ion()  # type: ignore  # noqa: PGH003
         self.run()
 
-    def run(self):
+    def run(self) -> None:
         """Run the process."""
         try:
-            while True:
-                try:
+            self.exiting = False
+            while not self.exiting:
+                msg = None
+                array = None
+                with contextlib.suppress(Empty):
                     # try to get new data
-                    array = self.plotQ.get_nowait()
-                    self.tkQ.put([Pixel(rgb).hex_str for rgb in array])
-                except multiprocessing.queues.Empty:
-                    pass
+                    array = self.plot_q.get_nowait()
+                with contextlib.suppress(Empty):
+                    msg = self.exit_q.get_nowait()
+                if array is not None:
+                    self.tk_q.put([Pixel(rgb).hex_str for rgb in array])
+                if msg is not None:
+                    self.exiting = True
         except KeyboardInterrupt:
             pass
-        except Exception as ex:
-            print(f"Error in {PlotOutput.__name__}: {ex!s}")
+        except Exception:
+            LOGGER.exception("Error in %s", PlotOutput.__name__)
         finally:
-            self.exitQ.put("quit")
+            self.exit_q.put("quit")
 
 
 class App:
     """The application for tkinter."""
 
-    def __init__(self) -> None:
-        """The application for tkinter."""
+    def __init__(self) -> None:  # noqa: PLR0915
+        """Application for tkinter."""
         # create tKinter GUI. This GUI could really use some help
-        self.lightQ: multiprocessing.Queue = multiprocessing.Queue()
-        self.plotQ: multiprocessing.Queue = multiprocessing.Queue()
-        self.tkQ: multiprocessing.Queue = multiprocessing.Queue()
-        self.exitQ: multiprocessing.Queue = multiprocessing.Queue()
+        self.light_q: multiprocessing.Queue[SimConfig] = multiprocessing.Queue()
+        self.plotQ: multiprocessing.Queue[NDArray[np.int32]] = multiprocessing.Queue()
+        self.tk_q: multiprocessing.Queue[str | list[str]] = multiprocessing.Queue()
+        self.exitQ: multiprocessing.Queue[str] = multiprocessing.Queue()
         # create process objects
         self.lightProcess = multiprocessing.Process(
             target=LightOutput,
             args=(
-                self.lightQ,
+                self.light_q,
                 self.plotQ,
-                self.tkQ,
+                self.tk_q,
                 self.exitQ,
             ),
         )
@@ -179,7 +239,7 @@ class App:
             target=PlotOutput,
             args=(
                 self.plotQ,
-                self.tkQ,
+                self.tk_q,
                 self.exitQ,
             ),
         )
@@ -188,7 +248,7 @@ class App:
         self.guiProcess.start()
 
         self.ledCount = None
-        self.buttons = []
+        self.buttons: list[tk.Button] = []
         self.running = False
 
         self.root = tk.Tk()
@@ -198,13 +258,13 @@ class App:
 
         self.scrollbarY = tk.Scrollbar(
             self.canvas,
-            command=self.canvas.yview,
+            command=self.canvas.yview,  # type: ignore  # noqa: PGH003
             orient=tk.VERTICAL,
         )
         self.scrollbarY.pack(side=tk.RIGHT, fill="y")
         self.scrollbarX = tk.Scrollbar(
             self.canvas,
-            command=self.canvas.xview,
+            command=self.canvas.xview,  # type: ignore  # noqa: PGH003
             orient=tk.HORIZONTAL,
         )
         self.scrollbarX.pack(side=tk.BOTTOM, fill="y")
@@ -217,11 +277,11 @@ class App:
         self.mainFrame.pack(fill="both", anchor=tk.NW, expand=True)
         self.mainFrame.rowconfigure(1, weight=1)
         self.mainFrame.columnconfigure(0, weight=1)
-        # self.mainFrame.columnconfigure(0, weight=1)
         self.mainFrame.columnconfigure(1, weight=1)
         self.mainFrame.columnconfigure(2, weight=1)
         self.mainFrame.columnconfigure(3, weight=1)
         self.mainFrame.columnconfigure(4, weight=1)
+        self.root.protocol("WM_DELETE_WINDOW", lambda: self.destroy())
 
         self.ledCountInt = tk.IntVar()
         self.ledCountlabel = tk.Label(
@@ -241,10 +301,10 @@ class App:
             row=0,
             column=1,
         )
-        self.ledCountInt.set(100)
+        self.ledCountInt.set(20)
 
         self.functionString = tk.StringVar()
-        self.functionChoices = [f for f in dir(ArrayController) if f[:11] == "useFunction"]
+        self.functionChoices = list(PixelTransform.ALL_TRANSFORMS)
         self.functionChoices.sort()
         self.functionString.set(self.functionChoices[0])
         self.functionDropdown = tk.OptionMenu(
@@ -258,7 +318,7 @@ class App:
         )
 
         self.patternString = tk.StringVar()
-        self.patternChoices = [f for f in dir(ArrayController) if f[:8] == "useColor"]
+        self.patternChoices = list(PixelSequence.ALL_SEQUENCES)
         self.patternChoices.sort()
         self.patternString.set(self.patternChoices[0])
         self.patternDropdown = tk.OptionMenu(
@@ -291,7 +351,7 @@ class App:
         )
 
         self.delayFloat = tk.DoubleVar()
-        self.delayFloat.set(0.05)
+        self.delayFloat.set(0.01)
         self.delayLabel = tk.Label(
             self.mainFrame,
             text="Refresh Delay (Seconds)",
@@ -314,14 +374,14 @@ class App:
             height=1,
             width=10,
             text="Go",
-            command=self.configureLightBerries,
+            command=self.configure_lightberries,
         )
         self.buttonGo.grid(
             row=0,
             column=8,
         )
 
-        self.root.bind("<Return>", lambda event: self.configureLightBerries())
+        self.root.bind("<Return>", lambda _: self.configure_lightberries())
 
         self.buttonFrame = tk.Frame(
             self.mainFrame,
@@ -338,15 +398,15 @@ class App:
         self.root.title(
             "LightBerries LED GUI Simulator (function parameters not included)",
         )
-        self.root.after(1, self.checkQ)
+        self.root.after(1, self.check_q)
 
         self.root.mainloop()
 
-    def checkQ(self):
-        """Method for checking whether other processes have sent us data."""
-        self.root.after(1, self.checkQ)
+    def check_q(self) -> None:
+        """Check whether other processes have sent us data."""
+        self.root.after(1, self.check_q)
         try:
-            data = self.tkQ.get_nowait()
+            data = self.tk_q.get_nowait()
             if isinstance(data, str):
                 if data == "running":
                     self.running = True
@@ -359,48 +419,48 @@ class App:
             else:
                 for index, btn in enumerate(self.buttons):
                     btn.configure(bg="#" + data[index])
-            # print(f"app got data: {len(data)}")
-        except multiprocessing.queues.Empty:
+        except Empty:
             pass
 
-    def onConfigure(self):
+    def on_configure(self) -> None:
         """Configure the convas widget."""
         # update scrollregion after starting 'mainloop'
         # when all widgets are in canvas
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
-    def configureLightBerries(self):
+    def configure_lightberries(self) -> None:
         """Configure LightBerries."""
-        # print("configuring")
-        if self.ledCount is None:
-            ledCount = int(self.ledCountInt.get())
-            for column in range(ledCount):
-                self.buttonFrame.columnconfigure(column, weight=1)
-                btn = tk.Button(
-                    self.buttonFrame,
-                    bg="black",
-                    fg="white",
-                    width=1,
-                    height=1,
-                )
-                btn.grid(
-                    row=1,
-                    column=column,
-                    sticky="nw",
-                )
-                self.buttons.append(btn)
-            self.lightQ.put_nowait(ledCount)
-            self.ledCount = ledCount
-        # print("sending data")
+        self.buttonFrame.children.clear()
+        self.buttons.clear()
+        led_count = int(self.ledCountInt.get())
+        for column in range(led_count):
+            self.buttonFrame.columnconfigure(column, weight=1)
+            btn = tk.Button(
+                self.buttonFrame,
+                bg="black",
+                fg="white",
+                width=1,
+                height=1,
+            )
+            btn.grid(
+                row=1,
+                column=column,
+                sticky="nw",
+            )
+            self.buttons.append(btn)
+        self.light_q.put_nowait(SimConfig(DataName.led_count, int_value=led_count))
+        self.ledCount = led_count
         if self.running is False:
-            self.lightQ.put(self.durationInt.get())
-            self.lightQ.put(self.delayFloat.get())
-            self.lightQ.put(self.patternString.get())
-            self.lightQ.put(self.functionString.get())
-            self.lightQ.put("go")
+            self.light_q.put(SimConfig(name=DataName.duration, float_value=self.durationInt.get()))
+            self.light_q.put(SimConfig(name=DataName.delay, float_value=self.delayFloat.get()))
+            self.light_q.put(SimConfig(name=DataName.sequence, str_value=self.patternString.get()))
+            self.light_q.put(SimConfig(name=DataName.transform, str_value=self.functionString.get()))
+            self.light_q.put(SimConfig(name=DataName.command, str_value="go"))
 
     def destroy(self) -> None:
         """Destroy this object."""
+        self.exitQ.put("quit")
+        self.light_q.put(SimConfig(DataName.command, "quit"))
         self.root.destroy()
         self.__del__()
 
@@ -409,6 +469,5 @@ class App:
 
 
 if __name__ == "__main__":
-    theApp = App()
-    del theApp
-    del theApp
+    app = App()
+    del app

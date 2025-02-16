@@ -242,7 +242,7 @@ class PixelSequence(Sequence[Pixel]):
 
         """
         if self._array:
-            return np.array([p.rgb_array for p in self._array], dtype=np.int32)
+            return np.array([p.array for p in self._array], dtype=np.int32)
         return np.zeros((0, 3), dtype=np.int32)
 
     @property

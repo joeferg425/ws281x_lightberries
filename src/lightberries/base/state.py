@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass, field
-from enum import IntEnum
+from enum import IntFlag
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from lightberries.pixel_transform import PixelTransform
 
 
-class LEDFadeType(IntEnum):
+class LEDFadeType(IntFlag):
     """Enumeration of types of LED fade for use in functions."""
 
     FADE_OFF = 0
@@ -39,31 +39,7 @@ class LEDFadeType(IntEnum):
         return fade_types[random.randint(0, len(fade_types) - 1)]
 
 
-class ThingMoves(IntEnum):
-    """States for thing movement."""
-
-    NOTHING = 0x0
-    METEOR = 0x1
-    LIGHT_SPEED = 0x2
-    TURTLE = 0x4
-
-
-class ThingSizes(IntEnum):
-    """States for thing sizes."""
-
-    NOTHING = 0x0
-    GROW = 0x10
-    SHRINK = 0x20
-
-
-class ThingColors(IntEnum):
-    """States for thing colors."""
-
-    NOTHING = 0x0
-    CYCLE = 0x100
-
-
-class ChangeStates(IntEnum):
+class ChangeStates(IntFlag):
     """States for random change."""
 
     FADING_ON = 0
@@ -82,19 +58,21 @@ class TransformState:
     color_cycle: bool = False
     color_scaler: float = 0.5
 
-    current_state: int = 0
+    current_state: IntFlag = 0  # type: ignore  # noqa: PGH003
     state_max: int = 0
     direction: int = 1
+    direction_previous: int = 1
     ran_once: bool = False
 
     index: int = 0
+    index_no_modulo: int = 0
     index_next: int = 0
+    index_next_no_modulo: int = 0
     index_previous: int = 0
-    # index_min: int = 0
-    # index_max: int = 0
     index_updated: bool = False
     index_range: NDArray[np.int32] = field(default_factory=lambda: np.zeros([0], dtype=np.int32))
-    index_reflect: bool = False
+    # index_reflect: bool = False
+    index_bounce: bool = False
 
     fade_type: LEDFadeType = LEDFadeType.FADE_OFF
     fade_amount: int = 128
@@ -139,10 +117,28 @@ class TransformState:
     period_short: int = 10
 
     def __post_init__(self) -> None:
-        self.index_next: int = self.index + self.step_size
+        self.re_init()
+
+    def re_init(self) -> None:
+        """Do some initialization for the state."""
+        self.index_no_modulo = self.index
+        self.index_next_no_modulo = self.index + (self.direction * self.step_size)
+        if self.index_next_no_modulo >= self.controller.virtual_led_count:
+            if self.index_bounce is True:
+                self.direction *= -1
+                self.index_next = self.index_next_no_modulo % (self.controller.virtual_led_count - 1)
+            else:
+                self.index_next = self.index_next_no_modulo % self.controller.virtual_led_count
+        elif self.index_next_no_modulo <= 0:
+            self.index_next = self.index_next_no_modulo % self.controller.virtual_led_count
+            if self.index_bounce is True:
+                self.direction *= -1
+                self.index_next += self.controller.virtual_led_count - 1
+        else:
+            self.index_next = self.index_next_no_modulo
+
+        self.index_next = self.index + self.step_size
         self.index_previous: int = (self.index - self.step_size) % self.controller.real_led_count
-        self.index_min: int = self.index
-        self.index_max: int = self.index
 
     def set_fade_amount(self, fade_amount: float) -> None:
         """Make sure fade amount is valid.

@@ -5,8 +5,6 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING
 
-import numpy as np
-
 from lightberries.array_sequence.solid import SequenceSolid
 from lightberries.base.pixel import Pixel, PixelColor
 from lightberries.overlay.fade_off import TransformFadeOff
@@ -102,6 +100,9 @@ class TransformMarquee(PixelTransform):
             )
         array[: transform.state.pixel_sequence.led_count] = [Pixel(x) for x in transform.state.pixel_sequence]
         transform.controller.set_virtual_led_buffer(array)
+        transform.state.index = 1
+        transform.state.index_bounce = True
+        transform.advance_index()
         # turn off all LEDs every time so we can turn on new ones
         TransformFadeOff.create(
             controller=controller,
@@ -112,44 +113,43 @@ class TransformMarquee(PixelTransform):
 
     def transform(self) -> None:
         """Do nothing."""
-        # increment delay counter
-        self.state.delay_counter += 1
+        super().transform()
         # wait for several LED cycles to change LEDs
-        if self.state.delay_counter >= self.state.delay_count_max:
-            # reset delay counter
-            self.state.delay_counter = 0
+        if self.state.delay_count_reset:
+            self.advance_index()
             # calculate possible next index
-            self.state.index_next = self.state.index + (self.state.step_size * self.state.direction)
-            # calculate max index we will update
-            self.state.index_max = self.state.index_next + self.state.size
-            # if we are going to overshoot
-            if self.state.index_max >= self.controller.virtual_led_count:
-                # switch direction
-                self.state.direction *= -1
-                # set index to either the next step or the max possible
-                # (accounts for step sizes > 1)
-                self.state.index = max(
-                    self.state.index + (self.state.step_size * self.state.direction),
-                    self.controller.virtual_led_count - self.state.size,
-                )
-            # if we will undershoot
-            elif self.state.index_max < self.state.size:
-                # TODO: should make a wrap-around version
-                # switch direction
-                self.state.direction *= -1
-                # set index to either the next step or zero
-                # (accounts for step sizes > 1)
-                self.state.index = max(
-                    self.state.index + (self.state.step_size * self.state.direction),
-                    0,
-                )
-            else:
-                # next index is valid, use it
-                self.state.index = self.state.index_next
-        # calculate color sequence range
-        self.state.index_range = np.arange(
-            self.state.index,
-            self.state.index + self.state.size,
-        )
-        # update LEDs with new values
-        self.controller.virtual_led_buffer[np.sort(self.state.index_range)] = self.state.pixel_sequence
+        #     self.state.index_next = self.state.index + (self.state.step_size * self.state.direction)
+        #     # calculate max index we will update
+        #     self.state.index_max = self.state.index_next + self.state.size
+        #     # if we are going to overshoot
+        #     if self.state.index_max >= self.controller.virtual_led_count:
+        #         # switch direction
+        #         self.state.direction *= -1
+        #         # set index to either the next step or the max possible
+        #         # (accounts for step sizes > 1)
+        #         self.state.index = max(
+        #             self.state.index + (self.state.step_size * self.state.direction),
+        #             self.controller.virtual_led_count - self.state.size,
+        #         )
+        #     # if we will undershoot
+        #     elif self.state.index_max < self.state.size:
+        #         # TODO: should make a wrap-around version
+        #         # switch direction
+        #         self.state.direction *= -1
+        #         # set index to either the next step or zero
+        #         # (accounts for step sizes > 1)
+        #         self.state.index = max(
+        #             self.state.index + (self.state.step_size * self.state.direction),
+        #             0,
+        #         )
+        #     else:
+        #         # next index is valid, use it
+        #         self.state.index = self.state.index_next
+        # # calculate color sequence range
+        # self.state.index_range = np.arange(
+        #     self.state.index,
+        #     self.state.index + self.state.size,
+        # )
+        # # update LEDs with new values
+        # self.controller.virtual_led_buffer[np.sort(self.state.index_range)] = self.state.pixel_sequence
+        self.assign_pixel_sequence()
