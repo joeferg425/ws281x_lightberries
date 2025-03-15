@@ -19,3 +19,5 @@ from lightberries.array_sequence.stretch import SequenceStretch as SequenceStret
 from lightberries.array_sequence.transition import (
     SequenceTransition as SequenceTransition,
 )
+from lightberries.cli_commands import alive as alive
+from lightberries.cli_commands import sprite as sprite

@@ -152,4 +152,4 @@ class TransformMarquee(PixelTransform):
         # )
         # # update LEDs with new values
         # self.controller.virtual_led_buffer[np.sort(self.state.index_range)] = self.state.pixel_sequence
-        self.assign_pixel_sequence()
+        self.assign_pixel_to_array()

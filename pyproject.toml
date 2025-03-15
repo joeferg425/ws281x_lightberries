@@ -1,3 +1,6 @@
+[build-system]
+requires = ["pdm-backend", "pdm-build-locked"]
+build-backend = "pdm.backend"
 
 [project]
 name = "lightberries"
@@ -6,8 +9,8 @@ dependencies = [
     "Adafruit-Blinka>=3.0.0",
     "adafruit-circuitpython-neopixel>=6.3.12",
     "numpy>=2.0.2",
-    "rpi-ws281x>=5.0.0",
-    "RPi-GPIO>=0.7.1",
+    # "rpi-ws281x>=5.0.0",
+    # "RPi-GPIO>=0.7.1",
     # "pygame<3.0.0,>=2.1.2",
     "typer>=0.13.1",
     # "strenum>=0.4.15",
@@ -27,7 +30,7 @@ license = { file = "LICENSE" }
 Repository = "https://github.com/joeferg425/ws281x_lightberries"
 
 [project.scripts]
-lightberries = "__main__:main"
+lightberries = "lightberries.cli:CLI"
 
 [tool.pdm]
 distribution = true
@@ -43,9 +46,6 @@ dev = [
 
 [tool.pdm.build]
 includes = ["src/lightberries"]
-[build-system]
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
 
 [tool.black]
 line-length = 120

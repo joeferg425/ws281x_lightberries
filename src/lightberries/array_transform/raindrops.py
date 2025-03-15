@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import random
-from enum import IntEnum
+from enum import IntFlag
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -17,12 +17,15 @@ if TYPE_CHECKING:
     from lightberries.base.state import TransformState
     from lightberries.pixel_sequence import PixelSequence
 
+MIN_FADE = 5
+MAX_FADE = 50
 
-class RaindropStates(IntEnum):
+
+class RaindropStates(IntFlag):
     """Raindrop function states."""
 
-    OFF = 0
-    SPLASH = 1
+    OFF = 1
+    SPLASH = 2
 
 
 class TransformRaindrop(PixelTransform):
@@ -78,8 +81,8 @@ class TransformRaindrop(PixelTransform):
             transform.state = state
         else:
             transform.state.size_max = random.randint(2, int(transform.controller.virtual_led_count // 8))
-            transform.state.active_chance = random.uniform(0.005, 0.1)
-            transform.state.step_size_max = random.randint(2, 5)
+            transform.state.active_chance = random.randint(5, 100)
+            transform.state.secondary_count_step = random.randint(2, 5)
 
         if pixel_sequence is not None:
             transform.state.pixel_sequence = pixel_sequence
@@ -89,82 +92,96 @@ class TransformRaindrop(PixelTransform):
         if max_raindrops is None:
             max_raindrops = max(min(transform.state.pixel_sequence.led_count, 10), 2)
         if step_size is not None:
-            transform.state.step_size_max = step_size
-        if transform.state.step_size_max > 3:  # noqa: PLR2004
-            transform.state.active_chance /= 3.0
-        if raindrop_chance is None:
-            raindrop_chance = random.uniform(0.01, 0.25)
+            transform.state.secondary_count_step = step_size
+        else:
+            transform.state.secondary_count_step = random.randint(1, 5)
+        # if transform.state.step_size_max > 3:  # noqa: PLR2004
+        # transform.state.active_chance /= 3.0
+        if raindrop_chance is not None and raindrop_chance > 0 and raindrop_chance < 1:
+            transform.state.active_chance = raindrop_chance * 1000
+        else:
+            transform.state.active_chance = random.randint(10, 250)
 
         # assign raindrop growth speed
-        transform.state.step_size = transform.state.step_size_max
+        # transform.state.step_size = transform.state.step_size_max
         if fade_amount is None:
             transform.state.set_fade_amount(((MAX_INT8 / transform.state.size_max) / MAX_INT8) * 2)
         else:
             transform.state.set_fade_amount(fade_amount=fade_amount)
         # chance of raindrop
-        transform.state.active_chance = raindrop_chance
 
-        raindrops: list[PixelTransform] = []
+        # raindrops: list[PixelTransform] = []
         TransformFadeOff.create(
             controller=controller,
             fade_amount=transform.state.fade_amount,
         )
-        raindrop = None
+        _transform = None
         for _ in range(max_raindrops):
-            if raindrop is None:
-                raindrop = transform
+            if _transform is None:
+                _transform = transform
             else:
-                raindrop = transform.copy()
+                _transform = transform.copy()
             # randomize start index
-            raindrop.state.index = random.randint(0, transform.controller.virtual_led_count - 1)
+            _transform.state.index = random.randint(0, transform.controller.virtual_led_count - 1)
             # max size
-            raindrop.state.step_count_max = random.randint(2, raindrop.state.size_max)
+            _transform.state.secondary_count_max = random.randint(2, _transform.state.size_max)
+            _transform.state.set_fade_amount(random.randint(MIN_FADE, MAX_FADE))
             # set raindrop to be inactive initially
-            raindrop.state.current_state = RaindropStates.OFF
-            raindrops.append(raindrop)
+            _transform.state.flags = RaindropStates.OFF
+            _transform.calc_sequence_range()
+            PixelTransform.ACTIVE_TRANSFORMS.append(_transform)
         # set first raindrop active
-        raindrops[0].state.current_state = RaindropStates.SPLASH
+        PixelTransform.ACTIVE_TRANSFORMS[0].state.flags = RaindropStates.OFF
         # add fading
-        return raindrops
+        return PixelTransform.ACTIVE_TRANSFORMS
 
     def transform(self) -> None:
         """Cause random "splashes" across the LED strand."""
         # if raindrop is off
-        if self.state.current_state is RaindropStates.OFF:
+        if self.state.flags is RaindropStates.OFF:
             # randomly turn on
-            if random.randint(0, 1000) / 1000 < self.state.active_chance:
+            if random.randint(0, 1000) < self.state.active_chance:
                 # set state on
-                self.state.current_state = RaindropStates.SPLASH
+                self.state.flags = RaindropStates.SPLASH
                 # set max width of this raindrop
-                self.state.step_count_max = random.randint(
+                self.state.secondary_count_max = random.randint(
                     1,
                     max(self.state.size_max, 2),
                 )
+                self.state.delay_count_max = random.randint(
+                    5,
+                    15,
+                )
+                self.state.secondary_count_max = random.randint(
+                    1,
+                    5,
+                )
                 # set fade amount
-                self.state.set_fade_amount(((MAX_INT8 / self.state.step_count_max) / MAX_INT8) * 2)
+                # self.state.set_fade_amount(((MAX_INT8 / self.state.step_count_max) / MAX_INT8) * 2)
+                self.state.set_fade_amount(random.randint(MIN_FADE, MAX_FADE))
                 self.state.color_scaler = (
-                    self.state.step_count_max - self.state.step_counter
-                ) / self.state.step_count_max
+                    self.state.secondary_count_max - self.state.secondary_counter
+                ) / self.state.secondary_count_max
         # if raindrop is splashing
-        elif self.state.current_state is RaindropStates.SPLASH:
+        elif self.state.flags is RaindropStates.SPLASH:
             # if splash is still growing
-            if self.state.step_counter <= self.state.step_count_max:
+            if self.state.secondary_counter <= self.state.secondary_count_max:
                 # lower valued side of "splash"
                 index_lower_min = max(
-                    self.state.index - self.state.step_size * self.state.step_counter,
+                    self.state.index - self.state.secondary_counter * self.state.secondary_counter,
                     0,
                 )
                 index_lower_max = max(
-                    self.state.index + 1 - self.state.step_size * self.state.step_counter,
+                    self.state.index + 1 - self.state.secondary_counter * self.state.secondary_counter,
                     0,
                 )
                 # higher valued side of "splash"
                 index_higher_min = min(
-                    self.state.index + self.state.step_counter,
+                    self.state.index + self.state.secondary_counter,
                     self.controller.virtual_led_count,
                 )
                 index_higher_max = min(
-                    self.state.index + self.state.step_counter + self.state.step_size,
+                    self.state.index + self.state.secondary_counter + self.state.secondary_count_step,
                     self.controller.virtual_led_count,
                 )
                 if (index_lower_max - index_lower_min) > 0:
@@ -199,7 +216,9 @@ class TransformRaindrop(PixelTransform):
                     self.state.pixel_sequence[self.state.pixel_sequence.led_index].array * self.state.color_scaler
                 )
                 # increment splash growth counter
-                self.state.step_counter += self.state.step_size
+                self.advance_delay_counter()
+                if self.state.delay_count_reset:
+                    self.state.secondary_counter += 1
             # splash is done growing
             else:
                 # randomize next splash start index
@@ -208,9 +227,11 @@ class TransformRaindrop(PixelTransform):
                     self.controller.virtual_led_count - 1,
                 )
                 # reset growth counter
-                self.state.step_counter = 0
+                self.state.secondary_counter = 0
                 # semi-randomize next color
                 for _ in range(1, random.randint(2, 4)):
                     self.state.pixel_sequence.advance_index()
                 # set state to off
-                self.state.current_state = RaindropStates.OFF
+                self.state.flags = RaindropStates.OFF
+        self.calc_sequence_range()
+        self.assign_pixel_to_array()

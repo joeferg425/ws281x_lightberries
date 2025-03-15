@@ -5,9 +5,7 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING
 
-from lightberries.array_sequence.solid import SequenceSolid
 from lightberries.base.constants import MAX_INT8
-from lightberries.base.pixel import Pixel, PixelColor, pixel_from_color
 from lightberries.overlay.fade_off import TransformFadeOff
 from lightberries.pixel_transform import PixelTransform
 
@@ -80,31 +78,15 @@ class TransformCylon(PixelTransform):
             fade_amount=transform.state.fade_amount,
         )
 
-        # shift eye by this much for each update
-        transform.state.size = transform.state.pixel_sequence.led_count
-        # adjust virtual LED buffer if necessary so that the cylon can actually move
-        if transform.controller.virtual_led_count <= transform.state.pixel_sequence.led_count:
-            array = SequenceSolid(
-                led_count=transform.state.pixel_sequence.led_count,
-                color=pixel_from_color(PixelColor.OFF),
-            )
-            array[: transform.state.pixel_sequence.led_count] = [Pixel(x) for x in transform.state.pixel_sequence]
-            transform.controller.set_virtual_led_buffer(array)
-        if transform.controller.virtual_led_count <= controller.real_led_count:
-            array = SequenceSolid(
-                led_count=controller.real_led_count,
-                color=pixel_from_color(PixelColor.OFF),
-            )
-            array[: transform.state.pixel_sequence.led_count] = [Pixel(x) for x in transform.state.pixel_sequence]
-            transform.controller.set_virtual_led_buffer(array)
         # set start and next indices
         transform.state.index_bounce = True
         transform.state.index_previous = 0
         transform.state.index = 1
         transform.state.direction = 1
         transform.state.direction_previous = 1
-        transform.state.delay_count_max = 1
+        transform.state.pixel_sequence.get_random_index()
         transform.advance_index()
+        transform.calc_sequence_range()
 
         TransformCylon.ACTIVE_TRANSFORMS.append(transform)
         return TransformCylon.ACTIVE_TRANSFORMS
@@ -114,4 +96,5 @@ class TransformCylon(PixelTransform):
         super().transform()
         if self.state.delay_count_reset:
             self.advance_index()
-        self.assign_pixel()
+            self.calc_sequence_range()
+        self.assign_pixel_to_array()

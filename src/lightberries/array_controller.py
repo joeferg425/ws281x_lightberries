@@ -93,7 +93,7 @@ class ArrayController:
             testing: when testing
 
         """
-        Pixel.default_pixel_order = led_order
+        Pixel.order = led_order
         # configure logging
         if debug is True or verbose is True:
             if not LOGGER.handlers:
@@ -267,7 +267,7 @@ class ArrayController:
     @property
     def seconds_per_mode(
         self,
-    ) -> float | None:
+    ) -> float:
         """The number of seconds to run the configuration.
 
         Returns
@@ -551,19 +551,22 @@ class ArrayController:
 
     def run(
         self,
+        seconds_per_mode: float | None = 60.0,
     ) -> None:
         """Run the configured color pattern and function either forever or for self.secondsPerMode."""
         LOGGER.debug("%s.%s:", ArrayController.__name__, self.run.__name__)
         # set start time
         self._last_mode_change = time.time()
         # set a target time to change
-        if self.seconds_per_mode is None:
-            self._next_mode_change = self._last_mode_change + (random.uniform(30, 120))
+        if seconds_per_mode is None:
+            self._seconds_per_mode = 0.0
+            self._loop_forever = True
         else:
+            self._seconds_per_mode = seconds_per_mode
             self._next_mode_change = self._last_mode_change + (self.seconds_per_mode)
         # loop
         self.running = True
-        while (time.time() < self._next_mode_change and self.running is True) or self._loop_forever:
+        while self._loop_forever or (time.time() < self._next_mode_change and self.running is True):
             # run the selected functions using LightFunction object callbacks
             self._run_functions()
             # copy the resulting RGB values to the ws28xx LED buffer
@@ -573,14 +576,11 @@ class ArrayController:
             # tell the ws28xx controller to transmit the new data
             self.refresh_leds()
         self._last_mode_change = time.time()
-        if self.seconds_per_mode is None:
-            self._next_mode_change = self._last_mode_change + (random.randint(30, 120))
-        else:
-            self._next_mode_change = self._last_mode_change + (self.seconds_per_mode)
+        self._next_mode_change = self._last_mode_change + (self.seconds_per_mode)
 
     def demo(  # noqa: C901, PLR0912, PLR0915
         self,
-        seconds_per_mode: float | None = 0.5,
+        seconds_per_mode: float | None = 60.0,
         function_names: list[str] | None = None,
         color_names: list[str] | None = None,
         skip_functions: list[str] | None = None,
@@ -599,11 +599,11 @@ class ArrayController:
 
         """
         LOGGER.debug("%s.%s:", ArrayController.__name__, self.demo.__name__)
-        _seconds_per_mode: int = 60
         if seconds_per_mode is not None:
-            _seconds_per_mode = int(seconds_per_mode)
-        self.seconds_per_mode = _seconds_per_mode
-        if seconds_per_mode == 0.0:
+            self._seconds_per_mode = seconds_per_mode
+        else:
+            self.seconds_per_mode = 0.0
+        if self.seconds_per_mode == 0.0:
             self._loop_forever = True
 
         if function_names is None:

@@ -56,7 +56,7 @@ class LEDOrder(Order, enum.Enum):
 class Pixel:
     """A single LED pixel."""
 
-    default_pixel_order: LEDOrder = LEDOrder.GRB
+    order: LEDOrder = LEDOrder.GRB
 
     def __init__(
         self,
@@ -80,10 +80,10 @@ class Pixel:
         # initialize to zero
         self.int32value: int = 0
 
-        self._order = Pixel.default_pixel_order
-        for i in self._order:
+        # self._order = Pixel.default_pixel_order
+        for i in self.order:
             if i < 0 or i > 3:  # noqa: PLR2004
-                msg = f"Invalid Pixel order: {self._order}"
+                msg = f"Invalid Pixel order: {self.order}"
                 raise PixelError(msg)
 
         # none gets a zero
@@ -101,9 +101,9 @@ class Pixel:
             # if self._order == LEDOrder.RGB.value:
             self.int32value = (
                 # this is where the rgb order comes into play
-                (int(_color[self._order.red]) << 16)
-                + (int(_color[self._order.green]) << 8)
-                + (int(_color[self._order.blue]))
+                (int(_color[self.order.red]) << 16)
+                + (int(_color[self.order.green]) << 8)
+                + (int(_color[self.order.blue]))
             )
 
         # this is an instance of this class, just use the value
@@ -128,7 +128,7 @@ class Pixel:
             _color = (color[LEDOrder.RGB.red], color[LEDOrder.RGB.green], color[LEDOrder.RGB.blue])
             self.int32value = (
                 # this is where the rgb order comes into play
-                (int(_color[self._order[0]]) << 16) + (int(_color[self._order[1]]) << 8) + (int(_color[self._order[2]]))
+                (int(_color[self.order[0]]) << 16) + (int(_color[self.order[1]]) << 8) + (int(_color[self.order[2]]))
             )
 
         # we've got an error boys!
@@ -161,10 +161,10 @@ class Pixel:
         """
         return self.int32value
 
-    @property
-    def order(self) -> LEDOrder:
-        """Get the LED order of this pixel object."""
-        return self._order
+    # @property
+    # def order(self) -> LEDOrder:
+    #     """Get the LED order of this pixel object."""
+    #     return self._order
 
     def __str__(
         self,
@@ -176,7 +176,7 @@ class Pixel:
             a string representation of the pixel
 
         """
-        return f"PX#{self.rgb_array[LEDOrder.RGB.red]:02X}{self.rgb_array[LEDOrder.RGB.green]:02X}{self.rgb_array[LEDOrder.RGB.blue]:02X}:{self._order.name}"  # noqa: E501
+        return f"PX#{self.rgb_array[LEDOrder.RGB.red]:02X}{self.rgb_array[LEDOrder.RGB.green]:02X}{self.rgb_array[LEDOrder.RGB.blue]:02X}:{self.order.name}"  # noqa: E501
 
     def __repr__(
         self,
@@ -262,9 +262,9 @@ class Pixel:
         """
         return np.array(
             [
-                self.array[self._order.red],
-                self.array[self._order.green],
-                self.array[self._order.blue],
+                self.array[self.order.red],
+                self.array[self.order.green],
+                self.array[self.order.blue],
             ],
         )
 
@@ -280,9 +280,9 @@ class Pixel:
 
         """
         return (
-            self.array[self._order[0]],
-            self.array[self._order[1]],
-            self.array[self._order[2]],
+            self.array[self.order[0]],
+            self.array[self.order[1]],
+            self.array[self.order[2]],
         )
 
     @property
@@ -326,7 +326,7 @@ class Pixel:
         self,
         color_next: Pixel | None = None,
         fade_amount: int | None = None,
-    ) -> NDArray[np.int32]:
+    ) -> Pixel:
         """Fade an LED's color by the given amount and return the new RGB value.
 
         Args:
@@ -343,22 +343,22 @@ class Pixel:
             color_next = pixel_from_color(PixelColor.OFF)
         if fade_amount is None:
             fade_amount = 25
-        color = self.array.copy()
+        color = self.rgb_array.copy()
         # copy it to make sure we don't change the original by reference
         for rgb_index in range(len(color)):
             # the values closest to the target color might match already
-            if color[rgb_index] != color_next.array[rgb_index]:
+            if color[rgb_index] != color_next.rgb_array[rgb_index]:
                 # subtract or add as appropriate in order to get closer to target color
-                if color[rgb_index] - fade_amount > color_next.array[rgb_index]:
+                if color[rgb_index] - fade_amount > color_next.rgb_array[rgb_index]:
                     color[rgb_index] -= fade_amount
-                elif color[rgb_index] + fade_amount < color_next.array[rgb_index]:
+                elif color[rgb_index] + fade_amount < color_next.rgb_array[rgb_index]:
                     color[rgb_index] += fade_amount
                 else:
-                    color[rgb_index] = color_next.array[rgb_index]
-        self.int32value = (
-            (int(color[self._order[0]]) << 16) + (int(color[self._order[1]]) << 8) + (int(color[self._order[2]]))
-        )
-        return color
+                    color[rgb_index] = color_next.rgb_array[rgb_index]
+        # self.int32value = (
+        #     (int(color[self.order[0]]) << 16) + (int(color[self.order[1]]) << 8) + (int(color[self.order[2]]))
+        # )
+        return Pixel(color)
 
     def copy(self) -> Pixel:
         """Get a copy of this pixel.
@@ -429,7 +429,7 @@ class Pixel:
         array[key] = value
         self.int32value = (
             # this is where the rgb order comes into play
-            (int(array[self._order[0]]) << 16) + (int(array[self._order[1]]) << 8) + (int(array[self._order[2]]))
+            (int(array[self.order[0]]) << 16) + (int(array[self.order[1]]) << 8) + (int(array[self.order[2]]))
         )
 
     def __int__(self) -> int:
@@ -461,7 +461,7 @@ def pixel_from_color(color: PixelColor) -> Pixel:
     """
     if color not in _pixels:
         _pixels[color] = Pixel(color)
-    return _pixels[color]
+    return _pixels[color].copy()
 
 
 class PixelColor(_Pixel, enum.Enum):

@@ -242,7 +242,7 @@ class WS281xString(Sequence[NDArray[np.int32]]):
         """
         if isinstance(key, slice):
             for i, j in enumerate(range(self._ledCount)[key]):
-                p = Pixel(value[i, Pixel.default_pixel_order])
+                p = Pixel(value[i, Pixel.order])
                 self._ws281x_pixel_strip.setPixelColor(j, p.int32value)
         elif isinstance(key, (np.integer)):
             if int(key) >= self._ledCount:

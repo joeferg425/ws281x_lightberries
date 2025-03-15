@@ -76,7 +76,6 @@ class PixelTransform:
     def __str__(
         self,
     ) -> str:
-        # return f'[{self.state.index:02d}/{self.state.index_no_modulo:02d}]: "{self._name}" {self.state.pixel_sequence.pixel} [{", ".join([f"{i:02d}" for i in self.state.index_range])}] {">" if self.state.direction == 1 else "<"}'
         return f'[{self.state.index}]: "{self._name}" {self.state.pixel_sequence.pixel}'
 
     def __repr__(
@@ -156,55 +155,56 @@ class PixelTransform:
     def transform(self) -> None:
         """Run this array function's transformation."""
         self.advance_delay_counter()
+        LOGGER.debug("%s", self)
 
-    def calc_range(
-        self,
-    ) -> NDArray[np.int32]:
-        """Calculate index range.
+    # def calc_range(
+    #     self,
+    # ) -> NDArray[np.int32]:
+    #     """Calculate index range.
 
-        Args:
-        ----
-            indexFrom: from index
-            indexTo: to index
+    #     Args:
+    #     ----
+    #         indexFrom: from index
+    #         indexTo: to index
 
-        Returns:
-        -------
-            array of indices
+    #     Returns:
+    #     -------
+    #         array of indices
 
-        """
-        self.state.index_range = np.arange(
-            self.state.index_no_modulo + self.state.direction,
-            self.state.index_next_no_modulo + self.state.direction,
-            self.state.direction,
-            dtype=np.int32,
-        )
-        modulo = np.where(self.state.index_range >= (self.controller.virtual_led_count))[0]
-        if len(modulo) != 0:
-            for _ in range(5):
-                self.state.index_range[modulo] -= self.controller.virtual_led_count
-                if self.state.index_bounce and len(modulo):
-                    self.state.index_range[modulo] += 1
-                    self.state.index_range[modulo] *= -1
-                    self.state.index_range[modulo] += self.controller.virtual_led_count - 1
-                modulo = np.where(
-                    self.state.index_range >= (self.controller.virtual_led_count),
-                )[0]
-                if len(modulo) == 0:
-                    break
-        modulo = np.where(self.state.index_range < 0)[0]
-        if len(modulo) != 0:
-            for _ in range(5):
-                self.state.index_range[modulo] += self.controller.virtual_led_count
-                if self.state.index_bounce and len(modulo):
-                    self.state.index_range[modulo] -= 1
-                    self.state.index_range[modulo] *= -1
-                    self.state.index_range[modulo] += self.controller.virtual_led_count - 1
-                modulo = np.where(self.state.index_range < 0)[0]
-                if len(modulo) == 0:
-                    break
-        return self.state.index_range
+    #     """
+    #     self.state.index_range = np.arange(
+    #         self.state.index_no_modulo + self.state.direction,
+    #         self.state.index_next_no_modulo + self.state.direction,
+    #         self.state.direction,
+    #         dtype=np.int32,
+    #     )
+    #     modulo = np.where(self.state.index_range >= (self.controller.virtual_led_count))[0]
+    #     if len(modulo) != 0:
+    #         for _ in range(5):
+    #             self.state.index_range[modulo] -= self.controller.virtual_led_count
+    #             if self.state.index_bounce and len(modulo):
+    #                 self.state.index_range[modulo] += 1
+    #                 self.state.index_range[modulo] *= -1
+    #                 self.state.index_range[modulo] += self.controller.virtual_led_count - 1
+    #             modulo = np.where(
+    #                 self.state.index_range >= (self.controller.virtual_led_count),
+    #             )[0]
+    #             if len(modulo) == 0:
+    #                 break
+    #     modulo = np.where(self.state.index_range < 0)[0]
+    #     if len(modulo) != 0:
+    #         for _ in range(5):
+    #             self.state.index_range[modulo] += self.controller.virtual_led_count
+    #             if self.state.index_bounce and len(modulo):
+    #                 self.state.index_range[modulo] -= 1
+    #                 self.state.index_range[modulo] *= -1
+    #                 self.state.index_range[modulo] += self.controller.virtual_led_count - 1
+    #             modulo = np.where(self.state.index_range < 0)[0]
+    #             if len(modulo) == 0:
+    #                 break
+    #     return self.state.index_range
 
-    def calc_sequence_range(
+    def calc_sequence_range(  # noqa: C901
         self,
     ) -> NDArray[np.int32]:
         """Calculate index range.
@@ -374,7 +374,7 @@ class PixelTransform:
             self.state.step_counter = 0
             self.state.step_count_reset = True
 
-    def advance_index(self) -> None:
+    def advance_index(self) -> None:  # noqa: PLR0912
         """Calculate next transform indices."""
         self.state.index_previous = self.state.index
         self.state.index_no_modulo = self.state.index + (self.state.step_size * self.state.direction)
@@ -408,21 +408,21 @@ class PixelTransform:
         self.state.index_updated = self.state.index_previous != self.state.index
         self.calc_sequence_range()
 
-    def assign_pixel(self) -> None:
+    # def assign_pixel(self) -> None:
+    #     """Assign colors to indices."""
+    #     if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
+    #         self.controller.virtual_led_buffer[self.state.index_range] = self.state.pixel_sequence.pixel
+    #     else:
+    #         self.controller.virtual_led_buffer[
+    #             np.where(
+    #                 self.controller.virtual_led_index_buffer == self.state.index_range,
+    #             )
+    #         ] = self.state.pixel_sequence.pixel
+
+    def assign_pixel_to_array(self) -> None:
         """Assign colors to indices."""
         if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
             self.controller.virtual_led_buffer[self.state.index_range] = self.state.pixel_sequence.pixel
-        else:
-            self.controller.virtual_led_buffer[
-                np.where(
-                    self.controller.virtual_led_index_buffer == self.state.index_range,
-                )
-            ] = self.state.pixel_sequence.pixel
-
-    def assign_pixel_sequence(self) -> None:
-        """Assign colors to indices."""
-        if len(self.controller.virtual_led_buffer.shape) == SHAPE_2D:
-            self.controller.virtual_led_buffer[self.state.index_range] = self.state.pixel_sequence.array
         else:
             self.controller.virtual_led_buffer[
                 np.where(

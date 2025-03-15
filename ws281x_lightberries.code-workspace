@@ -139,7 +139,7 @@
 				]
 			},
 			{
-				"name": "lightberries: accelerate",
+				"name": "accelerate",
 				"type": "debugpy",
 				"request": "launch",
 				"module": "lightberries",
@@ -149,59 +149,65 @@
 				},
 				"justMyCode": false,
 				"args": [
-					"--brightness",
-					"0.1",
-					"--led-count",
-					"197",
-					"--function",
-					"accelerate",
-					"--verbose",
-					"--duration",
-					"10"
-				]
-			},
-			{
-				"name": "lightberries: alive",
-				"type": "debugpy",
-				"request": "launch",
-				"module": "lightberries",
-				"console": "integratedTerminal",
-				"linux": {
-					"sudo": true
-				},
-				"justMyCode": false,
-				"args": [
-					"--brightness",
-					"0.1",
-					"--led-count",
-					"197",
-					"--function",
-					"alive",
-					"--verbose",
-					"--duration",
-					"10"
-				]
-			},
-			{
-				"name": "lightberries: cylon",
-				"type": "debugpy",
-				"request": "launch",
-				"module": "lightberries",
-				"console": "integratedTerminal",
-				"linux": {
-					"sudo": true
-				},
-				"justMyCode": false,
-				"args": [
-					"--brightness",
-					"0.1",
-					"--led-count",
-					"197",
-					"--function",
-					"cylon",
-					"--verbose",
+					"Accelerate",
+					// "--brightness",
+					// "0.1",
+					// "--led-count",
+					// "197",
+					// "--function",
+					// "accelerate",
 					// "--duration",
 					// "10"
+					"--verbose",
+					"--verbose",
+				]
+			},
+			{
+				"name": "alive",
+				"type": "debugpy",
+				"request": "launch",
+				"module": "lightberries",
+				"console": "integratedTerminal",
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false,
+				"args": [
+					"Alive",
+					// "--brightness",
+					// "0.1",
+					// "--led-count",
+					// "197",
+					// "--function",
+					// "alive",
+					// "--duration",
+					// "10"
+					"--verbose",
+					"--verbose",
+				]
+			},
+			{
+				"name": "cylon",
+				"type": "debugpy",
+				"request": "launch",
+				"module": "lightberries",
+				"console": "integratedTerminal",
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false,
+				"args": [
+					"Cylon",
+					// "--brightness",
+					// "0.1",
+					// "--led-count",
+					// "197",
+					// "--function",
+					// "cylon",
+					// "--duration",
+					// "10"
+					"--verbose",
+					"--verbose",
 				]
 			},
 			{
@@ -369,19 +375,47 @@
 				},
 				"justMyCode": false,
 				"args": [
-					"--brightness",
-					"0.1",
-					"--led-count",
-					"197",
-					"--function",
+					// "--brightness",
+					// "0.1",
+					// "--led-count",
+					// "197",
+					// "--function",
 					"sprite",
 					"--verbose",
-					"--duration",
-					"10"
+					"--verbose",
+					// "--duration",
+					// "10"
+					"--count",
+					"1",
 				]
 			},
 			{
-				"name": "example: simulate array",
+				"name": "lightberries: accelerate",
+				"type": "debugpy",
+				"request": "launch",
+				"module": "lightberries",
+				"console": "integratedTerminal",
+				"linux": {
+					"sudo": true
+				},
+				"justMyCode": false,
+				"args": [
+					// "--brightness",
+					// "0.1",
+					// "--led-count",
+					// "197",
+					// "--function",
+					"accelerate",
+					"--verbose",
+					"--verbose",
+					// "--duration",
+					// "10"
+					"--count",
+					"1",
+				]
+			},
+			{
+				"name": "simulate array",
 				"type": "debugpy",
 				"request": "launch",
 				"program": "${workspaceFolder}/examples/simulate_array.py",

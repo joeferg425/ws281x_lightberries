@@ -133,11 +133,11 @@ class TransformRandom(PixelTransform):
         # if the random change has completed
         if self.state.pixel_sequence.pixel == self.state.pixel_sequence.pixel_next:
             # if the state is "fading on"
-            if self.state.current_state == ChangeStates.FADING_ON.value:
+            if self.state.flags & ChangeStates.FADING_ON:
                 # just set next state to "on"
-                self.state.current_state = ChangeStates.ON.value
+                self.state.flags = ChangeStates.ON
             # if the state is "on"
-            elif self.state.current_state == ChangeStates.ON.value:
+            elif self.state.flags & ChangeStates.ON:
                 # increment delay counter
                 self.state.delay_counter += 1
                 # if we are done delaying
@@ -153,20 +153,20 @@ class TransformRandom(PixelTransform):
                         # set next color to background color
                         self.state.pixel_sequence.pixel_next = Pixel(self.controller.background_color)
                         # set state to "fading off"
-                        self.state.current_state = ChangeStates.FADING_OFF.value
+                        self.state.flags = ChangeStates.FADING_OFF
                         self.state.index = self.get_random_index()
                     # if not fading to background
                     else:
                         # go to wait state
-                        self.state.current_state = ChangeStates.WAIT.value
+                        self.state.flags = ChangeStates.WAIT
             # if state is "fading off"
-            elif self.state.current_state == ChangeStates.FADING_OFF.value:
+            elif self.state.flags & ChangeStates.FADING_OFF:
                 # increment delay counter
                 self.state.delay_counter += 1
                 # if we are done delaying
                 if self.state.delay_counter >= self.state.delay_count_max:
                     # set state to "waiting"
-                    self.state.current_state = ChangeStates.WAIT.value
+                    self.state.flags = ChangeStates.WAIT
                     # reset delay counter
                     self.state.delay_counter = 0
                     self.state.delay_count_max = random.randint(
@@ -174,7 +174,7 @@ class TransformRandom(PixelTransform):
                         self.state.delay_count_max,
                     )
             # if state is "waiting"
-            elif self.state.current_state == ChangeStates.WAIT.value:
+            elif self.state.flags & ChangeStates.WAIT:
                 # increment delay counter
                 self.state.delay_counter += 1
                 # if we are done waiting
@@ -196,7 +196,7 @@ class TransformRandom(PixelTransform):
                     for _ in range(random.randint(1, 5)):
                         self.state.pixel_sequence.advance_index(keep_current=True)
                     # set state to "fading on"
-                    self.state.current_state = ChangeStates.FADING_ON.value
+                    self.state.flags = ChangeStates.FADING_ON
                     # randomize delay counter so they aren't synchronized
                     self.state.delay_counter = 0
                     self.state.delay_count_max = random.randint(
@@ -206,7 +206,7 @@ class TransformRandom(PixelTransform):
         # if fading LEDs
         if self.state.fade_type == LEDFadeType.FADE_OFF:
             # fade the color
-            self.state.pixel_sequence.pixel.fade(
+            self.state.pixel_sequence.pixel = self.state.pixel_sequence.pixel.fade(
                 color_next=self.state.pixel_sequence.pixel_next,
                 fade_amount=self.state.fade_amount,
             )

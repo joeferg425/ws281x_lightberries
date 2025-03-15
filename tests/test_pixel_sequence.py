@@ -39,7 +39,7 @@ RANGE_5 = list(range(0, 5, 1))
 def setup_test() -> None:
     """Fixture."""
     # Code that will run before your test, for example:
-    Pixel.default_pixel_order = LEDOrder.GRB
+    Pixel.order = LEDOrder.GRB
 
 
 def test_sequence_no_name_in_base() -> None:
@@ -166,7 +166,7 @@ def test_sequence_off_list_short() -> None:
     ids=[f"led_count: {i}" for i in RANGE_5],
 )
 def test_array_to_numpy_array(led_count: int | None) -> None:
-    Pixel.default_pixel_order = LEDOrder.RGB
+    Pixel.order = LEDOrder.RGB
     sequence = SequenceRandom(led_count=led_count)
     array = SequenceRandom.pixel_array_to_numpy_array(sequence)
     assert sequence is not None

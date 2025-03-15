@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     import lightberries.array_controller
+    from lightberries.base.pixel import Pixel
     from lightberries.pixel_sequence import PixelSequence
     from lightberries.pixel_transform import PixelTransform
 
@@ -56,9 +57,10 @@ class TransformState:
 
     pixel_sequence: PixelSequence
     color_cycle: bool = False
+    color_cycle_randomize: bool = False
     color_scaler: float = 0.5
 
-    current_state: IntFlag = 0  # type: ignore  # noqa: PGH003
+    flags: IntFlag = 0  # type: ignore  # noqa: PGH003
     state_max: int = 0
     direction: int = 1
     direction_previous: int = 1
@@ -71,7 +73,6 @@ class TransformState:
     index_previous: int = 0
     index_updated: bool = False
     index_range: NDArray[np.int32] = field(default_factory=lambda: np.zeros([0], dtype=np.int32))
-    # index_reflect: bool = False
     index_bounce: bool = False
 
     fade_type: LEDFadeType = LEDFadeType.FADE_OFF
@@ -90,6 +91,11 @@ class TransformState:
     step_count_previous: int = 0
     step_count_max: int = 0
     step_count_reset: bool = False
+
+    secondary_counter: int = 0
+    secondary_count_step: int = 0
+    secondary_count_max: int = 1
+    secondary_count_reset_value: int = 1
 
     collision: bool = False
     collision_enabled: bool = False
@@ -172,7 +178,7 @@ class TransformState:
 
     def fade_color(
         self,
-    ) -> NDArray[np.int32]:
+    ) -> Pixel:
         """Fade an LED's color by the given amount and return the new RGB value.
 
         Args:

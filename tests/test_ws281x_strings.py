@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 def setup_test() -> None:
     """Fixture."""
     # Code that will run before your test, for example:
-    Pixel.default_pixel_order = LEDOrder.RGB
+    Pixel.order = LEDOrder.RGB
 
 
 def mock_instantiate_pixel_strip(  # noqa: PLR0913
@@ -177,7 +177,7 @@ def test_single_assignment_numpy_int() -> None:
 def test_multiple_assignment() -> None:
     """Test creation of light string with simple args."""
     led_count = 10
-    Pixel.default_pixel_order = LEDOrder.RGB
+    Pixel.order = LEDOrder.RGB
     with mock.patch.object(WS281xString, "_instantiate_pixel_strip", new=mock_instantiate_pixel_strip):
         ws281x = WS281xString(led_count=led_count, simulate=True)
 
@@ -240,7 +240,7 @@ def test_multiple_assignment() -> None:
 
 def test_multiple_assignment_simulated() -> None:
     """Test creation of light string with simple args."""
-    Pixel.default_pixel_order = LEDOrder.RGB
+    Pixel.order = LEDOrder.RGB
     led_count = 10
     with mock.patch.object(WS281xString, "_instantiate_pixel_strip", new=mock_instantiate_pixel_strip):
         ws281x = WS281xString(led_count=led_count, simulate=True)
@@ -298,7 +298,7 @@ def test_multiple_assignment_simulated() -> None:
 
 def test_context_manager() -> None:
     """Tests."""
-    Pixel.default_pixel_order = LEDOrder.RGB
+    Pixel.order = LEDOrder.RGB
     led_count = 10
     with (
         mock.patch.object(WS281xString, "_instantiate_pixel_strip", new=mock_instantiate_pixel_strip),

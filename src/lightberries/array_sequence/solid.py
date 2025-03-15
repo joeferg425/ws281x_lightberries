@@ -54,4 +54,4 @@ class SequenceSolid(ArraySequence):
             name=name,
             pixel_sequence=pixel_sequence,
         )
-        LOGGER.debug("%s %d : %s", SequenceSolid.__name__, led_count, pixel)
+        # LOGGER.debug("%s %d : %s", SequenceSolid.__name__, led_count, pixel)

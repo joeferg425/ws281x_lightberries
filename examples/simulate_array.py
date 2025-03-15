@@ -96,7 +96,7 @@ class LightOutput:
                 LOGGER.info(PixelTransform.ACTIVE_TRANSFORMS[1])
         time.sleep(self.delay)
 
-    def run(self) -> None:  # noqa: C901, PLR0912
+    def run(self) -> None:  # noqa: C901, PLR0912, PLR0915
         """Run the process."""
         try:
             led_count = 20
@@ -114,7 +114,7 @@ class LightOutput:
                             refresh_callback=lambda: self.update(),
                             led_order=LEDOrder.RGB,
                         )
-                        Pixel.default_pixel_order = LEDOrder.RGB
+                        Pixel.order = LEDOrder.RGB
                         self.has_run = True
                     elif msg.name is DataName.duration:
                         self.lightController.seconds_per_mode = msg.float_value
@@ -142,7 +142,7 @@ class LightOutput:
                                 pixel_sequence=sequence,
                             )
                             self.tk_q.put("running")
-                            self.lightController.run()
+                            self.lightController.run(seconds_per_mode=self.lightController.seconds_per_mode)
                             self.tk_q.put("done")
                         elif msg.str_value == "quit":
                             break

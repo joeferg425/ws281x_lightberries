@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, ClassVar, overload
 
 import numpy as np
 
-from lightberries.base.logger import LOGGER
 from lightberries.base.pixel import Pixel, PixelColor
 
 if TYPE_CHECKING:
@@ -67,7 +66,6 @@ class PixelSequence(Sequence[Pixel]):
             self._pixel_next: Pixel = self._array[1].copy()
         else:
             self._pixel_next: Pixel = self._pixel.copy()
-        LOGGER.debug(self)
 
     def __len__(self) -> int:
         return self._led_count
@@ -242,7 +240,7 @@ class PixelSequence(Sequence[Pixel]):
 
         """
         if self._array:
-            return np.array([p.array for p in self._array], dtype=np.int32)
+            return np.roll(np.array([p.array for p in self._array], dtype=np.int32), self.led_index, 0)
         return np.zeros((0, 3), dtype=np.int32)
 
     @property
@@ -318,6 +316,7 @@ class PixelSequence(Sequence[Pixel]):
         """
         _led_index = random.randint(0, self.led_count - 1)
         self._set_index(_led_index)
+        self._pixel: Pixel = self._array[self.led_index].copy()
         return self._led_index
 
     def get_random_pixel(self) -> Pixel:
@@ -380,7 +379,7 @@ class PixelSequence(Sequence[Pixel]):
             s += ", ...]"
         else:
             s += "]"
-        return f"{self._name.replace('Sequence','')}: SQX#{self._led_count}[{s}"
+        return f"{self._name.replace('Sequence', '')}: SQX#{self._led_count}[{s}"
 
     def __repr__(
         self,
@@ -414,7 +413,7 @@ class PixelSequence(Sequence[Pixel]):
             month = Month(month.month)
         else:
             month = Month(month)
-        return MonthSequences[month]
+        return get_month_sequences()[month]
 
 
 class Month(IntEnum):
@@ -434,103 +433,105 @@ class Month(IntEnum):
     December = 12
 
 
-MonthSequences = {
-    Month.January: PixelSequence.from_list(
-        [
-            Pixel(PixelColor.CYAN2),
-            Pixel(PixelColor.WHITE),
-            Pixel(PixelColor.CYAN),
-            Pixel(PixelColor.BLUE2),
-            Pixel(PixelColor.BLUE),
-        ],
-    ),
-    Month.February: PixelSequence.from_list(
-        [
-            Pixel(PixelColor.PINK),
-            Pixel(PixelColor.WHITE),
-            Pixel(PixelColor.RED),
-            Pixel(PixelColor.WHITE),
-        ],
-    ),
-    Month.March: PixelSequence.from_list(
-        [
-            Pixel(PixelColor.GREEN),
-            Pixel(PixelColor.WHITE),
-            Pixel(PixelColor.ORANGE),
-            Pixel(PixelColor.WHITE),
-            Pixel(PixelColor.YELLOW),
-        ],
-    ),
-    Month.April: PixelSequence.from_list(
-        [
-            Pixel(PixelColor.PINK),
-            Pixel(PixelColor.CYAN),
-            Pixel(PixelColor.YELLOW),
-            Pixel(PixelColor.GREEN),
-            Pixel(PixelColor.WHITE),
-        ],
-    ),
-    Month.May: PixelSequence.from_list(
-        [
-            Pixel(PixelColor.PINK),
-            Pixel(PixelColor.YELLOW),
-            Pixel(PixelColor.GREEN),
-            Pixel(PixelColor.WHITE),
-        ],
-    ),
-    Month.June: PixelSequence.from_list(
-        [
-            Pixel(PixelColor.RED),
-            Pixel(PixelColor.WHITE),
-            Pixel(PixelColor.BLUE),
-            Pixel(PixelColor.GREEN),
-        ],
-    ),
-    Month.July: PixelSequence.from_list(
-        [
-            Pixel(PixelColor.RED),
-            Pixel(PixelColor.WHITE),
-            Pixel(PixelColor.BLUE),
-        ],
-    ),
-    Month.August: PixelSequence.from_list(
-        [
-            Pixel(PixelColor.ORANGE),
-            Pixel(PixelColor.WHITE),
-            Pixel(PixelColor.YELLOW),
-            Pixel(PixelColor.ORANGE2),
-        ],
-    ),
-    Month.September: PixelSequence.from_list(
-        [
-            Pixel(PixelColor.RED),
-            Pixel(PixelColor.ORANGE),
-            Pixel(PixelColor.WHITE),
-            Pixel(PixelColor.YELLOW),
-            Pixel(PixelColor.ORANGE2),
-            Pixel(PixelColor.RED2),
-        ],
-    ),
-    Month.October: PixelSequence.from_list(
-        [
-            Pixel(PixelColor.MIDNIGHT),
-            Pixel(PixelColor.RED),
-            Pixel(PixelColor.ORANGE),
-            Pixel(PixelColor.OFF),
-        ],
-    ),
-    Month.November: PixelSequence.from_list(
-        [
-            Pixel(PixelColor.RED),
-            Pixel(PixelColor.MIDNIGHT),
-            Pixel(PixelColor.GRAY),
-        ],
-    ),
-    Month.December: PixelSequence.from_list(
-        [
-            Pixel(PixelColor.RED),
-            Pixel(PixelColor.WHITE),
-            Pixel(PixelColor.GREEN),
-        ],
-    ),
-}
+def get_month_sequences() -> dict[Month, PixelSequence]:
+    """Build list each time so LED order is correct."""
+    return {
+        Month.January: PixelSequence.from_list(
+            [
+                Pixel(PixelColor.CYAN2),
+                Pixel(PixelColor.WHITE),
+                Pixel(PixelColor.CYAN),
+                Pixel(PixelColor.BLUE2),
+                Pixel(PixelColor.BLUE),
+            ],
+        ),
+        Month.February: PixelSequence.from_list(
+            [
+                Pixel(PixelColor.PINK),
+                Pixel(PixelColor.WHITE),
+                Pixel(PixelColor.RED),
+                Pixel(PixelColor.WHITE),
+            ],
+        ),
+        Month.March: PixelSequence.from_list(
+            [
+                Pixel(PixelColor.GREEN),
+                Pixel(PixelColor.WHITE),
+                Pixel(PixelColor.ORANGE),
+                Pixel(PixelColor.WHITE),
+                Pixel(PixelColor.YELLOW),
+            ],
+        ),
+        Month.April: PixelSequence.from_list(
+            [
+                Pixel(PixelColor.PINK),
+                Pixel(PixelColor.CYAN),
+                Pixel(PixelColor.YELLOW),
+                Pixel(PixelColor.GREEN),
+                Pixel(PixelColor.WHITE),
+            ],
+        ),
+        Month.May: PixelSequence.from_list(
+            [
+                Pixel(PixelColor.PINK),
+                Pixel(PixelColor.YELLOW),
+                Pixel(PixelColor.GREEN),
+                Pixel(PixelColor.WHITE),
+            ],
+        ),
+        Month.June: PixelSequence.from_list(
+            [
+                Pixel(PixelColor.RED),
+                Pixel(PixelColor.WHITE),
+                Pixel(PixelColor.BLUE),
+                Pixel(PixelColor.GREEN),
+            ],
+        ),
+        Month.July: PixelSequence.from_list(
+            [
+                Pixel(PixelColor.RED),
+                Pixel(PixelColor.WHITE),
+                Pixel(PixelColor.BLUE),
+            ],
+        ),
+        Month.August: PixelSequence.from_list(
+            [
+                Pixel(PixelColor.ORANGE),
+                Pixel(PixelColor.WHITE),
+                Pixel(PixelColor.YELLOW),
+                Pixel(PixelColor.ORANGE2),
+            ],
+        ),
+        Month.September: PixelSequence.from_list(
+            [
+                Pixel(PixelColor.RED),
+                Pixel(PixelColor.ORANGE),
+                Pixel(PixelColor.WHITE),
+                Pixel(PixelColor.YELLOW),
+                Pixel(PixelColor.ORANGE2),
+                Pixel(PixelColor.RED2),
+            ],
+        ),
+        Month.October: PixelSequence.from_list(
+            [
+                Pixel(PixelColor.MIDNIGHT),
+                Pixel(PixelColor.RED),
+                Pixel(PixelColor.ORANGE),
+                Pixel(PixelColor.OFF),
+            ],
+        ),
+        Month.November: PixelSequence.from_list(
+            [
+                Pixel(PixelColor.RED),
+                Pixel(PixelColor.MIDNIGHT),
+                Pixel(PixelColor.GRAY),
+            ],
+        ),
+        Month.December: PixelSequence.from_list(
+            [
+                Pixel(PixelColor.RED),
+                Pixel(PixelColor.WHITE),
+                Pixel(PixelColor.GREEN),
+            ],
+        ),
+    }

@@ -13,7 +13,7 @@ import lightberries.base.rpiws281x_patch
 from lightberries.array_controller import ArrayController
 from lightberries.array_sequence.solid import SequenceSolid
 from lightberries.array_transform.all import TransformAccelerate, TransformNone
-from lightberries.array_transform.array_transform import (
+from lightberries.array_transform.base import (
     ArrayTransform,
 )
 from lightberries.base.pixel import LEDOrder, PixelColor
@@ -834,8 +834,8 @@ def test_accelerate_create_with_values() -> None:
     function_list = TransformAccelerate.create(
         controller=controller,
         pixel_sequence=pixel_sequence,
-        delay_count_max=delay_count_max,
-        step_count_max=step_count_max,
+        delay_count=delay_count_max,
+        step_count=step_count_max,
         color_cycle=color_cycle,
         fade_amount=fade_amount,
     )
@@ -860,8 +860,8 @@ def test_accelerate_next() -> None:
     function_list = TransformAccelerate.create(
         controller=controller,
         pixel_sequence=pixel_sequence,
-        delay_count_max=delay_count_max,
-        step_count_max=step_count_max,
+        delay_count=delay_count_max,
+        step_count=step_count_max,
         color_cycle=color_cycle,
         fade_amount=fade_amount,
     )
